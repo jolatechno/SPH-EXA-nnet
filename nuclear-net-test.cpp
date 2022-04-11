@@ -76,7 +76,7 @@ int main() {
 		auto RQ = nnet::include_temp(r_included, Q, 1);
 
 		// solve the system
-		nnet::solve_first_order(Y, T, RQ, dr_included, dt, 0.6);
+		std::tie(Y, T) = nnet::solve_first_order(Y, T, RQ, dr_included, dt, 0.6);
 
 		E_tot = Y.dot(Q) + T;
 		m_tot = Y.dot(M);

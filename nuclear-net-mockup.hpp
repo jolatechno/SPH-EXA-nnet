@@ -27,10 +27,10 @@ namespace nnet {
 		auto RQ = include_temp(r_included, Q, rho);
 
 		// solve the system
-		solve_first_order(Y, T, RQ, dr_included, Q, dt)
+		auto [Y_next, T_next] = solve_first_order(Y, T, RQ, dr_included, Q, dt)
 
 		// if needed, convert back to masses
-		mols_to_masses(Y, M);
+		mols_to_masses(Y_next, M);
 
 	------------------- */
 
@@ -80,7 +80,7 @@ namespace nnet {
 	}
 
 	template<class matrix>
-	matrix desintegration_rate_to_first_order(matrix &r) {
+	Eigen::MatrixXd desintegration_rate_to_first_order(const matrix &r) {
 		/* -------------------
 		simply add the diagonal desintegration terms to the desintegration rates if not included
 
@@ -88,7 +88,7 @@ namespace nnet {
 		------------------- */
 
 		int dimension = r.cols();
-		matrix r_out = r;
+		Eigen::MatrixXd r_out = r;
 
 		for (int i = 0; i < dimension; ++i) {
 			r_out(i, i) = 0;
@@ -157,13 +157,13 @@ namespace nnet {
 	}
 
 	template<class matrix, class tensor, class vector>
-	matrix fusion_to_desintegration_rates(matrix &r, const tensor &f, const vector &Y) {
+	Eigen::MatrixXd fusion_to_desintegration_rates(const matrix &r, const tensor &f, const vector &Y) {
 		/* -------------------
 		include fusion rate into desintegration rates for a given state Y
 		------------------- */
 
 		const int dimension = Y.size();
-		matrix r_out = Eigen::MatrixXd::Zero(dimension, dimension);
+		Eigen::MatrixXd r_out = Eigen::MatrixXd::Zero(dimension, dimension);
 
 		// add fusion rates
 		for (int i = 0; i < dimension; ++i)
@@ -209,11 +209,11 @@ namespace nnet {
 	}
 
 	template<class matrix, class vector, typename Float>
-	void solve_first_order(vector &Y, Float &T, const matrix &RQ, const matrix &dr, const Float dt, const Float theta=1, const Float epsilon=1e-16) {
+	std::tuple<vector, Float> solve_first_order(const vector &Y, const Float T, const matrix &RQ, const matrix &dr, const Float dt, const Float theta=1, const Float epsilon=1e-16) {
 		/* -------------------
 		Solves d{Y, T}/dt = RQ*Y using eigen:
 		{DY, DT} = RQ*(Y + teta*DY)*dt + (dr*Y*DT, 0)*dt
-		=> {DY, DT} * (I - dt*teta*{RQ, dr*Y)} = dt*{r, Q}*Y
+		=> {DY, DT} * (I - dt*teta*{RQ, dr*Y)} = dt*RQ*Y
 		------------------- */
 
 		const int dimension = Y.size();
@@ -233,7 +233,7 @@ namespace nnet {
 		auto sparse_M = utils::sparsify(M, epsilon);
 
 		/* -------------------
-		TODO: Add loop
+		TODO (if needed): Add loop
 		------------------- */
 		// now solve {Dy, DT}*M = RHS
 		Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>  BCGST;
@@ -241,8 +241,10 @@ namespace nnet {
 		auto const DY_T = BCGST.solve(RHS);
 
 		// add to solution
-		T += DY_T(0);
-		Y += DY_T(Eigen::seq(1, dimension));
+		Float T_next = T + DY_T(0);
+		auto Y_next = Y + DY_T(Eigen::seq(1, dimension));
+
+		return {Y_next, T_next};
 	}
 
 
