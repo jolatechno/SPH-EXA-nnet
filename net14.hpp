@@ -15,8 +15,8 @@ namespace nnet {
 			}();
 
 		/// constant number of particle created by photodesintegrations
-		const Eigen::Matrix<int, 14, 14> n_photodesintegrations = [](){
-				Eigen::Matrix<int, 14, 14> n = Eigen::Matrix<int, 14, 14>::Zero();
+		const Eigen::Matrix<int, -1, -1> n_photodesintegration = [](){
+				Eigen::Matrix<int, -1, -1> n = Eigen::Matrix<int, -1, -1>::Zero(14, 14);
 
 				// C -> 3He
 				n(0, 1) = 3;
@@ -31,8 +31,8 @@ namespace nnet {
 			}();
 
 		/// constant number of particle created by fusions
-		const Eigen::Tensor<int, 3> n_fusions = [](){
-				Eigen::Tensor<int, 3> n(14, 14, 14);
+		const Eigen::Tensor<float, 3> n_fusion = [](){
+				Eigen::Tensor<float, 3> n(14, 14, 14);
 				n.setZero();
 
 				// C + C -> Ne + He
@@ -47,19 +47,20 @@ namespace nnet {
 				n(5, 2, 2) = 2;
 				n(0, 2, 2) = 2;
 
-				// 3He -> C ???? !!!!!
-				
+				// 3He -> C
+				n(1, 0, 0) = 2./3.;
+
 				return n;
 			}();
 
 		/// 
 		template<typename Float>
-		Eigen::Matrix<Float, 14, 14> get_photodesintegration_rates(const Float T) {
+		Eigen::Matrix<Float, -1, -1> get_photodesintegration_rates(const Float T) {
 			/* -------------------
 			simply copute desintegration rates within net-14
 			------------------- */
 
-			Eigen::Matrix<Float, 14, 14> r = Eigen::Matrix<Float, 14, 14>::Zero();
+			Eigen::Matrix<Float, -1, -1> r = Eigen::Matrix<Float, -1, -1>::Zero(14, 14);
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			bellow is implemented the weigth sof the following reactions, based on a paper using fits:
@@ -145,15 +146,15 @@ namespace nnet {
 
 			Float r2abe = (7.40e+05*t9i32)*std::exp(-1.0663*t9i)
 				+ 4.164e+09*t9i23*std::exp(-13.49*t9i13-t92/0.009604)*(1. + 0.031*t913 + 8.009*t923 + 1.732*t9 + 49.883*t943 + 27.426*t953);
-      		Float rbeac = (130.*t9i32)*std::exp(-3.3364*t9i)
+      		Float r3a, rbeac = (130.*t9i32)*std::exp(-3.3364*t9i)
       			+ 2.510e+07*t9i23*std::exp(-23.57*t9i13 - t92/0.055225)*(1. + 0.018*t913 + 5.249*t923 + 0.650*t9 + 19.176*t943 + 6.034*t953);
-			Float r3a, rev = 2.e20*std::exp(-84.419412e0*t9i);
 			if(T > 8e7) {
 	      		r3a=2.90e-16*(r2abe*rbeac)
 	      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
 		    } else
 	      		r3a=2.90e-16*(r2abe*rbeac)*(0.01 + 0.2*(1. + 4.*std::exp(-std::pow(0.025*t9i, 3.263)))/(1. + 4.*std::exp(-std::pow(t9/0.025, 9.227))))
 	      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
+			Float rev = 2.e20*std::exp(-84.419412e0*t9i);
 
 			r(0, 1) = rev*(t93)*r3a;
 
@@ -182,7 +183,13 @@ namespace nnet {
 				O <-> Ne
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 
-			// TODO !!!!!
+			// O -> Ne
+			Float roag=(9.37e+09*t9i23*std::exp(-39.757*t9i13-t92/2.515396) + 62.1*t9i32*std::exp(-10.297*t9i) + 538.*t9i32*std::exp(-12.226*t9i) + 13.*t92*std::exp(-20.093*t9i));
+        	r(3, 2)=roag;
+
+      		// Ne -> O
+      		Float rnega=roag*5.65e+10*t9r32*std::exp(-54.93807*t9rm1);
+      		r(2, 3)=rnega;
 
 
 			return r;
@@ -197,28 +204,78 @@ namespace nnet {
 			Eigen::Tensor<Float, 3> f(14, 14, 14);
 			f.setZero();
 
-			// C + C -> Ne + He
-			// TODO !!!!!
+			Float t9r=T*1.0e-09;
+      		Float t9=std::min((Float)10., t9r);
+      		Float t92=t9*t9;
+      		Float t93=t92*t9;
+      		Float t95=t92*t93;
+      		Float t912=std::sqrt(t9);
+      		Float t913=std::pow(t9, 1./3.);
+      		Float t923=t913*t913;
+      		Float t932=t9*t912;
+      		Float t943=t9*t913;
+      		Float t953=t9*t923;
+
+      		Float t9i=1./t9;
+      		Float t9i13=1./t913;
+      	 	Float t9i23=1./t923;
+      		Float t9i32=1./t932;
+      		Float t9rm1=1./t9r;
+      		Float t9r32=t9*std::sqrt(t9r);
+
+      		Float t9a=t9/(1. + 0.0396*t9);
+		    Float t9a13=std::pow(t9a, 1./3.);
+		    Float t9a56=std::pow(t9a, 5./6.);
+
+
+      		// 3He -> C	
+			Float r2abe = (7.40e+05*t9i32)*std::exp(-1.0663*t9i)
+				+ 4.164e+09*t9i23*std::exp(-13.49*t9i13-t92/0.009604)*(1. + 0.031*t913 + 8.009*t923 + 1.732*t9 + 49.883*t943 + 27.426*t953);
+      		Float r3a, rbeac = (130.*t9i32)*std::exp(-3.3364*t9i)
+      			+ 2.510e+07*t9i23*std::exp(-23.57*t9i13 - t92/0.055225)*(1. + 0.018*t913 + 5.249*t923 + 0.650*t9 + 19.176*t943 + 6.034*t953);
+			if(T > 8e7) {
+	      		r3a=2.90e-16*(r2abe*rbeac)
+	      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
+		    } else
+	      		r3a=2.90e-16*(r2abe*rbeac)*(0.01 + 0.2*(1. + 4.*std::exp(-std::pow(0.025*t9i, 3.263)))/(1. + 4.*std::exp(-std::pow(t9/0.025, 9.227))))
+	      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);	
+	      	f(1, 0, 0) = r3a;
+
+
+	      	// C + C -> Ne + He
+      		Float r24=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
+      		f(3, 1, 1) = r24;
+      		f(0, 1, 1) = r24;
 
 			// C + O -> Mg + He
-			// TODO !!!!!
+			Float r1216=0.;
+			if (T > 5e9) {
+	            t9a=t9/(1. + 0.055*t9);
+	            Float t9a2=t9a*t9a;
+	            t9a13=std::pow(t9a, 1./3.);
+	            Float t9a23=t9a13*t9a13;
+	            t9a56=std::pow(t9a, 5./6.);
+	            r1216=1.72e+31*t9a56*t9i32*std::exp(-106.594/t9a13)/(std::exp(-0.18*t9a2) + 1.06e-03*std::exp(2.562*t9a23));
+	        }
+	        f(4, 1, 2) = r1216;
+      		f(0, 1, 2) = r1216;
 
 			// O + O -> Si + He
-			// TODO !!!!!
-				
-			// 3He -> C ???? !!!!!			
+			Float r32=7.10d+36*t9i23*std::exp(-135.93*t9i13 - 0.629*t923 - 0.445*t943 + 0.0103*t92);
+      		f(5, 2, 2) = r32;
+      		f(0, 2, 2) = r32;
 
 			return f;
 		}
 
 		/// function computing the coulombian correction
 		template<typename Float>
-		Eigen::Vector<Float, 14> ideal_gaz_correction(const Float T) {
+		Eigen::Vector<Float, -1> ideal_gaz_correction(const Float T) {
 			/* -------------------
 			simply copute the coulombian correction of BE within net-14
 			------------------- */
 
-			Eigen::Vector<Float, 14> BE_corr(14);
+			Eigen::Vector<Float, -1> BE_corr(14);
 			BE_corr = 3./2. * constants::Kb * constants::Na * T;
 
 			return BE_corr;

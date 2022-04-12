@@ -40,8 +40,8 @@ solve_system : compose_system(Y, T), Y, T:
 
 namespace nnet {
 	namespace utils {
-		template<typename Float>
-		Eigen::SparseMatrix<Float> sparsify(const Eigen::Matrix<Float, -1, -1> &Min, const Float epsilon=1e-16) {
+		template<typename Float, int n>
+		Eigen::SparseMatrix<Float> sparsify(const Eigen::Matrix<Float, n, n> &Min, const Float epsilon=1e-16) {
 			/* -------------------
 			put a "sparsified" version of Min into Mout according to epsilon 
 			------------------- */
@@ -157,7 +157,7 @@ namespace nnet {
 		const vector RHS = Mp*Y_T*dt;
 
 		// construct M
-		matrix M = -theta*dt*Mp + Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1);
+		matrix M = -theta*dt*Mp + matrix::Identity(dimension + 1, dimension + 1);
 
 		// sparcify M
 		auto sparse_M = utils::sparsify(M, epsilon);

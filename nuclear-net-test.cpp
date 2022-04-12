@@ -3,9 +3,10 @@
 
 int main() {
 	std::cout << nnet::net14::BE.transpose() << "\n\n";
-	std::cout << nnet::net14::n_photodesintegrations << "\n\n";
-	//std::cout << nnet::net14::n_fusions << "\n\n";
-	std::cout << nnet::net14::get_photodesintegration_rates((double)2e9) << "\n\n";
+	std::cout << nnet::net14::n_photodesintegration << "\n\n";
+	//std::cout << nnet::net14::n_fusion << "\n\n";
+	std::cout << nnet::net14::get_photodesintegration_rates((double)2e9) << "\n\n\n";
+	//std::cout << nnet::net14::get_fusion_rates((double)2e9) << "\n\n\n";
 
 
 	// photodesintegration rates
@@ -21,7 +22,7 @@ int main() {
 	// fusion rates
 	Eigen::Tensor<double, 3> f(3, 3, 3);
 	Eigen::Tensor<double, 3> df(3, 3, 3);
-	Eigen::Tensor<int, 3> nf(3, 3, 3);
+	Eigen::Tensor<float, 3> nf(3, 3, 3);
 	nf(2, 0, 0) = 1;
 	nf(2, 0, 1) = 1;
 	df(2, 0, 0) = 0.2;
