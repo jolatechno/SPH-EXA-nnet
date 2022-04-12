@@ -11,7 +11,7 @@ double Adot(Eigen::Vector<double, 14> const &Y) {
 int main() {
 	// initial state
 	Eigen::Vector<double, -1> Y(14);
-	double T = 1e9;
+	double T = 1e8;
 	Y(0) = 0.8;
 	Y(1) = 0.7;
 	Y(2) = 0.2;
@@ -30,7 +30,7 @@ int main() {
 	double last_T = T;
 	double m_tot, m_tot_0 = Adot(Y);
 
-	double dt=5e-12, T_max = 2;
+	double dt=5e-30, T_max = 2;
 	int n_max = 200; //T_max/dt;
 	const int n_print = 20;
 	for (int i = 0; i < n_max; ++i) {
@@ -39,34 +39,32 @@ int main() {
 			auto f = nnet::net14::get_fusion_rates(T);
 
 			//to insure that the equation is dY/dt = r*Y
-			//auto M = nnet::photodesintegration_to_first_order(r, nnet::net14::n_photodesintegration);
-
-			//std::cout << Adot(M*Y) << ", ";
+			auto M = nnet::photodesintegration_to_first_order(r, nnet::net14::n_photodesintegration);
+			
+			if (i == 0)
+				std::cout << "\n\n\n\n" << M << "\n\n" << Adot(M*Y) << "\n\n";
 
 			// add fusion rates to desintegration rates
-			auto M = nnet::fusion_to_first_order(f, nnet::net14::n_fusion, Y);
+			M += nnet::fusion_to_first_order(f, nnet::net14::n_fusion, Y);
 
-			std::cout << Adot(M*Y) << "\n";
-
-			/*if (i == 0)
-				std::cout << "\n\n\n\n" << M << "\n\n\n\n";*/
+			//std::cout << Adot(M*Y) << "\n";
 
 			// no derivative
 			Eigen::Matrix<double, -1, -1> dMdT = Eigen::Matrix<double, -1, -1>::Zero(14, 14);
 
 			// add temperature to the problem
-			return std::pair<Eigen::Matrix<double, -1, -1>, Eigen::Matrix<double, -1, -1>>{nnet::include_temp(M, 1., 0., nnet::net14::BE, Y), dMdT};
+			return std::pair<Eigen::Matrix<double, -1, -1>, Eigen::Matrix<double, -1, -1>>{nnet::include_temp(M, 1.0e8, 0., nnet::net14::BE, Y), dMdT};
 		};
 
 		// solve the system
-		auto DY_T = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-12);
+		auto DY_T = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-16);
 		std::tie(Y, T) = nnet::add_and_cleanup(Y, T, DY_T);
 
 		m_tot = Adot(Y);
 
 		// !!!!!!!!
 		// cheating by normalizing
-		Y /= m_tot;
+		//Y /= m_tot;
 
 		if (i % (int)((float)n_max/(float)n_print) == 0)
 			std::cout << Y.transpose() << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot_0 - m_tot << "),\t" << T << "\n\n";
