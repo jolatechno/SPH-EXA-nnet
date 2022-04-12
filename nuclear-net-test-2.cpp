@@ -55,34 +55,36 @@ int main() {
 	double E_tot, E_tot_0 = Y.dot(m + BE) + T;
 	double m_tot, m_tot_0 = Y.dot(m);
 
-	double dt=1e-3, T_max = 2;
+	double dt=5e-3, T_max = 2;
 	const int n_print = 20;
 	for (int i = 0; i < T_max/dt; ++i) {
-		f(2, 0, 0) = 0.7 + df(2, 0, 0)*(T - 1);
-		f(2, 0, 1) = 0.2 + df(2, 0, 1)*(T - 1);
+		auto construct_system = [&](const Eigen::VectorXd &Y, double T) {
+			f(2, 0, 0) = 0.7 + df(2, 0, 0)*(T - 1);
+			f(2, 0, 1) = 0.2 + df(2, 0, 1)*(T - 1);
 
-		f(0, 1, 2) = 0.2 + df(0, 1, 2)*(T - 1);
-		f(0, 2, 2) = 0.5 + df(0, 2, 2)*(T - 1);
+			f(0, 1, 2) = 0.2 + df(0, 1, 2)*(T - 1);
+			f(0, 2, 2) = 0.5 + df(0, 2, 2)*(T - 1);
 
-		r(0, 1) = 0.8 + dr(0, 1)*(T - 1);
-		r(1, 0) = 0.7 + dr(1, 0)*(T - 1);
+			r(0, 1) = 0.8 + dr(0, 1)*(T - 1);
+			r(1, 0) = 0.7 + dr(1, 0)*(T - 1);
 
-		r(0, 2) = 0.4 + dr(0, 2)*(T - 1);
-		r(1, 2) = 0.2 + dr(1, 2)*(T - 1);
+			r(0, 2) = 0.4 + dr(0, 2)*(T - 1);
+			r(1, 2) = 0.2 + dr(1, 2)*(T - 1);
 
-		//to insure that the equation is dY/dt = r*Y
-		auto M = nnet::photodesintegration_to_first_order(r, n);
-		auto dMdT = nnet::photodesintegration_to_first_order(dr, n);
+			//to insure that the equation is dY/dt = r*Y
+			auto M = nnet::photodesintegration_to_first_order(r, n);
+			auto dMdT = nnet::photodesintegration_to_first_order(dr, n);
 
-		// add fusion rates to desintegration rates
-		M += nnet::fusion_to_first_order(f, nf, Y);
-		dMdT += nnet::fusion_to_first_order(df, nf, Y);
+			// add fusion rates to desintegration rates
+			M += nnet::fusion_to_first_order(f, nf, Y);
+			dMdT += nnet::fusion_to_first_order(df, nf, Y);
 
-		// add temperature to the problem
-		auto Mp = nnet::include_temp(M, dMdT, 1., 0., BE, Y);
+			// add temperature to the problem
+			return nnet::include_temp(M, dMdT, 1., 0., BE, Y);
+		};
 
 		// solve the system
-		auto DY_T = nnet::solve_first_order(Y, T, Mp, dt, 0.6);
+		auto DY_T = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-20);
 		Y += DY_T(Eigen::seq(1, 3));
 		T += DY_T(0);
 

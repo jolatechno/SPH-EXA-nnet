@@ -1,0 +1,270 @@
+#include <vector>
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
+#include <unsupported/Eigen/CXX11/Tensor>
+
+/*
+photodesintegration_to_first_order  R_i,j, n_i,j
+
+fusion_to_first_order               F_i,j,k, n_i,j,k, Y_i
+	'-> M : dY/dt = M*Y
+
+coulomb_correction : Y -> dU/dY
+
+include_temp : dM/dT, theta, value_1, value_2, BE'_i: sum_i(BE'_i*dY_i/dt) + value_1*T = value_2*dT/dt
+	'-> M' : d{T, Y}/dt = M'*{T, Y}
+
+iterate_system M', theta, Y, T
+	'-> D{T, Y} = Dt* M'*(T_in*(1 - theta) + T_out*theta)
+
+	D{T, Y} = Dt* M'*(T_in*(1 - theta) + T_out*theta)
+ 	<=> D{T, Y} = Dt* M'*({T_in, Y_in} + theta*{DT, DY})
+ 	<=> (I - Dt*M'()*theta)*D{T, Y} = DT*M'*{T_in, Y_in}
+ 	<=> D{T, Y} = (I - Dt* M' *theta)^{-1} * DT* M' *{T_in, Y_in}
+
+solve_system : compose_system(Y, T), Y, T:
+ 	DT = 0, DY = 0
+
+ 	while true:
+ 		M' = compose_system(Y + theta*DY, T + theta*DT)
+
+		DT, DY -> iterate_system(M', Y, T)
+
+		abs((DT - DT_prev)/T) < tol:
+		 	T = T + DT, Y = Y + DT
+
+	return T + DT, Y + DY
+*/
+
+namespace nnet {
+	namespace utils {
+		template<typename Float>
+		Eigen::SparseMatrix<Float> sparsify(const Eigen::Matrix<Float, -1, -1> &Min, const Float epsilon=1e-16) {
+			/* -------------------
+			put a "sparsified" version of Min into Mout according to epsilon 
+			------------------- */
+			std::vector<Eigen::Triplet<Float>> coefs;
+
+			for (int i = 0; i < Min.cols(); ++i)
+				for (int j = 0; j < Min.rows(); ++j)
+					if (std::abs(Min(i, j)) > epsilon)
+						coefs.push_back(Eigen::Triplet<Float>(i, j, Min(i, j)));
+
+			Eigen::SparseMatrix<Float> Mout(Min.cols(), Min.rows());
+			Mout.setFromTriplets(coefs.begin(), coefs.end());
+			return Mout;
+		}
+	}
+
+	template<class FloatMatrix, class IntMatrix>
+	FloatMatrix photodesintegration_to_first_order(const FloatMatrix &r, const IntMatrix &n) {
+		/* -------------------
+		simply add the diagonal desintegration terms to the desintegration rates if not included
+
+		makes sure that the equation ends up being : dY/dt = r*Y
+		------------------- */
+
+		int dimension = r.cols();
+		FloatMatrix M = Eigen::MatrixXd::Zero(dimension, dimension);
+
+		for (int i = 0; i < dimension; ++i)
+			for (int j = 0; j < dimension; ++j)
+				if (j != i) {
+					M(j, i) =  r(j, i)*n(j, i);
+					M(i, i) -= r(j, i);
+				}
+
+		return M;
+	}
+
+	template<typename Float, class IntTensor, class vector>
+	Eigen::Matrix<Float, -1, -1> fusion_to_first_order(const Eigen::Tensor<Float, 3> &f, const IntTensor &n, const vector &Y) {
+		/* -------------------
+		include fusion rate into desintegration rates for a given state Y
+		------------------- */
+
+		const int dimension = Y.size();
+		Eigen::Matrix<Float, -1, -1> M = Eigen::MatrixXd::Zero(dimension, dimension);
+
+		// add fusion rates
+		for (int i = 0; i < dimension; ++i)
+			for (int j = 0; j < dimension; ++j)
+				if (i != j) {
+					// add i + i -> j
+					M(j, i) += f(j, i, i)*Y(i)*n(j, i, i);
+					M(i, i) -= f(j, i, i)*Y(i)*2;
+
+					// add i + k -> j
+					for (int k = 0; k < dimension; ++k)
+						if (i != k) {
+							M(j, i) += (f(j, i, k)*n(j, i, k) + f(j, k, i)*n(j, k, i))*Y(k)/2;
+							M(i, i) -= (f(j, i, k)			  + f(j, k, i)			 )*Y(k);
+						}
+				}
+
+		return M;
+	}
+
+	template<class matrix, class vector, typename Float>
+	matrix include_temp(const matrix &M, const matrix &dMdT, const Float value_1, const Float value_2, const vector &BE, const vector &Y) {
+		/* -------------------
+		add a row to M based on BE so that, d{T, Y}/dt = M'*{T, Y}
+
+		value_1, value_2 : BE.dY/dt + value_2*T = value_1*dT/dt
+					   <=> (M * Y).BE / value_1 + value_2 / value_1 * T = dT/dt
+					   <=> (M.t * BE).Y / value_1 + value_2 / value_1 * T = dT/dt
+
+		dMdT : dY/dt = (M + DT*dMdT)*Y
+		   <=> dY/dt = (M + dt*dMdT*dT/dt)*Y
+		   <=> dY/dt = (M + dt*dMdT*dT/dt)*Y
+		------------------- */
+
+		const int dimension = Y.size();
+		matrix Mp(dimension + 1, dimension + 1);
+
+		// insert M
+		Mp(Eigen::seq(1, dimension), Eigen::seq(1, dimension)) = M;
+		Mp(0, 0) = value_2/value_1;
+
+		// insert Y -> temperature terms
+		Mp(0, Eigen::seq(1, dimension)) = -M.transpose()*BE/value_1;
+
+		// insert temperature -> Y terms
+		// Mp(Eigen::seq(1, dimension), 0) = dMdT*Y;
+
+		return Mp;
+	}
+
+	template<class matrix, class vector, typename Float>
+	vector solve_first_order(const vector &Y, const Float T, const matrix &Mp, const Float dt, const Float theta=1, const Float epsilon=1e-16) {
+		/* -------------------
+		Solves d{Y, T}/dt = RQ*Y using eigen:
+
+		D{T, Y} = Dt* M'*(T_in*(1 - theta) + T_out*theta)
+ 	<=> D{T, Y} = Dt* M'*({T_in, Y_in} + theta*{DT, DY})
+ 	<=> (I - Dt*M'()*theta)*D{T, Y} = DT*M'*{T_in, Y_in}
+		------------------- */
+
+		const int dimension = Y.size();
+
+		// construct vector
+		vector Y_T(dimension + 1);
+		Y_T << T, Y;
+
+		// right hand side
+		const vector RHS = Mp*Y_T*dt;
+
+		// construct M
+		matrix M = -theta*dt*Mp + Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1);
+
+		// sparcify M
+		auto sparse_M = utils::sparsify(M, epsilon);
+
+		// now solve {Dy, DT}*M = RHS
+		Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>  BCGST;
+		BCGST.compute(sparse_M);
+		auto const DY_T = BCGST.solve(RHS);
+
+		// add to solution
+		return DY_T;
+	}
+
+	template<class problem, class vector, typename Float>
+	vector solve_system(const problem construct_system, const vector &Y, const Float T, const Float dt, const Float theta=1, const Float tol=1e-5, const Float epsilon=1e-16) {
+		const int dimension = Y.size();
+
+		// construct vector
+		vector Y_T(dimension + 1), DY_T(dimension + 1), prev_DY_T(dimension + 1);
+		Y_T << T, Y;
+
+		auto M = construct_system(Y, T);
+		prev_DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
+
+		while (true) {
+			auto M = construct_system(Y + theta*prev_DY_T(Eigen::seq(1, dimension)), T + theta*prev_DY_T(0));
+			DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
+
+			if (std::abs(prev_DY_T(0) - DY_T(0))/(T + theta*DY_T(0)) < tol)
+				return DY_T;
+
+			prev_DY_T = DY_T;
+		}
+	}
+
+
+	namespace net14 {
+		template<class matrix, typename Float>
+		void get_net14_desintegration_rates(matrix &r, const Float T) {
+			/* -------------------
+			simply copute desintegration rates within net-14
+			------------------- */
+
+			// TODO
+		}
+
+		template<class matrix, typename Float>
+		void get_net14_desintegration_rates_derivatives(matrix &dr, const Float T) {
+			/* -------------------
+			simply copute desintegration rates derivatives within net-14
+			------------------- */
+
+			// TODO
+		}
+
+		template<class tensor, typename Float>
+		void get_net14_fusion_rates(tensor &f, const Float T) {
+			/* -------------------
+			simply copute fusion rates within net-14
+			------------------- */
+
+			// TODO
+		}
+
+		template<class tensor, typename Float>
+		void get_net14_fusion_rates_derivatives(tensor &df, const Float T) {
+			/* -------------------
+			simply copute fusion rates derivatives within net-14
+			------------------- */
+
+			// TODO
+		}
+	}
+
+	namespace net87 {
+		template<class matrix, typename Float>
+		void get_net87_desintegration_rates(matrix &r, const Float T) {
+			/* -------------------
+			simply copute desintegration rates within net-14
+			------------------- */
+
+			// TODO
+		}
+
+		template<class matrix, typename Float>
+		void get_net87_desintegration_rates_derivatives(matrix &dr, const Float T) {
+			/* -------------------
+			simply copute desintegration rates derivatives within net-14
+			------------------- */
+
+			// TODO
+		}
+
+		template<class tensor, typename Float>
+		void get_net87_fusion_rates(tensor &f, const Float T) {
+			/* -------------------
+			simply copute fusion rates within net-14
+			------------------- */
+
+			// TODO
+		}
+
+		template<class tensor, typename Float>
+		void get_net87_fusion_rates_derivatives(tensor &df, const Float T) {
+			/* -------------------
+			simply copute fusion rates derivatives within net-14
+			------------------- */
+
+			// TODO
+		}
+	}
+}
