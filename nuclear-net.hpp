@@ -157,7 +157,7 @@ namespace nnet {
 		matrix M = -theta*dt*Mp + matrix::Identity(dimension + 1, dimension + 1);
 
 		// insert temperature -> Y terms
-		M(Eigen::seq(1, dimension), 0) += dMdT*Y;
+		//M(Eigen::seq(1, dimension), 0) += -theta*dt*dMdT*Y;
 
 		// sparcify M
 		auto sparse_M = utils::sparsify(M, epsilon);

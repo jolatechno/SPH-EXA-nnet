@@ -30,8 +30,8 @@ int main() {
 	double last_T = T;
 	double m_tot, m_tot_0 = Adot(Y);
 
-	double dt=5e-30, T_max = 2;
-	int n_max = 200; //T_max/dt;
+	double dt=5e-12, T_max = 1e-7;
+	int n_max = T_max/dt;
 	const int n_print = 20;
 	for (int i = 0; i < n_max; ++i) {
 		auto construct_system = [&](const Eigen::VectorXd &Y, double T) {
@@ -40,24 +40,27 @@ int main() {
 
 			//to insure that the equation is dY/dt = r*Y
 			auto M = nnet::photodesintegration_to_first_order(r, nnet::net14::n_photodesintegration);
-			
-			if (i == 0)
-				std::cout << "\n\n\n\n" << M << "\n\n" << Adot(M*Y) << "\n\n";
 
 			// add fusion rates to desintegration rates
 			M += nnet::fusion_to_first_order(f, nnet::net14::n_fusion, Y);
 
-			//std::cout << Adot(M*Y) << "\n";
+
+
+			if (i /*% (int)((float)n_max/(float)n_print)*/ == 0)
+				std::cout << "\n\n\n\n" << M << "\n\n" << Adot(M*Y) << "\n\n";
+
+			//std::cout << Adot(M*Y) << ",";
+
 
 			// no derivative
 			Eigen::Matrix<double, -1, -1> dMdT = Eigen::Matrix<double, -1, -1>::Zero(14, 14);
 
 			// add temperature to the problem
-			return std::pair<Eigen::Matrix<double, -1, -1>, Eigen::Matrix<double, -1, -1>>{nnet::include_temp(M, 1.0e8, 0., nnet::net14::BE, Y), dMdT};
+			return std::pair<Eigen::Matrix<double, -1, -1>, Eigen::Matrix<double, -1, -1>>{nnet::include_temp(M, 1., 0., nnet::net14::BE, Y), dMdT};
 		};
 
 		// solve the system
-		auto DY_T = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-16);
+		auto DY_T = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-100);
 		std::tie(Y, T) = nnet::add_and_cleanup(Y, T, DY_T);
 
 		m_tot = Adot(Y);
@@ -67,7 +70,7 @@ int main() {
 		//Y /= m_tot;
 
 		if (i % (int)((float)n_max/(float)n_print) == 0)
-			std::cout << Y.transpose() << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot_0 - m_tot << "),\t" << T << "\n\n";
+			std::cout << "\n" << Y.transpose() << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot_0 - m_tot << "),\t" << T << "\n";
 
 		if (i != T_max/dt - 1) {
 			last_Y = Y;

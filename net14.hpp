@@ -92,14 +92,13 @@ namespace nnet {
 			// Z -> Z "+ 1"
 			for (int i = 4; i < 14; ++i) {
 				coefs[i - 4] = 
-					  constants::fits::fit[i - 4][1]
-					+ constants::fits::fit[i - 4][2]*t9i
-					+ constants::fits::fit[i - 4][3]*t9i13
-					+ constants::fits::fit[i - 4][4]*t913
-					+ constants::fits::fit[i - 4][5]*t9
-					+ constants::fits::fit[i - 4][6]*t953
-					+ constants::fits::fit[i - 4][7]*lt9;
-				r(i, i - 1) = std::exp(coefs[i - 4]); 
+					  constants::fits::fit[i - 4][1]*t9i
+					+ constants::fits::fit[i - 4][2]*t9i13
+					+ constants::fits::fit[i - 4][3]*t913
+					+ constants::fits::fit[i - 4][4]*t9
+					+ constants::fits::fit[i - 4][5]*t953
+					+ constants::fits::fit[i - 4][6]*lt9;
+				r(i, i - 1) = std::exp(constants::fits::fit[i - 4][0] + coefs[i - 4]); 
 			}
 
 			Float val1=11.6045e0*t9i;
@@ -112,8 +111,8 @@ namespace nnet {
 				int k = constants::fits::get_temperature_range(T);
 				r(i - 1, i) = constants::fits::choose[i - 4][k]/constants::fits::choose[i + 1 - 4][k]*
 					std::exp(
-						  constants::fits::fit[i - 4][8]
-						+ coefs[i - 4]
+						  coefs               [i - 4]
+						+ constants::fits::fit[i - 4][7]
 						- constants::fits::q  [i - 4]*val1
 						+ val2
 					);
