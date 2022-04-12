@@ -84,7 +84,7 @@ int main() {
 		};
 
 		// solve the system
-		auto DY_T = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-20);
+		auto DY_T = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-10);
 		Y += DY_T(Eigen::seq(1, 3));
 		T += DY_T(0);
 

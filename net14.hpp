@@ -63,7 +63,6 @@ namespace nnet {
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			bellow is implemented the weigth sof the following reactions, based on a paper using fits:
-				-  O <-> Ne
 				- Ne <-> Mg
 				- Mg <-> Si
 				- Si <-> S
@@ -76,7 +75,7 @@ namespace nnet {
 				- Ni <-> Zn
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 
-			Float coefs[14 - 3] = {0.};
+			Float coefs[14 - 4] = {0.};
 
 			Float t9=temp/1.e9;
 			Float t913=t9**(1.e0/3.e0);
@@ -109,7 +108,7 @@ namespace nnet {
 			// Z <- Z "+ 1"
 			for (int i = 4; i < 14; ++i) {
 				int k = get_temperature_range(T);
-				r(i - 1, i) = constants::fits::choose[i][k]/constants::fits::choose[i + 1][k]*
+				r(i - 1, i) = constants::fits::choose[i - 4][k]/constants::fits::choose[i + 1 - 4][k]*
 					std::exp(
 						  constants::fits::fit[i - 4][8]
 						+ coefs[i - 4];
@@ -121,11 +120,19 @@ namespace nnet {
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			more accurate computation of the rates of:
+				O <-> Ne
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+
+			// TODO !!!!!
+
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			more accurate computation of the rates of:
 				C <-> O
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 
 			// TODO !!!!!
-			
+
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			more accurate computation of the rates of:
