@@ -108,7 +108,7 @@ namespace nnet {
 	}
 
 	template<class matrix, class vector, typename Float>
-	matrix include_temp(const matrix &M, const matrix &dMdT, const Float value_1, const Float value_2, const vector &BE, const vector &Y) {
+	matrix include_temp(const matrix &M, const Float value_1, const Float value_2, const vector &BE, const vector &Y) {
 		/* -------------------
 		add a row to M based on BE so that, d{T, Y}/dt = M'*{T, Y}
 
@@ -131,14 +131,11 @@ namespace nnet {
 		// insert Y -> temperature terms
 		Mp(0, Eigen::seq(1, dimension)) = -M.transpose()*BE/value_1;
 
-		// insert temperature -> Y terms
-		// Mp(Eigen::seq(1, dimension), 0) = dMdT*Y;
-
 		return Mp;
 	}
 
 	template<class matrix, class vector, typename Float>
-	vector solve_first_order(const vector &Y, const Float T, const matrix &Mp, const Float dt, const Float theta=1, const Float epsilon=1e-16) {
+	vector solve_first_order(const vector &Y, const Float T, const matrix &Mp, const matrix &dMdT, const Float dt, const Float theta=1, const Float epsilon=1e-16) {
 		/* -------------------
 		Solves d{Y, T}/dt = RQ*Y using eigen:
 
@@ -159,6 +156,9 @@ namespace nnet {
 		// construct M
 		matrix M = -theta*dt*Mp + matrix::Identity(dimension + 1, dimension + 1);
 
+		// insert temperature -> Y terms
+		M(Eigen::seq(1, dimension), 0) += dMdT*Y;
+
 		// sparcify M
 		auto sparse_M = utils::sparsify(M, epsilon);
 
@@ -171,25 +171,40 @@ namespace nnet {
 		return DY_T;
 	}
 
+	template<class vector, typename Float>
+	std::tuple<vector, Float> add_and_cleanup(const vector &Y, const Float T, const vector &DY_T, const Float epsilon=1e-10) {
+		const int dimension = Y.size();
+
+		Float next_T = T + DY_T(0);
+		vector next_Y = Y + DY_T(Eigen::seq(1, dimension));
+
+		for (int i = 0; i < dimension; ++i)
+			if (next_Y(i) < epsilon)
+				next_Y(i) = 0;
+
+		return {next_Y, next_T};
+	}
+
 	template<class problem, class vector, typename Float>
 	vector solve_system(const problem construct_system, const vector &Y, const Float T, const Float dt, const Float theta=1, const Float tol=1e-5, const Float epsilon=1e-16) {
 		const int dimension = Y.size();
 
 		// construct vector
-		vector Y_T(dimension + 1), DY_T(dimension + 1), prev_DY_T(dimension + 1);
-		Y_T << T, Y;
+		vector DY_T(dimension + 1), prev_DY_T(dimension + 1);
 
-		auto M = construct_system(Y, T);
-		prev_DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
+		{
+			auto [M, dMdT] = construct_system(Y, T);
+			prev_DY_T = solve_first_order(Y, T, M, dMdT, dt, theta, epsilon);
+		}
 
 		while (true) {
 			// construct system
-			auto next_Y = Y + theta*prev_DY_T(Eigen::seq(1, dimension));
-			auto next_T = T + theta*prev_DY_T(0);
-			M = construct_system(next_Y, next_T);
+			vector scaled_DY_T = theta*prev_DY_T;
+			auto [next_Y, next_T] = add_and_cleanup(Y, T, scaled_DY_T, epsilon);
+			auto [M, dMdT] = construct_system(next_Y, next_T);
 
 			// solve system
-			DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
+			DY_T = solve_first_order(Y, T, M, dMdT, dt, theta, epsilon);
 
 			// exit on condition
 			if (std::abs(prev_DY_T(0) - DY_T(0))/(T + theta*DY_T(0)) < tol)
