@@ -54,7 +54,7 @@ namespace nnet {
 
 		/// 
 		template<typename Float>
-		Eigen::Matrix<Float, 14, 14> get_net14_desintegration_rates(const Float T) {
+		Eigen::Matrix<Float, 14, 14> get_photodesintegration_rates(const Float T) {
 			/* -------------------
 			simply copute desintegration rates within net-14
 			------------------- */
@@ -77,10 +77,10 @@ namespace nnet {
 
 			Float coefs[14 - 4] = {0.};
 
-			Float t9=temp/1.e9;
-			Float t913=t9**(1.e0/3.e0);
+			Float t9=T/1.e9;
+			Float t913=std::pow(t9, 1./3.);
 			Float t923=t913*t913;
-			Float t953=t9**(5.e0/3.e0);
+			Float t953=std::pow(t9, 5./3.);
 			Float t9i=1.e0/t9;
 			Float t9i2=t9i*t9i;
 			Float t9i13=1.e0/t913;
@@ -90,13 +90,14 @@ namespace nnet {
 
 			// Z -> Z "+ 1"
 			for (int i = 4; i < 14; ++i) {
-				coefs[i - 4] = constants::fits::fit[i][1]
+				coefs[i - 4] = 
+					  constants::fits::fit[i - 4][1]
 					+ constants::fits::fit[i - 4][2]*t9i
 					+ constants::fits::fit[i - 4][3]*t9i13
 					+ constants::fits::fit[i - 4][4]*t913
 					+ constants::fits::fit[i - 4][5]*t9
 					+ constants::fits::fit[i - 4][6]*t953
-					+ constants::fits::fit[i - 4][7]*lt;
+					+ constants::fits::fit[i - 4][7]*lt9;
 				r(i, i - 1) = std::exp(coefs[i - 4]); 
 			}
 
@@ -107,15 +108,73 @@ namespace nnet {
 
 			// Z <- Z "+ 1"
 			for (int i = 4; i < 14; ++i) {
-				int k = get_temperature_range(T);
+				int k = constants::fits::get_temperature_range(T);
 				r(i - 1, i) = constants::fits::choose[i - 4][k]/constants::fits::choose[i + 1 - 4][k]*
 					std::exp(
 						  constants::fits::fit[i - 4][8]
-						+ coefs[i - 4];
+						+ coefs[i - 4]
 						- constants::fits::q  [i - 4]*val1
 						+ val2
 					);
 			}
+
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			more accurate computation of the rates of:
+				C -> He
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+
+      		Float t9r=T*1.0e-09;
+      		t9=std::min((Float)10., t9r);
+      		Float t92=t9*t9;
+      		Float t93=t92*t9;
+      		Float t95=t92*t93;
+      		Float t912=std::sqrt(t9);
+      		t913=std::pow(t9, 1./3.);
+      		t923=t913*t913;
+      		Float t932=t9*t912;
+      		Float t943=t9*t913;
+      		t953=t9*t923;
+
+      		t9i=1./t9;
+      		t9i13=1./t913;
+      	 	t9i23=1./t923;
+      		Float t9i32=1./t932;
+      		Float t9rm1=1./t9r;
+      		Float t9r32=t9*std::sqrt(t9r);
+
+			Float r2abe = (7.40e+05*t9i32)*std::exp(-1.0663*t9i)
+				+ 4.164e+09*t9i23*std::exp(-13.49*t9i13-t92/0.009604)*(1. + 0.031*t913 + 8.009*t923 + 1.732*t9 + 49.883*t943 + 27.426*t953);
+      		Float rbeac = (130.*t9i32)*std::exp(-3.3364*t9i)
+      			+ 2.510e+07*t9i23*std::exp(-23.57*t9i13 - t92/0.055225)*(1. + 0.018*t913 + 5.249*t923 + 0.650*t9 + 19.176*t943 + 6.034*t953);
+			Float r3a, rev = 2.e20*std::exp(-84.419412e0*t9i);
+			if(T > 8e7) {
+	      		r3a=2.90e-16*(r2abe*rbeac)
+	      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
+		    } else
+	      		r3a=2.90e-16*(r2abe*rbeac)*(0.01 + 0.2*(1. + 4.*std::exp(-std::pow(0.025*t9i, 3.263)))/(1. + 4.*std::exp(-std::pow(t9/0.025, 9.227))))
+	      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
+
+			r(0, 1) = rev*(t93)*r3a;
+
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			more accurate computation of the rates of:
+				C <-> O
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+
+			// C -> O
+			Float rcag = 1.04e+08/(t92*std::pow(1. + 0.0489*t9i23, 2.))*std::exp(-32.120*t9i13-t92/12.222016)
+            	+ 1.76e+08/(
+            		t92*std::pow(1. + 0.2654*t9i23, 2.)*std::exp(-32.120*t9i13)
+           			+ 1.25e+03*t9i32*std::exp(-27.499*t9i)
+           			+ 1.43e-02*t95*std::exp(-15.541*t9i)
+           		);
+			r(2, 1) = rcag;
+
+			// O -> C
+			Float roga = rcag*5.13e+10*t9r32*std::exp(-83.108047*t9rm1);
+			r(1, 2) = roga;
 
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -126,27 +185,11 @@ namespace nnet {
 			// TODO !!!!!
 
 
-			/* !!!!!!!!!!!!!!!!!!!!!!!!
-			more accurate computation of the rates of:
-				C <-> O
-			!!!!!!!!!!!!!!!!!!!!!!!! */
-
-			// TODO !!!!!
-
-
-			/* !!!!!!!!!!!!!!!!!!!!!!!!
-			more accurate computation of the rates of:
-				C -> He
-			!!!!!!!!!!!!!!!!!!!!!!!! */
-
-			// TODO !!!!!
-
-
 			return r;
 		}
 
 		template<typename Float>
-		Eigen::Tensor<Float, 3> get_net14_fusion_rates(const Float T) {
+		Eigen::Tensor<Float, 3> get_fusion_rates(const Float T) {
 			/* -------------------
 			simply copute fusion rates within net-14
 			------------------- */

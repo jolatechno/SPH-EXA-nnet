@@ -2,6 +2,12 @@
 #include "nuclear-net.hpp"
 
 int main() {
+	std::cout << nnet::net14::BE.transpose() << "\n\n";
+	std::cout << nnet::net14::n_photodesintegrations << "\n\n";
+	//std::cout << nnet::net14::n_fusions << "\n\n";
+	std::cout << nnet::net14::get_photodesintegration_rates((double)2e9) << "\n\n";
+
+
 	// photodesintegration rates
 	Eigen::MatrixXd r(3, 3);
 	Eigen::MatrixXd dr(3, 3);
