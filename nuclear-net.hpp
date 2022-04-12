@@ -1,15 +1,17 @@
+#pragma once
+
 #include <vector>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <unsupported/Eigen/CXX11/Tensor>
+
+#include "net14-constants.hpp"
 
 /*
 photodesintegration_to_first_order  R_i,j, n_i,j
 
 fusion_to_first_order               F_i,j,k, n_i,j,k, Y_i
 	'-> M : dY/dt = M*Y
-
-coulomb_correction : Y -> dU/dY
 
 include_temp : dM/dT, theta, value_1, value_2, BE'_i: sum_i(BE'_i*dY_i/dt) + value_1*T = value_2*dT/dt
 	'-> M' : d{T, Y}/dt = M'*{T, Y}
@@ -65,7 +67,7 @@ namespace nnet {
 		------------------- */
 
 		int dimension = r.cols();
-		FloatMatrix M = Eigen::MatrixXd::Zero(dimension, dimension);
+		FloatMatrix M = FloatMatrix::Zero(dimension, dimension);
 
 		for (int i = 0; i < dimension; ++i)
 			for (int j = 0; j < dimension; ++j)
@@ -84,7 +86,7 @@ namespace nnet {
 		------------------- */
 
 		const int dimension = Y.size();
-		Eigen::Matrix<Float, -1, -1> M = Eigen::MatrixXd::Zero(dimension, dimension);
+		Eigen::Matrix<Float, -1, -1> M = Eigen::Matrix<Float, -1, -1>::Zero(dimension, dimension);
 
 		// add fusion rates
 		for (int i = 0; i < dimension; ++i)
@@ -181,9 +183,15 @@ namespace nnet {
 		prev_DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
 
 		while (true) {
-			auto M = construct_system(Y + theta*prev_DY_T(Eigen::seq(1, dimension)), T + theta*prev_DY_T(0));
+			// construct system
+			auto next_Y = Y + theta*prev_DY_T(Eigen::seq(1, dimension));
+			auto next_T = T + theta*prev_DY_T(0);
+			M = construct_system(next_Y, next_T);
+
+			// solve system
 			DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
 
+			// exit on condition
 			if (std::abs(prev_DY_T(0) - DY_T(0))/(T + theta*DY_T(0)) < tol)
 				return DY_T;
 
@@ -193,78 +201,115 @@ namespace nnet {
 
 
 	namespace net14 {
-		template<class matrix, typename Float>
-		void get_net14_desintegration_rates(matrix &r, const Float T) {
+		/// constant mass-excendent values
+		const Eigen::VectorXd BE = [](){
+				Eigen::VectorXd BE_(14);
+				BE_ << 0.0, 7.27440, 14.43580, 19.16680, 28.48280, 38.46680, 45.41480, 52.05380, 59.09380, 64.22080, 71.91280, 79.85180, 87.84680, 90.55480;
+				return BE_;
+			}();
+
+		/// constant number of particle created by photodesintegrations
+		const Eigen::Matrix<int, 14, 14> n_photodesintegrations = [](){
+				Eigen::Matrix<int, 14, 14> n = Eigen::Matrix<int, 14, 14>::Zero();
+
+				// C -> 3He
+				n(0, 1) = 3;
+
+				// Z <-> Z "+ 1"
+				for (int i = 1; i < 13; ++i) {
+					n(i, i + 1) = 1;
+					n(i + 1, i) = 1;
+				}
+
+				return n;
+			}();
+
+		/// constant number of particle created by fusions
+		const Eigen::Tensor<int, 3> n_fusions = [](){
+				Eigen::Tensor<int, 3> n(14, 14, 14);
+				n.setZero();
+
+				// C + C -> Ne + He
+				n(3, 1, 1) = 2;
+				n(0, 1, 1) = 2;
+
+				// C + O -> Mg + He
+				n(4, 1, 2) = 2;
+				n(0, 1, 2) = 2;
+
+				// O + O -> Si + He
+				n(5, 2, 2) = 2;
+				n(0, 2, 2) = 2;
+
+				// 3He -> C ????
+				
+				return n;
+			}();
+
+
+		/// function computing the coulombian correction
+		template<typename Float>
+		Eigen::Vector<Float, 14> ideal_gaz_correction(const Float T) {
+			/* -------------------
+			simply copute the coulombian correction of BE within net-14
+			------------------- */
+			Eigen::Vector<Float, 14> BE_corr(14);
+			BE_corr = 3./2. * constants::Kb * constants::Na * T;
+
+			return BE_corr;
+		}
+
+		/// function computing the coulombian correction
+		template<class vector, typename Float>
+		vector coulomb_correction(const vector &Y, const Float T, const Float rho) {
+			/* -------------------
+			simply copute the coulombian correction of BE within net-14
+			------------------- */
+			vector BE_corr(14);
+
+			BE_corr(0) = 0;
+			for (int i = 1; i < 14; ++i) {
+				BE_corr(i) = 2.27e5 * std::pow((Float)constants::Z(i), 5./3.) * std::pow(rho * Y(i), 1./3.) / T;
+			}
+
+			return BE_corr;
+		}
+
+		/// 
+		template<typename Float>
+		Eigen::Matrix<Float, 14, 14> get_net14_desintegration_rates(const Float T) {
 			/* -------------------
 			simply copute desintegration rates within net-14
 			------------------- */
 
-			// TODO
+			Eigen::Matrix<Float, 14, 14> r = Eigen::Matrix<Float, 14, 14>::Zero();
+
+			// Z -> Z "+ 1"
+			for (int i = 3; i < 13; ++i)
+				r(i + 1, i) = std::exp(0); 
+
+			// Z <- Z "+ 1"
+			for (int i = 4; i < 14; ++i) {
+				int k = get_temperature_range(T);
+				r(i - 1, i) = constants::fits::choose[i][k]/constants::fits::choose[i + 1][k]*std::exp(
+					0); 
+			}
+
+			return r;
 		}
 
-		template<class matrix, typename Float>
-		void get_net14_desintegration_rates_derivatives(matrix &dr, const Float T) {
-			/* -------------------
-			simply copute desintegration rates derivatives within net-14
-			------------------- */
-
-			// TODO
-		}
-
-		template<class tensor, typename Float>
-		void get_net14_fusion_rates(tensor &f, const Float T) {
-			/* -------------------
-			simply copute fusion rates within net-14
-			------------------- */
-
-			// TODO
-		}
-
-		template<class tensor, typename Float>
-		void get_net14_fusion_rates_derivatives(tensor &df, const Float T) {
-			/* -------------------
-			simply copute fusion rates derivatives within net-14
-			------------------- */
-
-			// TODO
-		}
-	}
-
-	namespace net87 {
-		template<class matrix, typename Float>
-		void get_net87_desintegration_rates(matrix &r, const Float T) {
-			/* -------------------
-			simply copute desintegration rates within net-14
-			------------------- */
-
-			// TODO
-		}
-
-		template<class matrix, typename Float>
-		void get_net87_desintegration_rates_derivatives(matrix &dr, const Float T) {
-			/* -------------------
-			simply copute desintegration rates derivatives within net-14
-			------------------- */
-
-			// TODO
-		}
-
-		template<class tensor, typename Float>
-		void get_net87_fusion_rates(tensor &f, const Float T) {
+		template<typename Float>
+		Eigen::Tensor<Float, 3> get_net14_fusion_rates(const Float T) {
 			/* -------------------
 			simply copute fusion rates within net-14
 			------------------- */
 
-			// TODO
-		}
-
-		template<class tensor, typename Float>
-		void get_net87_fusion_rates_derivatives(tensor &df, const Float T) {
-			/* -------------------
-			simply copute fusion rates derivatives within net-14
-			------------------- */
+			Eigen::Tensor<Float, 3> f(14, 14, 14);
+			f.setZero();
 
 			// TODO
+
+			return f;
 		}
 	}
 }
