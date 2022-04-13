@@ -11,7 +11,7 @@ namespace nnet {
 		const Eigen::VectorXd BE = [](){
 				Eigen::VectorXd BE_(14);
 				BE_ << 0.0, 7.27440, 14.43580, 19.16680, 28.48280, 38.46680, 45.41480, 52.05380, 59.09380, 64.22080, 71.91280, 79.85180, 87.84680, 90.55480;
-				return BE_; //*constants::UNKNOWN;
+				return BE_*constants::UNKNOWN;
 			}();
 
 		/// constant number of particle created by photodesintegrations
@@ -57,7 +57,7 @@ namespace nnet {
 				return n;
 			}();
 
-		/// 
+		/// function computing the photodesintegration rates withing net 14
 		template<typename Float>
 		Eigen::Matrix<Float, -1, -1> get_photodesintegration_rates(const Float T) {
 			/* -------------------
@@ -188,6 +188,7 @@ namespace nnet {
 			return r;
 		}
 
+		/// function computing the fusions rates withing net 14
 		template<typename Float>
 		Eigen::Tensor<Float, 3> get_fusion_rates(const Float T) {
 			/* -------------------
@@ -339,7 +340,7 @@ namespace nnet {
 			return f;
 		}
 
-		/// function computing the coulombian correction
+		/// function computing the ideal gaz correction
 		template<typename Float>
 		Eigen::Vector<Float, -1> ideal_gaz_correction(const Float T) {
 			/* -------------------

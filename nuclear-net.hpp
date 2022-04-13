@@ -131,7 +131,7 @@ namespace nnet {
 	}
 
 	template<class matrix, class vector, typename Float>
-	vector solve_first_order(const vector &Y, const Float T, const matrix &Mp, /*const matrix &dMdT,*/ const Float dt, const Float theta=1, const Float epsilon=1e-16) {
+	vector solve_first_order(const vector &Y, const Float T, const matrix &Mp, const Float dt, const Float theta=1, const Float epsilon=1e-16) {
 		/* -------------------
 		Solves d{Y, T}/dt = RQ*Y using eigen:
 
@@ -151,18 +151,6 @@ namespace nnet {
 
 		// construct M
 		matrix M = -theta*dt*Mp + matrix::Identity(dimension + 1, dimension + 1);
-
-
-		/* !!!!!!!!!!!!
-		doesn't make sense
-		and doesn't seems to be included in the fortran version of net14
-
-		dY/dt = (M + DT*dMdT)*Y
-	<=> dY/dt = (M + dt*dMdT*dT/dt)*Y
-	<=> dY/dt = (M + dt*dMdT*dT/dt)*Y
-		!!!!!!!!!!!! */
-		// insert temperature -> Y terms
-		//M(Eigen::seq(1, dimension), 0) += -theta*dt*dMdT*Y;
 
 		// sparcify M
 		auto sparse_M = utils::sparsify(M, epsilon);
@@ -198,8 +186,8 @@ namespace nnet {
 		vector DY_T(dimension + 1), prev_DY_T(dimension + 1);
 
 		{
-			auto /*[M, dMdT]*/ M = construct_system(Y, T);
-			prev_DY_T = solve_first_order(Y, T, M, /*dMdT,*/ dt, theta, epsilon);
+			auto M = construct_system(Y, T);
+			prev_DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
 		}
 
 		int max_iter = std::max(0., -std::log2(tol));
@@ -207,10 +195,10 @@ namespace nnet {
 			// construct system
 			vector scaled_DY_T = theta*prev_DY_T;
 			auto [next_Y, next_T] = add_and_cleanup(Y, T, scaled_DY_T, epsilon);
-			auto /*[M, dMdT]*/ M = construct_system(Y, T);
+			auto M = construct_system(Y, T);
 
 			// solve system
-			DY_T = solve_first_order(Y, T, M, /*dMdT,*/ dt, theta, epsilon);
+			DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
 
 			// exit on condition
 			if (std::abs(prev_DY_T(0) - DY_T(0))/(T + theta*DY_T(0)) < tol || i == max_iter)
