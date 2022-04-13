@@ -3,31 +3,7 @@
 
 int main() {
 	double value_1 = 0;
-	double cv = 2;
-
-	// photodesintegration rates
-	Eigen::MatrixXd r(3, 3);
-	Eigen::MatrixXd dr(3, 3);
-	Eigen::MatrixXd n(3, 3);
-	n(1, 0) = 1; n(0, 1) = 1;
-	dr(1, 0) = 0.1; dr(0, 1) = -0.1;
-
-	n(0, 2) = 2; n(1, 2) = 2;
-	dr(0, 2) = -0.1; dr(1, 2) = -0.2;
-
-	// fusion rates
-	Eigen::Tensor<double, 3> f(3, 3, 3);
-	Eigen::Tensor<double, 3> df(3, 3, 3);
-	Eigen::Tensor<float, 3> nf(3, 3, 3);
-	nf(2, 0, 0) = 1;
-	nf(2, 0, 1) = 1;
-	df(2, 0, 0) = 0.2;
-	df(2, 0, 1) = 0.1;
-
-	nf(0, 1, 2) = 3;
-	nf(0, 2, 2) = 4;
-	df(0, 1, 2) = 1;
-	df(0, 2, 2) = 2;
+	double cv = 1;
 
 	// mass excedents
 	Eigen::VectorXd BE(3);
@@ -58,34 +34,46 @@ int main() {
 	double E_tot, E_tot_0 = Y.dot(m + BE) + cv*T;
 	double m_tot, m_tot_0 = Y.dot(m);
 
-	double dt=5e-3, T_max = 4;
+	double dt=5e-3, T_max = 0;
 	const int n_print = 20;
-	for (int i = 0; i < T_max/dt; ++i) {
+	for (int i = 0; i <= T_max/dt; ++i) {
 		auto construct_system = [&](const Eigen::VectorXd &Y, double T) {
-			f(2, 0, 0) = 0.7 + df(2, 0, 0)*(T - 1);
-			f(2, 0, 1) = 0.2 + df(2, 0, 1)*(T - 1);
+			std::vector<std::pair<nnet::reaction, double>> reactions_and_rates = {
+				// two simple photodesintegration (i -> j)
+				//{nnet::reaction({(0)}, {(1)}), 0.4 + T},
+				//{nnet::reaction({(1)}, {(0)}), 0.3 + 0.7*T},
 
-			f(0, 1, 2) = 0.2 + df(0, 1, 2)*(T - 1);
-			f(0, 2, 2) = 0.5 + df(0, 2, 2)*(T - 1);
+				// different species fusion (i + j -> k)
+				//{nnet::reaction({(1), (0)}, {(2)}), 0.5 + T},
 
-			r(0, 1) = 0.8 + dr(0, 1)*(T - 1);
-			r(1, 0) = 0.7 + dr(1, 0)*(T - 1);
+				// two different species "fission" (photodesintegration, i > j + k)
+				//{nnet::reaction({(2)}, {(1), (0)}), 0.3 + 1.1*T},
 
-			r(0, 2) = 0.4 + dr(0, 2)*(T - 1);
-			r(1, 2) = 0.2 + dr(1, 2)*(T - 1);
+				// same species fusion (i + i -> j)
+				//{nnet::reaction({(1, 2)}, {(2)}), 0.5 + T},
 
-			//to insure that the equation is dY/dt = r*Y
-			Eigen::MatrixXd M = nnet::photodesintegration_to_first_order(r, n);
+				// same species "fission" (photodesintegration, i -> j + j)
+				{nnet::reaction({(2)}, {(0, 2)}), 0.5 + T},
+			};
 
-			// add fusion rates to desintegration rates
-			M += nnet::fusion_to_first_order(f, nf, Y);
+			// generate matrix
+			Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reactions_and_rates, Y);
 
 			// add temperature to the problem
-			return nnet::include_temp(M, value_1, cv, BE, Y);
+			Eigen::MatrixXd Mp = nnet::include_temp(M, value_1, cv, BE, Y);
+
+
+
+			if (i == 0)
+				std::cout << "\n\n" << Mp << "\n\n";
+
+
+
+			return Mp;
 		};
 
 		// solve the system
-		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-5);
+		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-12);
 
 		E_tot = Y.dot(m + BE) + cv*T;
 		m_tot = Y.dot(m);

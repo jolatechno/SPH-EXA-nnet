@@ -48,12 +48,14 @@ solve_system : compose_system(Y, T), Y, T:
 
 
 namespace nnet {
-	class reaction {
-		class reactant {
-			int reactant_ID, n_reactant_consumed;
+	struct reaction {
+		struct reactant {
+			reactant(int reactant_id_, int n_reactant_consumed_=1) : reactant_id(reactant_id_), n_reactant_consumed(n_reactant_consumed_) {};
+			int reactant_id, n_reactant_consumed = 1;
 		};
-		class product {
-			int product_ID, n_product_produced;
+		struct product {
+			product(int product_id_, int n_product_produced_=1) : product_id(product_id_), n_product_produced(n_product_produced_) {};
+			int product_id, n_product_produced = 1;
 		};
 		std::vector<reactant> reactants;
 		std::vector<product> products;
@@ -92,8 +94,8 @@ namespace nnet {
 		}
 	}
 
-	template<typename Float, class vector>
-	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<std::pair<reaction, Float>> &reactions, vector const &Y) {
+	template<typename Float>
+	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<std::pair<reaction, Float>> &reactions, Eigen::Vector<Float, -1> const &Y) {
 		/* -------------------
 		reactes a sparce matrix M such that dY/dt = M*Y*
 		from a list of reactions
@@ -103,39 +105,42 @@ namespace nnet {
 		Eigen::Matrix<Float, -1, -1> M = Eigen::Matrix<Float, -1, -1>::Zero(dimension, dimension);
 
 		for (auto &[reaction, rate] : reactions) {
-			// compute the rate divided by the product of the factorial of ractants
+			// actual reaction speed (including factorials)
 			Float corrected_rate = rate;
-			for (auto &[_, n_reactant_consumed] : reaction.reactants)
-				corrected_rate /= (Float)std::tgamma(n_reactant_consumed + 1); // tgamma performas factorial with n - 1 -> hence we use n + 1
-
-			// actual reaction speed
-			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants)
-				corrected_rate *= std::pow(Y(reactant_id), n_reactant_consumed);
-
-			// compute diagonal terms (consuption)
 			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) {
-				Float consuption_rate = n_reactant_consumed*corrected_rate/Y(reactant_id);
-				M(reactant_id, reactant_id) -= consuption_rate;
+				corrected_rate *= std::pow(Y(reactant_id), n_reactant_consumed)/std::tgamma(n_reactant_consumed + 1); // tgamma performas factorial with n - 1 -> hence we use n + 1
+
+				std::cout << corrected_rate << ", " << std::tgamma(n_reactant_consumed + 1) << ", " << reactant_id << ", " << n_reactant_consumed << "\n";
+			}
+
+			// compute diagonal terms (consumption)
+			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) {
+				Float consumption_rate = n_reactant_consumed*corrected_rate/Y(reactant_id);
+
+				std::cout << "consumption term: " << consumption_rate << ", " << reactant_id << ", " << n_reactant_consumed << "\n";
+
+				M(2, 2) -= consumption_rate;
 			}
 
 			// compute non-diagonal terms (production)
-			for (auto &[product_ID, n_product_produced] : reaction.products) {
-				Float production_rate = n_product_produced*corrected_rate;
-
+			for (auto &[product_id, n_product_produced] : reaction.products) {
 				// find the closest diagonal term possible from the list of reactants
-				auto [best_reactant_id, best_n_product_produced] = reaction.reactants[0];
+				int best_reactant_id = reaction.reactants[0].reactant_id;
 				for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants | std::ranges::views::drop(1))
 					// if closer to the diagonal switch
-					if (std::abs(reactant_id - product_ID) < std::abs(best_reactant_id - product_ID)) {
+					if (std::abs(reactant_id - product_id) < std::abs(best_reactant_id - product_id))
 						best_reactant_id = reactant_id;
-						best_n_product_produced = n_reactant_consumed;
-					}
 
 				// insert into the matrix
-				production_rate /= Y(best_reactant_id);
-				M(product_ID, best_reactant_id) = production_rate;
+				Float production_rate = n_product_produced*corrected_rate/Y(best_reactant_id);
+
+				std::cout << "production term: " << production_rate << ", " << product_id << ", " << best_reactant_id << "\n";
+
+				M(1, 2) += production_rate;
 			}
 		}
+
+		std::cout << "\n" << M << "\n\n";
 
 		return M;
 	}
@@ -146,8 +151,8 @@ namespace nnet {
 		add a row to M based on BE so that, d{T, Y}/dt = M'*{T, Y}
 
 		value_1, cv : BE.dY/dt + value_1*T = cv*dT/dt
-					   <=> (M * Y).BE / cv + value_1/ cv * T = dT/dt
-					   <=> (M.t * BE).Y / cv + value_1 / cv * T = dT/dt
+					   <=> (M * Y).BE/cv + value_1/cv*T = dT/dt
+					   <=> (M.t * BE).Y/cv + value_1/cv*T = dT/dt
 		------------------- */
 
 		const int dimension = Y.size();
@@ -155,10 +160,10 @@ namespace nnet {
 
 		// insert M
 		Mp(Eigen::seq(1, dimension), Eigen::seq(1, dimension)) = M;
-		Mp(0, 0) = value_1/cv;
+		Mp(0, 0) = -value_1/cv;
 
 		// insert Y -> temperature terms
-		Mp(0, Eigen::seq(1, dimension)) = M.transpose()*BE/cv;
+		Mp(0, Eigen::seq(1, dimension)) = -M.transpose()*BE/cv;
 
 		return Mp;
 	}
