@@ -119,7 +119,7 @@ namespace nnet {
 
 				std::cout << "consumption term: " << consumption_rate << ", " << reactant_id << ", " << n_reactant_consumed << "\n";
 
-				M(2, 2) -= consumption_rate;
+				M(reactant_id, reactant_id) -= consumption_rate;
 			}
 
 			// compute non-diagonal terms (production)
@@ -136,7 +136,7 @@ namespace nnet {
 
 				std::cout << "production term: " << production_rate << ", " << product_id << ", " << best_reactant_id << "\n";
 
-				M(1, 2) += production_rate;
+				M(product_id, best_reactant_id) += production_rate;
 			}
 		}
 

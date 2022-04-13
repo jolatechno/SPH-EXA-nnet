@@ -35,8 +35,9 @@ int main() {
 	double m_tot, m_tot_0 = Y.dot(m);
 
 	double dt=5e-3, T_max = 0;
+	int n_max = 1; //T_max/dt;
 	const int n_print = 20;
-	for (int i = 0; i <= T_max/dt; ++i) {
+	for (int i = 0; i < n_max; ++i) {
 		auto construct_system = [&](const Eigen::VectorXd &Y, double T) {
 			std::vector<std::pair<nnet::reaction, double>> reactions_and_rates = {
 				// two simple photodesintegration (i -> j)
@@ -72,16 +73,18 @@ int main() {
 			return Mp;
 		};
 
-		// solve the system
-		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-12);
+		construct_system(Y, T);
 
-		E_tot = Y.dot(m + BE) + cv*T;
-		m_tot = Y.dot(m);
+		// solve the system
+		//std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-12);
+
+		/*E_tot = Y.dot(m + BE) + cv*T;
+		m_tot = Y.dot(m);*/
 
 		if (i % (int)((float)T_max / (dt*(float)n_print)) == 0)
 			std::cout << Y.transpose() << ",\t(E_tot=" << E_tot << ",\tDelta_E_tot=" << E_tot_0 - E_tot << "),\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot_0 - m_tot << "),\t" << T << "\n";
 
-		if (i != T_max/dt - 1) {
+		if (i != n_max - 1) {
 			last_Y = Y;
 			last_T = T;
 		}
