@@ -122,14 +122,14 @@ namespace nnet {
 		------------------- */
 
 		const int dimension = Y.size();
-		matrix Mp(dimension + 1, dimension + 1);
+		matrix Mp = matrix::Zero(dimension + 1, dimension + 1);
 
 		// insert M
 		Mp(Eigen::seq(1, dimension), Eigen::seq(1, dimension)) = M;
 		Mp(0, 0) = value_2/value_1;
 
 		// insert Y -> temperature terms
-		Mp(0, Eigen::seq(1, dimension)) = -M.transpose()*BE/value_1;
+		Mp(0, Eigen::seq(1, dimension)) = M.transpose()*BE/value_1*constants::UNKNOWN;
 
 		return Mp;
 	}
@@ -139,9 +139,9 @@ namespace nnet {
 		/* -------------------
 		Solves d{Y, T}/dt = RQ*Y using eigen:
 
-		D{T, Y} = Dt* M'*(T_in*(1 - theta) + T_out*theta)
- 	<=> D{T, Y} = Dt* M'*({T_in, Y_in} + theta*{DT, DY})
- 	<=> (I - Dt*M'()*theta)*D{T, Y} = DT*M'*{T_in, Y_in}
+		D{T, Y} = Dt* M'*{T_in + theta*DT, Y_in + theta*DY}
+ 	<=> D{T, Y} = Dt* M'*({T_in, Y_in} + theta*D{T, Y})
+ 	<=> (I - Dt*M'*theta)*D{T, Y} = Dt*M'*{T_in, Y_in}
 		------------------- */
 
 		const int dimension = Y.size();
@@ -156,6 +156,11 @@ namespace nnet {
 		// construct M
 		matrix M = -theta*dt*Mp + matrix::Identity(dimension + 1, dimension + 1);
 
+
+		/* !!!!!!!!!!!!
+		doesn't make sense
+		and doesn't seems to be included in the fortran version of net14
+		!!!!!!!!!!!! */
 		// insert temperature -> Y terms
 		//M(Eigen::seq(1, dimension), 0) += -theta*dt*dMdT*Y;
 
@@ -197,7 +202,8 @@ namespace nnet {
 			prev_DY_T = solve_first_order(Y, T, M, dMdT, dt, theta, epsilon);
 		}
 
-		while (true) {
+		int max_iter = std::max(0., -std::log2(tol));
+		for (int i = 0;; ++i) {
 			// construct system
 			vector scaled_DY_T = theta*prev_DY_T;
 			auto [next_Y, next_T] = add_and_cleanup(Y, T, scaled_DY_T, epsilon);
@@ -207,7 +213,7 @@ namespace nnet {
 			DY_T = solve_first_order(Y, T, M, dMdT, dt, theta, epsilon);
 
 			// exit on condition
-			if (std::abs(prev_DY_T(0) - DY_T(0))/(T + theta*DY_T(0)) < tol)
+			if (std::abs(prev_DY_T(0) - DY_T(0))/(T + theta*DY_T(0)) < tol || i == max_iter)
 				return DY_T;
 
 			prev_DY_T = DY_T;

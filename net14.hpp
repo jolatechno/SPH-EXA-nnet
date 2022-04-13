@@ -347,7 +347,7 @@ namespace nnet {
 			------------------- */
 
 			Eigen::Vector<Float, -1> BE_corr(14);
-			BE_corr = 3./2. * constants::Kb * constants::Na * T;
+			BE_corr = 3./2. * nnet::constants::Kb * nnet::constants::Na * T;
 
 			return BE_corr;
 		}
