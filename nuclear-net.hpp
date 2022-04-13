@@ -49,21 +49,39 @@ namespace nnet {
 		std::vector<std::pair<int, int>> products;
 	};
 
+	namespace utils {
+		template<typename Float, int n>
+		Eigen::SparseMatrix<Float> sparsify(const Eigen::Matrix<Float, n, n> &Min, const Float epsilon=1e-16) {
+			/* -------------------
+			put a "sparsified" version of Min into Mout according to epsilon 
+			------------------- */
+			std::vector<Eigen::Triplet<Float>> coefs;
+
+			for (int i = 0; i < Min.cols(); ++i)
+				for (int j = 0; j < Min.rows(); ++j)
+					if (std::abs(Min(i, j)) > epsilon)
+						coefs.push_back(Eigen::Triplet<Float>(i, j, Min(i, j)));
+
+			Eigen::SparseMatrix<Float> Mout(Min.cols(), Min.rows());
+			Mout.setFromTriplets(coefs.begin(), coefs.end());
+			return Mout;
+		}
+	}
+
 	template<typename Float, class vector>
-	Eigen::SparseMatrix<Float> first_order_from_reactions(const std::vector<std::pair<reaction, Float>> &reactions, vector const &Y) {
+	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<std::pair<reaction, Float>> &reactions, vector const &Y) {
 		/* -------------------
 		reactes a sparce matrix M such that dY/dt = M*Y*
 		from a list of reactions
 		------------------- */
 		const int dimension = Y.size();
-		std::vector<Eigen::Triplet<Float>> coefs;
+
+		Eigen::Matrix<Float, -1, -1> M = Eigen::Matrix<Float, -1, -1>::Zero(dimension, dimension);
 
 		/* -----------------------------------------
 		TODO
 		----------------------------------------- */
 
-		Eigen::SparseMatrix<Float> M(dimension, dimension);
-		M.setFromTriplets(coefs.begin(), coefs.end());
 		return M;
 	}
 
@@ -81,9 +99,6 @@ namespace nnet {
 		return {next_Y, next_T};
 	}
 
-	/* -----------------------------------------
-	should be modified
-	----------------------------------------- */
 	template<class matrix, class vector, typename Float>
 	matrix include_temp(const matrix &M, const Float value_1, const Float cv, const vector &BE, const vector &Y) {
 		/* -------------------
@@ -107,9 +122,6 @@ namespace nnet {
 		return Mp;
 	}
 
-	/* -----------------------------------------
-	should be modified
-	----------------------------------------- */
 	template<class matrix, class vector, typename Float>
 	vector solve_first_order(const vector &Y, const Float T, const matrix &Mp, const Float dt, const Float theta=1, const Float epsilon=1e-16) {
 		/* -------------------
@@ -119,22 +131,6 @@ namespace nnet {
  	<=> D{T, Y} = Dt* M'*({T_in, Y_in} + theta*D{T, Y})
  	<=> (I - Dt*M'*theta)*D{T, Y} = Dt*M'*{T_in, Y_in}
 		------------------- */
-
-		auto static sparsify = [](const matrix &Min, const Float epsilon=1e-16) {
-			/* -------------------
-			put a "sparsified" version of Min into Mout according to epsilon 
-			------------------- */
-			std::vector<Eigen::Triplet<Float>> coefs;
-
-			for (int i = 0; i < Min.cols(); ++i)
-				for (int j = 0; j < Min.rows(); ++j)
-					if (std::abs(Min(i, j)) > epsilon)
-						coefs.push_back(Eigen::Triplet<Float>(i, j, Min(i, j)));
-
-			Eigen::SparseMatrix<Float> Mout(Min.cols(), Min.rows());
-			Mout.setFromTriplets(coefs.begin(), coefs.end());
-			return Mout;
-		};
 
 		const int dimension = Y.size();
 
@@ -149,7 +145,7 @@ namespace nnet {
 		matrix M = -theta*dt*Mp + matrix::Identity(dimension + 1, dimension + 1);
 
 		// sparcify M
-		auto sparse_M = sparsify(M, epsilon);
+		auto sparse_M = utils::sparsify(M, epsilon);
 
 		// now solve {Dy, DT}*M = RHS
 		Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>  BCGST;
@@ -189,6 +185,35 @@ namespace nnet {
 			prev_DY_T = DY_T;
 		}
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 	/* -----------------------------------------
