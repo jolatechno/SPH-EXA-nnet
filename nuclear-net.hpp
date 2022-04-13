@@ -1,5 +1,9 @@
 #pragma once
 
+
+#include <cmath> // factorial
+#include <ranges> // drop
+
 #include <vector>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -45,8 +49,14 @@ solve_system : compose_system(Y, T), Y, T:
 
 namespace nnet {
 	class reaction {
-		std::vector<std::pair<int, int>> reactants;
-		std::vector<std::pair<int, int>> products;
+		class reactant {
+			int reactant_ID, n_reactant_consumed;
+		};
+		class product {
+			int product_ID, n_product_produced;
+		};
+		std::vector<reactant> reactants;
+		std::vector<product> products;
 	};
 
 	namespace utils {
@@ -66,6 +76,20 @@ namespace nnet {
 			Mout.setFromTriplets(coefs.begin(), coefs.end());
 			return Mout;
 		}
+
+		template<class vector, typename Float>
+		std::tuple<vector, Float> add_and_cleanup(const vector &Y, const Float T, const vector &DY_T, const Float epsilon=1e-10) {
+			const int dimension = Y.size();
+
+			Float next_T = T + DY_T(0);
+			vector next_Y = Y + DY_T(Eigen::seq(1, dimension));
+
+			for (int i = 0; i < dimension; ++i)
+				if (next_Y(i) < epsilon)
+					next_Y(i) = 0;
+
+			return {next_Y, next_T};
+		}
 	}
 
 	template<typename Float, class vector>
@@ -78,25 +102,42 @@ namespace nnet {
 
 		Eigen::Matrix<Float, -1, -1> M = Eigen::Matrix<Float, -1, -1>::Zero(dimension, dimension);
 
-		/* -----------------------------------------
-		TODO
-		----------------------------------------- */
+		for (auto &[reaction, rate] : reactions) {
+			// compute the rate divided by the product of the factorial of ractants
+			Float corrected_rate = rate;
+			for (auto &[_, n_reactant_consumed] : reaction.reactants)
+				corrected_rate /= (Float)std::tgamma(n_reactant_consumed + 1); // tgamma performas factorial with n - 1 -> hence we use n + 1
+
+			// actual reaction speed
+			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants)
+				corrected_rate *= std::pow(Y(reactant_id), n_reactant_consumed);
+
+			// compute diagonal terms (consuption)
+			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) {
+				Float consuption_rate = n_reactant_consumed*corrected_rate/Y(reactant_id);
+				M(reactant_id, reactant_id) -= consuption_rate;
+			}
+
+			// compute non-diagonal terms (production)
+			for (auto &[product_ID, n_product_produced] : reaction.products) {
+				Float production_rate = n_product_produced*corrected_rate;
+
+				// find the closest diagonal term possible from the list of reactants
+				auto [best_reactant_id, best_n_product_produced] = reaction.reactants[0];
+				for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants | std::ranges::views::drop(1))
+					// if closer to the diagonal switch
+					if (std::abs(reactant_id - product_ID) < std::abs(best_reactant_id - product_ID)) {
+						best_reactant_id = reactant_id;
+						best_n_product_produced = n_reactant_consumed;
+					}
+
+				// insert into the matrix
+				production_rate /= Y(best_reactant_id);
+				M(product_ID, best_reactant_id) = production_rate;
+			}
+		}
 
 		return M;
-	}
-
-	template<class vector, typename Float>
-	std::tuple<vector, Float> add_and_cleanup(const vector &Y, const Float T, const vector &DY_T, const Float epsilon=1e-10) {
-		const int dimension = Y.size();
-
-		Float next_T = T + DY_T(0);
-		vector next_Y = Y + DY_T(Eigen::seq(1, dimension));
-
-		for (int i = 0; i < dimension; ++i)
-			if (next_Y(i) < epsilon)
-				next_Y(i) = 0;
-
-		return {next_Y, next_T};
 	}
 
 	template<class matrix, class vector, typename Float>
@@ -157,7 +198,7 @@ namespace nnet {
 	}
 
 	template<class problem, class vector, typename Float>
-	vector solve_system(const problem construct_system, const vector &Y, const Float T, const Float dt, const Float theta=1, const Float tol=1e-5, const Float epsilon=1e-16) {
+	std::tuple<vector, Float> solve_system(const problem construct_system, const vector &Y, const Float T, const Float dt, const Float theta=1, const Float tol=1e-5, const Float epsilon=1e-16) {
 		const int dimension = Y.size();
 
 		// construct vector
@@ -172,7 +213,7 @@ namespace nnet {
 		for (int i = 0;; ++i) {
 			// construct system
 			vector scaled_DY_T = theta*prev_DY_T;
-			auto [next_Y, next_T] = add_and_cleanup(Y, T, scaled_DY_T, epsilon);
+			auto [next_Y, next_T] = utils::add_and_cleanup(Y, T, scaled_DY_T, epsilon);
 			auto M = construct_system(Y, T);
 
 			// solve system
@@ -180,7 +221,7 @@ namespace nnet {
 
 			// exit on condition
 			if (std::abs(prev_DY_T(0) - DY_T(0))/(T + theta*DY_T(0)) < tol || i == max_iter)
-				return DY_T;
+				return utils::add_and_cleanup(Y, T, DY_T, epsilon);
 
 			prev_DY_T = DY_T;
 		}

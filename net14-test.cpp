@@ -82,8 +82,7 @@ int main() {
 
 
 		// solve the system
-		auto DY_T = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-16);
-		std::tie(Y, T) = nnet::add_and_cleanup(Y, T, DY_T);
+		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-16);
 
 		m_tot = Adot(Y);
 
