@@ -2,6 +2,7 @@
 #include "nuclear-net.hpp"
 
 int main() {
+	double value_1 = 0;
 	double cv = 2;
 
 	// photodesintegration rates
@@ -80,7 +81,7 @@ int main() {
 			M += nnet::fusion_to_first_order(f, nf, Y);
 
 			// add temperature to the problem
-			return nnet::include_temp(M, cv, 0., BE, Y);
+			return nnet::include_temp(M, value_1, cv, BE, Y);
 		};
 
 		// solve the system

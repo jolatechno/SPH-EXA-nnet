@@ -9,7 +9,8 @@ double Adot(Eigen::Vector<double, 14> const &Y) {
 }
 
 int main() {
-	double cv = 1e4;
+	double value_1 = 3.3587703131823750e-002; // typical v1 from net14 fortran
+	double cv = 89668307.725306153; // typical cv from net14 fortran
 
 	// initial state
 	Eigen::Vector<double, -1> Y(14);
@@ -43,7 +44,7 @@ int main() {
 		M += nnet::fusion_to_first_order(f, nnet::net14::n_fusion, Y);
 
 		// include temperature
-		return nnet::include_temp(M, cv, 0., nnet::net14::BE, Y);
+		return nnet::include_temp(M, value_1, cv, nnet::net14::BE, Y);
 	};
 
 
@@ -70,7 +71,7 @@ int main() {
 				std::cout << Adot(M*Y) << "\n\n";
 
 			// include temperature
-			auto Mp = nnet::include_temp(M, cv, 0., nnet::net14::BE, Y);
+			auto Mp = nnet::include_temp(M, value_1, cv, nnet::net14::BE, Y);
 
 			if (i /*% (int)((float)n_max/(float)n_print)*/ == 0)
 				std::cout << Mp << "\n\n";

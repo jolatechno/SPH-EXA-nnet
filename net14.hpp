@@ -6,6 +6,8 @@
 #include "net14-constants.hpp"
 
 namespace nnet {
+	class reaction;
+
 	namespace net14 {
 		/// constant mass-excendent values
 		const Eigen::VectorXd BE = [](){
@@ -13,6 +15,24 @@ namespace nnet {
 				BE_ << 0.0, 7.27440, 14.43580, 19.16680, 28.48280, 38.46680, 45.41480, 52.05380, 59.09380, 64.22080, 71.91280, 79.85180, 87.84680, 90.55480;
 				return BE_*constants::UNKNOWN;
 			}();
+
+		/// compute a list of reactions for net14
+		template<typename Float>
+		std::vector<std::pair<nnet::reaction, Float>> compute_reaction_rates(const Float T) {
+			std::vector<std::pair<nnet::reaction, Float>> reactions;
+
+			/* -----------------------------------------
+			TODO
+			----------------------------------------- */
+
+			return reactions;
+		}
+
+		/* -----------------------------------------
+		--------------------------------------------
+		useless from now on
+		--------------------------------------------
+		----------------------------------------- */
 
 		/// constant number of particle created by photodesintegrations
 		const Eigen::Matrix<int, -1, -1> n_photodesintegration = [](){
@@ -349,25 +369,6 @@ namespace nnet {
 
 			Eigen::Vector<Float, -1> BE_corr(14);
 			BE_corr = 3./2. * constants::Kb * constants::Na * T;
-
-			return BE_corr;
-		}
-
-		/// function computing the coulombian correction
-		template<class vector, typename Float>
-		vector coulomb_correction(const vector &Y, const Float T, const Float rho) {
-			/* -------------------
-			simply copute the coulombian correction of BE within net-14
-			------------------- */
-
-			vector BE_corr(14);
-
-			// TO VERIFY !!!!!
-
-			BE_corr(0) = 0;
-			for (int i = 1; i < 14; ++i) {
-				BE_corr(i) = 2.27e5 * std::pow((Float)constants::Z(i), 5./3.) * std::pow(rho * Y(i) /* !!!!! verify ????? */, 1./3.) / T;
-			}
 
 			return BE_corr;
 		}
