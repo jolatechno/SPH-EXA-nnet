@@ -50,11 +50,9 @@ solve_system : compose_system(Y, T), Y, T:
 namespace nnet {
 	struct reaction {
 		struct reactant {
-			reactant(int reactant_id_, int n_reactant_consumed_=1) : reactant_id(reactant_id_), n_reactant_consumed(n_reactant_consumed_) {};
 			int reactant_id, n_reactant_consumed = 1;
 		};
 		struct product {
-			product(int product_id_, int n_product_produced_=1) : product_id(product_id_), n_product_produced(n_product_produced_) {};
 			int product_id, n_product_produced = 1;
 		};
 		std::vector<reactant> reactants;
@@ -107,40 +105,30 @@ namespace nnet {
 		for (auto &[reaction, rate] : reactions) {
 			// actual reaction speed (including factorials)
 			Float corrected_rate = rate;
-			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) {
+			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) 
 				corrected_rate *= std::pow(Y(reactant_id), n_reactant_consumed)/std::tgamma(n_reactant_consumed + 1); // tgamma performas factorial with n - 1 -> hence we use n + 1
-
-				std::cout << corrected_rate << ", " << std::tgamma(n_reactant_consumed + 1) << ", " << reactant_id << ", " << n_reactant_consumed << "\n";
-			}
 
 			// compute diagonal terms (consumption)
 			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) {
 				Float consumption_rate = n_reactant_consumed*corrected_rate/Y(reactant_id);
-
-				std::cout << "consumption term: " << consumption_rate << ", " << reactant_id << ", " << n_reactant_consumed << "\n";
-
 				M(reactant_id, reactant_id) -= consumption_rate;
 			}
 
 			// compute non-diagonal terms (production)
 			for (auto &[product_id, n_product_produced] : reaction.products) {
+
 				// find the closest diagonal term possible from the list of reactants
 				int best_reactant_id = reaction.reactants[0].reactant_id;
-				for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants | std::ranges::views::drop(1))
+				/*for (auto &[reactant_id, _] : reaction.reactants | std::ranges::views::drop(1))
 					// if closer to the diagonal switch
 					if (std::abs(reactant_id - product_id) < std::abs(best_reactant_id - product_id))
-						best_reactant_id = reactant_id;
+						best_reactant_id = reactant_id;*/
 
 				// insert into the matrix
 				Float production_rate = n_product_produced*corrected_rate/Y(best_reactant_id);
-
-				std::cout << "production term: " << production_rate << ", " << product_id << ", " << best_reactant_id << "\n";
-
 				M(product_id, best_reactant_id) += production_rate;
 			}
 		}
-
-		std::cout << "\n" << M << "\n\n";
 
 		return M;
 	}

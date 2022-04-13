@@ -34,27 +34,27 @@ int main() {
 	double E_tot, E_tot_0 = Y.dot(m + BE) + cv*T;
 	double m_tot, m_tot_0 = Y.dot(m);
 
-	double dt=5e-3, T_max = 0;
-	int n_max = 1; //T_max/dt;
+	double dt=5e-3, T_max = 2;
+	int n_max = T_max/dt;
 	const int n_print = 20;
 	for (int i = 0; i < n_max; ++i) {
 		auto construct_system = [&](const Eigen::VectorXd &Y, double T) {
 			std::vector<std::pair<nnet::reaction, double>> reactions_and_rates = {
 				// two simple photodesintegration (i -> j)
-				//{nnet::reaction({(0)}, {(1)}), 0.4 + T},
-				//{nnet::reaction({(1)}, {(0)}), 0.3 + 0.7*T},
+				{nnet::reaction({{0}}, {{1}}), 0.4 +     T},
+				{nnet::reaction({{1}}, {{0}}), 0.3 + 0.7*T},
 
 				// different species fusion (i + j -> k)
-				//{nnet::reaction({(1), (0)}, {(2)}), 0.5 + T},
+				{nnet::reaction({{1}, {0}}, {{2}}), 0.5 + T},
 
 				// two different species "fission" (photodesintegration, i > j + k)
-				//{nnet::reaction({(2)}, {(1), (0)}), 0.3 + 1.1*T},
+				{nnet::reaction({{2}}, {{1}, {0}}), 0.2 + 1.1*T},
 
 				// same species fusion (i + i -> j)
-				//{nnet::reaction({(1, 2)}, {(2)}), 0.5 + T},
+				{nnet::reaction({{1, 2}}, {{2}}), 0.6 + T},
 
 				// same species "fission" (photodesintegration, i -> j + j)
-				{nnet::reaction({(2)}, {(0, 2)}), 0.5 + T},
+				{nnet::reaction({{2}}, {{0, 2}}), 0.5 + T},
 			};
 
 			// generate matrix
@@ -76,10 +76,10 @@ int main() {
 		construct_system(Y, T);
 
 		// solve the system
-		//std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-12);
+		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-12);
 
-		/*E_tot = Y.dot(m + BE) + cv*T;
-		m_tot = Y.dot(m);*/
+		E_tot = Y.dot(m + BE) + cv*T;
+		m_tot = Y.dot(m);
 
 		if (i % (int)((float)T_max / (dt*(float)n_print)) == 0)
 			std::cout << Y.transpose() << ",\t(E_tot=" << E_tot << ",\tDelta_E_tot=" << E_tot_0 - E_tot << "),\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot_0 - m_tot << "),\t" << T << "\n";
