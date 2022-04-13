@@ -21,10 +21,10 @@ namespace nnet {
 				// C -> 3He
 				n(0, 1) = 3;
 
-				// Z <-> Z "+ 1"
+				// Z + He <- Z "+ 1"
 				for (int i = 1; i < 13; ++i) {
-					n(i, i + 1) = 1;
-					n(i + 1, i) = 1;
+					n(i, i + 1) = 2;
+					n(0, i + 1) = 2;
 				}
 
 				return n;
@@ -34,6 +34,10 @@ namespace nnet {
 		const Eigen::Tensor<float, 3> n_fusion = [](){
 				Eigen::Tensor<float, 3> n(14, 14, 14);
 				n.setZero();
+
+				// Z + He -> Z "+ 1"
+				for (int i = 1; i < 13; ++i)
+					n(i + 1, 0, i) = 1;
 
 				// C + C -> Ne + He
 				n(3, 1, 1) = 2;
@@ -64,19 +68,17 @@ namespace nnet {
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			bellow is implemented the weigth sof the following reactions, based on a paper using fits:
-				- Ne <-> Mg
-				- Mg <-> Si
-				- Si <-> S
-				-  S <-> Ar
-				- Ar <-> Ca
-				- Ca <-> Ti
-				- Ti <-> Cr
-				- Cr <-> Fe
-				- Fe <-> Ni
-				- Ni <-> Zn
+				- Ne + He <- Mg
+				- Mg + He <- Si
+				- Si + He <- S
+				-  S + He <- Ar
+				- Ar + He <- Ca
+				- Ca + He <- Ti
+				- Ti + He <- Cr
+				- Cr + He <- Fe
+				- Fe + He <- Ni
+				- Ni + He <- Zn
 			!!!!!!!!!!!!!!!!!!!!!!!! */
-
-			Float coefs[14 - 4] = {0.};
 
 			Float t9=T/1.e9;
 			Float t913=std::pow(t9, 1./3.);
@@ -89,39 +91,37 @@ namespace nnet {
 			Float t9i43=t9i23*t9i23;
 			Float lt9=std::log(t9);
 
-			// Z -> Z "+ 1"
+			Float val1=11.6045e0*t9i;
+			Float val2=1.5e0*lt9;
+			Float val3=val1*t9i*1.e-9;
+			Float val4=1.5e-9*t9i;
+
+			// Z + He <- Z "+ 1"
 			for (int i = 4; i < 14; ++i) {
-				coefs[i - 4] = 
+				Float coef = 
 					  constants::fits::fit[i - 4][1]*t9i
 					+ constants::fits::fit[i - 4][2]*t9i13
 					+ constants::fits::fit[i - 4][3]*t913
 					+ constants::fits::fit[i - 4][4]*t9
 					+ constants::fits::fit[i - 4][5]*t953
 					+ constants::fits::fit[i - 4][6]*lt9;
-				r(i, i - 1) = std::exp(constants::fits::fit[i - 4][0] + coefs[i - 4]); 
-			}
 
-			Float val1=11.6045e0*t9i;
-			Float val2=1.5e0*lt9;
-			Float val3=val1*t9i*1.e-9;
-			Float val4=1.5e-9*t9i;
-
-			// Z <- Z "+ 1"
-			for (int i = 4; i < 14; ++i) {
 				int k = constants::fits::get_temperature_range(T);
-				r(i - 1, i) = constants::fits::choose[i - 4][k]/constants::fits::choose[i + 1 - 4][k]*
+				Float rate = constants::fits::choose[i - 4][k]/constants::fits::choose[i + 1 - 4][k]*
 					std::exp(
-						  coefs               [i - 4]
+						  coef
 						+ constants::fits::fit[i - 4][7]
 						- constants::fits::q  [i - 4]*val1
 						+ val2
 					);
+				r(i - 1, i) = rate;
+				r(0, i) = rate;
 			}
 
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			more accurate computation of the rates of:
-				C -> He
+				C -> 3He
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 
       		Float t9r=T*1.0e-09;
@@ -160,33 +160,29 @@ namespace nnet {
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			more accurate computation of the rates of:
-				C <-> O
+				C + He <- O
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 
-			// C -> O
+
 			Float rcag = 1.04e+08/(t92*std::pow(1. + 0.0489*t9i23, 2.))*std::exp(-32.120*t9i13-t92/12.222016)
             	+ 1.76e+08/(t92*std::pow(1. + 0.2654*t9i23, 2.))*std::exp(-32.120*t9i13)
            			+ 1.25e+03*t9i32*std::exp(-27.499*t9i)
            			+ 1.43e-02*t95*std::exp(-15.541*t9i);
-			r(2, 1) = rcag;
-
-			// O -> C
 			Float roga = rcag*5.13e+10*t9r32*std::exp(-83.108047*t9rm1);
 			r(1, 2) = roga;
+			r(0, 2) = roga;
 
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			more accurate computation of the rates of:
-				O <-> Ne
+				O + He <- Ne
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 
-			// O -> Ne
-			Float roag=(9.37e+09*t9i23*std::exp(-39.757*t9i13-t92/2.515396) + 62.1*t9i32*std::exp(-10.297*t9i) + 538.*t9i32*std::exp(-12.226*t9i) + 13.*t92*std::exp(-20.093*t9i));
-        	r(3, 2)=roag;
 
-      		// Ne -> O
+			Float roag=(9.37e+09*t9i23*std::exp(-39.757*t9i13-t92/2.515396) + 62.1*t9i32*std::exp(-10.297*t9i) + 538.*t9i32*std::exp(-12.226*t9i) + 13.*t92*std::exp(-20.093*t9i));
       		Float rnega=roag*5.65e+10*t9r32*std::exp(-54.93807*t9rm1);
       		r(2, 3)=rnega;
+      		r(0, 3)=rnega;
 
 
 			return r;
@@ -200,6 +196,51 @@ namespace nnet {
 
 			Eigen::Tensor<Float, 3> f(14, 14, 14);
 			f.setZero();
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			bellow is implemented the weigth sof the following reactions, based on a paper using fits:
+				- Ne + He -> Mg
+				- Mg + He -> Si
+				- Si + He -> S
+				-  S + He -> Ar
+				- Ar + He -> Ca
+				- Ca + He -> Ti
+				- Ti + He -> Cr
+				- Cr + He -> Fe
+				- Fe + He -> Ni
+				- Ni + He -> Zn
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+
+			{
+				Float t9=T/1.e9;
+				Float t913=std::pow(t9, 1./3.);
+				Float t923=t913*t913;
+				Float t953=std::pow(t9, 5./3.);
+				Float t9i=1.e0/t9;
+				Float t9i2=t9i*t9i;
+				Float t9i13=1.e0/t913;
+				Float t9i23=t9i13*t9i13;
+				Float t9i43=t9i23*t9i23;
+				Float lt9=std::log(t9);
+
+				// Z + He -> Z "+ 1"
+				for (int i = 3; i < 14; ++i) {
+					Float coef = 
+						  constants::fits::fit[i - 4][1]*t9i
+						+ constants::fits::fit[i - 4][2]*t9i13
+						+ constants::fits::fit[i - 4][3]*t913
+						+ constants::fits::fit[i - 4][4]*t9
+						+ constants::fits::fit[i - 4][5]*t953
+						+ constants::fits::fit[i - 4][6]*lt9;
+					f(i, 0, i - 1) = std::exp(constants::fits::fit[i - 4][0] + coef); 
+				}
+			}
+
+
+      		/* !!!!!!!!!!!!!!!!!!!!!!!!
+			more accurate computation of the rates of:
+				3He -> C
+			!!!!!!!!!!!!!!!!!!!!!!!! */
 
 			Float t9r=T*1.0e-09;
       		Float t9=std::min((Float)10., t9r);
@@ -225,7 +266,6 @@ namespace nnet {
 		    Float t9a56=std::pow(t9a, 5./6.);
 
 
-      		// 3He -> C	
 			Float r2abe = (7.40e+05*t9i32)*std::exp(-1.0663*t9i)
 				+ 4.164e+09*t9i23*std::exp(-13.49*t9i13-t92/0.009604)*(1. + 0.031*t913 + 8.009*t923 + 1.732*t9 + 49.883*t943 + 27.426*t953);
       		Float r3a, rbeac = (130.*t9i32)*std::exp(-3.3364*t9i)
@@ -239,12 +279,42 @@ namespace nnet {
 	      	f(1, 0, 0) = r3a;
 
 
-	      	// C + C -> Ne + He
+	      	/* !!!!!!!!!!!!!!!!!!!!!!!!
+			more accurate computation of the rates of:
+				2C -> Ne + He
+			!!!!!!!!!!!!!!!!!!!!!!!! */
       		Float r24=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
       		f(3, 1, 1) = r24;
       		f(0, 1, 1) = r24;
 
-			// C + O -> Mg + He
+
+      		/* !!!!!!!!!!!!!!!!!!!!!!!!
+			more accurate computation of the rates of:
+				C + He -> O
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+
+			// C -> O
+			Float rcag = 1.04e+08/(t92*std::pow(1. + 0.0489*t9i23, 2.))*std::exp(-32.120*t9i13-t92/12.222016)
+            	+ 1.76e+08/(t92*std::pow(1. + 0.2654*t9i23, 2.))*std::exp(-32.120*t9i13)
+           			+ 1.25e+03*t9i32*std::exp(-27.499*t9i)
+           			+ 1.43e-02*t95*std::exp(-15.541*t9i);
+			f(2, 0, 1) = rcag;
+
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			more accurate computation of the rates of:
+				O + He -> Ne
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+
+			// O -> Ne
+			Float roag=(9.37e+09*t9i23*std::exp(-39.757*t9i13-t92/2.515396) + 62.1*t9i32*std::exp(-10.297*t9i) + 538.*t9i32*std::exp(-12.226*t9i) + 13.*t92*std::exp(-20.093*t9i));
+        	f(3, 0, 2)=roag;
+
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			more accurate computation of the rates of:
+				C + O -> Mg + He
+			!!!!!!!!!!!!!!!!!!!!!!!! */
 			Float r1216=0.;
 			if (T > 5e9) {
 	            t9a=t9/(1. + 0.055*t9);
@@ -257,7 +327,11 @@ namespace nnet {
 	        f(4, 1, 2) = r1216;
       		f(0, 1, 2) = r1216;
 
-			// O + O -> Si + He
+
+      		/* !!!!!!!!!!!!!!!!!!!!!!!!
+			more accurate computation of the rates of:
+				2O -> Si + He
+			!!!!!!!!!!!!!!!!!!!!!!!! */
 			Float r32=7.10d+36*t9i23*std::exp(-135.93*t9i13 - 0.629*t923 - 0.445*t943 + 0.0103*t92);
       		f(5, 2, 2) = r32;
       		f(0, 2, 2) = r32;
