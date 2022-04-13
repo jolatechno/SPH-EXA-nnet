@@ -129,7 +129,7 @@ namespace nnet {
 		Mp(0, 0) = value_2/value_1;
 
 		// insert Y -> temperature terms
-		Mp(0, Eigen::seq(1, dimension)) = M.transpose()*BE/value_1*constants::UNKNOWN;
+		Mp(0, Eigen::seq(1, dimension)) = M.transpose()*BE/value_1;
 
 		return Mp;
 	}

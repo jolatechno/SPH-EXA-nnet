@@ -4,14 +4,13 @@
 #include <unsupported/Eigen/CXX11/Tensor>
 
 namespace nnet {
-	namespace constants {
-		const double Kb = 1.380658e-16;
-		const double Na = 6.022137e23;
-		const double e2 = 2.306022645e-19;
-		const double UNKNOWN = 9.648529392e17;
-	};
 	namespace net14 {
 		namespace constants {
+			const double Kb = 1.380658e-16;
+			const double Na = 6.022137e23;
+			const double e2 = 2.306022645e-19;
+			const double UNKNOWN = 9.648529392e17;
+
 			/// constant atomic number values
 			const Eigen::Vector<int, 14> Z = [](){
 					Eigen::Vector<int, 14> Z_;

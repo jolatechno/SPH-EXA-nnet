@@ -9,7 +9,7 @@ double Adot(Eigen::Vector<double, 14> const &Y) {
 }
 
 int main() {
-	double rho = 1e-100;
+	double rho = 1e6;
 
 	// initial state
 	Eigen::Vector<double, -1> Y(14);
@@ -24,10 +24,10 @@ int main() {
 
 	auto last_Y = Y;
 	double last_T = T;
-	double m_tot;;
+	double m_tot;
 
-	double dt=7, t_max = 1e-2;
-	int n_max = 10000; //t_max/dt;
+	double dt=2e-4, t_max = 5;
+	int n_max = t_max/dt;
 	const int n_print = 20;
 
 
@@ -59,7 +59,7 @@ int main() {
 		/* ---------------------
 		test
 		--------------------- */
-		{
+		if (i /*% (int)((float)n_max/(float)n_print)*/ == 0) {
 			auto r = nnet::net14::get_photodesintegration_rates(T); 
 			auto f = nnet::net14::get_fusion_rates(T);
 
@@ -78,8 +78,7 @@ int main() {
 			if (i /*% (int)((float)n_max/(float)n_print)*/ == 0)
 				std::cout << Adot(M*Y) << "\n\n" << Mp << "\n\n";
 
-			auto DY = M*Y*dt;
-			delta_m += Adot(DY); 
+			/*auto DY = M*Y*dt;
 
 			/* Y += DY;
 			T += nnet::net14::BE.dot(DY)*10000000000;*/
@@ -100,7 +99,7 @@ int main() {
 		//Y /= m_tot;
 
 		if (i % (int)((float)n_max/(float)n_print) == 0)
-			std::cout << "\n" << Y.transpose() << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot - 1. << " != " << delta_m << "),\t" << T << "\n";
+			std::cout << "\n" << Y.transpose() << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot - 1. << "),\t" << T << "\n";
 
 		if (i != n_max - 1) {
 			last_Y = Y;

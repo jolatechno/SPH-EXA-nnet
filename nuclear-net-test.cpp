@@ -2,6 +2,8 @@
 #include "nuclear-net.hpp"
 
 int main() {
+	double rho = 2;
+
 	// photodesintegration rates
 	Eigen::MatrixXd r(3, 3);
 	Eigen::MatrixXd dr(3, 3);
@@ -28,9 +30,9 @@ int main() {
 
 	// mass excedents
 	Eigen::VectorXd BE(3);
-	BE(0) = 9;
+	BE(0) = 3;
 	BE(1) = 4;
-	BE(2) = 1;
+	BE(2) = 9;
 
 	// molar masses
 	Eigen::VectorXd m(3);
@@ -40,7 +42,6 @@ int main() {
 
 	// initial state
 	Eigen::VectorXd Y(3);
-	double rho = 0.05;
 	double T = 1;
 	Y(0) = 0.8;
 	Y(1) = 0.7;
