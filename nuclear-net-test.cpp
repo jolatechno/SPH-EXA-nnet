@@ -2,7 +2,7 @@
 #include "nuclear-net.hpp"
 
 int main() {
-	double rho = 2;
+	double cv = 2;
 
 	// photodesintegration rates
 	Eigen::MatrixXd r(3, 3);
@@ -54,7 +54,7 @@ int main() {
 
 	auto last_Y = Y;
 	double last_T = T;
-	double E_tot, E_tot_0 = Y.dot(m + BE) + rho*T;
+	double E_tot, E_tot_0 = Y.dot(m + BE) + cv*T;
 	double m_tot, m_tot_0 = Y.dot(m);
 
 	double dt=5e-3, T_max = 4;
@@ -75,24 +75,19 @@ int main() {
 
 			//to insure that the equation is dY/dt = r*Y
 			Eigen::MatrixXd M = nnet::photodesintegration_to_first_order(r, n);
-			Eigen::MatrixXd dMdT = nnet::photodesintegration_to_first_order(dr, n);
 
 			// add fusion rates to desintegration rates
 			M += nnet::fusion_to_first_order(f, nf, Y);
-			dMdT += nnet::fusion_to_first_order(df, nf, Y);
-
-			// no derivative
-			dMdT.setZero();
 
 			// add temperature to the problem
-			return std::pair<Eigen::MatrixXd, Eigen::MatrixXd>{nnet::include_temp(M, rho, 0., BE, Y), dMdT};
+			return nnet::include_temp(M, cv, 0., BE, Y);
 		};
 
 		// solve the system
 		auto DY_T = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-5);
 		std::tie(Y, T) = nnet::add_and_cleanup(Y, T, DY_T);
 
-		E_tot = Y.dot(m + BE) + rho*T;
+		E_tot = Y.dot(m + BE) + cv*T;
 		m_tot = Y.dot(m);
 
 		if (i % (int)((float)T_max / (dt*(float)n_print)) == 0)

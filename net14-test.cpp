@@ -9,7 +9,7 @@ double Adot(Eigen::Vector<double, 14> const &Y) {
 }
 
 int main() {
-	double rho = 1e6;
+	double cv = 1e6;
 
 	// initial state
 	Eigen::Vector<double, -1> Y(14);
@@ -46,10 +46,7 @@ int main() {
 		Eigen::Matrix<double, -1, -1> dMdT = Eigen::Matrix<double, -1, -1>::Zero(14, 14);
 
 		// include temperature
-		auto Mp = nnet::include_temp(M, rho, 0., nnet::net14::BE, Y);
-
-		// add temperature to the problem
-		return std::pair<Eigen::Matrix<double, -1, -1>, Eigen::Matrix<double, -1, -1>>{Mp, dMdT};
+		return nnet::include_temp(M, cv, 0., nnet::net14::BE, Y);
 	};
 
 
@@ -73,7 +70,7 @@ int main() {
 			M += nnet::fusion_to_first_order(f, nnet::net14::n_fusion, Y);
 
 			// include temperature
-			auto Mp = nnet::include_temp(M, rho, 0., nnet::net14::BE, Y);
+			auto Mp = nnet::include_temp(M, cv, 0., nnet::net14::BE, Y);
 
 			if (i /*% (int)((float)n_max/(float)n_print)*/ == 0)
 				std::cout << Adot(M*Y) << "\n\n" << Mp << "\n\n";
