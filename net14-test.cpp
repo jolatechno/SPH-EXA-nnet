@@ -9,7 +9,7 @@ double Adot(Eigen::Vector<double, 14> const &Y) {
 }
 
 int main() {
-	double cv = 1e6;
+	double cv = 1e-9;
 
 	// initial state
 	Eigen::Vector<double, -1> Y(14);
@@ -26,8 +26,8 @@ int main() {
 	double last_T = T;
 	double m_tot;
 
-	double dt=2e-4, t_max = 5;
-	int n_max = t_max/dt;
+	double dt=5e-7, t_max = 5e-2;
+	int n_max = 100000; //t_max/dt;
 	const int n_print = 20;
 
 
@@ -42,8 +42,7 @@ int main() {
 		// add fusion rates to desintegration rates
 		M += nnet::fusion_to_first_order(f, nnet::net14::n_fusion, Y);
 
-		// no derivative
-		Eigen::Matrix<double, -1, -1> dMdT = Eigen::Matrix<double, -1, -1>::Zero(14, 14);
+		M *= nnet::net14::constants::UNKNOWN/1.0e12;
 
 		// include temperature
 		return nnet::include_temp(M, cv, 0., nnet::net14::BE, Y);
@@ -64,16 +63,21 @@ int main() {
 			auto M = nnet::photodesintegration_to_first_order(r, nnet::net14::n_photodesintegration);
 			
 			if (i /*% (int)((float)n_max/(float)n_print)*/ == 0)
-				std::cout << "\n\n" << Adot(M*Y) << ",";
+				std::cout << "\n\n" << Adot(M*Y) << ", ";
 
 			// add fusion rates to desintegration rates
 			M += nnet::fusion_to_first_order(f, nnet::net14::n_fusion, Y);
+
+			if (i /*% (int)((float)n_max/(float)n_print)*/ == 0)
+				std::cout << Adot(M*Y) << "\n\n";
+
+			M *= nnet::net14::constants::UNKNOWN/1.0e12;
 
 			// include temperature
 			auto Mp = nnet::include_temp(M, cv, 0., nnet::net14::BE, Y);
 
 			if (i /*% (int)((float)n_max/(float)n_print)*/ == 0)
-				std::cout << Adot(M*Y) << "\n\n" << Mp << "\n\n";
+				std::cout << Mp << "\n\n";
 
 			/*auto DY = M*Y*dt;
 

@@ -11,7 +11,7 @@ namespace nnet {
 		const Eigen::VectorXd BE = [](){
 				Eigen::VectorXd BE_(14);
 				BE_ << 0.0, 7.27440, 14.43580, 19.16680, 28.48280, 38.46680, 45.41480, 52.05380, 59.09380, 64.22080, 71.91280, 79.85180, 87.84680, 90.55480;
-				return BE_*constants::UNKNOWN;
+				return BE_; //*constants::UNKNOWN;
 			}();
 
 		/// constant number of particle created by photodesintegrations
