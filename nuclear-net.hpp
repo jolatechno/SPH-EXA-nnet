@@ -119,14 +119,29 @@ namespace nnet {
 				// compute non-diagonal terms (production)
 				for (auto &[product_id, n_product_produced] : reaction.products) {
 
-					// find the closest diagonal term possible from the list of reactants
+					// find the optimum place to put the coeficient
 					int best_reactant_id = reaction.reactants[0].reactant_id;
+					bool is_non_zero = M(product_id, best_reactant_id) != 0.;
 					for (int j = 1; j < reaction.reactants.size(); ++j) { // for (auto &[reactant_id, _] : reaction.reactants | std::ranges::views::drop(1))
 						int reactant_id = reaction.reactants[j].reactant_id;
 
-						// if closer to the diagonal switch
-						if (std::abs(reactant_id - product_id) < std::abs(best_reactant_id - product_id))
-							best_reactant_id = reactant_id;
+						// prioritize the minimization of the number of non-zero terms
+						if (M(product_id, reactant_id) != 0.) {
+
+							// overwise if it is the first non-zero term
+							if (!is_non_zero) {
+								is_non_zero = true;
+								best_reactant_id = reactant_id;
+							} else
+								// otherwise keep the "relativly closest" element
+								if (std::abs((reactant_id - product_id)*M(product_id, reactant_id)/M(product_id, product_id)) <
+									std::abs((best_reactant_id - product_id)*M(product_id, best_reactant_id)/M(product_id, product_id)))
+									best_reactant_id = reactant_id;
+
+						} else if (!is_non_zero)
+							// if still populating a zero element, then keep the closest to the diagonal
+							if (std::abs(reactant_id - product_id) < std::abs(best_reactant_id - product_id))
+								best_reactant_id = reactant_id;
 					}
 
 					// insert into the matrix
