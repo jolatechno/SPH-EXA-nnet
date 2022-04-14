@@ -38,27 +38,50 @@ int main() {
 	int n_max = T_max/dt;
 	const int n_print = 20;
 	for (int i = 0; i < n_max; ++i) {
+
+		/* -----------------
+		reaction list */
+		std::vector<nnet::reaction> reactions = {
+			// two simple photodesintegration (i -> j)
+			{{{0}}, {{1}}},
+			{{{1}}, {{0}}},
+
+			// different species fusion (i + j -> k)
+			{{{1}, {0}}, {{2}}},
+
+			// two different species "fission" (photodesintegration, i > j + k)
+			{{{2}}, {{1}, {0}}},
+
+			// same species fusion (i + i -> j)
+			{{{1, 2}}, {{2}}},
+
+			// same species "fission" (photodesintegration, i -> j + j)
+			{{{2}}, {{0, 2}}},
+		};
+
+		/* -----------------
+		construct system function */
 		auto construct_system = [&](const Eigen::VectorXd &Y, double T) {
-			std::vector<std::pair<nnet::reaction, double>> reactions_and_rates = {
+			std::vector<double> rates = {
 				// two simple photodesintegration (i -> j)
-				{nnet::reaction({{0}}, {{1}}), 0.4 +     T},
-				{nnet::reaction({{1}}, {{0}}), 0.3 + 0.7*T},
+				0.3 + T,
+				0.2 + 0.7*T,
 
 				// different species fusion (i + j -> k)
-				{nnet::reaction({{1}, {0}}, {{2}}), 0.5 + T},
+				0.1 + 1.1*T,
 
 				// two different species "fission" (photodesintegration, i > j + k)
-				{nnet::reaction({{2}}, {{1}, {0}}), 0.2 + 1.1*T},
+				0.15 + 0.9*T,
 
 				// same species fusion (i + i -> j)
-				{nnet::reaction({{1, 2}}, {{2}}), 0.6 + T},
+				1.25 - 0.5*T,
 
 				// same species "fission" (photodesintegration, i -> j + j)
-				{nnet::reaction({{2}}, {{0, 2}}), 0.5 + T},
+				1 - 0.15*T,
 			};
 
 			// generate matrix
-			Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reactions_and_rates, Y);
+			Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reactions, rates, Y);
 
 			// add temperature to the problem
 			Eigen::MatrixXd Mp = nnet::include_temp(M, value_1, cv, BE, Y);
@@ -76,7 +99,7 @@ int main() {
 		construct_system(Y, T);
 
 		// solve the system
-		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-12);
+		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-18);
 
 		E_tot = Y.dot(m + BE) + cv*T;
 		m_tot = Y.dot(m);

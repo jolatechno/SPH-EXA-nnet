@@ -2,7 +2,7 @@
 
 
 #include <cmath> // factorial
-#include <ranges> // drop
+//#include <ranges> // drop
 
 #include <vector>
 #include <Eigen/Dense>
@@ -93,7 +93,7 @@ namespace nnet {
 	}
 
 	template<typename Float>
-	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<std::pair<reaction, Float>> &reactions, Eigen::Vector<Float, -1> const &Y) {
+	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Eigen::Vector<Float, -1> const &Y) {
 		/* -------------------
 		reactes a sparce matrix M such that dY/dt = M*Y*
 		from a list of reactions
@@ -102,7 +102,9 @@ namespace nnet {
 
 		Eigen::Matrix<Float, -1, -1> M = Eigen::Matrix<Float, -1, -1>::Zero(dimension, dimension);
 
-		for (auto &[reaction, rate] : reactions) {
+		for (int i = 0; i < reactions.size() && i < rates.size(); ++i) {
+			auto &reaction = reactions[i]; auto rate = rates[i];
+
 			// actual reaction speed (including factorials)
 			Float corrected_rate = rate;
 			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) 
@@ -119,10 +121,13 @@ namespace nnet {
 
 				// find the closest diagonal term possible from the list of reactants
 				int best_reactant_id = reaction.reactants[0].reactant_id;
-				/*for (auto &[reactant_id, _] : reaction.reactants | std::ranges::views::drop(1))
+				for (int j = 0; j < reaction.reactants.size(); ++j) { // for (auto &[reactant_id, _] : reaction.reactants | std::ranges::views::drop(1))
+					int reactant_id = reaction.reactants[j].reactant_id;
+
 					// if closer to the diagonal switch
 					if (std::abs(reactant_id - product_id) < std::abs(best_reactant_id - product_id))
-						best_reactant_id = reactant_id;*/
+						best_reactant_id = reactant_id;
+				}
 
 				// insert into the matrix
 				Float production_rate = n_product_produced*corrected_rate/Y(best_reactant_id);
