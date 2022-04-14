@@ -307,4 +307,5 @@ namespace nnet {
 
 			return rates;
 		}
+	}
 }

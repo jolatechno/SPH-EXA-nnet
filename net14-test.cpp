@@ -15,36 +15,25 @@ int main() {
 	double cv = 89668307.725306153; // typical cv from net14 fortran
 
 	// initial state
-	Eigen::Vector<double, -1> Y(14);
-	double T = 2e9;
-	for (int i = 0; i < 14; ++i)
-		Y(i) = 0.1;
+	Eigen::Vector<double, -1> X(14), Y(14);
+	X.setZero();
+	X(1) = 0.5;
+	X(2) = 0.5;
 
-	// normalize Y
-	Y /= Adot(Y);
+	for (int i = 0; i < 14; ++i) Y(i) = X(i) / nnet::net14::constants::A(i);
 
-	std::cout << Y.transpose() << ", " << T << std::endl;
-
+	double T = 1e9;
 	auto last_Y = Y;
 	double last_T = T;
 	double m_tot;
 
-	double dt=1e-4, t_max = 5e-2;
-	int n_max = 100000; //t_max/dt;
-	const int n_print = 20;
+	double dt=1e-4, t_max = 5.;
+	int n_max = 1000000; //t_max/dt;
+	const int n_print = 100; //20;
 
 
 
 	auto construct_system = [&](const Eigen::VectorXd &Y, double T) {
-		/*auto r = nnet::net14::get_photodesintegration_rates(T); 
-		auto f = nnet::net14::get_fusion_rates(T);
-
-		//to insure that the equation is dY/dt = r*Y
-		auto M = nnet::photodesintegration_to_first_order(r, nnet::net14::n_photodesintegration);
-
-		// add fusion rates to desintegration rates
-		M += nnet::fusion_to_first_order(f, nnet::net14::n_fusion, Y);*/
-
 		// compute rates
 		auto rates = nnet::net14::compute_reaction_rates(T);
 
@@ -55,6 +44,9 @@ int main() {
 	};
 
 
+
+
+	std::cout << X.transpose() << ", " << T << std::endl;
 
 	double delta_m = 0;
 	for (int i = 0; i < n_max; ++i) {
@@ -80,17 +72,19 @@ int main() {
 		--------------------- */
 
 
+
+
 		// solve the system
-		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-20);
+		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-30, 1e-30);
 
 		m_tot = Adot(Y);
 
-		// !!!!!!!!
-		// cheating by normalizing
-		//Y /= m_tot;
-
-		if (i % (int)((float)n_max/(float)n_print) == 0)
-			std::cout << "\n" << Y.transpose() << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot - 1. << "),\t" << T << "\n";
+		if (i % (int)((float)n_max/(float)n_print) == 0) {
+			for (int i = 0; i < 14; ++i) X(i) = Y(i) * nnet::net14::constants::A(i);
+			std::cout << "\n";
+			for (int i = 0; i <= 6; ++i) std::cout << X(i) << ", ";
+			std::cout << X(12) << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot - 1. << "),\t" << T << "\n";
+		}
 
 		if (i != n_max - 1) {
 			last_Y = Y;
@@ -98,7 +92,10 @@ int main() {
 		}
 	}
 
-	std::cout << "\n" << Y.transpose() << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot - 1. << "),\t" << T << "\n";
+	for (int i = 0; i < 14; ++i) X(i) = Y(i) * nnet::net14::constants::A(i);
+	std::cout << "\n";
+	for (int i = 0; i <= 6; ++i) std::cout << X(i) << ", ";
+	std::cout << X(12) << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot - 1. << "),\t" << T << "\n";
+
+	return 0;
 }
-
-
