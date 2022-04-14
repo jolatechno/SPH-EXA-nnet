@@ -1,5 +1,6 @@
 #include <iostream>
-#include "nuclear-net.hpp"
+
+#include "../src/nuclear-net.hpp"
 
 int main() {
 	double value_1 = 0;

@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "nuclear-net.hpp"
-#include "net14.hpp"
+#include "../src/nuclear-net.hpp"
+#include "../src/net14/net14.hpp"
 
 double Adot(Eigen::Vector<double, 14> const &Y) {
 	double norm = 0;

@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 #include <unsupported/Eigen/CXX11/Tensor>
 
-#include "nuclear-net.hpp"
+#include "../nuclear-net.hpp"
 #include "net14-constants.hpp"
 
 namespace nnet {
