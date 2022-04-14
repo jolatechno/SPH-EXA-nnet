@@ -9,8 +9,6 @@
 #include <Eigen/Sparse>
 #include <unsupported/Eigen/CXX11/Tensor>
 
-#include "net14.hpp"
-
 /*
 photodesintegration_to_first_order  R_i,j, n_i,j
 
@@ -110,30 +108,34 @@ namespace nnet {
 			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) 
 				corrected_rate *= std::pow(Y(reactant_id), n_reactant_consumed)/std::tgamma(n_reactant_consumed + 1); // tgamma performas factorial with n - 1 -> hence we use n + 1
 
-			// compute diagonal terms (consumption)
-			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) {
-				Float consumption_rate = n_reactant_consumed*corrected_rate/Y(reactant_id);
-				M(reactant_id, reactant_id) -= consumption_rate;
-			}
-
-			// compute non-diagonal terms (production)
-			for (auto &[product_id, n_product_produced] : reaction.products) {
-
-				// find the closest diagonal term possible from the list of reactants
-				int best_reactant_id = reaction.reactants[0].reactant_id;
-				for (int j = 0; j < reaction.reactants.size(); ++j) { // for (auto &[reactant_id, _] : reaction.reactants | std::ranges::views::drop(1))
-					int reactant_id = reaction.reactants[j].reactant_id;
-
-					// if closer to the diagonal switch
-					if (std::abs(reactant_id - product_id) < std::abs(best_reactant_id - product_id))
-						best_reactant_id = reactant_id;
+			// avoid divisions by 0
+			if (corrected_rate > 0) {
+				// compute diagonal terms (consumption)
+				for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) {
+					Float consumption_rate = n_reactant_consumed*corrected_rate/Y(reactant_id);
+					M(reactant_id, reactant_id) -= consumption_rate;
 				}
 
-				// insert into the matrix
-				Float production_rate = n_product_produced*corrected_rate/Y(best_reactant_id);
-				M(product_id, best_reactant_id) += production_rate;
+				// compute non-diagonal terms (production)
+				for (auto &[product_id, n_product_produced] : reaction.products) {
+
+					// find the closest diagonal term possible from the list of reactants
+					int best_reactant_id = reaction.reactants[0].reactant_id;
+					for (int j = 1; j < reaction.reactants.size(); ++j) { // for (auto &[reactant_id, _] : reaction.reactants | std::ranges::views::drop(1))
+						int reactant_id = reaction.reactants[j].reactant_id;
+
+						// if closer to the diagonal switch
+						if (std::abs(reactant_id - product_id) < std::abs(best_reactant_id - product_id))
+							best_reactant_id = reactant_id;
+					}
+
+					// insert into the matrix
+					Float production_rate = n_product_produced*corrected_rate/Y(best_reactant_id);
+					M(product_id, best_reactant_id) += production_rate;
+				}
 			}
 		}
+			
 
 		return M;
 	}

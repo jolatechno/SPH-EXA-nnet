@@ -3,27 +3,232 @@
 #include <Eigen/Dense>
 #include <unsupported/Eigen/CXX11/Tensor>
 
+#include "nuclear-net.hpp"
 #include "net14-constants.hpp"
 
 namespace nnet {
-	class reaction;
-
 	namespace net14 {
 		/// constant mass-excendent values
 		const Eigen::VectorXd BE = Eigen::Vector<double, 14>(std::vector<double>{0.0, 7.27440, 14.43580, 19.16680, 28.48280, 38.46680, 45.41480, 52.05380, 59.09380, 64.22080, 71.91280, 79.85180, 87.84680, 90.55480}.data())*constants::Mev_to_cJ;
 
 		// constant list of ordered reaction
+		const std::vector<nnet::reaction> reaction_list = {
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			fusions reactions from fits */
+			{{{0}, {3}},  {{4}}},  // Ne + He -> Mg
+			{{{0}, {4}},  {{5}}},  // Mg + He -> Si
+			{{{0}, {5}},  {{6}}},  // Si + He -> S
+			{{{0}, {6}},  {{7}}},  // S  + He -> Ar
+			{{{0}, {7}},  {{8}}},  // Ar + He -> Ca
+			{{{0}, {8}},  {{9}}},  // Ca + He -> Ti
+			{{{0}, {9}},  {{10}}}, // Ti + He -> Cr
+			{{{0}, {10}}, {{11}}}, // Cr + He -> Fe
+			{{{0}, {11}}, {{12}}}, // Fe + He -> Ni
+			{{{0}, {12}}, {{13}}}, // Ni + He -> Zn
+
+
+
+			/* fission reactions from fits
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			{{{4}},  {{0}, {3}}},  // Ne + He <- Mg
+			{{{5}},  {{0}, {4}}},  // Mg + He <- Si
+			{{{6}},  {{0}, {5}}},  // Si + He <- S
+			{{{7}},  {{0}, {6}}},  // S  + He <- Ar
+			{{{8}},  {{0}, {7}}},  // Ar + He <- Ca
+			{{{9}},  {{0}, {8}}},  // Ca + He <- Ti
+			{{{10}}, {{0}, {9}}},  // Ti + He <- Cr
+			{{{11}}, {{0}, {10}}}, // Cr + He <- Fe
+			{{{12}}, {{0}, {11}}}, // Fe + He <- Ni
+			{{{13}}, {{0}, {12}}}, // Ni + He <- Zn
+
+
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			   3He -> C fusion */
+			// {{{0, 3}}, {{1}}},
+
+			/* 3He <- C fission
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			// {{{1}}, {{0, 3}}},
+
+
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			2C -> Ne + He fusion
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			// {{{1, 2}}, {{3}, {0}}},
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			C + O -> Mg + He fusion
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			// {{{1}, {2}}, {{4}, {0}}},
+
+
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			2O -> Si + He fusion
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			// {{{2, 2}}, {{5}, {0}}},
+
+
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			   C + He -> O fusion */
+			/*{{{0}, {1}}, {{2}}},
+
+			// C + He <- O fission
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			// {{{2}},  {{0}, {1}}},
+
+
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			   O + He -> Ne fusion */
+			// {{{0}, {2}}, {{3}}},
+
+			/* O + He <- Ne fission
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			// {{{3}},  {{0}, {2}}}
+		};
 
 		/// compute a list of reactions for net14
 		template<typename Float>
-		std::vector<std::pair<nnet::reaction, Float>> compute_reaction_rates(const Float T) {
-			std::vector<std::pair<nnet::reaction, Float>> reactions;
+		std::vector<Float> compute_reaction_rates(const Float T) {
+			std::vector<Float> rates;
+			rates.reserve(reaction_list.size());
 
-			/* -----------------------------------------
-			TODO
-			----------------------------------------- */
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			fusions and fissions reactions from fits
+			!!!!!!!!!!!!!!!!!!!!!!!! */
 
-			return reactions;
+			Float coefs[14 - 3];
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			fusions reactions from fits 
+				- Ne + He -> Mg
+				- Mg + He -> Si
+				- Si + He -> S
+				-  S + He -> Ar
+				- Ar + He -> Ca
+				- Ca + He -> Ti
+				- Ti + He -> Cr
+				- Cr + He -> Fe
+				- Fe + He -> Ni
+				- Ni + He -> Zn */
+			{
+				const Float t9=T/1.e9;
+				const Float t913=std::pow(t9, 1./3.);
+				const Float t923=t913*t913;
+				const Float t953=std::pow(t9, 5./3.);
+				const Float t9i=1.e0/t9;
+				const Float t9i2=t9i*t9i;
+				const Float t9i13=1.e0/t913;
+				const Float t9i23=t9i13*t9i13;
+				const Float t9i43=t9i23*t9i23;
+				const Float lt9=std::log(t9);
+
+				// Z + He -> Z "+ 1"
+				for (int i = 3; i < 14; ++i) {
+					coefs[i - 4] = 
+						  constants::fits::fit[i - 4][1]*t9i
+						+ constants::fits::fit[i - 4][2]*t9i13
+						+ constants::fits::fit[i - 4][3]*t913
+						+ constants::fits::fit[i - 4][4]*t9
+						+ constants::fits::fit[i - 4][5]*t953
+						+ constants::fits::fit[i - 4][6]*lt9;
+					Float rate = std::exp(constants::fits::fit[i - 4][0] + coefs[i - 4]);
+					rates.push_back(rate); 
+				}
+			}
+
+			/* fission reactions from fits
+				- Ne + He <- Mg
+				- Mg + He <- Si
+				- Si + He <- S
+				-  S + He <- Ar
+				- Ar + He <- Ca
+				- Ca + He <- Ti
+				- Ti + He <- Cr
+				- Cr + He <- Fe
+				- Fe + He <- Ni
+				- Ni + He <- Zn
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			{
+				const Float t9=T/1.e9;
+				const Float t913=std::pow(t9, 1./3.);
+				const Float t923=t913*t913;
+				const Float t953=std::pow(t9, 5./3.);
+				const Float t9i=1.e0/t9;
+				const Float t9i2=t9i*t9i;
+				const Float t9i13=1.e0/t913;
+				const Float t9i23=t9i13*t9i13;
+				const Float t9i43=t9i23*t9i23;
+				const Float lt9=std::log(t9);
+
+				const Float val1=11.6045e0*t9i;
+				const Float val2=1.5e0*lt9;
+				const Float val3=val1*t9i*1.e-9;
+				const Float val4=1.5e-9*t9i;
+
+				for (int i = 4; i < 14; ++i) {
+					int k = constants::fits::get_temperature_range(T);
+					Float rate = constants::fits::choose[i - 4][k]/constants::fits::choose[i + 1 - 4][k]*
+						std::exp(
+							  coefs               [i - 4]
+							+ constants::fits::fit[i - 4][7]
+							- constants::fits::q  [i - 4]*val1
+							+ val2
+						);
+					rates.push_back(rate);
+				}
+			}
+
+
+
+			/* other fusion and fission reactions */
+			{
+
+
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+			    3He -> C fusion */
+
+				/* 3He <- C fission
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+
+
+
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				2C -> Ne + He fusion
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				C + O -> Mg + He fusion
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+
+
+
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				2O -> Si + He fusion
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+
+
+
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				   C + He -> O fusion */
+
+				/* C + He <- O fission
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+
+
+
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				   O + He -> Ne fusion */
+
+				/* O + He <- Ne fission
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+			}
+
+			return rates;
 		}
 
 
@@ -256,7 +461,6 @@ namespace nnet {
 			f.setZero();
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
-			bellow is implemented the weigth sof the following reactions, based on a paper using fits:
 				- Ne + He -> Mg
 				- Mg + He -> Si
 				- Si + He -> S
