@@ -10,11 +10,9 @@ namespace nnet {
 
 	namespace net14 {
 		/// constant mass-excendent values
-		const Eigen::VectorXd BE = [](){
-				Eigen::VectorXd BE_(14);
-				BE_ << 0.0, 7.27440, 14.43580, 19.16680, 28.48280, 38.46680, 45.41480, 52.05380, 59.09380, 64.22080, 71.91280, 79.85180, 87.84680, 90.55480;
-				return BE_*constants::UNKNOWN;
-			}();
+		const Eigen::VectorXd BE = Eigen::Vector<double, 14>(std::vector<double>{0.0, 7.27440, 14.43580, 19.16680, 28.48280, 38.46680, 45.41480, 52.05380, 59.09380, 64.22080, 71.91280, 79.85180, 87.84680, 90.55480}.data())*constants::Mev_to_cJ;
+
+		// constant list of ordered reaction
 
 		/// compute a list of reactions for net14
 		template<typename Float>

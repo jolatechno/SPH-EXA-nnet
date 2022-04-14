@@ -9,21 +9,13 @@ namespace nnet {
 			const double Kb = 1.380658e-16;
 			const double Na = 6.022137e23;
 			const double e2 = 2.306022645e-19;
-			const double UNKNOWN = 9.648529392e17;
+			const double Mev_to_cJ = 9.648529392e17;
 
 			/// constant atomic number values
-			const Eigen::Vector<int, 14> Z = [](){
-					Eigen::Vector<int, 14> Z_;
-					Z_ << 2, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30;
-					return Z_;
-				}();
+			const Eigen::Vector<int, -1> Z = Eigen::Vector<int, 14>(std::vector<int>{2, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30}.data());
 
 			/// constant number of masses values
-			const Eigen::Vector<int, 14> A = [](){
-					Eigen::Vector<int, 14> A_;
-					A_ << 4, 12, 16, 20, 24, 28, 32,  36, 40, 44, 48, 52, 56, 60;
-					return A_;
-				}();
+			const Eigen::Vector<int, -1> A = Eigen::Vector<int, 14>(std::vector<int>{4, 12, 16, 20, 24, 28, 32,  36, 40, 44, 48, 52, 56, 60}.data());
 
 			namespace fits {
 				int inline get_temperature_range(double T) {
