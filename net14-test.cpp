@@ -16,7 +16,7 @@ int main() {
 
 	// initial state
 	Eigen::Vector<double, -1> Y(14);
-	double T = 1.8e9;
+	double T = 2e9;
 	for (int i = 0; i < 14; ++i)
 		Y(i) = 0.1;
 
@@ -29,7 +29,7 @@ int main() {
 	double last_T = T;
 	double m_tot;
 
-	double dt=1e-9, t_max = 5e-2;
+	double dt=1e-4, t_max = 5e-2;
 	int n_max = 100000; //t_max/dt;
 	const int n_print = 20;
 

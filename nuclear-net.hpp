@@ -155,10 +155,10 @@ namespace nnet {
 
 		// insert M
 		Mp(Eigen::seq(1, dimension), Eigen::seq(1, dimension)) = M;
-		Mp(0, 0) = -value_1/cv;
+		Mp(0, 0) = value_1/cv;
 
 		// insert Y -> temperature terms
-		Mp(0, Eigen::seq(1, dimension)) = -M.transpose()*BE/cv;
+		Mp(0, Eigen::seq(1, dimension)) = M.transpose()*BE/cv;
 
 		return Mp;
 	}
