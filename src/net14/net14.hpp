@@ -152,8 +152,6 @@ namespace nnet {
 
 				const Float val1=11.6045e0*t9i;
 				const Float val2=1.5e0*lt9;
-				const Float val3=val1*t9i*1.e-9;
-				const Float val4=1.5e-9*t9i;
 
 				/* fision rates computed:
 					- Ne + He <- Mg

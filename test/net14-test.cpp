@@ -11,14 +11,15 @@ double Adot(Eigen::Vector<double, 14> const &Y) {
 }
 
 int main() {
-	double value_1 = 3.3587703131823750e-002; // typical v1 from net14 fortran
-	double cv = 89668307.725306153; // typical cv from net14 fortran
+	const double value_1 = 3.3587703131823750e-002; // typical v1 from net14 fortran
+	const double cv = 89668307.725306153; // typical cv from net14 fortran
+	const double density = 1e7; // density, g/cm^3
 
 	// initial state
 	Eigen::Vector<double, -1> X(14), Y(14);
 	X.setZero();
-	X(1) = 0.5;
-	X(2) = 0.5;
+	X(1) = 0.5 * density;
+	X(2) = 0.5 * density;
 
 	for (int i = 0; i < 14; ++i) Y(i) = X(i) / nnet::net14::constants::A(i);
 
@@ -27,9 +28,9 @@ int main() {
 	double last_T = T;
 	double m_tot;
 
-	double dt=2e-3, t_max = 5.;
-	int n_max = 10000; //t_max/dt;
-	const int n_print = 100; //20;
+	double dt=1e-17, t_max = 5.;
+	int n_max = 1000; //t_max/dt;
+	const int n_print = 20;
 
 
 
@@ -46,7 +47,9 @@ int main() {
 
 
 
-	std::cout << X.transpose() << ", " << T << std::endl;
+
+	for (int i = 0; i < 14; ++i) std::cout << X(i) / density << ", ";
+	std::cout << "\t" << T << std::endl;
 
 	double delta_m = 0;
 	for (int i = 0; i < n_max; ++i) {
@@ -75,15 +78,15 @@ int main() {
 
 
 		// solve the system
-		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-30, 1e-30);
+		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-30, 1e-60);
 
 		m_tot = Adot(Y);
 
 		if (i % (int)((float)n_max/(float)n_print) == 0) {
 			for (int i = 0; i < 14; ++i) X(i) = Y(i) * nnet::net14::constants::A(i);
 			std::cout << "\n";
-			for (int i = 0; i <= 6; ++i) std::cout << X(i) << ", ";
-			std::cout << X(12) << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot - 1. << "),\t" << T << "\n";
+			for (int i = 0; i < 14; ++i) std::cout << X(i) / density << ", ";
+			std::cout << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << (m_tot - density)/density*100 << "%),\t" << T << "\n";
 		}
 
 		if (i != n_max - 1) {
@@ -94,8 +97,8 @@ int main() {
 
 	for (int i = 0; i < 14; ++i) X(i) = Y(i) * nnet::net14::constants::A(i);
 	std::cout << "\n";
-	for (int i = 0; i <= 6; ++i) std::cout << X(i) << ", ";
-	std::cout << X(12) << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot - 1. << "),\t" << T << "\n";
+	for (int i = 0; i < 14; ++i) std::cout << X(i) / density << ", ";
+	std::cout << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << (m_tot - density)/density*100 << "%),\t" << T << "\n";
 
 	return 0;
 }

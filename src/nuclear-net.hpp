@@ -21,10 +21,10 @@ include_temp : theta, value_1, cv, BE'_i: sum_i(BE'_i*dY_i/dt) + value_1*T = cv*
 iterate_system M', theta, Y, T
 	'-> D{T, Y} = Dt* M'*(T_in*(1 - theta) + T_out*theta)
 
-	D{T, Y} = Dt* M'*(T_in*(1 - theta) + T_out*theta)
- 	<=> D{T, Y} = Dt* M'*({T_in, Y_in} + theta*{DT, DY})
- 	<=> (I - Dt*M'()*theta)*D{T, Y} = DT*M'*{T_in, Y_in}
- 	<=> D{T, Y} = (I - Dt* M' *theta)^{-1} * DT* M' *{T_in, Y_in}
+	D{T, Y} = Dt*M'*{T_in + theta*DT, Y_in + theta*Y_in}
+ 	<=> D{T, Y} = Dt*M'*({T_in, Y_in} + theta*{DT, DY})
+ 	<=> (I - Dt*M'*theta)*D{T, Y} = DT*M'*{T_in, Y_in}
+ 	<=> D{T, Y} = (I - Dt* M' *theta)^{-1} * DT*M'*{T_in, Y_in}
 
 solve_system : compose_system(Y, T), Y, T:
  	DT = 0, DY = 0
@@ -215,10 +215,7 @@ namespace nnet {
 		// now solve {Dy, DT}*M = RHS
 		Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>  BCGST;
 		BCGST.compute(sparse_M);
-		auto const DY_T = BCGST.solve(RHS);
-
-		// add to solution
-		return DY_T;
+		return BCGST.solve(RHS);
 	}
 
 	template<class problem, class vector, typename Float>
@@ -226,22 +223,18 @@ namespace nnet {
 		const int dimension = Y.size();
 
 		// construct vector
-		vector DY_T(dimension + 1), prev_DY_T(dimension + 1);
+		auto M = construct_system(Y, T);
+		auto prev_DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
 
-		{
-			auto M = construct_system(Y, T);
-			prev_DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
-		}
-
-		int max_iter = std::max(0., -std::log2(tol));
+		int max_iter = 10*std::max(0., -std::log2(tol));
 		for (int i = 0;; ++i) {
 			// construct system
 			vector scaled_DY_T = theta*prev_DY_T;
 			auto [next_Y, next_T] = utils::add_and_cleanup(Y, T, scaled_DY_T, epsilon);
-			auto M = construct_system(Y, T);
+			M = construct_system(Y, T);
 
 			// solve system
-			DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
+			auto DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
 
 			// exit on condition
 			if (std::abs(prev_DY_T(0) - DY_T(0))/(T + theta*DY_T(0)) < tol || i == max_iter)
