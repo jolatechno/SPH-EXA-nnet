@@ -27,8 +27,8 @@ int main() {
 	double last_T = T;
 	double m_tot;
 
-	double dt=1e-4, t_max = 5.;
-	int n_max = 1000000; //t_max/dt;
+	double dt=2e-3, t_max = 5.;
+	int n_max = 10000; //t_max/dt;
 	const int n_print = 100; //20;
 
 

@@ -91,7 +91,7 @@ namespace nnet {
 	}
 
 	template<typename Float>
-	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Eigen::Vector<Float, -1> const &Y) {
+	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Eigen::Vector<Float, -1> const &Y, const Float epsilon=0) {
 		/* -------------------
 		reactes a sparce matrix M such that dY/dt = M*Y*
 		from a list of reactions
@@ -111,8 +111,8 @@ namespace nnet {
 					corrected_rate *= std::pow(Y(reactant_id), n_reactant_consumed - 1);
 			}
 
-			// avoid divisions by 0
-			if (corrected_rate > 0) {
+			// stop if the rate is 0
+			if (std::abs(corrected_rate) >= epsilon) {
 				// compute diagonal terms (consumption)
 				for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) {
 					Float consumption_rate = n_reactant_consumed*corrected_rate;
