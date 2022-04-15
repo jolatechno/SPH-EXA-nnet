@@ -105,14 +105,20 @@ namespace nnet {
 
 			// actual reaction speed (including factorials)
 			Float corrected_rate = rate;
-			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) 
-				corrected_rate *= std::pow(Y(reactant_id), n_reactant_consumed)/std::tgamma(n_reactant_consumed + 1); // tgamma performas factorial with n - 1 -> hence we use n + 1
+			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) {
+				corrected_rate /= std::tgamma(n_reactant_consumed + 1); // tgamma performas factorial with n - 1 -> hence we use n + 1
+				if (i > n_reactant_consumed)
+					corrected_rate *= std::pow(Y(reactant_id), n_reactant_consumed - 1);
+			}
 
 			// avoid divisions by 0
 			if (corrected_rate > 0) {
 				// compute diagonal terms (consumption)
 				for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) {
-					Float consumption_rate = n_reactant_consumed*corrected_rate/Y(reactant_id);
+					Float consumption_rate = n_reactant_consumed*corrected_rate;
+					for (auto &[other_reactant_id, _] : reaction.reactants)
+						if (other_reactant_id != reactant_id)
+							consumption_rate *= Y(other_reactant_id);
 					M(reactant_id, reactant_id) -= consumption_rate;
 				}
 
@@ -145,7 +151,10 @@ namespace nnet {
 					}
 
 					// insert into the matrix
-					Float production_rate = n_product_produced*corrected_rate/Y(best_reactant_id);
+					Float production_rate = n_product_produced*corrected_rate;
+					for (auto &[other_reactant_id, _] : reaction.reactants)
+						if (other_reactant_id != best_reactant_id)
+							production_rate *= Y(other_reactant_id);
 					M(product_id, best_reactant_id) += production_rate;
 				}
 			}
