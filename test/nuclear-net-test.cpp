@@ -35,6 +35,8 @@ int main() {
 	double E_tot, E_tot_0 = Y.dot(m + BE) + cv*T;
 	double m_tot, m_tot_0 = Y.dot(m);
 
+	const double theta = 0.6;
+
 	double dt=5e-3, T_max = 2;
 	int n_max = T_max/dt;
 	const int n_print = 20;
@@ -82,7 +84,7 @@ int main() {
 			};
 
 			// generate matrix
-			Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reactions, rates, Y);
+			Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reactions, rates, 1., Y);
 
 			// add temperature to the problem
 			Eigen::MatrixXd Mp = nnet::include_temp(M, value_1, cv, BE, Y);
@@ -100,21 +102,17 @@ int main() {
 		construct_system(Y, T);
 
 		// solve the system
-		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-18);
+		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, theta, 1e-18);
 
 		E_tot = Y.dot(m + BE) + cv*T;
 		m_tot = Y.dot(m);
 
-		if (i % (int)((float)T_max / (dt*(float)n_print)) == 0)
+		if (n_print >= n_max || (n_max - i) % (int)((float)T_max / (dt*(float)n_print)) == 0)
 			std::cout << Y.transpose() << ",\t(E_tot=" << E_tot << ",\tDelta_E_tot=" << E_tot_0 - E_tot << "),\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot_0 - m_tot << "),\t" << T << "\n";
 
-		if (i != n_max - 1) {
-			last_Y = Y;
-			last_T = T;
-		}
+		last_Y = Y;
+		last_T = T;
 	}
-
-	std::cout << Y.transpose() << ",\t(E_tot=" << E_tot << ",\tDelta_E_tot=" << E_tot_0 - E_tot << "),\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot_0 - m_tot << "),\t" << T << "\n";
 }
 
 

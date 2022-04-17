@@ -91,7 +91,7 @@ namespace nnet {
 	}
 
 	template<typename Float>
-	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Eigen::Vector<Float, -1> const &Y, const Float epsilon=0) {
+	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const Float rho, Eigen::Vector<Float, -1> const &Y, const Float epsilon=0) {
 		/* -------------------
 		reactes a sparce matrix M such that dY/dt = M*Y*
 		from a list of reactions
@@ -110,6 +110,12 @@ namespace nnet {
 				if (i > n_reactant_consumed)
 					corrected_rate *= std::pow(Y(reactant_id), n_reactant_consumed - 1);
 			}
+
+			// correction with rho
+			int order = 0;
+			for (auto &[_, n_reactant_consumed] : reaction.reactants)
+				order += n_reactant_consumed;
+			corrected_rate *= std::pow(rho, order - 1);
 
 			// stop if the rate is 0
 			if (std::abs(corrected_rate) >= epsilon) {
@@ -207,7 +213,7 @@ namespace nnet {
 		const vector RHS = Mp*Y_T*dt;
 
 		// construct M
-		matrix M = -theta*dt*Mp + matrix::Identity(dimension + 1, dimension + 1);
+		matrix M = matrix::Identity(dimension + 1, dimension + 1) - theta*dt*Mp;
 
 		// sparcify M
 		auto sparse_M = utils::sparsify(M, epsilon);
@@ -231,7 +237,7 @@ namespace nnet {
 			// construct system
 			vector scaled_DY_T = theta*prev_DY_T;
 			auto [next_Y, next_T] = utils::add_and_cleanup(Y, T, scaled_DY_T, epsilon);
-			M = construct_system(Y, T);
+			M = construct_system(next_Y, next_T);
 
 			// solve system
 			auto DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);

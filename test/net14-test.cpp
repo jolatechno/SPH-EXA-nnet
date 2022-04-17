@@ -11,44 +11,44 @@ double Adot(Eigen::Vector<double, 14> const &Y) {
 }
 
 int main() {
-	const double value_1 = 3.3587703131823750e-002; // typical v1 from net14 fortran
-	const double cv = 89668307.725306153; // typical cv from net14 fortran
-	const double density = 1e7; // density, g/cm^3
+	const double value_1 = 0; // typical v1 from net14 fortran
+	const double cv = 2e7; // typical cv from net14 fortran
+	const double density = 1e9; // density, g/cm^3
 
 	// initial state
-	Eigen::Vector<double, -1> X(14), Y(14);
-	X.setZero();
-	X(1) = 0.5 * density;
-	X(2) = 0.5 * density;
+	Eigen::VectorXd Y(14), X = Eigen::VectorXd::Zero(14);
+	X(1) = 0.5;
+	X(2) = 0.5;
 
 	for (int i = 0; i < 14; ++i) Y(i) = X(i) / nnet::net14::constants::A(i);
 
 	double T = 1e9;
 	auto last_Y = Y;
 	double last_T = T;
-	double m_tot;
+	double m_tot, m_in = Adot(Y);
 
-	double dt=1e-17, t_max = 5.;
+	double dt=1e-16, t_max = 5.;
 	int n_max = 1000; //t_max/dt;
 	const int n_print = 20;
 
-
+	const double theta = 0.6;
 
 	auto construct_system = [&](const Eigen::VectorXd &Y, double T) {
 		// compute rates
 		auto rates = nnet::net14::compute_reaction_rates(T);
 
-		auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, Y);
+		auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, density, Y);
 
 		// include temperature
-		return nnet::include_temp(M, value_1, cv, nnet::net14::BE, Y);
+		Eigen::VectorXd BE = nnet::net14::BE - nnet::net14::ideal_gaz_correction(T);
+		return nnet::include_temp(M, value_1, cv, BE, Y);
 	};
 
 
 
 
 
-	for (int i = 0; i < 14; ++i) std::cout << X(i) / density << ", ";
+	for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
 	std::cout << "\t" << T << std::endl;
 
 	double delta_m = 0;
@@ -56,19 +56,24 @@ int main() {
 		/* ---------------------
 		begin test
 		--------------------- */
-		if (i /*% (int)((float)n_max/(float)n_print)*/ == 0) {
+		if (i == 0) {
 			auto rates = nnet::net14::compute_reaction_rates(T);
 
-			auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, Y);
+			auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, density, Y);
 
-			if (i /*% (int)((float)n_max/(float)n_print)*/ == 0)
+			if (i  == 0)
 				std::cout << "\n" << (M*Y).transpose() << "\n" << Adot(M*Y) << "\n\n";
 
 			// include temperature
-			auto Mp = nnet::include_temp(M, value_1, cv, nnet::net14::BE, Y);
+			Eigen::VectorXd BE = nnet::net14::BE - nnet::net14::ideal_gaz_correction(T);
+			auto Mp = nnet::include_temp(M, value_1, cv, BE, Y);
 
-			if (i /*% (int)((float)n_max/(float)n_print)*/ == 0)
-				std::cout << Mp << "\n\n";
+			if (i == 0)
+				std::cout << 
+					// M
+					Mp
+					// Eigen::MatrixXd::Identity(15, 15) - dt*theta*Mp
+				<< "\n\n";
 		}
 		/* ---------------------
 		end test
@@ -78,27 +83,27 @@ int main() {
 
 
 		// solve the system
-		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, 0.6, 1e-30, 1e-60);
+		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, theta, 1e-15, 1e-30);
 
 		m_tot = Adot(Y);
 
-		if (i % (int)((float)n_max/(float)n_print) == 0) {
+
+		if (i == 0) {
+			std::cout << "\n, dY=";
+			for (int i = 0; i < 14; ++i) std::cout << (Y(i) - last_Y(i)) / dt << ", ";
+			std::cout << "\n";
+		}
+
+		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0) {
 			for (int i = 0; i < 14; ++i) X(i) = Y(i) * nnet::net14::constants::A(i);
 			std::cout << "\n";
-			for (int i = 0; i < 14; ++i) std::cout << X(i) / density << ", ";
-			std::cout << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << (m_tot - density)/density*100 << "%),\t" << T << "\n";
+			for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
+			std::cout << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << (m_tot - m_in)/m_in*100 << "%),\t" << T << "\n";
 		}
 
-		if (i != n_max - 1) {
-			last_Y = Y;
-			last_T = T;
-		}
+		last_Y = Y;
+		last_T = T;
 	}
-
-	for (int i = 0; i < 14; ++i) X(i) = Y(i) * nnet::net14::constants::A(i);
-	std::cout << "\n";
-	for (int i = 0; i < 14; ++i) std::cout << X(i) / density << ", ";
-	std::cout << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << (m_tot - density)/density*100 << "%),\t" << T << "\n";
 
 	return 0;
 }

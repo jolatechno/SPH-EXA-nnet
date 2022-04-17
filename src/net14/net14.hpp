@@ -11,6 +11,13 @@ namespace nnet {
 		/// constant mass-excendent values
 		const Eigen::VectorXd BE = Eigen::Vector<double, 14>(std::vector<double>{0.0, 7.27440, 14.43580, 19.16680, 28.48280, 38.46680, 45.41480, 52.05380, 59.09380, 64.22080, 71.91280, 79.85180, 87.84680, 90.55480}.data())*constants::Mev_to_cJ;
 
+		/// ideal gaz correction
+		Eigen::VectorXd ideal_gaz_correction(const double T) {
+			Eigen::VectorXd BE_correction(14);
+			for (int i = 0; i < 14; ++i) BE_correction(i) = -constants::Na * constants::Kb * T;
+			return BE_correction;
+		}
+
 		// constant list of ordered reaction
 		const std::vector<nnet::reaction> reaction_list = {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -101,7 +108,7 @@ namespace nnet {
 			fusions and fissions reactions from fits
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 
-			Float coefs[14 - 3];
+			Float coefs[14 - 4];
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			fusions reactions from fits */
