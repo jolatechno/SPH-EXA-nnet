@@ -145,7 +145,7 @@ namespace nnet {
 						+ constants::fits::fit[i - 4][6]*lt9;
 
 					Float rate = std::exp(constants::fits::fit[i - 4][0] + coefs[i - 4]);
-					rates.push_back(rate); 
+					rates.push_back(rate); // std::cout << "dir(" << i << ")=" << rate << ", coef(" << i << ")=" << coefs[i - 4] << "\n";
 				}
 			}
 
@@ -180,7 +180,7 @@ namespace nnet {
 							- constants::fits::q  [i - 4]*val1
 							+ val2
 						);
-					rates.push_back(rate);
+					rates.push_back(rate); // std::cout << (i == 4 ? "\n" : "") << "inv(" << i << ")=" << rate << "\n";
 				}
 			}
 
@@ -233,7 +233,8 @@ namespace nnet {
 					/* 3He <- C fission
 					!!!!!!!!!!!!!!!!!!!!!!!! */
 			      	const Float rev = 2.e20*std::exp(-84.419412e0*t9i);
-			      	rates.push_back(r3a*rev*t93);
+			      	const Float rg3a = r3a*rev*t93;
+			      	rates.push_back(rg3a); // std::cout << "\nr3a=" << r3a << ", rg3a=" << rg3a << "\n";
 			    }
 
 			    
@@ -242,7 +243,7 @@ namespace nnet {
 				!!!!!!!!!!!!!!!!!!!!!!!! */
 				{
 		      		const Float r24=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
-		      		rates.push_back(r24);
+		      		rates.push_back(r24); // std::cout << "r24=" << r24;
 				}
 
 
@@ -252,7 +253,7 @@ namespace nnet {
 				{
 
 					Float r1216=0.;
-					if (T > 5e9) {
+					if (T > 5e8) {
 			            const Float t9ap=t9/(1. + 0.055*t9);
 			            const Float t9a2p=t9ap*t9ap;
 			            const Float t9a13p=std::pow(t9ap, 1./3.);
@@ -260,8 +261,7 @@ namespace nnet {
 			            const Float t9a56ap=std::pow(t9ap, 5./6.);
 			            r1216=1.72e+31*t9a56ap*t9i32*std::exp(-106.594/t9a13p)/(std::exp(-0.18*t9a2p) + 1.06e-03*std::exp(2.562*t9a23p));
 			        }
-			        rates.push_back(r1216);
-
+			        rates.push_back(r1216); //std::cout << ", r1216=" << r1216 << "\n";
 				}
 
 
@@ -269,8 +269,8 @@ namespace nnet {
 				2O -> Si + He fusion
 				!!!!!!!!!!!!!!!!!!!!!!!! */
 				{
-					const Float r32=7.10d+36*t9i23*std::exp(-135.93*t9i13 - 0.629*t923 - 0.445*t943 + 0.0103*t92);
-					rates.push_back(r32);
+					const Float r32=7.10e+36*t9i23*std::exp(-135.93*t9i13 - 0.629*t923 - 0.445*t943 + 0.0103*t92);
+					rates.push_back(r32); // std::cout << "r32=" << r32 << "\n";
 				}
 
 
@@ -290,7 +290,7 @@ namespace nnet {
 					/* C + He <- O fission
 					!!!!!!!!!!!!!!!!!!!!!!!! */
 					const Float roga = rcag*5.13e+10*t9r32*std::exp(-83.108047*t9rm1);
-					rates.push_back(roga);
+					rates.push_back(roga); // std::cout << "rcag=" << rcag << ", roga=" << roga << "\n";
 				}
 
 
@@ -306,7 +306,7 @@ namespace nnet {
 					/* O + He <- Ne fission
 					!!!!!!!!!!!!!!!!!!!!!!!! */
 					const Float rnega=roag*5.65e+10*t9r32*std::exp(-54.93807*t9rm1);
-					rates.push_back(rnega);
+					rates.push_back(rnega); // std::cout << "roag=" << roag << ", rnega=" << rnega << "\n";
 				}
 			}
 

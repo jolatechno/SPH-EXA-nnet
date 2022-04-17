@@ -232,7 +232,7 @@ namespace nnet {
 		auto M = construct_system(Y, T);
 		auto prev_DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
 
-		int max_iter = 10*std::max(0., -std::log2(tol));
+		int max_iter = (int)std::max(1., -std::log2(tol));
 		for (int i = 0;; ++i) {
 			// construct system
 			vector scaled_DY_T = theta*prev_DY_T;
@@ -243,7 +243,7 @@ namespace nnet {
 			auto DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
 
 			// exit on condition
-			if (std::abs(prev_DY_T(0) - DY_T(0))/(T + theta*DY_T(0)) < tol || i == max_iter)
+			if (i >= max_iter || std::abs(prev_DY_T(0) - DY_T(0))/next_T < tol)
 				return utils::add_and_cleanup(Y, T, DY_T, epsilon);
 
 			prev_DY_T = DY_T;
