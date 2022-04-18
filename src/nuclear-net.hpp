@@ -79,6 +79,37 @@ namespace nnet {
 			Mout.setFromTriplets(coefs.begin(), coefs.end());
 			return Mout;
 		}
+
+		template<typename Float, int n, int m>
+		void normalize(Eigen::Matrix<Float, n, n> &M, Eigen::Vector<Float, m> &RHS) {
+			const int dimension = RHS.size();
+
+			for (int i = 0; i < dimension; ++i) {
+
+				// find maximum
+				Float max_ = std::abs(M(0, i));
+				for (int j = 1; j < dimension; ++j) {
+					Float val = std::abs(M(j, i));
+					if (val > max_) max_ = val;
+				}
+
+				// normalize
+				RHS[i] /= max_;
+				for (int j = 0; j < dimension; ++j)
+					M(j, i) /= max_;
+			}
+		}
+
+		template<typename Float, int n, int m>
+		Eigen::Vector<Float, m> solve(Eigen::Matrix<Float, n, n> &M, Eigen::Vector<Float, m> &RHS, const Float epsilon=0) {
+			// sparcify M
+			auto sparse_M = utils::sparsify(M, epsilon);
+
+			// now solve M*X = RHS
+			Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>  BCGST;
+			BCGST.compute(sparse_M);
+			return BCGST.solve(RHS);
+		}
 	}
 
 	template<typename Float>
@@ -219,19 +250,16 @@ namespace nnet {
 		------------------- */
 
 		// right hand side
-		const vector RHS = Y_T + dt*(1 - theta)*Mp*Y_T;
+		vector RHS = Y_T + dt*(1 - theta)*Mp*Y_T;
 
 		// construct M
 		matrix M = matrix::Identity(dimension + 1, dimension + 1) - dt*theta*Mp;
 
-		// sparcify M
-		auto sparse_M = utils::sparsify(M, epsilon);
+		// normalize
+		utils::normalize(M, RHS);
 
-		// now solve {DT, Dy}*M = RHS
-		Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>  BCGST;
-		BCGST.compute(sparse_M);
-		return BCGST.solve(RHS);
-
+		// now solve M*{T_out, Y_out} = RHS
+		return utils::solve(M, RHS, epsilon);
 #else
 		/* different solver : */
 		/* -------------------
@@ -242,19 +270,17 @@ namespace nnet {
 		------------------- */
 
 		// right hand side
-		const vector RHS = Mp*Y_T*dt;
+		vector RHS = Mp*Y_T*dt;
 
 		// construct M
 		matrix M = matrix::Identity(dimension + 1, dimension + 1) - theta*dt*Mp;
 
-		// sparcify M
-		auto sparse_M = utils::sparsify(M, epsilon);
+		// normalize
+		utils::normalize(M, RHS);
 
-		// now solve {DT, Dy}*M = RHS
-		Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>  BCGST;
-		BCGST.compute(sparse_M);
-		vector DY_T = BCGST.solve(RHS);
-		return (vector)(Y_T + DY_T);
+		// now solve M*D{T, Y} = RHS
+		vector DY_T = utils::solve(M, RHS, epsilon);
+		return Y_T + DY_T;
 #endif
 	}
 
@@ -263,8 +289,8 @@ namespace nnet {
 		const int dimension = Y.size();
 
 		// construct vector
-		auto M = construct_system(Y, T);
-		auto prev_Y_T_out = solve_first_order(Y, T, M, dt, theta, epsilon);
+		vector prev_Y_T_out(dimension + 1);
+		prev_Y_T_out << T, Y;
 
 		int max_iter = (int)std::max(1., -std::log2(tol));
 		for (int i = 0;; ++i) {
@@ -273,7 +299,7 @@ namespace nnet {
 			vector scaled_Y_out = Y*(1 - theta) + theta*prev_Y_T_out(Eigen::seq(1, dimension));
 
 			// construct system
-			M = construct_system(scaled_Y_out, scaled_T_out);
+			auto M = construct_system(scaled_Y_out, scaled_T_out);
 
 			// solve system
 			auto Y_T_out = solve_first_order(Y, T, M, dt, theta, epsilon);
