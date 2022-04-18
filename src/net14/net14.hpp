@@ -7,8 +7,6 @@
 #include "net14-constants.hpp"
 
 
-bool net14_debug = false;
-
 namespace nnet {
 	namespace net14 {
 		/// constant mass-excendent values
@@ -150,6 +148,9 @@ namespace nnet {
 					Float rate = std::exp(constants::fits::fit[i - 4][0] + coefs[i - 4]);
 					rates.push_back(rate);
 
+					/* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
 					if (net14_debug) std::cout << "dir(" << i << ")=" << rate << ", coef(" << i << ")=" << coefs[i - 4] << "\n";
 				}
 			}
@@ -187,6 +188,9 @@ namespace nnet {
 						);
 					rates.push_back(rate);
 
+					/* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
 					if (net14_debug) std::cout << (i == 4 ? "\n" : "") << "inv(" << i << ")=" << rate << "\n";
 				}
 			}
@@ -243,6 +247,9 @@ namespace nnet {
 			      	const Float rg3a = r3a*rev*t93;
 			      	rates.push_back(rg3a);
 
+			      	/* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
 					if (net14_debug) std::cout << "\nr3a=" << r3a << ", rg3a=" << rg3a << "\n";
 			    }
 
@@ -254,6 +261,9 @@ namespace nnet {
 		      		const Float r24=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
 		      		rates.push_back(r24);
 
+		      		/* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
 					if (net14_debug) std::cout << "r24=" << r24;
 				}
 
@@ -274,6 +284,9 @@ namespace nnet {
 			        }
 			        rates.push_back(r1216);
 
+			        /* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
 					if (net14_debug) std::cout << ", r1216=" << r1216 << "\n";
 				}
 
@@ -285,6 +298,9 @@ namespace nnet {
 					const Float r32=7.10e+36*t9i23*std::exp(-135.93*t9i13 - 0.629*t923 - 0.445*t943 + 0.0103*t92);
 					rates.push_back(r32);
 
+					/* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
 					if (net14_debug) std::cout << "r32=" << r32 << "\n";
 				}
 
@@ -307,6 +323,9 @@ namespace nnet {
 					const Float roga = rcag*5.13e+10*t9r32*std::exp(-83.108047*t9rm1);
 					rates.push_back(roga);
 
+					/* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
 					if (net14_debug) std::cout << "rcag=" << rcag << ", roga=" << roga << "\n";
 				}
 
@@ -325,6 +344,9 @@ namespace nnet {
 					const Float rnega=roag*5.65e+10*t9r32*std::exp(-54.93807*t9rm1);
 					rates.push_back(rnega);
 
+					/* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
 					if (net14_debug) std::cout << "roag=" << roag << ", rnega=" << rnega << "\n";
 				}
 			}

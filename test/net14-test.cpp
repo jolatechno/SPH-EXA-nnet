@@ -12,7 +12,7 @@ double Adot(Eigen::Vector<double, 14> const &Y) {
 
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
-	const double cv = 2e7; // typical cv from net14 fortran
+	const double cv = 5e-7; // typical cv from net14 fortran
 	const double density = 1e9; // density, g/cm^3
 
 	// initial state
@@ -28,18 +28,18 @@ int main() {
 	double m_tot, m_in = Adot(Y);
 
 	double dt=1e-16, t_max = 5.;
-	int n_max = 10000; //t_max/dt;
+	int n_max = 1000; //t_max/dt;
 	const int n_print = 20;
 
 	const double theta = 0.6;
 
-	net14_debug=true;
 	auto construct_system = [&](const Eigen::VectorXd &Y_, double T_) {
 		// compute rates
 		auto rates = nnet::net14::compute_reaction_rates(T_);
-		net14_debug = false;
 
 		auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, density, Y_);
+
+		net14_debug = false;
 
 		// include temperature
 		Eigen::VectorXd BE = nnet::net14::BE + nnet::net14::ideal_gaz_correction(T_);
@@ -81,10 +81,10 @@ int main() {
 		--------------------- */
 
 
-
+		net14_debug=i==1;
 
 		// solve the system
-		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, theta, 1e-5, 0.);
+		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, theta, 1e-8, 0.);
 
 		m_tot = Adot(Y);
 

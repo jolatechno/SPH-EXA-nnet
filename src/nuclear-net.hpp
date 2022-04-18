@@ -9,6 +9,13 @@
 #include <Eigen/Sparse>
 #include <unsupported/Eigen/CXX11/Tensor>
 
+
+/* !!!!!!!!!!!!
+debuging :
+!!!!!!!!!!!! */
+bool net14_debug = false;
+
+
 /*
 photodesintegration_to_first_order  R_i,j, n_i,j
 
@@ -72,20 +79,6 @@ namespace nnet {
 			Mout.setFromTriplets(coefs.begin(), coefs.end());
 			return Mout;
 		}
-
-		template<class vector, typename Float>
-		std::tuple<vector, Float> add_and_cleanup(const vector &Y, const Float T, const vector &DY_T, const Float epsilon=1e-10) {
-			const int dimension = Y.size();
-
-			Float next_T = T + DY_T(0);
-			vector next_Y = Y + DY_T(Eigen::seq(1, dimension));
-
-			for (int i = 0; i < dimension; ++i)
-				if (next_Y(i) < epsilon)
-					next_Y(i) = 0;
-
-			return {next_Y, next_T};
-		}
 	}
 
 	template<typename Float>
@@ -113,7 +106,24 @@ namespace nnet {
 			int order = 0;
 			for (auto &[_, n_reactant_consumed] : reaction.reactants)
 				order += n_reactant_consumed;
-			corrected_rate *= std::pow(rho, order - 1);
+			corrected_rate *= std::pow(rho, (Float)(order - 1));
+
+
+
+			/* !!!!!!!!!!!!
+			debuging :
+			!!!!!!!!!!!! */
+			if (net14_debug) {
+				std::cerr << "\t\t";
+				for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants)
+					std::cerr << n_reactant_consumed << "*[" << reactant_id << "] ";
+				std::cerr << " -> ";
+				for (auto &[product_id, n_product_produced] : reaction.products)
+					std::cerr << n_product_produced << "*[" << product_id << "] ";
+				std::cerr << ", " << order << ", " << corrected_rate << " (" << rate << ")\n";
+			}
+
+
 
 			// stop if the rate is 0
 			if (std::abs(corrected_rate) >= epsilon) {
@@ -193,19 +203,43 @@ namespace nnet {
 
 	template<class matrix, class vector, typename Float>
 	vector solve_first_order(const vector &Y, const Float T, const matrix &Mp, const Float dt, const Float theta=1, const Float epsilon=1e-100) {
-		/* -------------------
-		Solves d{Y, T}/dt = M'*Y using eigen:
-
-		D{T, Y} = Dt* M'*{T_in + theta*DT, Y_in + theta*DY}
- 	<=> D{T, Y} = Dt* M'*({T_in, Y_in} + theta*D{T, Y})
- 	<=> (I - Dt*M'*theta)*D{T, Y} = Dt*M'*{T_in, Y_in}
-		------------------- */
-
 		const int dimension = Y.size();
 
 		// construct vector
 		vector Y_T(dimension + 1);
 		Y_T << T, Y;
+
+#ifndef DIFFERENT_SOLVER
+		/* -------------------
+		Solves d{Y, T}/dt = M'*Y using eigen:
+
+		{T_out, Y_out} = {T_in, Y_in} + Dt* M'*{T_in*(1 - theta) + theta*T_out, Y_in*(1 - theta) + theta*Y_out}
+ 	<=> {T_out, Y_out} = {T_in, Y_in} + Dt* M'*([1 - theta]*{T_in, Y_in} + theta*{T_out, Y_out})
+ 	<=> (I - Dt*M'*theta)*{T_out, Y_out} = (I + Dt*M'*[1- theta])*{T_in, Y_in}
+		------------------- */
+
+		// right hand side
+		const vector RHS = Y_T + dt*(1 - theta)*Mp*Y_T;
+
+		// construct M
+		matrix M = matrix::Identity(dimension + 1, dimension + 1) - dt*theta*Mp;
+
+		// sparcify M
+		auto sparse_M = utils::sparsify(M, epsilon);
+
+		// now solve {DT, Dy}*M = RHS
+		Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>  BCGST;
+		BCGST.compute(sparse_M);
+		return BCGST.solve(RHS);
+
+#else
+		/* different solver : */
+		/* -------------------
+		Solves d{Y, T}/dt = M'*Y using eigen:
+		D{T, Y} = Dt* M'*{T_in + theta*DT, Y_in + theta*DY}
+ 	<=> D{T, Y} = Dt* M'*({T_in, Y_in} + theta*D{T, Y})
+ 	<=> (I - Dt*M'*theta)*D{T, Y} = Dt*M'*{T_in, Y_in}
+		------------------- */
 
 		// right hand side
 		const vector RHS = Mp*Y_T*dt;
@@ -219,7 +253,9 @@ namespace nnet {
 		// now solve {DT, Dy}*M = RHS
 		Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>  BCGST;
 		BCGST.compute(sparse_M);
-		return BCGST.solve(RHS);
+		vector DY_T = BCGST.solve(RHS);
+		return (vector)(Y_T + DY_T);
+#endif
 	}
 
 	template<class problem, class vector, typename Float>
@@ -228,23 +264,25 @@ namespace nnet {
 
 		// construct vector
 		auto M = construct_system(Y, T);
-		auto prev_DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
+		auto prev_Y_T_out = solve_first_order(Y, T, M, dt, theta, epsilon);
 
 		int max_iter = (int)std::max(1., -std::log2(tol));
 		for (int i = 0;; ++i) {
+			// intermediary vecor
+			Float scaled_T_out = T*(1 - theta) + theta*prev_Y_T_out(0); 
+			vector scaled_Y_out = Y*(1 - theta) + theta*prev_Y_T_out(Eigen::seq(1, dimension));
+
 			// construct system
-			vector scaled_DY_T = theta*prev_DY_T;
-			auto [next_Y, next_T] = utils::add_and_cleanup(Y, T, scaled_DY_T, epsilon);
-			M = construct_system(next_Y, next_T);
+			M = construct_system(scaled_Y_out, scaled_T_out);
 
 			// solve system
-			auto DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
+			auto Y_T_out = solve_first_order(Y, T, M, dt, theta, epsilon);
 
 			// exit on condition
-			if (i >= max_iter || std::abs((prev_DY_T(0) - DY_T(0))/next_T) < tol)
-				return utils::add_and_cleanup(Y, T, DY_T, epsilon);
+			if (i >= max_iter || std::abs((prev_Y_T_out(0) - Y_T_out(0))/scaled_T_out) < tol)
+				return {Y_T_out(Eigen::seq(1, dimension)), Y_T_out(0)};
 
-			prev_DY_T = DY_T;
+			prev_Y_T_out = Y_T_out;
 		}
 	}
 }
