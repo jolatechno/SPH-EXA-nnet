@@ -64,30 +64,30 @@ int main() {
 
 		/* -----------------
 		construct system function */
-		auto construct_system = [&](const Eigen::VectorXd &Y, double T) {
+		auto construct_system = [&](const Eigen::VectorXd &Y_, double T_) {
 			std::vector<double> rates = {
 				// two simple photodesintegration (i -> j)
-				0.3 + T,
-				0.2 + 0.7*T,
+				0.3 + T_,
+				0.2 + 0.7*T_,
 
 				// different species fusion (i + j -> k)
-				0.1 + 1.1*T,
+				0.1 + 1.1*T_,
 
 				// two different species "fission" (photodesintegration, i > j + k)
-				0.15 + 0.9*T,
+				0.15 + 0.9*T_,
 
 				// same species fusion (i + i -> j)
-				1.25 - 0.5*T,
+				1.25 - 0.5*T_,
 
 				// same species "fission" (photodesintegration, i -> j + j)
-				1 - 0.15*T,
+				1 - 0.15*T_,
 			};
 
 			// generate matrix
-			Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reactions, rates, 1., Y);
+			Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reactions, rates, 1., Y_);
 
 			// add temperature to the problem
-			Eigen::MatrixXd Mp = nnet::include_temp(M, value_1, cv, BE, Y);
+			Eigen::MatrixXd Mp = nnet::include_temp(M, value_1, cv, BE, Y_);
 
 
 

@@ -12,7 +12,7 @@ double Adot(Eigen::Vector<double, 14> const &Y) {
 
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
-	const double cv = 1.; // typical cv from net14 fortran
+	const double cv = 2e7; // typical cv from net14 fortran
 	const double density = 1e9; // density, g/cm^3
 
 	// initial state
@@ -22,30 +22,35 @@ int main() {
 
 	for (int i = 0; i < 14; ++i) Y(i) = X(i) / nnet::net14::constants::A(i);
 
-	double T = 1.1e9;
+	double T = 1e9;
 	auto last_Y = Y;
 	double last_T = T;
 	double m_tot, m_in = Adot(Y);
 
-	double dt=1e-11, t_max = 5.;
+	double dt=1e-16, t_max = 5.;
 	int n_max = 10000; //t_max/dt;
 	const int n_print = 20;
 
 	const double theta = 0.6;
 
-	auto construct_system = [&](const Eigen::VectorXd &Y, double T) {
+	net14_debug=true;
+	auto construct_system = [&](const Eigen::VectorXd &Y_, double T_) {
 		// compute rates
-		auto rates = nnet::net14::compute_reaction_rates(T);
+		auto rates = nnet::net14::compute_reaction_rates(T_);
+		net14_debug = false;
 
-		auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, density, Y);
+		auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, density, Y_);
 
 		// include temperature
-		Eigen::VectorXd BE = nnet::net14::BE - nnet::net14::ideal_gaz_correction(T);
-		return nnet::include_temp(M, value_1, cv, BE, Y);
+		Eigen::VectorXd BE = nnet::net14::BE + nnet::net14::ideal_gaz_correction(T_);
+		return nnet::include_temp(M, value_1, cv, BE, Y_);
 	};
 
 	for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
 	std::cout << "\t" << T << std::endl;
+
+	Eigen::VectorXd BE = nnet::net14::BE + nnet::net14::ideal_gaz_correction(T);
+	std::cout << "\nBE(T=" << T <<")=" << BE.transpose() << "\n\n";
 
 	double delta_m = 0;
 	for (int i = 0; i < n_max; ++i) {
@@ -79,7 +84,7 @@ int main() {
 
 
 		// solve the system
-		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, theta, 1e-5, 1e-30);
+		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, theta, 1e-5, 0.);
 
 		m_tot = Adot(Y);
 

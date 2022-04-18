@@ -43,8 +43,6 @@ solve_system : compose_system(Y, T), Y, T:
 /* class reaction: std::vector<std::pair<int, int>> reactant -> std::vector<std::pair<int, int>> product */
 /* function "reaction_to_first_order": std:vector<std::pair<reaction, double>> -> Eigen::matrix */
 
-
-
 namespace nnet {
 	struct reaction {
 		struct reactant {
@@ -194,9 +192,9 @@ namespace nnet {
 	}
 
 	template<class matrix, class vector, typename Float>
-	vector solve_first_order(const vector &Y, const Float T, const matrix &Mp, const Float dt, const Float theta=1, const Float epsilon=1e-16) {
+	vector solve_first_order(const vector &Y, const Float T, const matrix &Mp, const Float dt, const Float theta=1, const Float epsilon=1e-100) {
 		/* -------------------
-		Solves d{Y, T}/dt = RQ*Y using eigen:
+		Solves d{Y, T}/dt = M'*Y using eigen:
 
 		D{T, Y} = Dt* M'*{T_in + theta*DT, Y_in + theta*DY}
  	<=> D{T, Y} = Dt* M'*({T_in, Y_in} + theta*D{T, Y})
@@ -218,7 +216,7 @@ namespace nnet {
 		// sparcify M
 		auto sparse_M = utils::sparsify(M, epsilon);
 
-		// now solve {Dy, DT}*M = RHS
+		// now solve {DT, Dy}*M = RHS
 		Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>  BCGST;
 		BCGST.compute(sparse_M);
 		return BCGST.solve(RHS);
@@ -243,7 +241,7 @@ namespace nnet {
 			auto DY_T = solve_first_order(Y, T, M, dt, theta, epsilon);
 
 			// exit on condition
-			if (i >= max_iter || std::abs(prev_DY_T(0) - DY_T(0))/next_T < tol)
+			if (i >= max_iter || std::abs((prev_DY_T(0) - DY_T(0))/next_T) < tol)
 				return utils::add_and_cleanup(Y, T, DY_T, epsilon);
 
 			prev_DY_T = DY_T;
