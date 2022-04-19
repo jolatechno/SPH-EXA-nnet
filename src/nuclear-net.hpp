@@ -17,12 +17,8 @@ bool net14_debug = false;
 
 namespace nnet {
 	namespace constants {
-		/// factor that correlate timestep to temperature
-		double timestep_temp_factor = 4e-3;
-		/// maximum timestep allowed
-		double max_timestep = 1e-2;
-		/// maximum timestep varition
-		double max_timestep_upstep = 1.5;
+		/// safety factor when determining the maximum timestep.
+		double safety_margin = 0.3;
 	}
 
 
@@ -273,6 +269,41 @@ namespace nnet {
 
 
 
+	/// gets the maximum timestep
+	/**
+	 * 
+	 */
+	template<typename Float, int n, int m>
+	Float get_max_timestep(const Eigen::Matrix<Float, n, n> &Mp, const Eigen::Vector<Float, m> &Y, const Float T) {
+		const int dimension = Y.size();
+
+		Eigen::Vector<Float, m> Y_T(dimension + 1);
+		Y_T << T, Y;
+
+		Eigen::Vector<Float, m> DY_T = Mp*Y_T;
+
+		// compute max dt
+		Float max_dt = 0;
+		for (int i = 0; i < dimension; ++i) 
+			if (DY_T(i + 1) != 0) {
+				// compute local max dt
+				Float max_dt_i;
+				if (DY_T(i + 1) > 0) {
+					max_dt_i = (1 - Y(i))/DY_T(i + 1);
+				} else
+					max_dt_i = -Y(i)     /DY_T(i + 1);
+
+				// compute max
+				if (!std::isnan(max_dt_i) && max_dt_i > max_dt)
+					max_dt = max_dt_i;
+			}
+
+		return max_dt;
+	}
+
+
+
+
 	/// solves a system non-iteratively.
 	/**
 	 *  solves non-iteratively and partialy implicitly the system represented by M.
@@ -286,28 +317,6 @@ namespace nnet {
 		vector Y_T(dimension + 1);
 		Y_T << T, Y;
 
-#ifdef DIFFERENT_SOLVER
-		/* -------------------
-		Solves d{Y, T}/dt = M'*Y using eigen:
-
-		                  {T_out,Y_out} = Dt* M'*{[1-theta]T_in+theta*T_out,  [1-theta]*Y_in+theta*Y_out} + {T_in,Y_in}
- 	<=>                   {T_out,Y_out} = Dt* M'*([1-theta]*{T_in,Y_in}    + theta*{T_out,Y_out})         + {T_in,Y_in}
- 	<=> (I - Dt*M'*theta)*{T_out,Y_out} =                                             (I + Dt*M'*[1-theta])*{T_in,Y_in}
-		------------------- */
-
-		// right hand side
-		vector RHS = Y_T + dt*(1 - theta)*Mp*Y_T;
-
-		// construct M
-		matrix M = matrix::Identity(dimension + 1, dimension + 1) - dt*theta*Mp;
-
-		// normalize
-		utils::normalize(M, RHS);
-
-		// now solve M*{T_out, Y_out} = RHS
-		return utils::solve(M, RHS, epsilon);
-#else
-		/* different solver : */
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
 
@@ -328,7 +337,6 @@ namespace nnet {
 		// now solve M*D{T, Y} = RHS
 		vector DY_T = utils::solve(M, RHS, epsilon);
 		return Y_T + DY_T;
-#endif
 	}
 
 
@@ -342,7 +350,7 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class problem, class vector, typename Float>
-	std::tuple<vector, Float> solve_system(const problem construct_system, const vector &Y, const Float T, Float &dt, const Float theta=1, const Float tol=1e-5, const Float epsilon=1e-16) {
+	std::tuple<vector, Float, Float> solve_system(const problem construct_system, const vector &Y, const Float T, const Float dt_max, const Float theta=1, const Float tol=1e-5, const Float epsilon=1e-16) {
 		const int dimension = Y.size();
 
 		// construct vector
@@ -351,6 +359,7 @@ namespace nnet {
 
 		// actual solving
 		int max_iter = std::max(1., -std::log2(tol));
+		Float dt = dt_max;
 		for (int i = 0;; ++i) {
 
 			// intermediary vecor
@@ -360,17 +369,24 @@ namespace nnet {
 			// construct system
 			auto M = construct_system(scaled_Y_out, scaled_T_out);
 
-			// solve system
-			auto Y_T_out = solve_first_order(Y, T, M, dt, theta, epsilon);
+			// adapt time step
+			Float next_dt = get_max_timestep(M, Y, T)*constants::safety_margin;
+			if (dt > next_dt) {
+				dt = next_dt;
+				--i;
+			} else {
+				// solve system
+				auto Y_T_out = solve_first_order(Y, T, M, dt, theta, epsilon);
 
-			// clip system
-			utils::clip(Y_T_out, epsilon);
+				// clip system
+				utils::clip(Y_T_out, epsilon);
 
-			// exit on condition
-			if (i >= max_iter || std::abs((prev_Y_T_out(0) - Y_T_out(0))/scaled_T_out) < tol)
-				return {Y_T_out(Eigen::seq(1, dimension)), Y_T_out(0)};
+				// exit on condition
+				if (i >= max_iter || std::abs((prev_Y_T_out(0) - Y_T_out(0))/scaled_T_out) < tol)
+					return {Y_T_out(Eigen::seq(1, dimension)), Y_T_out(0), dt};
 
-			prev_Y_T_out = Y_T_out;
+				prev_Y_T_out = Y_T_out;
+			}
 		}
 	}
 }

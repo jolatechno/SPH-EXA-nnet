@@ -103,7 +103,8 @@ int main() {
 		construct_system(Y, T);
 
 		// solve the system
-		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, theta, 1e-18);
+		double actual_dt;
+		std::tie(Y, T, actual_dt) = nnet::solve_system(construct_system, Y, T, dt, theta, 1e-18);
 
 		E_tot = Y.dot(m + BE) + cv*T;
 		m_tot = Y.dot(m);

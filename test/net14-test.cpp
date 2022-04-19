@@ -21,7 +21,8 @@ int main() {
 	double last_T = T;
 	double m_tot, m_in = Y.dot(nnet::net14::constants::A);
 
-	double dt=1e-16, t = 0;
+	const double max_dt=1e-2;
+	double t = 0;
 	int n_max = 1000;
 	const int n_print = 20;
 
@@ -49,8 +50,8 @@ int main() {
 		Eigen::VectorXd Y_T(14 + 1);
 		Y_T << T, Y;
 
-		Eigen::VectorXd RHS = Mp*Y_T*dt;
-		Eigen::MatrixXd Mpp = Eigen::MatrixXd::Identity(14 + 1, 14 + 1) - theta*dt*Mp;
+		Eigen::VectorXd RHS = Mp*Y_T*max_dt;
+		Eigen::MatrixXd Mpp = Eigen::MatrixXd::Identity(14 + 1, 14 + 1) - theta*max_dt*Mp;
 
 
 		std::cout << "\nBE(T=" << T <<") =\t" << BE.transpose() << "\n\n";
@@ -76,19 +77,9 @@ int main() {
 
 	for (int i = 1; i <= n_max; ++i) {
 
-		// timestep tweeking
-		double DT = last_T - T;
-		double prev_dt = dt;
-		if (DT != 0) {
-			dt = nnet::constants::timestep_temp_factor*T*prev_dt/std::abs(DT);
-			dt = std::min(dt, nnet::constants::max_timestep_upstep*prev_dt);
-		}
-			else dt = std::sqrt(nnet::constants::max_timestep_upstep)*prev_dt;
-		dt = std::min(dt, nnet::constants::max_timestep);
-
-
 		// solve the system
-		std::tie(Y, T) = nnet::solve_system(nnet::net14::construct_system(rho, cv, value_1), Y, T, dt, theta, 1e-8, 0.);
+		double dt;
+		std::tie(Y, T, dt) = nnet::solve_system(nnet::net14::construct_system(rho, cv, value_1), Y, T, max_dt, theta, 1e-8, 0.);
 		t += dt;
 
 		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0) {
