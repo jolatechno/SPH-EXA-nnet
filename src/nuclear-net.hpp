@@ -16,6 +16,18 @@ debuging :
 bool net14_debug = false;
 
 namespace nnet {
+	namespace constants {
+		/// factor that correlate timestep to temperature
+		double timestep_temp_factor = 4e-3;
+		/// maximum timestep allowed
+		double max_timestep = 1e-2;
+		/// maximum timestep varition
+		double max_timestep_upstep = 1.5;
+	}
+
+
+
+
 	/// reaction class
 	/**
 	 * ...TODO
@@ -30,6 +42,9 @@ namespace nnet {
 		std::vector<reactant> reactants;
 		std::vector<product> products;
 	};
+
+
+
 
 	namespace utils {
 		/// sparcify a matrix.
@@ -50,6 +65,9 @@ namespace nnet {
 			Mout.setFromTriplets(coefs.begin(), coefs.end());
 			return Mout;
 		}
+
+
+
 
 		/// normalizes a system.
 		/**
@@ -75,6 +93,8 @@ namespace nnet {
 					M(j, i) /= max_;
 			}
 		}
+
+
 
 
 		/// solves a system
@@ -107,6 +127,11 @@ namespace nnet {
 					X(i) = 0;
 		}
 	}
+
+
+
+
+
 
 	/// create a first order system from a list of reaction.
 	/**
@@ -150,7 +175,7 @@ namespace nnet {
 				std::cerr << "\t->\t";
 				for (auto &[product_id, n_product_produced] : Reaction.products)
 					std::cout << n_product_produced << "*[" << product_id << "] ";
-				std::cerr << ", " << order << ", " << rate << "\t->\t" << (corrected_rate/std::pow(rho, (Float)(order - 1))) << " ->\t" << corrected_rate << "\n";
+				std::cerr << ", " << order << ", " << rate << "\t->\t" << (corrected_rate/std::pow(rho, (Float)(order - 1))) << "\t->\t" << corrected_rate << "\n";
 			}
 
 
@@ -168,19 +193,9 @@ namespace nnet {
 					M(reactant_id, reactant_id) -= consumption_rate;
 				}
 
-#ifdef DISTRIBUTE_ELEMENT
-				// compute non-diagonal terms (production)
-				const int n_reactants = Reaction.reactants.size();
-				for (auto &[product_id, n_product_produced] : Reaction.products) {
-					for (auto &[reactant_id, _] : Reaction.products) {
-						Float production_rate = n_product_produced*corrected_rate/n_reactants;
-						for (auto &[other_reactant_id, _] : Reaction.reactants)
-							if (other_reactant_id != reactant_id)
-								production_rate *= Y(other_reactant_id);
-						M(product_id, reactant_id) += production_rate;
-					}
-				}
-#else
+
+
+
 				// compute non-diagonal terms (production)
 				for (auto &[product_id, n_product_produced] : Reaction.products) {
 					// find the optimum place to put the coeficient
@@ -206,7 +221,6 @@ namespace nnet {
 								best_reactant_id = reactant_id;
 					}
 
-
 					// insert into the matrix
 					Float production_rate = n_product_produced*corrected_rate;
 					for (auto &[other_reactant_id, _] : Reaction.reactants)
@@ -214,7 +228,6 @@ namespace nnet {
 							production_rate *= Y(other_reactant_id);
 					M(product_id, best_reactant_id) += production_rate;
 				}
-#endif
 			}
 		}
 			
@@ -222,19 +235,23 @@ namespace nnet {
 		return M;
 	}
 
+
+
+
+
 	/// includes temperature in the system represented by M.
 	/**
 	 * add a row to M based on BE to obtain M' such that, d{T,Y}/dt = M'*{T,Y}.
 	 * ...TODO
 	 */
 	template<class matrix, class vector, typename Float>
-	matrix include_temp(const matrix &M, const Float value_1, const Float cv, const vector &BE, const vector &Y) {
+	matrix include_temp(const matrix &M, const Float cv, const Float value_1, const vector &BE, const vector &Y) {
 		/* -------------------
 		Add a row to M (dY/dt = M*Y) such that d{T,Y}/dt = M'*{T,Y}:
 
-		 (dY/dt).BE    + value_1*T    = dT/dt*cv
-	<=>    (M*Y).BE/cv + value_1*T/cv = dT/dt
-	<=> (M.T*BE). Y/cv + value_1*T/cv = dT/dt
+		  (dY/dt).BE    + value_1*T    = dT/dt*cv
+	<=>     (M*Y).BE/cv + value_1*T/cv = dT/dt
+	<=>  (M.T*BE). Y/cv + value_1*T/cv = dT/dt
 		------------------- */
 
 		const int dimension = Y.size();
@@ -252,6 +269,10 @@ namespace nnet {
 		return Mp;
 	}
 
+
+
+
+
 	/// solves a system non-iteratively.
 	/**
 	 *  solves non-iteratively and partialy implicitly the system represented by M.
@@ -265,7 +286,7 @@ namespace nnet {
 		vector Y_T(dimension + 1);
 		Y_T << T, Y;
 
-#ifndef DIFFERENT_SOLVER
+#ifdef DIFFERENT_SOLVER
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
 
@@ -310,24 +331,31 @@ namespace nnet {
 #endif
 	}
 
+
+
+
+
+
 	/// fully solves a system.
 	/**
 	 *  solves iteratively and fully implicitly a single iteration of the system constructed by construct_system.
 	 * ...TODO
 	 */
 	template<class problem, class vector, typename Float>
-	std::tuple<vector, Float> solve_system(const problem construct_system, const vector &Y, const Float T, const Float dt, const Float theta=1, const Float tol=1e-5, const Float epsilon=1e-16) {
+	std::tuple<vector, Float> solve_system(const problem construct_system, const vector &Y, const Float T, Float &dt, const Float theta=1, const Float tol=1e-5, const Float epsilon=1e-16) {
 		const int dimension = Y.size();
 
 		// construct vector
 		vector prev_Y_T_out(dimension + 1);
 		prev_Y_T_out << T, Y;
 
-		int max_iter = (int)std::max(1., -std::log2(tol));
+		// actual solving
+		int max_iter = std::max(1., -std::log2(tol));
 		for (int i = 0;; ++i) {
+
 			// intermediary vecor
-			Float scaled_T_out = T*(1 - theta) + theta*prev_Y_T_out(0); 
-			vector scaled_Y_out = Y*(1 - theta) + theta*prev_Y_T_out(Eigen::seq(1, dimension));
+			Float scaled_T_out  = (1 - theta)*T + theta*prev_Y_T_out(0); 
+			vector scaled_Y_out = (1 - theta)*Y + theta*prev_Y_T_out(Eigen::seq(1, dimension));
 
 			// construct system
 			auto M = construct_system(scaled_Y_out, scaled_T_out);

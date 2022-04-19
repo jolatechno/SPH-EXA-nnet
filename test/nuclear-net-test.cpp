@@ -5,6 +5,7 @@
 int main() {
 	double value_1 = 0;
 	double cv = 1;
+	double rho = 1;
 
 	// mass excedents
 	Eigen::VectorXd BE(3);
@@ -84,10 +85,10 @@ int main() {
 			};
 
 			// generate matrix
-			Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reactions, rates, 1., Y_);
+			Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reactions, rates, rho, Y_);
 
 			// add temperature to the problem
-			Eigen::MatrixXd Mp = nnet::include_temp(M, value_1, cv, BE, Y_);
+			Eigen::MatrixXd Mp = nnet::include_temp(M, cv, value_1, BE, Y_);
 
 
 

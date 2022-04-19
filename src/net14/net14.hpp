@@ -353,5 +353,21 @@ namespace nnet {
 
 			return rates;
 		}
+
+		/// actual network
+		auto construct_system(const double rho, const double cv, const double value_1) {
+			auto construct_system = [=](const Eigen::VectorXd &Y, double T) {
+				// compute rates
+				auto rates = compute_reaction_rates(T);
+
+				auto M = nnet::first_order_from_reactions<double>(reaction_list, rates, rho, Y);
+
+				// include temperature
+				Eigen::VectorXd corrected_BE = BE + ideal_gaz_correction(T);
+				return nnet::include_temp(M, cv, value_1, corrected_BE, Y);
+			};
+
+			return construct_system;
+		}
 	}
 }
