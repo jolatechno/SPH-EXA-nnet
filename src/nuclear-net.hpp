@@ -145,13 +145,12 @@ namespace nnet {
 			debuging :
 			!!!!!!!!!!!! */
 			if (net14_debug) {
-				std::cerr << "\t\t";
 				for (auto &[reactant_id, n_reactant_consumed] : Reaction.reactants)
-					std::cerr << n_reactant_consumed << "*[" << reactant_id << "] ";
-				std::cerr << " -> ";
+					std::cout << n_reactant_consumed << "*[" << reactant_id << "] ";
+				std::cerr << "\t->\t";
 				for (auto &[product_id, n_product_produced] : Reaction.products)
-					std::cerr << n_product_produced << "*[" << product_id << "] ";
-				std::cerr << ", " << order << ", " << rate << " -> " << (corrected_rate/std::pow(rho, (Float)(order - 1))) << " ->\t" << corrected_rate << "\n";
+					std::cout << n_product_produced << "*[" << product_id << "] ";
+				std::cerr << ", " << order << ", " << rate << "\t->\t" << (corrected_rate/std::pow(rho, (Float)(order - 1))) << " ->\t" << corrected_rate << "\n";
 			}
 
 
@@ -232,7 +231,7 @@ namespace nnet {
 	matrix include_temp(const matrix &M, const Float value_1, const Float cv, const vector &BE, const vector &Y) {
 		/* -------------------
 		Add a row to M (dY/dt = M*Y) such that d{T,Y}/dt = M'*{T,Y}:
-		
+
 		 (dY/dt).BE    + value_1*T    = dT/dt*cv
 	<=>    (M*Y).BE/cv + value_1*T/cv = dT/dt
 	<=> (M.T*BE). Y/cv + value_1*T/cv = dT/dt

@@ -42,11 +42,6 @@ int main() {
 	for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
 	std::cout << "\t" << T << std::endl;
 
-
-	Eigen::VectorXd BE = nnet::net14::BE + nnet::net14::ideal_gaz_correction(T);
-	std::cout << "\nBE(T=" << T <<") =\t" << BE.transpose() << "\n\n";
-
-
 	double delta_m = 0;
 	for (int i = 1; i <= n_max; ++i) {
 		/* ---------------------
@@ -58,7 +53,7 @@ int main() {
 			auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, density, Y);
 
 			// include temperature
-			Eigen::VectorXd BE = nnet::net14::BE - nnet::net14::ideal_gaz_correction(T);
+			Eigen::VectorXd BE = nnet::net14::BE + nnet::net14::ideal_gaz_correction(T);
 			auto Mp = nnet::include_temp(M, value_1, cv, BE, Y);
 
 			// construct vector
@@ -67,6 +62,9 @@ int main() {
 
 			Eigen::VectorXd RHS = Mp*Y_T*dt;
 			Eigen::MatrixXd Mpp = Eigen::MatrixXd::Identity(14 + 1, 14 + 1) - theta*dt*Mp;
+
+
+			std::cout << "\nBE(T=" << T <<") =\t" << BE.transpose() << "\n\n";
 
 			std::cout << "phi =\n" << Mpp << "\n\n";
 

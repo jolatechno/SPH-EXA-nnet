@@ -347,7 +347,7 @@ namespace nnet {
 					/* !!!!!!!!!!!!
 					debuging :
 					!!!!!!!!!!!! */
-					if (net14_debug) std::cout << "roag=" << roag << ", rnega=" << rnega << "\n";
+					if (net14_debug) std::cout << "roag=" << roag << ", rnega=" << rnega << "\n\n";
 				}
 			}
 
