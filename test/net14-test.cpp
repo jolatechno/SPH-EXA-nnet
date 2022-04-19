@@ -5,7 +5,7 @@
 
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
-	const double cv = 5e-8; // typical cv from net14 fortran
+	const double cv = 2e-7; // typical cv from net14 fortran
 	const double density = 1e9; // density, g/cm^3
 
 	// initial state
@@ -20,11 +20,11 @@ int main() {
 	double last_T = T;
 	double m_tot, m_in = Y.dot(nnet::net14::constants::A);
 
-	double dt=1e-17, t_max = 5.;
+	double dt=1e-16, t_max = 5.;
 	int n_max = 10000; //t_max/dt;
 	const int n_print = 20;
 
-	const double theta = 1;
+	const double theta = 0.95;
 
 	auto construct_system = [&](const Eigen::VectorXd &Y_, double T_) {
 		// compute rates
@@ -57,14 +57,22 @@ int main() {
 
 			auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, density, Y);
 
-			std::cout << "\n" << (M*Y).dot(nnet::net14::constants::A) << "=dm/dt\n";
-
 			// include temperature
 			Eigen::VectorXd BE = nnet::net14::BE - nnet::net14::ideal_gaz_correction(T);
 			auto Mp = nnet::include_temp(M, value_1, cv, BE, Y);
 
+			// construct vector
 			Eigen::VectorXd Y_T(14 + 1);
 			Y_T << T, Y;
+
+			Eigen::VectorXd RHS = Mp*Y_T*dt;
+			Eigen::MatrixXd Mpp = Eigen::MatrixXd::Identity(14 + 1, 14 + 1) - theta*dt*Mp;
+
+			std::cout << "RHS=" << RHS.transpose() << "\n\n";
+
+			std::cout << "phi=\n" << Mpp << "\n\n";
+
+			std::cout << "\n" << (M*Y).dot(nnet::net14::constants::A) << "=dm/dt\n";
 
 			std::cout << (Mp*Y_T).transpose() << "\t=d{T, Y}/dt=Mp*{T, Y}\n"; 
 		}
