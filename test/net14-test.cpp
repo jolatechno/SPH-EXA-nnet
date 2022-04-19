@@ -3,16 +3,9 @@
 #include "../src/nuclear-net.hpp"
 #include "../src/net14/net14.hpp"
 
-double Adot(Eigen::Vector<double, 14> const &Y) {
-	double norm = 0;
-	for (int i = 0; i < 14; ++i)
-		norm += Y(i)*nnet::net14::constants::A(i);
-	return norm;
-}
-
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
-	const double cv = 5e-7; // typical cv from net14 fortran
+	const double cv = 5e-8; // typical cv from net14 fortran
 	const double density = 1e9; // density, g/cm^3
 
 	// initial state
@@ -25,13 +18,13 @@ int main() {
 	double T = 1e9;
 	auto last_Y = Y;
 	double last_T = T;
-	double m_tot, m_in = Adot(Y);
+	double m_tot, m_in = Y.dot(nnet::net14::constants::A);
 
-	double dt=1e-16, t_max = 5.;
-	int n_max = 1000; //t_max/dt;
+	double dt=1e-17, t_max = 5.;
+	int n_max = 10000; //t_max/dt;
 	const int n_print = 20;
 
-	const double theta = 0.6;
+	const double theta = 1;
 
 	auto construct_system = [&](const Eigen::VectorXd &Y_, double T_) {
 		// compute rates
@@ -49,32 +42,31 @@ int main() {
 	for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
 	std::cout << "\t" << T << std::endl;
 
+
 	Eigen::VectorXd BE = nnet::net14::BE + nnet::net14::ideal_gaz_correction(T);
 	std::cout << "\nBE(T=" << T <<")=" << BE.transpose() << "\n\n";
+
 
 	double delta_m = 0;
 	for (int i = 0; i < n_max; ++i) {
 		/* ---------------------
 		begin test
 		--------------------- */
-		/*if (i == 0) {
+		if (i == 0) {
 			auto rates = nnet::net14::compute_reaction_rates(T);
 
 			auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, density, Y);
 
-			if (i  == 0)
-				std::cout << "\n" << (M*Y).transpose() << "\n" << Adot(M*Y) << "\n\n";
+			std::cout << "\n" << (M*Y).dot(nnet::net14::constants::A) << "=dm/dt\n";
 
 			// include temperature
 			Eigen::VectorXd BE = nnet::net14::BE - nnet::net14::ideal_gaz_correction(T);
 			auto Mp = nnet::include_temp(M, value_1, cv, BE, Y);
 
-			if (i == 0)
-				std::cout << 
-					// M
-					//Mp
-					// Eigen::MatrixXd::Identity(15, 15) - dt*theta*Mp
-				<< "\n\n";
+			Eigen::VectorXd Y_T(14 + 1);
+			Y_T << T, Y;
+
+			std::cout << (Mp*Y_T).transpose() << "\t=d{T, Y}/dt=Mp*{T, Y}\n"; 
 		}
 		/* ---------------------
 		end test
@@ -83,19 +75,26 @@ int main() {
 
 		net14_debug=i==1;
 
+
 		// solve the system
 		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, theta, 1e-8, 0.);
 
-		m_tot = Adot(Y);
+		/* ---------------------
+		begin test
+		--------------------- */
+		if (i == 0) {
+			Eigen::VectorXd DY_T(14 + 1);
+			DY_T << (T - last_T), (Y - last_Y);
+			DY_T /= dt;
 
-
-		/*if (i == 0) {
-			std::cout << "\n, dY=";
-			for (int i = 0; i < 14; ++i) std::cout << (Y(i) - last_Y(i)) / dt << ", ";
-			std::cout << "\n";
-		}*/
+			std::cout << DY_T.transpose() << "\t=d{T, Y}/dt\n"; 
+		}
+		/* ---------------------
+		end test
+		--------------------- */
 
 		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0) {
+			m_tot = Y.dot(nnet::net14::constants::A);
 			for (int i = 0; i < 14; ++i) X(i) = Y(i) * nnet::net14::constants::A(i);
 			std::cout << "\n";
 			for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";

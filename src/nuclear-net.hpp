@@ -110,10 +110,19 @@ namespace nnet {
 			BCGST.compute(sparse_M);
 			return BCGST.solve(RHS);
 		}
+
+		template<typename Float, int n>
+		void clip(Eigen::Vector<Float, n> &X, const Float epsilon=0) {
+			const int dimension = X.size();
+
+			for (int i = 0; i < dimension; ++i)
+				if (X(i) < epsilon)
+					X(i) = 0;
+		}
 	}
 
 	template<typename Float>
-	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const Float rho, Eigen::Vector<Float, -1> const &Y, const Float epsilon=0) {
+	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const Float rho, Eigen::Vector<Float, -1> const &Y) {
 		/* -------------------
 		reactes a sparce matrix M such that dY/dt = M*Y*
 		from a list of reactions
@@ -123,11 +132,12 @@ namespace nnet {
 		Eigen::Matrix<Float, -1, -1> M = Eigen::Matrix<Float, -1, -1>::Zero(dimension, dimension);
 
 		for (int i = 0; i < reactions.size() && i < rates.size(); ++i) {
-			auto &reaction = reactions[i]; auto rate = rates[i];
+			const reaction &Reaction = reactions[i];
+			const Float rate = rates[i];
 
 			// actual reaction speed (including factorials)
 			Float corrected_rate = rate;
-			for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) {
+			for (auto &[reactant_id, n_reactant_consumed] : Reaction.reactants) {
 				corrected_rate /= std::tgamma(n_reactant_consumed + 1); // tgamma performas factorial with n - 1 -> hence we use n + 1
 				if (i > n_reactant_consumed)
 					corrected_rate *= std::pow(Y(reactant_id), n_reactant_consumed - 1);
@@ -135,9 +145,11 @@ namespace nnet {
 
 			// correction with rho
 			int order = 0;
-			for (auto &[_, n_reactant_consumed] : reaction.reactants)
+			for (auto &[_, n_reactant_consumed] : Reaction.reactants)
 				order += n_reactant_consumed;
 			corrected_rate *= std::pow(rho, (Float)(order - 1));
+
+
 
 
 
@@ -146,39 +158,52 @@ namespace nnet {
 			!!!!!!!!!!!! */
 			if (net14_debug) {
 				std::cerr << "\t\t";
-				for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants)
+				for (auto &[reactant_id, n_reactant_consumed] : Reaction.reactants)
 					std::cerr << n_reactant_consumed << "*[" << reactant_id << "] ";
 				std::cerr << " -> ";
-				for (auto &[product_id, n_product_produced] : reaction.products)
+				for (auto &[product_id, n_product_produced] : Reaction.products)
 					std::cerr << n_product_produced << "*[" << product_id << "] ";
-				std::cerr << ", " << order << ", " << corrected_rate << " (" << rate << ")\n";
+				std::cerr << ", " << order << ", " << rate << " -> " << (corrected_rate/std::pow(rho, (Float)(order - 1))) << " ->\t" << corrected_rate << "\n";
 			}
 
 
 
+
+
 			// stop if the rate is 0
-			if (std::abs(corrected_rate) >= epsilon) {
+			if (std::abs(corrected_rate) > 0) {
 				// compute diagonal terms (consumption)
-				for (auto &[reactant_id, n_reactant_consumed] : reaction.reactants) {
+				for (auto &[reactant_id, n_reactant_consumed] : Reaction.reactants) {
 					Float consumption_rate = n_reactant_consumed*corrected_rate;
-					for (auto &[other_reactant_id, _] : reaction.reactants)
+					for (auto &[other_reactant_id, _] : Reaction.reactants)
 						if (other_reactant_id != reactant_id)
 							consumption_rate *= Y(other_reactant_id);
 					M(reactant_id, reactant_id) -= consumption_rate;
 				}
 
+#ifdef DISTRIBUTE_ELEMENT
 				// compute non-diagonal terms (production)
-				for (auto &[product_id, n_product_produced] : reaction.products) {
-
+				const int n_reactants = Reaction.reactants.size();
+				for (auto &[product_id, n_product_produced] : Reaction.products) {
+					for (auto &[reactant_id, _] : Reaction.products) {
+						Float production_rate = n_product_produced*corrected_rate/n_reactants;
+						for (auto &[other_reactant_id, _] : Reaction.reactants)
+							if (other_reactant_id != reactant_id)
+								production_rate *= Y(other_reactant_id);
+						M(product_id, reactant_id) += production_rate;
+					}
+				}
+#else
+				// compute non-diagonal terms (production)
+				for (auto &[product_id, n_product_produced] : Reaction.products) {
 					// find the optimum place to put the coeficient
-					int best_reactant_id = reaction.reactants[0].reactant_id;
+					int best_reactant_id = Reaction.reactants[0].reactant_id;
 					bool is_non_zero = M(product_id, best_reactant_id) != 0.;
-					for (int j = 1; j < reaction.reactants.size(); ++j) { // for (auto &[reactant_id, _] : reaction.reactants | std::ranges::views::drop(1))
-						int reactant_id = reaction.reactants[j].reactant_id;
+					for (int j = 1; j < Reaction.reactants.size(); ++j) { // for (auto &[reactant_id, _] : Reaction.reactants | std::ranges::views::drop(1))
+						int reactant_id = Reaction.reactants[j].reactant_id;
 
 						// prioritize the minimization of the number of non-zero terms
 						if (M(product_id, reactant_id) != 0.) {
-
 							// overwise if it is the first non-zero term
 							if (!is_non_zero) {
 								is_non_zero = true;
@@ -188,20 +213,21 @@ namespace nnet {
 								if (std::abs((reactant_id - product_id)*M(product_id, reactant_id)/M(product_id, product_id)) <
 									std::abs((best_reactant_id - product_id)*M(product_id, best_reactant_id)/M(product_id, product_id)))
 									best_reactant_id = reactant_id;
-
 						} else if (!is_non_zero)
 							// if still populating a zero element, then keep the closest to the diagonal
 							if (std::abs(reactant_id - product_id) < std::abs(best_reactant_id - product_id))
 								best_reactant_id = reactant_id;
 					}
 
+
 					// insert into the matrix
 					Float production_rate = n_product_produced*corrected_rate;
-					for (auto &[other_reactant_id, _] : reaction.reactants)
+					for (auto &[other_reactant_id, _] : Reaction.reactants)
 						if (other_reactant_id != best_reactant_id)
 							production_rate *= Y(other_reactant_id);
 					M(product_id, best_reactant_id) += production_rate;
 				}
+#endif
 			}
 		}
 			
@@ -224,10 +250,10 @@ namespace nnet {
 
 		// insert M
 		Mp(Eigen::seq(1, dimension), Eigen::seq(1, dimension)) = M;
-		Mp(0, 0) = value_1/cv;
 
-		// insert Y -> temperature terms
+		// insert (T, Y) -> dT terms
 		Mp(0, Eigen::seq(1, dimension)) = M.transpose()*BE/cv;
+		Mp(0, 0) = value_1/cv; // T -> dT term
 
 		return Mp;
 	}
@@ -264,6 +290,7 @@ namespace nnet {
 		/* different solver : */
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
+
 		D{T, Y} = Dt* M'*{T_in + theta*DT, Y_in + theta*DY}
  	<=> D{T, Y} = Dt* M'*({T_in, Y_in} + theta*D{T, Y})
  	<=> (I - Dt*M'*theta)*D{T, Y} = Dt*M'*{T_in, Y_in}
@@ -303,6 +330,9 @@ namespace nnet {
 
 			// solve system
 			auto Y_T_out = solve_first_order(Y, T, M, dt, theta, epsilon);
+
+			// clip system
+			utils::clip(Y_T_out, epsilon);
 
 			// exit on condition
 			if (i >= max_iter || std::abs((prev_Y_T_out(0) - Y_T_out(0))/scaled_T_out) < tol)
