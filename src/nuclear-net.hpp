@@ -15,42 +15,11 @@ debuging :
 !!!!!!!!!!!! */
 bool net14_debug = false;
 
-
-/*
-photodesintegration_to_first_order  R_i,j, n_i,j
-
-fusion_to_first_order               F_i,j,k, n_i,j,k, Y_i
-	'-> M : dY/dt = M*Y
-
-include_temp : theta, value_1, cv, BE'_i: sum_i(BE'_i*dY_i/dt) + value_1*T = cv*dT/dt
-	'-> M' : d{T, Y}/dt = M'*{T, Y}
-
-iterate_system M', theta, Y, T
-	'-> D{T, Y} = Dt* M'*(T_in*(1 - theta) + T_out*theta)
-
-	D{T, Y} = Dt*M'*{T_in + theta*DT, Y_in + theta*Y_in}
- 	<=> D{T, Y} = Dt*M'*({T_in, Y_in} + theta*{DT, DY})
- 	<=> (I - Dt*M'*theta)*D{T, Y} = DT*M'*{T_in, Y_in}
- 	<=> D{T, Y} = (I - Dt* M' *theta)^{-1} * DT*M'*{T_in, Y_in}
-
-solve_system : compose_system(Y, T), Y, T:
- 	DT = 0, DY = 0
-
- 	while true:
- 		M' = compose_system(Y + theta*DY, T + theta*DT)
-
-		DT, DY -> iterate_system(M', Y, T)
-
-		abs((DT - DT_prev)/T) < tol:
-		 	T = T + DT, Y = Y + DT
-
-	return T + DT, Y + DY
-*/
-
-/* class reaction: std::vector<std::pair<int, int>> reactant -> std::vector<std::pair<int, int>> product */
-/* function "reaction_to_first_order": std:vector<std::pair<reaction, double>> -> Eigen::matrix */
-
 namespace nnet {
+	/// reaction class
+	/**
+	 * ...TODO
+	 */
 	struct reaction {
 		struct reactant {
 			int reactant_id, n_reactant_consumed = 1;
@@ -63,11 +32,13 @@ namespace nnet {
 	};
 
 	namespace utils {
+		/// sparcify a matrix.
+		/**
+		 * retursn a "sparsified" version of Min, with non-zero elements having a higher absolute value thab epsilon.
+		 * ...TODO
+		 */
 		template<typename Float, int n>
 		Eigen::SparseMatrix<Float> sparsify(const Eigen::Matrix<Float, n, n> &Min, const Float epsilon=1e-16) {
-			/* -------------------
-			put a "sparsified" version of Min into Mout according to epsilon 
-			------------------- */
 			std::vector<Eigen::Triplet<Float>> coefs;
 
 			for (int i = 0; i < Min.cols(); ++i)
@@ -80,6 +51,11 @@ namespace nnet {
 			return Mout;
 		}
 
+		/// normalizes a system.
+		/**
+		 * normalizes each equation of a system represented by a matrix (M) and a Right Hand Side (RHS).
+		 * ...TODO
+		 */
 		template<typename Float, int n, int m>
 		void normalize(Eigen::Matrix<Float, n, n> &M, Eigen::Vector<Float, m> &RHS) {
 			const int dimension = RHS.size();
@@ -100,6 +76,12 @@ namespace nnet {
 			}
 		}
 
+
+		/// solves a system
+		/**
+		 * solves a system represented by a matrix (M) and a Right Hand Side (RHS).
+		 * ...TODO
+		 */
 		template<typename Float, int n, int m>
 		Eigen::Vector<Float, m> solve(Eigen::Matrix<Float, n, n> &M, Eigen::Vector<Float, m> &RHS, const Float epsilon=0) {
 			// sparcify M
@@ -111,6 +93,11 @@ namespace nnet {
 			return BCGST.solve(RHS);
 		}
 
+		/// clip the values in a vector
+		/**
+		 * clip the values in a vector, to make 0 any negative value, or values smaller than a tolerance epsilon
+		 * ...TODO
+		 */
 		template<typename Float, int n>
 		void clip(Eigen::Vector<Float, n> &X, const Float epsilon=0) {
 			const int dimension = X.size();
@@ -121,12 +108,13 @@ namespace nnet {
 		}
 	}
 
+	/// create a first order system from a list of reaction.
+	/**
+	 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y.
+	 * ...TODO
+	 */
 	template<typename Float>
 	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const Float rho, Eigen::Vector<Float, -1> const &Y) {
-		/* -------------------
-		reactes a sparce matrix M such that dY/dt = M*Y*
-		from a list of reactions
-		------------------- */
 		const int dimension = Y.size();
 
 		Eigen::Matrix<Float, -1, -1> M = Eigen::Matrix<Float, -1, -1>::Zero(dimension, dimension);
@@ -235,14 +223,19 @@ namespace nnet {
 		return M;
 	}
 
+	/// includes temperature in the system represented by M.
+	/**
+	 * add a row to M based on BE to obtain M' such that, d{T,Y}/dt = M'*{T,Y}.
+	 * ...TODO
+	 */
 	template<class matrix, class vector, typename Float>
 	matrix include_temp(const matrix &M, const Float value_1, const Float cv, const vector &BE, const vector &Y) {
 		/* -------------------
-		add a row to M based on BE so that, d{T, Y}/dt = M'*{T, Y}
-
-		value_1, cv : BE.dY/dt + value_1*T = cv*dT/dt
-					   <=> (M * Y).BE/cv + value_1/cv*T = dT/dt
-					   <=> (M.t * BE).Y/cv + value_1/cv*T = dT/dt
+		Add a row to M (dY/dt = M*Y) such that d{T,Y}/dt = M'*{T,Y}:
+		
+		 (dY/dt).BE    + value_1*T    = dT/dt*cv
+	<=>    (M*Y).BE/cv + value_1*T/cv = dT/dt
+	<=> (M.T*BE). Y/cv + value_1*T/cv = dT/dt
 		------------------- */
 
 		const int dimension = Y.size();
@@ -251,13 +244,20 @@ namespace nnet {
 		// insert M
 		Mp(Eigen::seq(1, dimension), Eigen::seq(1, dimension)) = M;
 
-		// insert (T, Y) -> dT terms
+		// insert Y -> dT terms (first row)
 		Mp(0, Eigen::seq(1, dimension)) = M.transpose()*BE/cv;
-		Mp(0, 0) = value_1/cv; // T -> dT term
+
+		// insert T -> dT term  (first row diagonal value)
+		Mp(0, 0) = value_1/cv;
 
 		return Mp;
 	}
 
+	/// solves a system non-iteratively.
+	/**
+	 *  solves non-iteratively and partialy implicitly the system represented by M.
+	 * ...TODO
+	 */
 	template<class matrix, class vector, typename Float>
 	vector solve_first_order(const vector &Y, const Float T, const matrix &Mp, const Float dt, const Float theta=1, const Float epsilon=1e-100) {
 		const int dimension = Y.size();
@@ -270,9 +270,9 @@ namespace nnet {
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
 
-		{T_out, Y_out} = {T_in, Y_in} + Dt* M'*{T_in*(1 - theta) + theta*T_out, Y_in*(1 - theta) + theta*Y_out}
- 	<=> {T_out, Y_out} = {T_in, Y_in} + Dt* M'*([1 - theta]*{T_in, Y_in} + theta*{T_out, Y_out})
- 	<=> (I - Dt*M'*theta)*{T_out, Y_out} = (I + Dt*M'*[1- theta])*{T_in, Y_in}
+		                  {T_out,Y_out} = Dt* M'*{[1-theta]T_in+theta*T_out,  [1-theta]*Y_in+theta*Y_out} + {T_in,Y_in}
+ 	<=>                   {T_out,Y_out} = Dt* M'*([1-theta]*{T_in,Y_in}    + theta*{T_out,Y_out})         + {T_in,Y_in}
+ 	<=> (I - Dt*M'*theta)*{T_out,Y_out} =                                             (I + Dt*M'*[1-theta])*{T_in,Y_in}
 		------------------- */
 
 		// right hand side
@@ -291,9 +291,9 @@ namespace nnet {
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
 
-		D{T, Y} = Dt* M'*{T_in + theta*DT, Y_in + theta*DY}
- 	<=> D{T, Y} = Dt* M'*({T_in, Y_in} + theta*D{T, Y})
- 	<=> (I - Dt*M'*theta)*D{T, Y} = Dt*M'*{T_in, Y_in}
+		                  D{T, Y} = Dt* M'*{T_in+theta*DT, Y_in+theta*DY}
+ 	<=>                   D{T, Y} = Dt* M'*({T_in,Y_in}  + theta*D{T,Y})
+ 	<=> (I - Dt*M'*theta)*D{T, Y} = Dt* M'* {T_in,Y_in}
 		------------------- */
 
 		// right hand side
@@ -311,6 +311,11 @@ namespace nnet {
 #endif
 	}
 
+	/// fully solves a system.
+	/**
+	 *  solves iteratively and fully implicitly a single iteration of the system constructed by construct_system.
+	 * ...TODO
+	 */
 	template<class problem, class vector, typename Float>
 	std::tuple<vector, Float> solve_system(const problem construct_system, const vector &Y, const Float T, const Float dt, const Float theta=1, const Float tol=1e-5, const Float epsilon=1e-16) {
 		const int dimension = Y.size();

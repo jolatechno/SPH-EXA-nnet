@@ -44,15 +44,15 @@ int main() {
 
 
 	Eigen::VectorXd BE = nnet::net14::BE + nnet::net14::ideal_gaz_correction(T);
-	std::cout << "\nBE(T=" << T <<")=" << BE.transpose() << "\n\n";
+	std::cout << "\nBE(T=" << T <<") =\t" << BE.transpose() << "\n\n";
 
 
 	double delta_m = 0;
-	for (int i = 0; i < n_max; ++i) {
+	for (int i = 1; i <= n_max; ++i) {
 		/* ---------------------
 		begin test
 		--------------------- */
-		if (i == 0) {
+		if (i == 1) {
 			auto rates = nnet::net14::compute_reaction_rates(T);
 
 			auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, density, Y);
@@ -68,11 +68,11 @@ int main() {
 			Eigen::VectorXd RHS = Mp*Y_T*dt;
 			Eigen::MatrixXd Mpp = Eigen::MatrixXd::Identity(14 + 1, 14 + 1) - theta*dt*Mp;
 
-			std::cout << "\n\n\nphi=\n" << Mpp << "\n\n";
+			std::cout << "phi =\n" << Mpp << "\n\n";
 
-			std::cout << "RHS=" << RHS.transpose() << "\n\n";
+			std::cout << "RHS =\t\t" << RHS.transpose() << "\n\n";
 
-			std::cout << "Y*Mp=" << (Mp*Y_T).transpose() << "\n\n\n"; 
+			std::cout << "Mp*{T,Y} =\t" << (Mp*Y_T).transpose() << "\n\n\n"; 
 		}
 		/* ---------------------
 		end test
@@ -81,23 +81,9 @@ int main() {
 
 		net14_debug=i==1;
 
-
 		// solve the system
 		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt, theta, 1e-8, 0.);
 
-		/* ---------------------
-		begin test
-		--------------------- */
-		if (i == 0) {
-			Eigen::VectorXd DY_T(14 + 1);
-			DY_T << (T - last_T), (Y - last_Y);
-			DY_T /= dt;
-
-			std::cout << DY_T.transpose() << "\t=d{T, Y}/dt\n"; 
-		}
-		/* ---------------------
-		end test
-		--------------------- */
 
 		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0) {
 			m_tot = Y.dot(nnet::net14::constants::A);
