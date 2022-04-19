@@ -278,13 +278,6 @@ namespace nnet {
 		// right hand side
 		vector RHS = Y_T + dt*(1 - theta)*Mp*Y_T;
 
-	/* !!!!!!!!!!!!
-	no idea why
-	!!!!!!!!!!!! */
-	#ifdef ZERO_T_RHS
-		RHS(0) = Y_T(0);
-	#endif
-
 		// construct M
 		matrix M = matrix::Identity(dimension + 1, dimension + 1) - dt*theta*Mp;
 
@@ -305,13 +298,6 @@ namespace nnet {
 
 		// right hand side
 		vector RHS = Mp*Y_T*dt;
-
-		/* !!!!!!!!!!!!
-		no idea why
-		!!!!!!!!!!!! */
-	#ifdef ZERO_T_RHS
-		RHS(0) = 0;
-	#endif
 
 		// construct M
 		matrix M = matrix::Identity(dimension + 1, dimension + 1) - theta*dt*Mp;

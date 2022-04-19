@@ -5,7 +5,7 @@
 
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
-	const double cv = 2e-7; // typical cv from net14 fortran
+	const double cv = 2e7; // typical cv from net14 fortran
 	const double density = 1e9; // density, g/cm^3
 
 	// initial state
@@ -68,13 +68,11 @@ int main() {
 			Eigen::VectorXd RHS = Mp*Y_T*dt;
 			Eigen::MatrixXd Mpp = Eigen::MatrixXd::Identity(14 + 1, 14 + 1) - theta*dt*Mp;
 
+			std::cout << "\n\n\nphi=\n" << Mpp << "\n\n";
+
 			std::cout << "RHS=" << RHS.transpose() << "\n\n";
 
-			std::cout << "phi=\n" << Mpp << "\n\n";
-
-			std::cout << "\n" << (M*Y).dot(nnet::net14::constants::A) << "=dm/dt\n";
-
-			std::cout << (Mp*Y_T).transpose() << "\t=d{T, Y}/dt=Mp*{T, Y}\n"; 
+			std::cout << "Y*Mp=" << (Mp*Y_T).transpose() << "\n\n\n"; 
 		}
 		/* ---------------------
 		end test
