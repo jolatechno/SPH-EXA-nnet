@@ -168,10 +168,10 @@ namespace nnet {
 			if (net14_debug) {
 				for (auto &[reactant_id, n_reactant_consumed] : Reaction.reactants)
 					std::cout << n_reactant_consumed << "*[" << reactant_id << "] ";
-				std::cerr << "\t->\t";
+				std::cout << "\t->\t";
 				for (auto &[product_id, n_product_produced] : Reaction.products)
 					std::cout << n_product_produced << "*[" << product_id << "] ";
-				std::cerr << ", " << order << ", " << rate << "\t->\t" << (corrected_rate/std::pow(rho, (Float)(order - 1))) << "\t->\t" << corrected_rate << "\n";
+				std::cout << ", " << order << ", " << rate << "\t->\t" << (corrected_rate/std::pow(rho, (Float)(order - 1))) << "\t->\t" << corrected_rate << "\n";
 			}
 
 

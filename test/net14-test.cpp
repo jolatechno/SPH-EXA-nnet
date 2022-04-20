@@ -4,9 +4,9 @@
 #include "../src/net14/net14.hpp"
 
 int main() {
-	double value_1 = 0; // typical v1 from net14 fortran
-	double cv = 3e7; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
-	double rho = 1e9; // rho, g/cm^3
+	const double value_1 = 0; // typical v1 from net14 fortran
+	const double cv = 6e7; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
+	const double rho = 1e9; // rho, g/cm^3
 	double T = 1e9;
 
 	// initial state
@@ -19,14 +19,14 @@ int main() {
 	
 	auto last_Y = Y;
 	double last_T = T;
-	double m_tot, m_in = Y.dot(nnet::net14::constants::A);
+	double m_in = Y.dot(nnet::net14::constants::A);
 
-	const double max_dt=1e-1;
+	const double max_dt=5e-2;
 	double t = 0, dt=1e-12;
-	int n_max = 30000;
-	const int n_print = 20;
+	int n_max = 100000;
+	const int n_print = 30, n_save=4000;
 
-	const double theta = 0.6;
+	const double theta = 0.5;
 
 
 
@@ -71,6 +71,7 @@ int main() {
 
 
 
+	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
 
 	for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
 	std::cout << "\t" << T << std::endl;
@@ -79,23 +80,31 @@ int main() {
 
 	for (int i = 1; i <= n_max; ++i) {
 		if (DT > 0)
-			dt = std::min(dt*1.5, dt*1e-4*T/DT);
+			dt = std::min(dt*1.5, dt*std::pow((T/DT)/(cv*5e-4), 1.5));
 		dt = std::min(max_dt, dt);
 
 		// solve the system
-		std::tie(Y, T, dt) = nnet::solve_system(nnet::net14::construct_system(rho, cv, value_1), Y, T, dt, theta, 1e-9, 0., 1e-40);
+		std::tie(Y, T, dt) = nnet::solve_system(nnet::net14::construct_system(rho, cv, value_1), Y, T, dt, theta, 1e-9, 0., 1e-50);
 		t += dt;
 
-
-
-		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0) {
-			m_tot = Y.dot(nnet::net14::constants::A);
+		// formated print (stderr)
+		if (n_save >= n_max || (n_max - i) % (int)((float)n_max/(float)n_save) == 0) {
+			double m_tot = Y.dot(nnet::net14::constants::A);
 			for (int i = 0; i < 14; ++i) X(i) = Y(i) * nnet::net14::constants::A(i);
+			std::cerr << t << "," << dt << ",," << T << ",,";
+			for (int i = 0; i < 14; ++i) std::cerr << X(i) << ",";
+			std::cerr << "," << (m_tot - m_in)/m_in << "\n";
+		}
+
+		// debug print
+		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0) {
+			double m_tot = Y.dot(nnet::net14::constants::A);
+			for (int i = 0; i < 14; ++i) X(i) = Y(i) * nnet::net14::constants::A(i);
+
 			std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
 			for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
 			std::cout << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << (m_tot - m_in)/m_in*100 << "%),\t" << T << "\n";
 		}
-
 
 		DT = std::abs(last_T - T);
 
