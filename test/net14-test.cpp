@@ -21,7 +21,7 @@ int main() {
 	double last_T = T;
 	double m_in = Y.dot(nnet::net14::constants::A);
 
-	const double max_dt=5e-2;
+	const double max_dt=5e-2, min_dt=1e-17;
 	double t = 0, dt=1e-12;
 	int n_max = 100000;
 	const int n_print = 30, n_save=4000;
@@ -76,16 +76,36 @@ int main() {
 	for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
 	std::cout << "\t" << T << std::endl;
 
-	double DT = 0;
+	const double max_dm = 1e-3;
+	double old_dm_m = 0;
 
 	for (int i = 1; i <= n_max; ++i) {
-		if (DT > 0)
-			dt = std::min(dt*1.5, dt*std::pow((T/DT)/(cv*5e-4), 1.5));
-		dt = std::min(max_dt, dt);
+		double m_tot, dm_m, next_T;
+		Eigen::VectorXd next_Y(14);
 
-		// solve the system
-		std::tie(Y, T, dt) = nnet::solve_system(nnet::net14::construct_system(rho, cv, value_1), Y, T, dt, theta, 1e-9, 0., 1e-50);
-		t += dt;
+		for (int j = 0;; ++j) {
+			// solve the system
+			std::tie(next_Y, next_T, dt) = nnet::solve_system(nnet::net14::construct_system(rho, cv, value_1), Y, T, dt, theta, 1e-9, 0., 1e-50);
+			t += dt;
+
+			// timestep tweeking
+			double DT = std::abs(last_T - next_T);
+			if (DT > 0)
+				dt = std::min(dt*1.5, dt*std::pow((next_T/DT)/(cv*4e-4), 1.5));
+			dt = std::min(max_dt, dt);
+			dt = std::max(min_dt, dt);
+
+			// loop condition
+			m_tot = next_Y.dot(nnet::net14::constants::A);
+			dm_m = (m_tot - m_in)/m_in;
+			if (std::abs(dm_m - old_dm_m) <= max_dm)
+				break;
+
+			std::cout << dm_m << " > " << old_dm_m << ",    " << dt << "\n";
+		}
+
+		Y = next_Y;
+		T = next_T;
 
 		// formated print (stderr)
 		if (n_save >= n_max || (n_max - i) % (int)((float)n_max/(float)n_save) == 0) {
@@ -93,20 +113,21 @@ int main() {
 			for (int i = 0; i < 14; ++i) X(i) = Y(i) * nnet::net14::constants::A(i);
 			std::cerr << t << "," << dt << ",," << T << ",,";
 			for (int i = 0; i < 14; ++i) std::cerr << X(i) << ",";
-			std::cerr << "," << (m_tot - m_in)/m_in << "\n";
+			std::cerr << "," << dm_m << "\n";
 		}
 
 		// debug print
 		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0) {
-			double m_tot = Y.dot(nnet::net14::constants::A);
+			
 			for (int i = 0; i < 14; ++i) X(i) = Y(i) * nnet::net14::constants::A(i);
 
 			std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
 			for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
-			std::cout << "\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << (m_tot - m_in)/m_in*100 << "%),\t" << T << "\n";
+			std::cout << "\t(m_tot=" << m_tot << ",\tDelta_m_tot/m_tot=" << dm_m << "),\t" << T << "\n";
 		}
 
-		DT = std::abs(last_T - T);
+
+		old_dm_m = dm_m;
 
 		last_Y = Y;
 		last_T = T;
