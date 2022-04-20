@@ -34,10 +34,10 @@ int main() {
 
 	/* ---------------------
 	begin test
-	--------------------- */ /*
+	--------------------- */
 	{
 		net14_debug = true;
-		auto rates = nnet::net14::compute_reaction_rates(T);
+		auto [rates, drates] = nnet::net14::compute_reaction_rates(T);
 		auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, rho, Y);
 		net14_debug = false;
 

@@ -101,15 +101,16 @@ namespace nnet {
 
 		/// compute a list of reactions for net14
 		template<typename Float>
-		std::vector<Float> compute_reaction_rates(const Float T) {
-			std::vector<Float> rates;
+		std::tuple<std::vector<Float>, std::vector<Float>> compute_reaction_rates(const Float T) {
+			std::vector<Float> rates, drates;
 			rates.reserve(reaction_list.size());
+			drates.reserve(reaction_list.size());
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			fusions and fissions reactions from fits
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 
-			Float coefs[14 - 4];
+			Float coefs[14 - 4], dcoefs[14- 4];
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			fusions reactions from fits */
@@ -145,13 +146,24 @@ namespace nnet {
 						+ constants::fits::fit[i - 4][5]*t953
 						+ constants::fits::fit[i - 4][6]*lt9;
 
+					dcoefs[i - 4] = (- constants::fits::fit     [i - 4][1]*t9i2 
+						             + (-   constants::fits::fit[i - 4][2]*t9i43
+						                +   constants::fits::fit[i - 4][3]*t9i23
+						                + 5*constants::fits::fit[i - 4][5]*t923)*(1./3.)
+						             + constants::fits::fit     [i - 4][4]
+						             + constants::fits::fit     [i - 4][6]*t9i)*1e-9;
+
 					Float rate = std::exp(constants::fits::fit[i - 4][0] + coefs[i - 4]);
 					rates.push_back(rate);
+
+					Float drate = rate*dcoefs[i - 4];
+					rates.push_back(drate);
 
 					/* !!!!!!!!!!!!
 					debuging :
 					!!!!!!!!!!!! */
-					if (net14_debug) std::cout << "dir(" << i << ")=" << rate << ", coef(" << i << ")=" << coefs[i - 4] << "\n";
+					if (net14_debug) std::cout << "dir(" << i << ")=" << rate << ", coef(" << i << ")=" << coefs[i - 4];
+					if (net14_debug) std::cout << "\tddir(" << i << ")=" << drate << ", dcoef(" << i << ")=" << dcoefs[i - 4] << "\n";
 				}
 			}
 
@@ -165,6 +177,8 @@ namespace nnet {
 
 				const Float val1=11.6045e0*t9i;
 				const Float val2=1.5e0*lt9;
+				const Float val3=val1*t9i*1e-9;
+				const Float val4=1.5e-9*t9i;
 
 				/* fision rates computed:
 					- Ne + He <- Mg
@@ -181,17 +195,24 @@ namespace nnet {
 					int k = constants::fits::get_temperature_range(T);
 					Float rate = constants::fits::choose[i - 4][k]/constants::fits::choose[i + 1 - 4][k]*
 						std::exp(
-							  coefs               [i - 4]
+							  coefs                [i - 4]
 							+ constants::fits::fit[i - 4][7]
-							- constants::fits::q  [i - 4]*val1
+							- constants::fits::q   [i - 4]*val1
 							+ val2
 						);
 					rates.push_back(rate);
 
+					Float drate = rate*(
+						  dcoefs            [i - 4]
+						+ constants::fits::q[i - 4]*val3
+						+ val4);
+					drates.push_back(drate);
+
 					/* !!!!!!!!!!!!
 					debuging :
 					!!!!!!!!!!!! */
-					if (net14_debug) std::cout << (i == 4 ? "\n" : "") << "inv(" << i << ")=" << rate << "\n";
+					if (net14_debug) std::cout << (i == 4 ? "\n" : "") << "inv(" << i << ")=" << rate;
+					if (net14_debug) std::cout << "\tdinv(" << i << ")=" << drate << "\n";
 				}
 			}
 
@@ -351,14 +372,14 @@ namespace nnet {
 				}
 			}
 
-			return rates;
+			return {rates, drates};
 		}
 
 		/// actual network
 		auto construct_system(const double rho, const double cv, const double value_1) {
 			auto construct_system = [=](const Eigen::VectorXd &Y, double T) {
 				// compute rates
-				auto rates = compute_reaction_rates(T);
+				auto [rates, drates] = compute_reaction_rates(T);
 
 				auto M = nnet::first_order_from_reactions<double>(reaction_list, rates, rho, Y);
 
