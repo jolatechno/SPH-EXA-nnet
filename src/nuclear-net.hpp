@@ -332,7 +332,7 @@ namespace nnet {
 		matrix M = matrix::Identity(dimension + 1, dimension + 1) - theta*dt*Mp;
 
 		// normalize
-		// utils::normalize(M, RHS);
+		utils::normalize(M, RHS);
 
 		// now solve M*D{T, Y} = RHS
 		vector DY_T = utils::solve(M, RHS, epsilon);

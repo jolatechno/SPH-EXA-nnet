@@ -23,7 +23,7 @@ int main() {
 
 	const double max_dt=5e-2, min_dt=1e-17;
 	double t = 0, dt=1e-12;
-	int n_max = 100000;
+	int n_max = 80000;
 	const int n_print = 30, n_save=4000;
 
 	const double theta = 0.5;
@@ -85,7 +85,7 @@ int main() {
 
 		for (int j = 0;; ++j) {
 			// solve the system
-			std::tie(next_Y, next_T, dt) = nnet::solve_system(nnet::net14::construct_system(rho, cv, value_1), Y, T, dt, theta, 1e-9, 0., 1e-50);
+			std::tie(next_Y, next_T, dt) = nnet::solve_system(nnet::net14::construct_system(rho, cv, value_1), Y, T, dt, theta, 1e-10, 1e-100, 1e-100);
 			t += dt;
 
 			// timestep tweeking
@@ -101,7 +101,7 @@ int main() {
 			if (std::abs(dm_m - old_dm_m) <= max_dm)
 				break;
 
-			std::cout << dm_m << " > " << old_dm_m << ",    " << dt << "\n";
+			std::cout << "\t" << dm_m << " > " << old_dm_m << ",    " << dt << "\n";
 		}
 
 		Y = next_Y;
@@ -132,6 +132,46 @@ int main() {
 		last_Y = Y;
 		last_T = T;
 	}
+
+
+	
+
+
+
+	/* ---------------------
+	begin test
+	--------------------- */
+	/*{
+		T = 8.33e9;
+
+		net14_debug = true;
+		auto rates = nnet::net14::compute_reaction_rates(T);
+		auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, rho, Y);
+		net14_debug = false;
+
+		// include temperature
+		Eigen::VectorXd BE = nnet::net14::BE + nnet::net14::ideal_gaz_correction(T);
+		auto Mp = nnet::include_temp(M, cv, value_1, BE, Y);
+
+		// construct vector
+		Eigen::VectorXd Y_T(14 + 1);
+		Y_T << T, Y;
+
+		Eigen::VectorXd RHS = Mp*Y_T*dt;
+		Eigen::MatrixXd Mpp = Eigen::MatrixXd::Identity(14 + 1, 14 + 1) - theta*dt*Mp;
+
+
+		std::cout << "\nBE(T=" << T <<") =\t" << BE.transpose() << "\n\n";
+
+		std::cout << "phi =\n" << Mpp << "\n\n";
+
+		std::cout << "RHS =\t\t" << RHS.transpose() << "\n\n";
+
+		std::cout << "Mp*{T,Y} =\t" << (Mp*Y_T).transpose() << "\n\n\n"; 
+	}
+	/* ---------------------
+	end test
+	--------------------- */
 
 
 
