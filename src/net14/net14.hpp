@@ -157,7 +157,7 @@ namespace nnet {
 					rates.push_back(rate);
 
 					Float drate = rate*dcoefs[i - 4];
-					rates.push_back(drate);
+					drates.push_back(drate);
 
 					/* !!!!!!!!!!!!
 					debuging :
@@ -261,12 +261,20 @@ namespace nnet {
 			      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
 					rates.push_back(r3a);
 
+					// TODO: !!!
+		      		const Float dr3a = 0.;
+		      		drates.push_back(dr3a);
+
 
 					/* 3He <- C fission
 					!!!!!!!!!!!!!!!!!!!!!!!! */
 			      	const Float rev = 2.e20*std::exp(-84.419412e0*t9i);
 			      	const Float rg3a = r3a*rev*t93;
 			      	rates.push_back(rg3a);
+
+			      	// TODO: !!!
+		      		const Float drg3a = 0.;
+		      		drates.push_back(drg3a);
 
 			      	/* !!!!!!!!!!!!
 					debuging :
@@ -281,6 +289,10 @@ namespace nnet {
 				{
 		      		const Float r24=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
 		      		rates.push_back(r24);
+
+		      		// TODO: !!!
+		      		const Float dr24 = 0.;
+		      		drates.push_back(dr24);
 
 		      		/* !!!!!!!!!!!!
 					debuging :
@@ -305,6 +317,10 @@ namespace nnet {
 			        }
 			        rates.push_back(r1216);
 
+			        // TODO: !!!
+		      		const Float dr1216 = 0.;
+		      		drates.push_back(dr1216);
+
 			        /* !!!!!!!!!!!!
 					debuging :
 					!!!!!!!!!!!! */
@@ -318,6 +334,10 @@ namespace nnet {
 				{
 					const Float r32=7.10e+36*t9i23*std::exp(-135.93*t9i13 - 0.629*t923 - 0.445*t943 + 0.0103*t92);
 					rates.push_back(r32);
+
+					// TODO: !!!
+		      		const Float dr32 = 0.;
+		      		drates.push_back(dr32);
 
 					/* !!!!!!!!!!!!
 					debuging :
@@ -338,11 +358,19 @@ namespace nnet {
 		           			+ 1.43e-02*t95*std::exp(-15.541*t9i);
 					rates.push_back(rcag);
 
+					// TODO: !!!
+		      		const Float drcag = 0.;
+		      		drates.push_back(drcag);
+
 
 					/* C + He <- O fission
 					!!!!!!!!!!!!!!!!!!!!!!!! */
 					const Float roga = rcag*5.13e+10*t9r32*std::exp(-83.108047*t9rm1);
 					rates.push_back(roga);
+
+					// TODO: !!!
+		      		const Float droga = 0.;
+		      		drates.push_back(droga);
 
 					/* !!!!!!!!!!!!
 					debuging :
@@ -360,10 +388,18 @@ namespace nnet {
 					const Float roag=(9.37e+09*t9i23*std::exp(-39.757*t9i13-t92/2.515396) + 62.1*t9i32*std::exp(-10.297*t9i) + 538.*t9i32*std::exp(-12.226*t9i) + 13.*t92*std::exp(-20.093*t9i));
         			rates.push_back(roag);
 
+        			// TODO: !!!
+		      		const Float droag = 0.;
+		      		drates.push_back(droag);
+
 					/* O + He <- Ne fission
 					!!!!!!!!!!!!!!!!!!!!!!!! */
 					const Float rnega=roag*5.65e+10*t9r32*std::exp(-54.93807*t9rm1);
 					rates.push_back(rnega);
+
+					// TODO: !!!
+		      		const Float drnega = 0.;
+		      		drates.push_back(drnega);
 
 					/* !!!!!!!!!!!!
 					debuging :
@@ -376,19 +412,18 @@ namespace nnet {
 		}
 
 		/// actual network
-		auto construct_system(const double rho, const double cv, const double value_1) {
-			auto construct_system = [=](const Eigen::VectorXd &Y, double T) {
-				// compute rates
-				auto [rates, drates] = compute_reaction_rates(T);
+		std::tuple<Eigen::MatrixXd, Eigen::MatrixXd> construct_system(const Eigen::VectorXd &Y, const double T, const double rho, const double cv, const double value_1) {
+			// compute rates
+			auto [rates, drates] = compute_reaction_rates(T);
 
-				auto M = nnet::first_order_from_reactions<double>(reaction_list, rates, rho, Y);
+			Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reaction_list, rates, rho, Y);
+			Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(reaction_list, drates, rho, Y);
 
-				// include temperature
-				Eigen::VectorXd corrected_BE = BE + ideal_gaz_correction(T);
-				return nnet::include_temp(M, cv, value_1, corrected_BE, Y);
-			};
+			// include temperature
+			Eigen::VectorXd corrected_BE = BE + ideal_gaz_correction(T);
+			Eigen::MatrixXd Mp = nnet::include_temp(M, Y, corrected_BE, cv, value_1);
 
-			return construct_system;
+			return {Mp, dM_dT};
 		}
 	}
 }

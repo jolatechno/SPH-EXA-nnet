@@ -20,12 +20,9 @@ int main() {
 	double last_T = T;
 	double m_in = Y.dot(nnet::net14::constants::A);
 
-	const double max_dt=5e-2, min_dt=1e-17;
 	double t = 0, dt=1e-12;
 	int n_max = 100000;
 	const int n_print = 30, n_save=4000;
-
-	nnet::constants::theta = 0.5;
 
 
 	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
@@ -36,7 +33,8 @@ int main() {
 
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
-		std::tie(Y, T, dt) = nnet::solve_system_var_timestep(nnet::net14::constants::A, nnet::net14::construct_system(rho, cv, value_1), Y, T, dt);
+		auto [Mp, dM_dT] = nnet::net14::construct_system(Y, T, rho, cv, value_1);
+		std::tie(Y, T, dt) = nnet::solve_system_var_timestep(Mp, dM_dT, Y, T, nnet::net14::constants::A, dt);
 		t += dt;
 
 		double m_tot = Y.dot(nnet::net14::constants::A);

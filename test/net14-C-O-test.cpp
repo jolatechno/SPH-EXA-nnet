@@ -21,12 +21,9 @@ int main() {
 	double last_T = T;
 	double m_in = Y.dot(nnet::net14::constants::A);
 
-	const double max_dt=5e-2, min_dt=1e-17;
 	double t = 0, dt=1e-12;
-	int n_max = 100000;
+	int n_max = 1000000;
 	const int n_print = 30, n_save=4000;
-
-	nnet::constants::theta = 0.5;
 
 
 
@@ -34,23 +31,25 @@ int main() {
 
 	/* ---------------------
 	begin test
-	--------------------- */
+	--------------------- */ /*
 	{
 		net14_debug = true;
 		auto [rates, drates] = nnet::net14::compute_reaction_rates(T);
-		auto M = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, rates, rho, Y);
+		Eigen::MatrixXd M =     nnet::first_order_from_reactions<double>(nnet::net14::reaction_list,  rates, rho, Y);
 		net14_debug = false;
+		Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, drates, rho, Y);
 
 		// include temperature
 		Eigen::VectorXd BE = nnet::net14::BE + nnet::net14::ideal_gaz_correction(T);
-		auto Mp = nnet::include_temp(M, cv, value_1, BE, Y);
+		auto Mp = nnet::include_temp(M, Y, BE, cv, value_1);
+		auto MpT = nnet::include_rate_derivative(Mp, dM_dT, Y);
 
 		// construct vector
 		Eigen::VectorXd Y_T(14 + 1);
 		Y_T << T, Y;
 
-		Eigen::VectorXd RHS = Mp*Y_T*dt;
-		Eigen::MatrixXd Mpp = Eigen::MatrixXd::Identity(14 + 1, 14 + 1) - nnet::constants::theta*dt*Mp;
+		Eigen::VectorXd RHS = Mp*Y_T*0.01;
+		Eigen::MatrixXd Mpp = Eigen::MatrixXd::Identity(14 + 1, 14 + 1) - nnet::constants::theta*0.01*MpT;
 
 
 		std::cout << "\nBE(T=" << T <<") =\t" << BE.transpose() << "\n\n";
@@ -74,7 +73,8 @@ int main() {
 
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
-		std::tie(Y, T, dt) = nnet::solve_system_var_timestep(nnet::net14::constants::A, nnet::net14::construct_system(rho, cv, value_1), Y, T, dt);
+		auto [Mp, dM_dT] = nnet::net14::construct_system(Y, T, rho, cv, value_1);
+		std::tie(Y, T, dt) = nnet::solve_system_var_timestep(Mp, dM_dT, Y, T, nnet::net14::constants::A, dt);
 		t += dt;
 
 		double m_tot = Y.dot(nnet::net14::constants::A);

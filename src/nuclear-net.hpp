@@ -23,7 +23,7 @@ namespace nnet {
 
 
 		/// theta for the implicit method
-		double theta = 0.8;
+		double theta = 0.6;
 		/// tolerance of the implicit solver
 		double implicit_tol = 1e-9;
 
@@ -35,11 +35,13 @@ namespace nnet {
 		double max_dt_step = 1.5;
 
 		/// relative temperature variation target of the implicit solver
-		double dT_T_target = 5e-5;
+		double dT_T_target = 4e-3;
 		/// relative mass conservation target of the implicit solver
-		double dm_m_target = 1e-6;
+		double dm_m_target = 1e-5;
+		/// relative temperature variation tolerance of the implicit solver
+		double dT_T_tol = 1e-2;
 		/// relative mass conservation tolerance of the implicit solver
-		double dm_m_tol = 1e-5;
+		double dm_m_tol = 1e-4;
 
 
 
@@ -269,7 +271,7 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class matrix, class vector, typename Float>
-	matrix include_temp(const matrix &M, const Float cv, const Float value_1, const vector &BE, const vector &Y) {
+	matrix include_temp(const matrix &M, const vector &Y, const vector &BE, const Float cv, const Float value_1) {
 		/* -------------------
 		Add a row to M (dY/dt = M*Y) such that d{T,Y}/dt = M'*{T,Y}:
 
@@ -296,13 +298,38 @@ namespace nnet {
 
 
 
+	/// includes the derivative of rates in the system represented by M.
+	/**
+	 * fills a column to M' based on dM/dT.
+	 * ...TODO
+	 */
+	template<class matrix, class vector>
+	matrix include_rate_derivative(const matrix &Mp, const matrix &dM_dT, const vector &Y) {
+		/* -------------------
+		DY = (M + theta*dM/dT*DT)*Y
+	<=> Mp[1:dimension, 0] = dM/dT*Y
+		------------------- */
+
+		const int dimension = Y.size();
+
+		matrix MpT = Mp;
+
+		// derivative of Y compared to T
+		MpT(Eigen::seq(1, dimension), 0) = dM_dT*Y;
+
+		return MpT;
+	}
+
+
+
+
 	/// solves a system non-iteratively.
 	/**
 	 *  solves non-iteratively and partialy implicitly the system represented by M.
 	 * ...TODO
 	 */
 	template<class matrix, class vector, typename Float>
-	vector solve_first_order(const vector &Y, const Float T, const matrix &Mp, const Float dt) {
+	std::tuple<vector, Float> solve_system(const matrix &Mp, const matrix &dM_dT, const vector &Y, const Float T, const Float dt) {
 		const int dimension = Y.size();
 
 		// construct vector
@@ -320,58 +347,18 @@ namespace nnet {
 		// right hand side
 		vector RHS = Mp*Y_T*dt;
 
+		// include rate derivative
+		matrix MpT = include_rate_derivative(Mp, dM_dT, Y);
+
 		// construct M
-		matrix M = matrix::Identity(dimension + 1, dimension + 1) - constants::theta*dt*Mp;
+		matrix M = matrix::Identity(dimension + 1, dimension + 1) - constants::theta*dt*MpT;
 
 		// normalize
 		utils::normalize(M, RHS);
 
 		// now solve M*D{T, Y} = RHS
 		vector DY_T = utils::solve(M, RHS, constants::epsilon_system);
-		return Y_T + DY_T;
-	}
-
-
-
-
-
-
-	/// fully solves a system.
-	/**
-	 *  solves iteratively and fully implicitly a single iteration of the system constructed by construct_system.
-	 * ...TODO
-	 */
-	template<class problem, class vector, typename Float>
-	std::tuple<vector, Float> solve_system(const problem construct_system, const vector &Y, const Float T, const Float dt) {
-		const int dimension = Y.size();
-
-		// construct vector
-		vector prev_Y_T_out(dimension + 1);
-		prev_Y_T_out << T, Y;
-
-		// actual solving
-		int max_iter = std::max(1., -std::log2(constants::implicit_tol));
-		for (int i = 0;; ++i) {
-
-			// intermediary vecor
-			Float scaled_T_out  = (1 - constants::theta)*T + constants::theta*prev_Y_T_out(0); 
-			vector scaled_Y_out = (1 - constants::theta)*Y + constants::theta*prev_Y_T_out(Eigen::seq(1, dimension));
-
-			// construct system
-			auto M = construct_system(scaled_Y_out, scaled_T_out);
-
-			// solve system
-			auto Y_T_out = solve_first_order(Y, T, M, dt);
-
-			// clip system
-			utils::clip(Y_T_out, constants::epsilon_vector);
-
-			// exit on condition
-			if (i >= max_iter || std::abs((prev_Y_T_out(0) - Y_T_out(0))/scaled_T_out) <= constants::implicit_tol)
-				return {Y_T_out(Eigen::seq(1, dimension)), Y_T_out(0)};
-
-			prev_Y_T_out = Y_T_out;
-		}
+		return {Y + DY_T(Eigen::seq(1, dimension)), T + DY_T(0)};
 	}
 
 
@@ -382,15 +369,15 @@ namespace nnet {
 	 *  solves iteratively and fully implicitly a single iteration of the system constructed by construct_system, with added timestep tweeking
 	 * ...TODO
 	 */
-	template<class problem, class vector, typename Float>
-	std::tuple<vector, Float, Float> solve_system_var_timestep(const vector &A, const problem construct_system, const vector &Y, const Float T, Float dt) {
+	template<class matrix, class vector, typename Float>
+	std::tuple<vector, Float, Float> solve_system_var_timestep(const matrix &Mp, const matrix &dM_dT, const vector &Y, const Float T, const vector &A, Float dt) {
 		const Float m_in = Y.dot(A);
 
 		// actual solving
-		int max_iter = std::max(1., -std::log2(constants::dm_m_target));
+		int max_iter = std::max(1., -std::log2(constants::dm_m_target*constants::dT_T_target));
 		for (int i = 0;; ++i) {
 			// solve the system
-			auto [next_Y, next_T] = solve_system(construct_system, Y, T, dt);
+			auto [next_Y, next_T] = solve_system(Mp, dM_dT, Y, T, dt);
 
 			// mass temperature variation
 			Float dm_m = std::abs((next_Y.dot(A) - m_in)/m_in);
@@ -402,7 +389,8 @@ namespace nnet {
 			dt = std::min((Float)constants::max_dt, dt);
 
 			// exit on condition
-			if (i >= max_iter || dm_m <= constants::dm_m_tol)
+			if (i >= max_iter ||
+			(dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol))
 				return {next_Y, next_T, dt};
 		}
 	}
