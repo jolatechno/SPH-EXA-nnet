@@ -23,7 +23,7 @@ int main() {
 
 	const double max_dt=5e-2, min_dt=1e-17;
 	double t = 0, dt=1e-12;
-	int n_max = 80000;
+	int n_max = 200000;
 	const int n_print = 30, n_save=4000;
 
 	const double theta = 0.5;
@@ -98,7 +98,7 @@ int main() {
 			if (std::abs(dm_m - old_dm_m) <= max_dm)
 				break;
 
-			std::cout << "\t" << dm_m << " > " << old_dm_m << ",    " << dt << "\n";
+			// std::cout << "\t" << dm_m << " > " << old_dm_m << ",    " << dt << "\n";
 		}
 
 		Y = next_Y;
