@@ -36,7 +36,7 @@ int main() {
 	double E_tot, E_tot_0 = Y.dot(m + BE) + cv*T;
 	double m_tot, m_tot_0 = Y.dot(m);
 
-	const double theta = 0.6;
+	nnet::constants::theta = 0.6;
 
 	double dt=5e-3, T_max = 2;
 	int n_max = T_max/dt;
@@ -103,8 +103,7 @@ int main() {
 		construct_system(Y, T);
 
 		// solve the system
-		double actual_dt;
-		std::tie(Y, T, actual_dt) = nnet::solve_system(construct_system, Y, T, dt, theta, 1e-18);
+		std::tie(Y, T) = nnet::solve_system(construct_system, Y, T, dt);
 
 		E_tot = Y.dot(m + BE) + cv*T;
 		m_tot = Y.dot(m);

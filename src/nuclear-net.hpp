@@ -19,6 +19,34 @@ namespace nnet {
 	namespace constants {
 		/// safety factor when determining the maximum timestep.
 		double safety_margin = 0.3;
+
+
+
+		/// theta for the implicit method
+		double theta = 0.8;
+		/// tolerance of the implicit solver
+		double implicit_tol = 1e-9;
+
+		/// minimum timestep
+		double min_dt = 1e-20;
+		/// maximum timestep
+		double max_dt = 1e-2;
+		/// maximum timestep evolution
+		double max_dt_step = 1.5;
+
+		/// relative temperature variation target of the implicit solver
+		double dT_T_target = 5e-5;
+		/// relative mass conservation target of the implicit solver
+		double dm_m_target = 1e-6;
+		/// relative mass conservation tolerance of the implicit solver
+		double dm_m_tol = 1e-5;
+
+
+
+		/// the value that is considered null inside a system
+		double epsilon_system = 1e-100;
+		/// the value that is considered null inside a state
+		double epsilon_vector = 1e-100;
 	}
 
 
@@ -49,7 +77,7 @@ namespace nnet {
 		 * ...TODO
 		 */
 		template<typename Float, int n>
-		Eigen::SparseMatrix<Float> sparsify(const Eigen::Matrix<Float, n, n> &Min, const Float epsilon=1e-16) {
+		Eigen::SparseMatrix<Float> sparsify(const Eigen::Matrix<Float, n, n> &Min, const Float epsilon) {
 			std::vector<Eigen::Triplet<Float>> coefs;
 
 			for (int i = 0; i < Min.cols(); ++i)
@@ -99,7 +127,7 @@ namespace nnet {
 		 * ...TODO
 		 */
 		template<typename Float, int n, int m>
-		Eigen::Vector<Float, m> solve(Eigen::Matrix<Float, n, n> &M, Eigen::Vector<Float, m> &RHS, const Float epsilon=0) {
+		Eigen::Vector<Float, m> solve(Eigen::Matrix<Float, n, n> &M, Eigen::Vector<Float, m> &RHS, const Float epsilon) {
 			// sparcify M
 			auto sparse_M = utils::sparsify(M, epsilon);
 
@@ -115,7 +143,7 @@ namespace nnet {
 		 * ...TODO
 		 */
 		template<typename Float, int n>
-		void clip(Eigen::Vector<Float, n> &X, const Float epsilon=0) {
+		void clip(Eigen::Vector<Float, n> &X, const Float epsilon) {
 			const int dimension = X.size();
 
 			for (int i = 0; i < dimension; ++i)
@@ -268,49 +296,13 @@ namespace nnet {
 
 
 
-
-	/// gets the maximum timestep
-	/**
-	 * 
-	 */
-	template<typename Float, int n, int m>
-	Float get_max_timestep(const Eigen::Matrix<Float, n, n> &Mp, const Eigen::Vector<Float, m> &Y, const Float T, const Float epsilon_clip=0) {
-		const int dimension = Y.size();
-
-		Eigen::Vector<Float, m> Y_T(dimension + 1);
-		Y_T << T, Y;
-
-		Eigen::Vector<Float, m> DY_T = Mp*Y_T;
-
-		// compute max dt
-		Float max_dt = 0;
-		for (int i = 0; i < dimension; ++i) 
-			if (DY_T(i + 1) != 0) {
-				// compute local max dt
-				Float max_dt_i;
-				if (DY_T(i + 1) > 0) {
-					max_dt_i =  (1.           - Y(i))/DY_T(i + 1);
-				} else
-					max_dt_i = -(epsilon_clip + Y(i))/DY_T(i + 1);
-
-				// compute max
-				if (!std::isnan(max_dt_i) && max_dt_i > max_dt)
-					max_dt = max_dt_i;
-			}
-
-		return max_dt;
-	}
-
-
-
-
 	/// solves a system non-iteratively.
 	/**
 	 *  solves non-iteratively and partialy implicitly the system represented by M.
 	 * ...TODO
 	 */
 	template<class matrix, class vector, typename Float>
-	vector solve_first_order(const vector &Y, const Float T, const matrix &Mp, const Float dt, const Float theta=1, const Float epsilon=1e-100) {
+	vector solve_first_order(const vector &Y, const Float T, const matrix &Mp, const Float dt) {
 		const int dimension = Y.size();
 
 		// construct vector
@@ -329,13 +321,13 @@ namespace nnet {
 		vector RHS = Mp*Y_T*dt;
 
 		// construct M
-		matrix M = matrix::Identity(dimension + 1, dimension + 1) - theta*dt*Mp;
+		matrix M = matrix::Identity(dimension + 1, dimension + 1) - constants::theta*dt*Mp;
 
 		// normalize
 		utils::normalize(M, RHS);
 
 		// now solve M*D{T, Y} = RHS
-		vector DY_T = utils::solve(M, RHS, epsilon);
+		vector DY_T = utils::solve(M, RHS, constants::epsilon_system);
 		return Y_T + DY_T;
 	}
 
@@ -350,52 +342,68 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class problem, class vector, typename Float>
-	std::tuple<vector, Float, Float> solve_system(const problem construct_system, const vector &Y, const Float T, const Float dt_max, const Float theta=1, const Float tol=1e-5, const Float epsilon=1e-16, const Float epsilon_clip=1e-16) {
+	std::tuple<vector, Float> solve_system(const problem construct_system, const vector &Y, const Float T, const Float dt) {
 		const int dimension = Y.size();
 
 		// construct vector
 		vector prev_Y_T_out(dimension + 1);
 		prev_Y_T_out << T, Y;
 
-		Float dt = dt_max;
-		Float prev_dt = dt;
-
 		// actual solving
-		int max_iter = std::max(1., -std::log2(tol));
+		int max_iter = std::max(1., -std::log2(constants::implicit_tol));
 		for (int i = 0;; ++i) {
 
 			// intermediary vecor
-			Float scaled_T_out  = (1 - theta)*T + theta*prev_Y_T_out(0); 
-			vector scaled_Y_out = (1 - theta)*Y + theta*prev_Y_T_out(Eigen::seq(1, dimension));
+			Float scaled_T_out  = (1 - constants::theta)*T + constants::theta*prev_Y_T_out(0); 
+			vector scaled_Y_out = (1 - constants::theta)*Y + constants::theta*prev_Y_T_out(Eigen::seq(1, dimension));
 
 			// construct system
 			auto M = construct_system(scaled_Y_out, scaled_T_out);
 
+			// solve system
+			auto Y_T_out = solve_first_order(Y, T, M, dt);
+
+			// clip system
+			utils::clip(Y_T_out, constants::epsilon_vector);
+
+			// exit on condition
+			if (i >= max_iter || std::abs((prev_Y_T_out(0) - Y_T_out(0))/scaled_T_out) <= constants::implicit_tol)
+				return {Y_T_out(Eigen::seq(1, dimension)), Y_T_out(0)};
+
+			prev_Y_T_out = Y_T_out;
+		}
+	}
 
 
-			// adapt time step
-			/*Float next_dt = get_max_timestep(M, Y, T, epsilon_clip)*constants::safety_margin;
-			if (dt > next_dt) {
-				dt = next_dt;
-				--i;
-			} else {*/
 
 
-				// solve system
-				auto Y_T_out = solve_first_order(Y, T, M, dt, theta, epsilon);
+	/// fully solves a system, with timestep tweeking
+	/**
+	 *  solves iteratively and fully implicitly a single iteration of the system constructed by construct_system, with added timestep tweeking
+	 * ...TODO
+	 */
+	template<class problem, class vector, typename Float>
+	std::tuple<vector, Float, Float> solve_system_var_timestep(const vector &A, const problem construct_system, const vector &Y, const Float T, Float dt) {
+		const Float m_in = Y.dot(A);
 
-				// clip system
-				utils::clip(Y_T_out, epsilon_clip);
+		// actual solving
+		int max_iter = std::max(1., -std::log2(constants::dm_m_target));
+		for (int i = 0;; ++i) {
+			// solve the system
+			auto [next_Y, next_T] = solve_system(construct_system, Y, T, dt);
 
-				// exit on condition
-				if (i >= max_iter || std::abs((prev_Y_T_out(0) - Y_T_out(0))/scaled_T_out) < tol) // if (i >= max_iter || std::abs(((T - prev_Y_T_out(0))/prev_dt*dt - (T - Y_T_out(0)))/scaled_T_out) < tol)
-					return {Y_T_out(Eigen::seq(1, dimension)), Y_T_out(0), dt};
+			// mass temperature variation
+			Float dm_m = std::abs((next_Y.dot(A) - m_in)/m_in);
+			Float dT_T = std::abs((next_T - T)/((1 - constants::theta)*T + constants::theta*next_T));
 
-				prev_Y_T_out = Y_T_out;
-				prev_dt = dt;
+			// timestep tweeking
+			Float dt_multiplier = std::min((Float)constants::max_dt_step, std::min(constants::dT_T_target/dT_T, constants::dm_m_target/dm_m));
+			dt = std::max((Float)constants::min_dt, dt*dt_multiplier);
+			dt = std::min((Float)constants::max_dt, dt);
 
-
-			//}
+			// exit on condition
+			if (i >= max_iter || dm_m <= constants::dm_m_tol)
+				return {next_Y, next_T, dt};
 		}
 	}
 }
