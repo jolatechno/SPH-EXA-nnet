@@ -274,7 +274,7 @@ namespace nnet {
 	 * 
 	 */
 	template<typename Float, int n, int m>
-	Float get_max_timestep(const Eigen::Matrix<Float, n, n> &Mp, const Eigen::Vector<Float, m> &Y, const Float T) {
+	Float get_max_timestep(const Eigen::Matrix<Float, n, n> &Mp, const Eigen::Vector<Float, m> &Y, const Float T, const Float epsilon_clip=0) {
 		const int dimension = Y.size();
 
 		Eigen::Vector<Float, m> Y_T(dimension + 1);
@@ -289,9 +289,9 @@ namespace nnet {
 				// compute local max dt
 				Float max_dt_i;
 				if (DY_T(i + 1) > 0) {
-					max_dt_i = (1 - Y(i))/DY_T(i + 1);
+					max_dt_i =  (1.           - Y(i))/DY_T(i + 1);
 				} else
-					max_dt_i = -Y(i)     /DY_T(i + 1);
+					max_dt_i = -(epsilon_clip + Y(i))/DY_T(i + 1);
 
 				// compute max
 				if (!std::isnan(max_dt_i) && max_dt_i > max_dt)
@@ -332,7 +332,7 @@ namespace nnet {
 		matrix M = matrix::Identity(dimension + 1, dimension + 1) - theta*dt*Mp;
 
 		// normalize
-		utils::normalize(M, RHS);
+		// utils::normalize(M, RHS);
 
 		// now solve M*D{T, Y} = RHS
 		vector DY_T = utils::solve(M, RHS, epsilon);
@@ -350,16 +350,18 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class problem, class vector, typename Float>
-	std::tuple<vector, Float, Float> solve_system(const problem construct_system, const vector &Y, const Float T, const Float dt_max, const Float theta=1, const Float tol=1e-5, const Float epsilon=1e-16) {
+	std::tuple<vector, Float, Float> solve_system(const problem construct_system, const vector &Y, const Float T, const Float dt_max, const Float theta=1, const Float tol=1e-5, const Float epsilon=1e-16, const Float epsilon_clip=1e-16) {
 		const int dimension = Y.size();
 
 		// construct vector
 		vector prev_Y_T_out(dimension + 1);
 		prev_Y_T_out << T, Y;
 
+		Float dt = dt_max;
+		Float prev_dt = dt;
+
 		// actual solving
 		int max_iter = std::max(1., -std::log2(tol));
-		Float dt = dt_max;
 		for (int i = 0;; ++i) {
 
 			// intermediary vecor
@@ -369,24 +371,31 @@ namespace nnet {
 			// construct system
 			auto M = construct_system(scaled_Y_out, scaled_T_out);
 
+
+
 			// adapt time step
-			Float next_dt = get_max_timestep(M, Y, T)*constants::safety_margin;
+			/*Float next_dt = get_max_timestep(M, Y, T, epsilon_clip)*constants::safety_margin;
 			if (dt > next_dt) {
 				dt = next_dt;
 				--i;
-			} else {
+			} else {*/
+
+
 				// solve system
 				auto Y_T_out = solve_first_order(Y, T, M, dt, theta, epsilon);
 
 				// clip system
-				utils::clip(Y_T_out, epsilon);
+				utils::clip(Y_T_out, epsilon_clip);
 
 				// exit on condition
-				if (i >= max_iter || std::abs((prev_Y_T_out(0) - Y_T_out(0))/scaled_T_out) < tol)
+				if (i >= max_iter || std::abs((prev_Y_T_out(0) - Y_T_out(0))/scaled_T_out) < tol) // if (i >= max_iter || std::abs(((T - prev_Y_T_out(0))/prev_dt*dt - (T - Y_T_out(0)))/scaled_T_out) < tol)
 					return {Y_T_out(Eigen::seq(1, dimension)), Y_T_out(0), dt};
 
 				prev_Y_T_out = Y_T_out;
-			}
+				prev_dt = dt;
+
+
+			//}
 		}
 	}
 }
