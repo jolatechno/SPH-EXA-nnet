@@ -24,9 +24,6 @@ int main() {
 
 	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
 
-	for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
-	std::cout << "\t" << last_T << std::endl;
-
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
 		auto [Mp, dM_dT] = nnet::net14::construct_system(last_Y, last_T, rho, cv, value_1);

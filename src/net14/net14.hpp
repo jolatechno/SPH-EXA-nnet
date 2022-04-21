@@ -582,7 +582,7 @@ namespace nnet {
 				{
 		      		const Float vA=-54.903255*t9i;
       				const Float dvA=54.903255*t9i2;
-      				
+
       				dl[3]=5.65e10*std::exp(vA)*(deff[3]*t932 + 1.5*eff[3]*t912 + eff[3]*t932*dvA)*1.e-9;
 		      		drates.push_back(dl[3]);
 
@@ -599,8 +599,8 @@ namespace nnet {
 			// compute rates
 			auto [rates, drates] = compute_reaction_rates(T);
 
-			Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reaction_list, rates, rho, Y);
-			Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(reaction_list, drates, rho, Y);
+			Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reaction_list, rates, Y, constants::A, rho);
+			Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(reaction_list, drates, Y, constants::A, rho);
 
 			// include temperature
 			Eigen::VectorXd corrected_BE = BE + ideal_gaz_correction(T);

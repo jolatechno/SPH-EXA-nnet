@@ -5,9 +5,12 @@
 
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
-	const double cv = 2e7; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
 	const double rho = 1e9; // rho, g/cm^3
-	double last_T = 1e9;
+	//const double cv = 2e7; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
+	//double last_T = 1e9;
+
+	const double cv = 1e30; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
+	double last_T = 8e9;
 
 	// initial state
 	Eigen::VectorXd last_Y(14), X = Eigen::VectorXd::Zero(14);
@@ -19,7 +22,7 @@ int main() {
 	double m_in = last_Y.dot(nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
-	int n_max = 1000000;
+	int n_max = 4000; //1000000;
 	const int n_print = 30, n_save=4000;
 
 
@@ -29,16 +32,17 @@ int main() {
 	/* ---------------------
 	begin test
 	--------------------- */
-	{
+#ifdef DEBUG
+	{		
 		net14_debug = true;
 		auto [rates, drates] = nnet::net14::compute_reaction_rates(last_T);
-		Eigen::MatrixXd M =     nnet::first_order_from_reactions<double>(nnet::net14::reaction_list,  rates, rho, last_Y);
+		Eigen::MatrixXd M =     nnet::first_order_from_reactions<double>(nnet::net14::reaction_list,  rates, last_Y, nnet::net14::constants::A, rho);
 		net14_debug = false;
-		Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, drates, rho, last_Y);
+		Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, drates, last_Y, nnet::net14::constants::A, rho);
 
 		// include temperature
 		Eigen::VectorXd BE = nnet::net14::BE + nnet::net14::ideal_gaz_correction(last_T);
-		auto Mp = nnet::include_temp(M, last_Y, BE, cv, value_1);
+		auto Mp =  nnet::include_temp(M, last_Y, BE, cv, value_1);
 		auto MpT = nnet::include_rate_derivative(Mp, dM_dT, last_Y);
 
 		// construct vector
@@ -48,10 +52,12 @@ int main() {
 		Eigen::VectorXd RHS = Mp*Y_T*0.01;
 
 		std::cout << "\nBE(T=" << last_T <<") =\t" << BE.transpose() << "\n\n";
+		std::cout << "M.T*A =" << (M.transpose()*nnet::net14::constants::A).transpose() << "\t-> sum=\t" << (M.transpose()*nnet::net14::constants::A).sum() << "\n\n";
 		std::cout << "phi =\n" << MpT << "\n\n";
 		std::cout << "RHS =\t\t" << RHS.transpose() << "\n\n";
 		std::cout << "Mp*{T,Y} =\t" << (Mp*Y_T).transpose() << "\n\n\n"; 
 	}
+#endif
 	/* ---------------------
 	end test
 	--------------------- */
@@ -62,9 +68,6 @@ int main() {
 
 
 	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
-
-	for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
-	std::cout << "\t" << last_T << std::endl;
 
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system

@@ -95,8 +95,8 @@ int main() {
 		};
 
 		// generate matrix
-		Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reactions, rates, rho, Y_);
-		Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(reactions, drates, rho, Y_);
+		Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reactions, rates, Y_, m, rho);
+		Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(reactions, drates, Y_, m, rho);
 
 		// add temperature to the problem
 		Eigen::MatrixXd Mp = nnet::include_temp(M, Y_, BE, cv, value_1);

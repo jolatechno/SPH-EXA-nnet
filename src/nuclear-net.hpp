@@ -37,11 +37,11 @@ namespace nnet {
 		/// relative temperature variation target of the implicit solver
 		double dT_T_target = 1e-2;
 		/// relative mass conservation target of the implicit solver
-		double dm_m_target = 1e-4;
+		double dm_m_target = 1e-5;
 		/// relative temperature variation tolerance of the implicit solver
 		double dT_T_tol = 1e-1;
 		/// relative mass conservation tolerance of the implicit solver
-		double dm_m_tol = 1e-3;
+		double dm_m_tol = 1e-4;
 
 
 
@@ -165,7 +165,7 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<typename Float>
-	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const Float rho, Eigen::Vector<Float, -1> const &Y) {
+	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Eigen::Vector<Float, -1> const &Y, Eigen::Vector<Float, -1> const &A, const Float rho) {
 		const int dimension = Y.size();
 
 		Eigen::Matrix<Float, -1, -1> M = Eigen::Matrix<Float, -1, -1>::Zero(dimension, dimension);
@@ -204,12 +204,42 @@ namespace nnet {
 				std::cout << ", " << order << ", " << rate << "\t->\t" << (corrected_rate/std::pow(rho, (Float)(order - 1))) << "\t->\t" << corrected_rate << "\n";
 			}
 
-
-
-
-
 			// stop if the rate is 0
 			if (std::abs(corrected_rate) > 0) {
+#ifndef SMART_MATRIX_GENERATION
+				// total reactant mass
+				Float total_reactant_mass = 0;
+				for (auto &[reactant_id, n_reactant_consumed] : Reaction.reactants)
+					total_reactant_mass += n_reactant_consumed*A(reactant_id);
+
+				// compute non-diagonal terms (production)
+				for (auto &[reactant_id, n_reactant_consumed] : Reaction.reactants) {
+					// reaction mass proportion
+					Float this_reactant_mass_proportion = n_reactant_consumed*A(reactant_id)/total_reactant_mass;
+
+					// reaction rate including concentration
+					Float production_rate = this_reactant_mass_proportion*corrected_rate;
+					for (auto &[other_reactant_id, _] : Reaction.reactants)
+						if (other_reactant_id != reactant_id)
+							production_rate *= Y(other_reactant_id);
+
+					for (auto &[product_id, n_product_produced] : Reaction.products)
+						M(product_id, reactant_id) += n_product_produced*production_rate;
+				}
+
+			}
+		}
+
+
+		// add diagonal terms
+		for (int reactant_id = 0; reactant_id < dimension; ++reactant_id) {
+			M(reactant_id, reactant_id) = 0;
+			for (int product_id = 0; product_id < dimension; ++product_id)
+				if (product_id != reactant_id)
+					M(reactant_id, reactant_id) -= M(product_id, reactant_id)*A(product_id);
+			M(reactant_id, reactant_id) /= A(reactant_id);
+		}
+#else
 				// compute diagonal terms (consumption)
 				for (auto &[reactant_id, n_reactant_consumed] : Reaction.reactants) {
 					Float consumption_rate = n_reactant_consumed*corrected_rate;
@@ -218,9 +248,6 @@ namespace nnet {
 							consumption_rate *= Y(other_reactant_id);
 					M(reactant_id, reactant_id) -= consumption_rate;
 				}
-
-
-
 
 				// compute non-diagonal terms (production)
 				for (auto &[product_id, n_product_produced] : Reaction.products) {
@@ -253,14 +280,14 @@ namespace nnet {
 						if (other_reactant_id != best_reactant_id)
 							production_rate *= Y(other_reactant_id);
 					M(product_id, best_reactant_id) += production_rate;
-				}
-			}
+				}	
+			}	
 		}
+#endif
 			
 
 		return M;
 	}
-
 
 
 
@@ -306,7 +333,10 @@ namespace nnet {
 	template<class matrix, class vector>
 	matrix include_rate_derivative(const matrix &Mp, const matrix &dM_dT, const vector &Y) {
 		/* -------------------
-		DY = (M + theta*dM/dT*DT)*Y
+		D{T, Y} = Dt*(M'  + theta*dM/dT*DT)*{T_in+theta*DT, Y_in+theta*DY}
+ 	<=>                               D{T, Y} = Dt*((M' + theta*dM/dT*DT)*{T_in,Y_in}  + theta*M'*D{T,Y})
+ 	<=> (I - Dt*theta*(M' + dM/dT*Y))*D{T, Y} = Dt*M'*{T_in,Y_in}
+
 	<=> Mp[1:dimension, 0] = dM/dT*Y
 		------------------- */
 
@@ -339,9 +369,9 @@ namespace nnet {
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
 
-		                  D{T, Y} = Dt* M'*{T_in+theta*DT, Y_in+theta*DY}
- 	<=>                   D{T, Y} = Dt* M'*({T_in,Y_in}  + theta*D{T,Y})
- 	<=> (I - Dt*M'*theta)*D{T, Y} = Dt* M'* {T_in,Y_in}
+		                              D{T, Y} = Dt*(M'  + theta*dM/dT*DT)*{T_in+theta*DT, Y_in+theta*DY}
+ 	<=>                               D{T, Y} = Dt*((M' + theta*dM/dT*DT)*{T_in,Y_in}  + theta*M'*D{T,Y})
+ 	<=> (I - Dt*theta*(M' + dM/dT*Y))*D{T, Y} = Dt*M'*{T_in,Y_in}
 		------------------- */
 
 		// right hand side
@@ -381,8 +411,7 @@ namespace nnet {
 		const Float m_in = Y.dot(A);
 
 		// actual solving
-		int max_iter = std::max(1., -std::log2(constants::dm_m_target*constants::dT_T_target));
-		for (int i = 0;; ++i) {
+		while (true) {
 			// solve the system
 			auto [next_Y, next_T] = solve_system(Mp, dM_dT, Y, T, dt);
 
@@ -392,12 +421,21 @@ namespace nnet {
 
 			// timestep tweeking
 			Float actual_dt = dt;
-			Float dt_multiplier = std::min((Float)constants::max_dt_step, std::min(constants::dT_T_target/dT_T, constants::dm_m_target/dm_m));
-			dt = std::min((Float)constants::max_dt, std::max((Float)constants::min_dt, dt*dt_multiplier));
+			Float dt_multiplier = std::min(
+				(Float)constants::max_dt_step,
+				std::min(
+					dT_T == 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T,
+					dm_m == 0 ? (Float)constants::max_dt_step : constants::dm_m_target/dm_m
+				));
+			dt = std::min(
+				(Float)constants::max_dt,
+				std::max(
+					(Float)constants::min_dt,
+					dt*dt_multiplier
+				));
 
 			// exit on condition
-			if (i >= max_iter ||
-			(dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol)) 
+			if (dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol)
 				return {next_Y, next_T, actual_dt};
 		}
 	}
