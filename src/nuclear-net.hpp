@@ -35,13 +35,13 @@ namespace nnet {
 		double max_dt_step = 1.5;
 
 		/// relative temperature variation target of the implicit solver
-		double dT_T_target = 4e-3;
+		double dT_T_target = 1e-2;
 		/// relative mass conservation target of the implicit solver
-		double dm_m_target = 1e-5;
+		double dm_m_target = 1e-4;
 		/// relative temperature variation tolerance of the implicit solver
-		double dT_T_tol = 1e-2;
+		double dT_T_tol = 1e-1;
 		/// relative mass conservation tolerance of the implicit solver
-		double dm_m_tol = 1e-4;
+		double dm_m_tol = 1e-3;
 
 
 
