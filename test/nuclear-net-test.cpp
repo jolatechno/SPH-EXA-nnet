@@ -20,21 +20,19 @@ int main() {
 	m(2) = 4;
 
 	// initial state
-	Eigen::VectorXd Y(3);
-	double T = 1;
-	Y(0) = 0.8;
-	Y(1) = 0.7;
-	Y(2) = 0.1;
+	Eigen::VectorXd last_Y(3);
+	double last_T = 1;
+	last_Y(0) = 0.8;
+	last_Y(1) = 0.7;
+	last_Y(2) = 0.1;
 
 	// normalize Y
-	Y /= Y.dot(m);
+	last_Y /= last_Y.dot(m);
 
-	std::cout << Y.transpose() << ", " << T << std::endl;
+	std::cout << last_Y.transpose() << ", " << last_T << std::endl;
 
-	auto last_Y = Y;
-	double last_T = T;
-	double E_tot, E_tot_0 = Y.dot(m + BE) + cv*T;
-	double m_tot, m_tot_0 = Y.dot(m);
+	double E_tot, E_tot_0 = last_Y.dot(m + BE) + cv*last_T;
+	double m_tot, m_tot_0 = last_Y.dot(m);
 
 
 	/* -----------------
@@ -106,15 +104,15 @@ int main() {
 		return std::tuple<Eigen::MatrixXd, Eigen::MatrixXd>{Mp, dM_dT};
 	};
 
-	double dt=5e-3, T_max = 2;
+	double dt=5e-2, T_max = 2;
 	int n_max = T_max/dt;
 	const int n_print = 20;
 	for (int i = 0; i < n_max; ++i) {
 
-		auto [Mp, dM_dT] = construct_system(Y, T);
+		auto [Mp, dM_dT] = construct_system(last_Y, last_T);
 
 		// solve the system
-		std::tie(Y, T) = nnet::solve_system(Mp, dM_dT, Y, T, dt);
+		auto [Y, T] = nnet::solve_system(Mp, dM_dT, last_Y, last_T, dt);
 
 		E_tot = Y.dot(m + BE) + cv*T;
 		m_tot = Y.dot(m);

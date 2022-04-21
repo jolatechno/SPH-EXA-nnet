@@ -113,7 +113,7 @@ namespace nnet {
 			Float coefs[14 - 4], dcoefs[14- 4];
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
-			fusions reactions from fits */
+			fusions reactions rate and rate derivative from fits */
 			{
 				const Float t9=T/1.e9;
 				const Float t913=std::pow(t9, 1./3.);
@@ -168,7 +168,7 @@ namespace nnet {
 			}
 
 
-			/* fission reactions from fits
+			/* fission reactions rate and rate derivative from fits
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			{
 				const Float t9=T/1.e9;
@@ -217,7 +217,8 @@ namespace nnet {
 			}
 
 
-			/* other fusion and fission reactions */
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			other fusion and fission reactions rate */
 			{
 				const Float t9r=T*1.0e-09;
 	      		const Float t9=std::min((Float)10., t9r);
@@ -261,10 +262,6 @@ namespace nnet {
 			      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
 					rates.push_back(r3a);
 
-					// TODO: !!!
-		      		const Float dr3a = 0.;
-		      		drates.push_back(dr3a);
-
 
 					/* 3He <- C fission
 					!!!!!!!!!!!!!!!!!!!!!!!! */
@@ -272,9 +269,6 @@ namespace nnet {
 			      	const Float rg3a = r3a*rev*t93;
 			      	rates.push_back(rg3a);
 
-			      	// TODO: !!!
-		      		const Float drg3a = 0.;
-		      		drates.push_back(drg3a);
 
 			      	/* !!!!!!!!!!!!
 					debuging :
@@ -290,9 +284,6 @@ namespace nnet {
 		      		const Float r24=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
 		      		rates.push_back(r24);
 
-		      		// TODO: !!!
-		      		const Float dr24 = 0.;
-		      		drates.push_back(dr24);
 
 		      		/* !!!!!!!!!!!!
 					debuging :
@@ -317,9 +308,6 @@ namespace nnet {
 			        }
 			        rates.push_back(r1216);
 
-			        // TODO: !!!
-		      		const Float dr1216 = 0.;
-		      		drates.push_back(dr1216);
 
 			        /* !!!!!!!!!!!!
 					debuging :
@@ -335,9 +323,6 @@ namespace nnet {
 					const Float r32=7.10e+36*t9i23*std::exp(-135.93*t9i13 - 0.629*t923 - 0.445*t943 + 0.0103*t92);
 					rates.push_back(r32);
 
-					// TODO: !!!
-		      		const Float dr32 = 0.;
-		      		drates.push_back(dr32);
 
 					/* !!!!!!!!!!!!
 					debuging :
@@ -358,19 +343,12 @@ namespace nnet {
 		           			+ 1.43e-02*t95*std::exp(-15.541*t9i);
 					rates.push_back(rcag);
 
-					// TODO: !!!
-		      		const Float drcag = 0.;
-		      		drates.push_back(drcag);
-
 
 					/* C + He <- O fission
 					!!!!!!!!!!!!!!!!!!!!!!!! */
 					const Float roga = rcag*5.13e+10*t9r32*std::exp(-83.108047*t9rm1);
 					rates.push_back(roga);
 
-					// TODO: !!!
-		      		const Float droga = 0.;
-		      		drates.push_back(droga);
 
 					/* !!!!!!!!!!!!
 					debuging :
@@ -388,15 +366,130 @@ namespace nnet {
 					const Float roag=(9.37e+09*t9i23*std::exp(-39.757*t9i13-t92/2.515396) + 62.1*t9i32*std::exp(-10.297*t9i) + 538.*t9i32*std::exp(-12.226*t9i) + 13.*t92*std::exp(-20.093*t9i));
         			rates.push_back(roag);
 
-        			// TODO: !!!
-		      		const Float droag = 0.;
-		      		drates.push_back(droag);
 
 					/* O + He <- Ne fission
 					!!!!!!!!!!!!!!!!!!!!!!!! */
 					const Float rnega=roag*5.65e+10*t9r32*std::exp(-54.93807*t9rm1);
 					rates.push_back(rnega);
 
+
+					/* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
+					if (net14_debug) std::cout << "roag=" << roag << ", rnega=" << rnega << "\n\n";
+				}
+			}
+
+
+			/* other fusion and fission reactions rate derivative 
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			{
+
+			    /* !!!!!!!!!!!!!!!!!!!!!!!!
+				O + He <-> Ne fusion and fission
+				!!!!!!!!!!!!!!!!!!!!!!!!*/
+			    {
+					/* !!!!!!!!!!!!!!!!!!!!!!!!
+				    3He -> C fusion */
+					// TODO: !!!
+		      		const Float dr3a = 0.;
+		      		drates.push_back(dr3a);
+
+
+					/* 3He <- C fission
+					!!!!!!!!!!!!!!!!!!!!!!!! */
+			      	// TODO: !!!
+		      		const Float drg3a = 0.;
+		      		drates.push_back(drg3a);
+
+			      	/* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
+					if (net14_debug) std::cout << "\ndr3a=" << dr3a << ", drg3a=" << drg3a << "\n";
+			    }
+
+			    
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				2C -> Ne + He fusion
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+				{
+		      		// TODO: !!!
+		      		const Float dr24 = 0.;
+		      		drates.push_back(dr24);
+
+		      		/* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
+					if (net14_debug) std::cout << "dr24=" << dr24;
+				}
+
+
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				C + O -> Mg + He fusion
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+				{
+			        // TODO: !!!
+		      		const Float dr1216 = 0.;
+		      		drates.push_back(dr1216);
+
+			        /* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
+					if (net14_debug) std::cout << ", dr1216=" << dr1216 << "\n";
+				}
+
+
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				2O -> Si + He fusion
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+				{
+					// TODO: !!!
+		      		const Float dr32 = 0.;
+		      		drates.push_back(dr32);
+
+					/* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
+					if (net14_debug) std::cout << "dr32=" << dr32 << "\n";
+				}
+
+
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				O + He <-> Ne fusion and fission
+				!!!!!!!!!!!!!!!!!!!!!!!!*/
+				{
+					/* !!!!!!!!!!!!!!!!!!!!!!!!
+					   C + He -> O fusion */
+					// TODO: !!!
+		      		const Float drcag = 0.;
+		      		drates.push_back(drcag);
+
+
+					/* C + He <- O fission
+					!!!!!!!!!!!!!!!!!!!!!!!! */
+					// TODO: !!!
+		      		const Float droga = 0.;
+		      		drates.push_back(droga);
+
+					/* !!!!!!!!!!!!
+					debuging :
+					!!!!!!!!!!!! */
+					if (net14_debug) std::cout << "drcag=" << drcag << ", droga=" << droga << "\n";
+				}
+
+
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				O + He <-> Ne fusion and fission
+				!!!!!!!!!!!!!!!!!!!!!!!!*/
+				{
+					/* !!!!!!!!!!!!!!!!!!!!!!!!
+					   O + He -> Ne fusion */
+        			// TODO: !!!
+		      		const Float droag = 0.;
+		      		drates.push_back(droag);
+
+					/* O + He <- Ne fission
+					!!!!!!!!!!!!!!!!!!!!!!!! */
 					// TODO: !!!
 		      		const Float drnega = 0.;
 		      		drates.push_back(drnega);
@@ -404,7 +497,7 @@ namespace nnet {
 					/* !!!!!!!!!!!!
 					debuging :
 					!!!!!!!!!!!! */
-					if (net14_debug) std::cout << "roag=" << roag << ", rnega=" << rnega << "\n\n";
+					if (net14_debug) std::cout << "droag=" << droag << ", drnega=" << drnega << "\n\n";
 				}
 			}
 

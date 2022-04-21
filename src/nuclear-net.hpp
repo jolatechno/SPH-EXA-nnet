@@ -345,13 +345,13 @@ namespace nnet {
 		------------------- */
 
 		// right hand side
-		vector RHS = Mp*Y_T*dt;
+		vector RHS = Mp*Y_T;
 
 		// include rate derivative
 		matrix MpT = include_rate_derivative(Mp, dM_dT, Y);
 
 		// construct M
-		matrix M = matrix::Identity(dimension + 1, dimension + 1) - constants::theta*dt*MpT;
+		matrix M = matrix::Identity(dimension + 1, dimension + 1)/dt - constants::theta*MpT;
 
 		// normalize
 		utils::normalize(M, RHS);
@@ -370,7 +370,7 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class matrix, class vector, typename Float>
-	std::tuple<vector, Float, Float> solve_system_var_timestep(const matrix &Mp, const matrix &dM_dT, const vector &Y, const Float T, const vector &A, Float dt) {
+	std::tuple<vector, Float, Float> solve_system_var_timestep(const matrix &Mp, const matrix &dM_dT, const vector &Y, const Float T, const vector &A, Float &dt) {
 		const Float m_in = Y.dot(A);
 
 		// actual solving
@@ -384,14 +384,14 @@ namespace nnet {
 			Float dT_T = std::abs((next_T - T)/((1 - constants::theta)*T + constants::theta*next_T));
 
 			// timestep tweeking
+			Float actual_dt = dt;
 			Float dt_multiplier = std::min((Float)constants::max_dt_step, std::min(constants::dT_T_target/dT_T, constants::dm_m_target/dm_m));
-			dt = std::max((Float)constants::min_dt, dt*dt_multiplier);
-			dt = std::min((Float)constants::max_dt, dt);
+			dt = std::min((Float)constants::max_dt, std::max((Float)constants::min_dt, dt*dt_multiplier));
 
 			// exit on condition
 			if (i >= max_iter ||
-			(dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol))
-				return {next_Y, next_T, dt};
+			(dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol)) 
+				return {next_Y, next_T, actual_dt};
 		}
 	}
 }
