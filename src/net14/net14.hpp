@@ -490,7 +490,7 @@ namespace nnet {
 				        const Float dval=dvC*std::exp(vC)+1.06e-3*dvD*std::exp(vD);
 
 
-				        deff[15]=1.72e31*t9i32*(std::pow(vA, -1.d/6.d)*dvA*5./6. - 1.5*vA56*t9i+vA56*(dvB - dval/val))*std::exp(vB)/val*1.e-9;
+				        deff[15]=1.72e31*t9i32*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i+vA56*(dvB - dval/val))*std::exp(vB)/val*1.e-9;
 				    }
 		      		drates.push_back(deff[15]);
 
@@ -503,55 +503,91 @@ namespace nnet {
 				2O -> Si + He fusion
 				!!!!!!!!!!!!!!!!!!!!!!!! */
 				{
-					// TODO: !!!
-		      		const Float dr32 = 0.;
-		      		drates.push_back(dr32);
+					const Float vA=-135.93e0*t9i13 - .629*t923 - .445*t943 + .0103*t92;
+					const Float dvA=45.31*t9i43 - .629*t9i13*2./3. - .445*t913*4./3. + .0206*t9;
+					deff[16]=7.10e36*std::exp(vA)*t9i23*(-t9i*2./3. + dvA)*1.e-9;
+		      		drates.push_back(deff[16]);
 
 					// debuging :
-					if (net14_debug) std::cout << "dr32=" << dr32 << "\n";
+					if (net14_debug) std::cout << "dr32=" << deff[16] << "\n";
 				}
 
 
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
-				O + He <-> Ne fusion and fission
-				!!!!!!!!!!!!!!!!!!!!!!!!*/
+				C + He -> O fusion */
 				{
-					/* !!!!!!!!!!!!!!!!!!!!!!!!
-					   C + He -> O fusion */
-					// TODO: !!!
-		      		const Float drcag = 0.;
-		      		drates.push_back(drcag);
+					const Float vA=-84.419412*t9i;
+				    const Float vB=std::pow(1.+.0489*t9i23, 2);
+				    const Float vC=-32.120*t9i13 - std::pow(t9/3.496, 2.);
+				    const Float vD=std::pow(1.+.2654*t9i23, 2);
+				    const Float vE=-32.120*t9i13;
+				    const Float vF=-27.499*t9i;
+				    const Float vG=-15.541*t9i;
+				    const Float dvA=84.419412*t9i2;
+				    const Float dvB=-(2.+.0978*t9i23)*(.0326*t9i53);
+				    const Float dvC=32.120*t9i43/3.-2.*t9/std::pow(3.496, 2.);
+				    const Float dvD=-(2.+.5308*t9i23)*(.5308*t9i53/3.);
+				    const Float dvE=32.120*t9i43/3.;
+				    const Float dvF=27.499*t9i2;
+				    const Float dvG=15.541*t9i2;
 
+					
+		      		deff[2]=(1.04e8*std::exp(vC)*t9i2*(-2.*t9i + dvC - dvB/vB)/vB
+           				+ 1.76e8*std::exp(vE)*t9i2*(-2.*t9i + dvE - dvD/vD)/vD
+           				+ 1.25e3*std::exp(vF)*(-1.5*t9i52 + dvF*t9i32)
+           				+ 1.43e-2*std::exp(vG)*(5.*t94 + dvG*t95))*1.e-9;
+		      		drates.push_back(deff[2]);
+
+		      		// debuging :
+					if (net14_debug) std::cout << "drcag=" << deff[2] << "\n";
+		      	}
+
+				
+				{
+					const Float vA=-83.108047*t9i;
+					const Float vB=-39.757*t9i13 - std::pow(t9/1.586, 2.);
+					const Float vC=-10.297*t9i;
+					const Float vD=-12.226*t9i;
+					const Float vE=-20.093*t9i;
+					const Float dvA=83.108047*t9i2;
+					const Float dvB=39.757*t9i43/3. - 2.*t9/std::pow(1.586, 2.);
+					const Float dvC=10.297*t9i2;
+					const Float dvD=12.226*t9i2;
+					const Float dvE=20.093*t9i2;
 
 					/* C + He <- O fission
 					!!!!!!!!!!!!!!!!!!!!!!!! */
-					// TODO: !!!
-		      		const Float droga = 0.;
-		      		drates.push_back(droga);
+					dl[2]=5.13e10*std::exp(vA)*(deff[2]*t932 + eff[2]*1.5*t912 + eff[2]*t932*dvA)*1.e-9;
+		      		drates.push_back(dl[2]);
 
 					// debuging :
-					if (net14_debug) std::cout << "drcag=" << drcag << ", droga=" << droga << "\n";
+					if (net14_debug) std::cout << "droga=" << dl[2] << "\n";
+
+
+					/* !!!!!!!!!!!!!!!!!!!!!!!!
+					   O + He -> Ne fusion */
+        			deff[3] = (9.37e9*std::exp(vB)*(-t9i53*2./3. + t9i23*dvB)
+			      		+ 62.1*std::exp(vC)*(-1.5*t9i52 + t9i32*dvC)
+			      		+ 538.*std::exp(vD)*(-1.5*t9i52 + t9i32*dvD)
+           				+ 13.*std::exp(vE)*(2.*t9 + t92*dvE))*1.e-9;
+		      		drates.push_back(deff[3]);
+
+		      		// debuging :
+					if (net14_debug) std::cout << "droag=" << deff[3] << "\n";
 				}
 
 
-				/* !!!!!!!!!!!!!!!!!!!!!!!!
-				O + He <-> Ne fusion and fission
-				!!!!!!!!!!!!!!!!!!!!!!!!*/
-				{
-					/* !!!!!!!!!!!!!!!!!!!!!!!!
-					   O + He -> Ne fusion */
-        			// TODO: !!!
-		      		const Float droag = 0.;
-		      		drates.push_back(droag);
-
-					/* O + He <- Ne fission
+				/* O + He <- Ne fission
 					!!!!!!!!!!!!!!!!!!!!!!!! */
-					// TODO: !!!
-		      		const Float drnega = 0.;
-		      		drates.push_back(drnega);
+				{
+		      		const Float vA=-54.903255*t9i;
+      				const Float dvA=54.903255*t9i2;
+      				
+      				dl[3]=5.65e10*std::exp(vA)*(deff[3]*t932 + 1.5*eff[3]*t912 + eff[3]*t932*dvA)*1.e-9;
+		      		drates.push_back(dl[3]);
 
 					// debuging :
-					if (net14_debug) std::cout << "droag=" << droag << ", drnega=" << drnega << "\n\n";
+					if (net14_debug) std::cout << "drnega=" << dl[3] << "\n\n";
 				}
 			}
 
