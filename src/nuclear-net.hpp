@@ -35,13 +35,13 @@ namespace nnet {
 		double max_dt_step = 1.5;
 
 		/// relative temperature variation target of the implicit solver
-		double dT_T_target = 1e-2;
+		double dT_T_target = 1e-2; //1e-4;
 		/// relative mass conservation target of the implicit solver
-		double dm_m_target = 1e-5;
+		double dm_m_target = 1e-3;
 		/// relative temperature variation tolerance of the implicit solver
 		double dT_T_tol = 1e-1;
 		/// relative mass conservation tolerance of the implicit solver
-		double dm_m_tol = 1e-4;
+		double dm_m_tol = 1e-2;
 
 
 
@@ -175,20 +175,18 @@ namespace nnet {
 			const Float rate = rates[i];
 
 			// actual reaction speed (including factorials)
+			int order = 0;
 			Float corrected_rate = rate;
-			for (auto &[reactant_id, n_reactant_consumed] : Reaction.reactants) {
+			for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
 				corrected_rate /= std::tgamma(n_reactant_consumed + 1); // tgamma performas factorial with n - 1 -> hence we use n + 1
 				if (i > n_reactant_consumed)
 					corrected_rate *= std::pow(Y(reactant_id), n_reactant_consumed - 1);
+
+				order += n_reactant_consumed;
 			}
 
 			// correction with rho
-			int order = 0;
-			for (auto &[_, n_reactant_consumed] : Reaction.reactants)
-				order += n_reactant_consumed;
 			corrected_rate *= std::pow(rho, (Float)(order - 1));
-
-
 
 
 
@@ -196,95 +194,53 @@ namespace nnet {
 			debuging :
 			!!!!!!!!!!!! */
 			if (net14_debug) {
-				for (auto &[reactant_id, n_reactant_consumed] : Reaction.reactants)
-					std::cout << n_reactant_consumed << "*[" << reactant_id << "] ";
+				for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants)
+					std::cout << n_reactant_consumed << "*[" << A(reactant_id) << "] ";
 				std::cout << "\t->\t";
-				for (auto &[product_id, n_product_produced] : Reaction.products)
-					std::cout << n_product_produced << "*[" << product_id << "] ";
+				for (auto const [product_id, n_product_produced] : Reaction.products)
+					std::cout << n_product_produced << "*[" << A(product_id) << "] ";
 				std::cout << ", " << order << ", " << rate << "\t->\t" << (corrected_rate/std::pow(rho, (Float)(order - 1))) << "\t->\t" << corrected_rate << "\n";
 			}
 
+
+
 			// stop if the rate is 0
 			if (std::abs(corrected_rate) > 0) {
-#ifndef SMART_MATRIX_GENERATION
 				// total reactant mass
 				Float total_reactant_mass = 0;
-				for (auto &[reactant_id, n_reactant_consumed] : Reaction.reactants)
+				for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants)
 					total_reactant_mass += n_reactant_consumed*A(reactant_id);
 
-				// compute non-diagonal terms (production)
-				for (auto &[reactant_id, n_reactant_consumed] : Reaction.reactants) {
+
+
+				for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
+					// compute reaction rate including other species
+					Float this_rate = corrected_rate;
+					for (auto &[other_reactant_id, _] : Reaction.reactants)
+						if (other_reactant_id != reactant_id)
+							this_rate *= Y(other_reactant_id);
+
+					// insert diagonal terms (consumption)
+					M(reactant_id, reactant_id) -= n_reactant_consumed*this_rate;
+
+					
+
 					// reaction mass proportion
 					Float this_reactant_mass_proportion = n_reactant_consumed*A(reactant_id)/total_reactant_mass;
 
-					// reaction rate including concentration
-					Float production_rate = this_reactant_mass_proportion*corrected_rate;
-					for (auto &[other_reactant_id, _] : Reaction.reactants)
-						if (other_reactant_id != reactant_id)
-							production_rate *= Y(other_reactant_id);
+					// compute non-diagonal terms (production)
+					Float production_rate = this_rate*this_reactant_mass_proportion;
 
-					for (auto &[product_id, n_product_produced] : Reaction.products)
+					// insert production rates
+					for (auto const [product_id, n_product_produced] : Reaction.products)
 						M(product_id, reactant_id) += n_product_produced*production_rate;
 				}
-
 			}
 		}
 
-
-		// add diagonal terms
-		for (int reactant_id = 0; reactant_id < dimension; ++reactant_id) {
-			M(reactant_id, reactant_id) = 0;
-			for (int product_id = 0; product_id < dimension; ++product_id)
-				if (product_id != reactant_id)
-					M(reactant_id, reactant_id) -= M(product_id, reactant_id)*A(product_id);
-			M(reactant_id, reactant_id) /= A(reactant_id);
-		}
-#else
-				// compute diagonal terms (consumption)
-				for (auto &[reactant_id, n_reactant_consumed] : Reaction.reactants) {
-					Float consumption_rate = n_reactant_consumed*corrected_rate;
-					for (auto &[other_reactant_id, _] : Reaction.reactants)
-						if (other_reactant_id != reactant_id)
-							consumption_rate *= Y(other_reactant_id);
-					M(reactant_id, reactant_id) -= consumption_rate;
-				}
-
-				// compute non-diagonal terms (production)
-				for (auto &[product_id, n_product_produced] : Reaction.products) {
-					// find the optimum place to put the coeficient
-					int best_reactant_id = Reaction.reactants[0].reactant_id;
-					bool is_non_zero = M(product_id, best_reactant_id) != 0.;
-					for (int j = 1; j < Reaction.reactants.size(); ++j) { // for (auto &[reactant_id, _] : Reaction.reactants | std::ranges::views::drop(1))
-						int reactant_id = Reaction.reactants[j].reactant_id;
-
-						// prioritize the minimization of the number of non-zero terms
-						if (M(product_id, reactant_id) != 0.) {
-							// overwise if it is the first non-zero term
-							if (!is_non_zero) {
-								is_non_zero = true;
-								best_reactant_id = reactant_id;
-							} else
-								// otherwise keep the "relativly closest" element
-								if (std::abs((reactant_id - product_id)*M(product_id, reactant_id)/M(product_id, product_id)) <
-									std::abs((best_reactant_id - product_id)*M(product_id, best_reactant_id)/M(product_id, product_id)))
-									best_reactant_id = reactant_id;
-						} else if (!is_non_zero)
-							// if still populating a zero element, then keep the closest to the diagonal
-							if (std::abs(reactant_id - product_id) < std::abs(best_reactant_id - product_id))
-								best_reactant_id = reactant_id;
-					}
-
-					// insert into the matrix
-					Float production_rate = n_product_produced*corrected_rate;
-					for (auto &[other_reactant_id, _] : Reaction.reactants)
-						if (other_reactant_id != best_reactant_id)
-							production_rate *= Y(other_reactant_id);
-					M(product_id, best_reactant_id) += production_rate;
-				}	
-			}	
-		}
-#endif
-			
+		auto const dM_dt = M.transpose()*A;
+		for (int i = 0; i < dimension; ++i)
+			M(i, i) -= dM_dt(i)/A(i);
 
 		return M;
 	}

@@ -6,11 +6,8 @@
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
 	const double rho = 1e9; // rho, g/cm^3
-	//const double cv = 2e7; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
-	//double last_T = 1e9;
-
-	const double cv = 1e30; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
-	double last_T = 8e9;
+	const double cv = 2e7; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
+	double last_T = 1e9;
 
 	// initial state
 	Eigen::VectorXd last_Y(14), X = Eigen::VectorXd::Zero(14);
@@ -22,7 +19,7 @@ int main() {
 	double m_in = last_Y.dot(nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
-	int n_max = 4000; //1000000;
+	int n_max = 100000;
 	const int n_print = 30, n_save=4000;
 
 
@@ -92,6 +89,12 @@ int main() {
 			std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
 			for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
 			std::cout << "\t(m_tot=" << m_tot << ",\tDelta_m_tot/m_tot=" << dm_m << "),\t" << T << "\n";
+
+			auto [rates, drates] = nnet::net14::compute_reaction_rates(T);
+			Eigen::MatrixXd M =     nnet::first_order_from_reactions<double>(nnet::net14::reaction_list,  rates, Y, nnet::net14::constants::A, rho);
+			Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, drates, Y, nnet::net14::constants::A, rho);
+
+			std::cout << (M*Y).dot(nnet::net14::constants::A) << "=(m*Y).A, " << (dM_dT*Y).dot(nnet::net14::constants::A) << "=(dM_dT*Y).A\n";
 		}
 
 		last_Y = Y;
