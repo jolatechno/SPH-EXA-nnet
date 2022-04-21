@@ -358,7 +358,14 @@ namespace nnet {
 
 		// now solve M*D{T, Y} = RHS
 		vector DY_T = utils::solve(M, RHS, constants::epsilon_system);
-		return {Y + DY_T(Eigen::seq(1, dimension)), T + DY_T(0)};
+
+		// add values
+		vector next_Y = Y + DY_T(Eigen::seq(1, dimension));
+		Float next_T = T + DY_T(0);
+
+		// cleanup
+		utils::clip(next_Y, nnet::constants::epsilon_vector);
+		return {next_Y, next_T};
 	}
 
 

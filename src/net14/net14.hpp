@@ -115,6 +115,7 @@ namespace nnet {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			fusions reactions rate and rate derivative from fits */
 			{
+				// constants:
 				const Float t9=T/1.e9;
 				const Float t913=std::pow(t9, 1./3.);
 				const Float t923=t913*t913;
@@ -171,6 +172,7 @@ namespace nnet {
 			/* fission reactions rate and rate derivative from fits
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			{
+				// constants:
 				const Float t9=T/1.e9;
 				const Float t9i=1.e0/t9;
 				const Float lt9=std::log(t9);
@@ -220,6 +222,7 @@ namespace nnet {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			other fusion and fission reactions rate */
 			{
+				// constants:
 				const Float t9r=T*1.0e-09;
 	      		const Float t9=std::min((Float)10., t9r);
 	      		const Float t92=t9*t9;
@@ -384,6 +387,30 @@ namespace nnet {
 			/* other fusion and fission reactions rate derivative 
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			{
+				// constants:
+				const Float t9=T*1.0e-09;
+      			const Float t92=t9*t9;
+      			const Float t93=t92*t9;
+      			const Float t94=t93*t9;
+      			const Float t95=t94*t9;
+      			const Float t912=std::sqrt(t9);
+      			const Float t913=std::pow(t9, 1./3.);
+      			const Float t923=t913*t913;
+      			const Float t932=t9*t912;
+      			const Float t943=t9*t913;
+      			const Float t952=t9*t932;
+      			const Float t953=t9*t923;
+      			const Float t9i=1./t9;
+      			const Float t9i2=t9i*t9i;
+      			const Float t9i3=t9i2*t9i;
+      			const Float t9i12=1./t912;
+      			const Float t9i13=1./t913;
+      			const Float t9i23=1./t923;
+      			const Float t9i32=1./t932;
+      			const Float t9i43=1./t943;
+      			const Float t9i52=1./t952;
+      			const Float t9i53=1./t953;
+      			
 
 			    /* !!!!!!!!!!!!!!!!!!!!!!!!
 				O + He <-> Ne fusion and fission
