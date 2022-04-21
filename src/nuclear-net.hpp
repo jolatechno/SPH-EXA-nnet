@@ -23,7 +23,7 @@ namespace nnet {
 
 
 		/// theta for the implicit method
-		double theta = 0.6;
+		double theta = 0.7;
 		/// tolerance of the implicit solver
 		double implicit_tol = 1e-9;
 
@@ -35,13 +35,13 @@ namespace nnet {
 		double max_dt_step = 1.5;
 
 		/// relative temperature variation target of the implicit solver
-		double dT_T_target = 1e-2; //1e-4;
+		double dT_T_target = 4e-3;
 		/// relative mass conservation target of the implicit solver
-		double dm_m_target = 1e-3;
+		double dm_m_target = 1e-5;
 		/// relative temperature variation tolerance of the implicit solver
 		double dT_T_tol = 1e-1;
 		/// relative mass conservation tolerance of the implicit solver
-		double dm_m_tol = 1e-2;
+		double dm_m_tol = 1e-3;
 
 
 
@@ -165,145 +165,79 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<typename Float>
-	Eigen::Matrix<Float, -1, -1> first_order_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Eigen::Vector<Float, -1> const &Y, Eigen::Vector<Float, -1> const &A, const Float rho) {
+	Eigen::Matrix<Float, -1, -1> order_0_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Eigen::Vector<Float, -1> const &Y, const Float rho) {
 		const int dimension = Y.size();
 
 		Eigen::Matrix<Float, -1, -1> M = Eigen::Matrix<Float, -1, -1>::Zero(dimension, dimension);
 
 		for (int i = 0; i < reactions.size() && i < rates.size(); ++i) {
 			const reaction &Reaction = reactions[i];
-			const Float rate = rates[i];
+			Float rate = rates[i];
 
-			// actual reaction speed (including factorials)
+			// compute order and correct for rho
 			int order = 0;
-			Float corrected_rate = rate;
-			for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
-				corrected_rate /= std::tgamma(n_reactant_consumed + 1); // tgamma performas factorial with n - 1 -> hence we use n + 1
-				if (i > n_reactant_consumed)
-					corrected_rate *= std::pow(Y(reactant_id), n_reactant_consumed - 1);
-
+			for (auto const [_, n_reactant_consumed] : Reaction.reactants)
 				order += n_reactant_consumed;
-			}
+			rate *= std::pow(rho, order - 1);
 
-			// correction with rho
-			corrected_rate *= std::pow(rho, (Float)(order - 1));
+			auto const [reactant_id, n_reactant_consumed] = Reaction.reactants[0];
+			// compute rate
+			Float this_rate = rate;
+			this_rate *= std::pow(Y(reactant_id), n_reactant_consumed - 1);
+			for (auto &[other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
+				if (other_reactant_id != reactant_id)
+					this_rate *= std::pow(Y(other_reactant_id), other_n_reactant_consumed);
 
+				// insert consumption rate
+			M(reactant_id, reactant_id) -= this_rate*n_reactant_consumed;
 
-
-			/* !!!!!!!!!!!!
-			debuging :
-			!!!!!!!!!!!! */
-			if (net14_debug) {
-				for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants)
-					std::cout << n_reactant_consumed << "*[" << A(reactant_id) << "] ";
-				std::cout << "\t->\t";
-				for (auto const [product_id, n_product_produced] : Reaction.products)
-					std::cout << n_product_produced << "*[" << A(product_id) << "] ";
-				std::cout << ", " << order << ", " << rate << "\t->\t" << (corrected_rate/std::pow(rho, (Float)(order - 1))) << "\t->\t" << corrected_rate << "\n";
-			}
-
-
-
-			// stop if the rate is 0
-			if (std::abs(corrected_rate) > 0) {
-				// total reactant mass
-				Float total_reactant_mass = 0;
-				for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants)
-					total_reactant_mass += n_reactant_consumed*A(reactant_id);
-
-
-
-				for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
-					// compute reaction rate including other species
-					Float this_rate = corrected_rate;
-					for (auto &[other_reactant_id, _] : Reaction.reactants)
-						if (other_reactant_id != reactant_id)
-							this_rate *= Y(other_reactant_id);
-
-					// insert diagonal terms (consumption)
-					M(reactant_id, reactant_id) -= n_reactant_consumed*this_rate;
-
-					
-
-					// reaction mass proportion
-					Float this_reactant_mass_proportion = n_reactant_consumed*A(reactant_id)/total_reactant_mass;
-
-					// compute non-diagonal terms (production)
-					Float production_rate = this_rate*this_reactant_mass_proportion;
-
-					// insert production rates
-					for (auto const [product_id, n_product_produced] : Reaction.products)
-						M(product_id, reactant_id) += n_product_produced*production_rate;
-				}
-			}
+			// insert production rates
+			for (auto const [product_id, n_product_produced] : Reaction.products)
+				M(product_id, reactant_id) += this_rate*n_product_produced;
 		}
-
-		auto const dM_dt = M.transpose()*A;
-		for (int i = 0; i < dimension; ++i)
-			M(i, i) -= dM_dt(i)/A(i);
 
 		return M;
 	}
 
-
-
-
-	/// includes temperature in the system represented by M.
+	/// create a first order system from a list of reaction.
 	/**
-	 * add a row to M based on BE to obtain M' such that, d{T,Y}/dt = M'*{T,Y}.
+	 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y.
 	 * ...TODO
 	 */
-	template<class matrix, class vector, typename Float>
-	matrix include_temp(const matrix &M, const vector &Y, const vector &BE, const Float cv, const Float value_1) {
-		/* -------------------
-		Add a row to M (dY/dt = M*Y) such that d{T,Y}/dt = M'*{T,Y}:
-
-		  (dY/dt).BE    + value_1*T    = dT/dt*cv
-	<=>     (M*Y).BE/cv + value_1*T/cv = dT/dt
-	<=>  (M.T*BE). Y/cv + value_1*T/cv = dT/dt
-		------------------- */
-
-		const int dimension = Y.size();
-		matrix Mp = matrix::Zero(dimension + 1, dimension + 1);
-
-		// insert M
-		Mp(Eigen::seq(1, dimension), Eigen::seq(1, dimension)) = M;
-
-		// insert Y -> dT terms (first row)
-		Mp(0, Eigen::seq(1, dimension)) = M.transpose()*BE/cv;
-
-		// insert T -> dT term  (first row diagonal value)
-		Mp(0, 0) = value_1/cv;
-
-		return Mp;
-	}
-
-
-
-
-	/// includes the derivative of rates in the system represented by M.
-	/**
-	 * fills a column to M' based on dM/dT.
-	 * ...TODO
-	 */
-	template<class matrix, class vector>
-	matrix include_rate_derivative(const matrix &Mp, const matrix &dM_dT, const vector &Y) {
-		/* -------------------
-		D{T, Y} = Dt*(M'  + theta*dM/dT*DT)*{T_in+theta*DT, Y_in+theta*DY}
- 	<=>                               D{T, Y} = Dt*((M' + theta*dM/dT*DT)*{T_in,Y_in}  + theta*M'*D{T,Y})
- 	<=> (I - Dt*theta*(M' + dM/dT*Y))*D{T, Y} = Dt*M'*{T_in,Y_in}
-
-	<=> Mp[1:dimension, 0] = dM/dT*Y
-		------------------- */
-
+	template<typename Float>
+	Eigen::Matrix<Float, -1, -1> order_1_dY_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Eigen::Vector<Float, -1> const &Y, const Float rho) {
 		const int dimension = Y.size();
 
-		matrix MpT = Mp;
+		Eigen::Matrix<Float, -1, -1> M = Eigen::Matrix<Float, -1, -1>::Zero(dimension, dimension);
 
-		// derivative of Y compared to T
-		MpT(Eigen::seq(1, dimension), 0) = dM_dT*Y;
+		for (int i = 0; i < reactions.size() && i < rates.size(); ++i) {
+			const reaction &Reaction = reactions[i];
+			Float rate = rates[i];
 
-		return MpT;
+			// compute order and correct for rho
+			int order = 0;
+			for (auto const [_, n_reactant_consumed] : Reaction.reactants)
+				order += n_reactant_consumed;
+			rate *= std::pow(rho, order - 1);
+
+			for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
+				// compute rate
+				Float this_rate = rate;
+				this_rate *= std::pow(Y(reactant_id), n_reactant_consumed - 1);
+				for (auto &[other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
+					if (other_reactant_id != reactant_id)
+						this_rate *= std::pow(Y(other_reactant_id), other_n_reactant_consumed);
+
+				// insert consumption rate
+				M(reactant_id, reactant_id) -= this_rate*n_reactant_consumed;
+
+				// insert production rates
+				for (auto const [product_id, n_product_produced] : Reaction.products)
+					M(product_id, reactant_id) += this_rate*n_product_produced;
+			}
+		}
+
+		return M;
 	}
 
 
@@ -314,36 +248,54 @@ namespace nnet {
 	 *  solves non-iteratively and partialy implicitly the system represented by M.
 	 * ...TODO
 	 */
-	template<class matrix, class vector, typename Float>
-	std::tuple<vector, Float> solve_system(const matrix &Mp, const matrix &dM_dT, const vector &Y, const Float T, const Float dt) {
-		const int dimension = Y.size();
-
-		// construct vector
-		vector Y_T(dimension + 1);
-		Y_T << T, Y;
-
+	template<class vector, typename Float>
+	std::tuple<vector, Float> solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
+		const vector &BE, const vector &Y, 
+		const Float T, const Float cv, const Float rho, const Float value_1, const Float dt) {
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
 
 		                              D{T, Y} = Dt*(M'  + theta*dM/dT*DT)*{T_in+theta*DT, Y_in+theta*DY}
  	<=>                               D{T, Y} = Dt*((M' + theta*dM/dT*DT)*{T_in,Y_in}  + theta*M'*D{T,Y})
  	<=> (I - Dt*theta*(M' + dM/dT*Y))*D{T, Y} = Dt*M'*{T_in,Y_in}
+
+ 		To include temperature:
+
+		dY/dt = (M + dM/dT*dT)*Y + dM*dY
+		dT/dt = value_1/cv*T + (dY/dt).Be/cv = value_1/cv*T + (M*Y).Be = value_1/cv*T + (M.T*Be)*Y
 		------------------- */
+		const int dimension = Y.size();
+
+		// construct matrix
+		Eigen::Matrix<Float, -1, -1> Mp = Eigen::Matrix<Float, -1, -1>::Zero(dimension + 1, dimension + 1);
+
+		// main matrix part
+		Mp(Eigen::seq(1,dimension), Eigen::seq(1,dimension)) = order_1_dY_from_reactions(reactions, rates, Y, rho);
 
 		// right hand side
-		vector RHS = Mp*Y_T;
+		Eigen::Matrix<Float, -1, -1> M = order_0_from_reactions(reactions, rates, Y, rho);
+		vector RHS(dimension + 1), dY_dt = M*Y;
+		RHS(Eigen::seq(1, dimension)) = dY_dt;
+		RHS(0) = T*value_1/cv + BE.dot(dY_dt)/cv;
+
+		// include Y -> T terms
+		Mp(0, Eigen::seq(1, dimension)) = M.transpose()*BE/cv;
+		Mp(0, 0) = value_1/cv;
 
 		// include rate derivative
-		matrix MpT = include_rate_derivative(Mp, dM_dT, Y);
+		Eigen::Matrix<Float, -1, -1> dM_dT = order_0_from_reactions(reactions, drates_dT, Y, rho);
+		Mp(Eigen::seq(1, dimension), 0) = dM_dT*Y;
+
+		//std::cout << "Mp=\n" << Mp << "\n\nM=\n" << M << "\n\n"; 
 
 		// construct M
-		matrix M = matrix::Identity(dimension + 1, dimension + 1)/dt - constants::theta*MpT;
+		Eigen::Matrix<Float, -1, -1> M_sys = Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1)/dt - constants::theta*Mp;
 
 		// normalize
-		utils::normalize(M, RHS);
+		utils::normalize(M_sys, RHS);
 
 		// now solve M*D{T, Y} = RHS
-		vector DY_T = utils::solve(M, RHS, constants::epsilon_system);
+		vector DY_T = utils::solve(M_sys, RHS, constants::epsilon_system);
 
 		// add values
 		vector next_Y = Y + DY_T(Eigen::seq(1, dimension));
@@ -362,14 +314,16 @@ namespace nnet {
 	 *  solves iteratively and fully implicitly a single iteration of the system constructed by construct_system, with added timestep tweeking
 	 * ...TODO
 	 */
-	template<class matrix, class vector, typename Float>
-	std::tuple<vector, Float, Float> solve_system_var_timestep(const matrix &Mp, const matrix &dM_dT, const vector &Y, const Float T, const vector &A, Float &dt) {
+	template<class vector, class vector_int, typename Float>
+	std::tuple<vector, Float, Float> solve_system_var_timestep(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
+		const vector &BE, const vector_int &A, const vector &Y,
+		const Float T, const Float cv, const Float rho, const Float value_1, Float &dt) {
 		const Float m_in = Y.dot(A);
 
 		// actual solving
 		while (true) {
 			// solve the system
-			auto [next_Y, next_T] = solve_system(Mp, dM_dT, Y, T, dt);
+			auto [next_Y, next_T] = solve_system(reactions, rates, drates_dT, BE, Y, T, cv, rho, value_1, dt);
 
 			// mass temperature variation
 			Float dm_m = std::abs((next_Y.dot(A) - m_in)/m_in);
@@ -391,7 +345,8 @@ namespace nnet {
 				));
 
 			// exit on condition
-			if (dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol)
+			if (actual_dt <= constants::min_dt ||
+				(dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol))
 				return {next_Y, next_T, actual_dt};
 		}
 	}

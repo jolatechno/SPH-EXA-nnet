@@ -19,7 +19,7 @@ int main() {
 	double m_in = last_Y.dot(nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
-	int n_max = 100000;
+	int n_max = 100000; //100000;
 	const int n_print = 30, n_save=4000;
 
 
@@ -68,8 +68,11 @@ int main() {
 
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
-		auto [Mp, dM_dT] = nnet::net14::construct_system(last_Y, last_T, rho, cv, value_1);
-		auto [Y, T, actual_dt] = nnet::solve_system_var_timestep(Mp, dM_dT, last_Y, last_T, nnet::net14::constants::A, dt);
+		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates(last_T);
+		auto BE = nnet::net14::get_corrected_BE(last_T);
+		auto [Y, T, actual_dt] = nnet::solve_system_var_timestep(nnet::net14::reaction_list, rate, drates_dT,
+			BE, nnet::net14::constants::A, last_Y, 
+			last_T, cv, rho, value_1, dt);
 		t += actual_dt;
 
 		double m_tot = Y.dot(nnet::net14::constants::A);
@@ -90,11 +93,14 @@ int main() {
 			for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
 			std::cout << "\t(m_tot=" << m_tot << ",\tDelta_m_tot/m_tot=" << dm_m << "),\t" << T << "\n";
 
+
+#ifdef DEBUG
 			auto [rates, drates] = nnet::net14::compute_reaction_rates(T);
 			Eigen::MatrixXd M =     nnet::first_order_from_reactions<double>(nnet::net14::reaction_list,  rates, Y, nnet::net14::constants::A, rho);
 			Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, drates, Y, nnet::net14::constants::A, rho);
 
 			std::cout << (M*Y).dot(nnet::net14::constants::A) << "=(m*Y).A, " << (dM_dT*Y).dot(nnet::net14::constants::A) << "=(dM_dT*Y).A\n";
+#endif
 		}
 
 		last_Y = Y;

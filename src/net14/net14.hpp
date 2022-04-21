@@ -594,19 +594,10 @@ namespace nnet {
 			return {rates, drates};
 		}
 
-		/// actual network
-		std::tuple<Eigen::MatrixXd, Eigen::MatrixXd> construct_system(const Eigen::VectorXd &Y, const double T, const double rho, const double cv, const double value_1) {
-			// compute rates
-			auto [rates, drates] = compute_reaction_rates(T);
-
-			Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reaction_list, rates, Y, constants::A, rho);
-			Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(reaction_list, drates, Y, constants::A, rho);
-
-			// include temperature
+		/// function to compute the corrected BE
+		Eigen::VectorXd get_corrected_BE(double const T) {
 			Eigen::VectorXd corrected_BE = BE + ideal_gaz_correction(T);
-			Eigen::MatrixXd Mp = nnet::include_temp(M, Y, corrected_BE, cv, value_1);
-
-			return {Mp, dM_dT};
+			return corrected_BE;
 		}
 	}
 }
