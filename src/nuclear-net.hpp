@@ -46,9 +46,9 @@ namespace nnet {
 
 
 		/// the value that is considered null inside a system
-		double epsilon_system = 1e-100;
+		double epsilon_system = 1e-80;
 		/// the value that is considered null inside a state
-		double epsilon_vector = 1e-100;
+		double epsilon_vector = 1e-40;
 	}
 
 
@@ -139,6 +139,9 @@ namespace nnet {
 			return BCGST.solve(RHS);
 		}
 
+
+
+
 		/// clip the values in a vector
 		/**
 		 * clip the values in a vector, to make 0 any negative value, or values smaller than a tolerance epsilon
@@ -200,6 +203,10 @@ namespace nnet {
 		return M;
 	}
 
+
+
+
+
 	/// create a first order system from a list of reaction.
 	/**
 	 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y.
@@ -233,7 +240,6 @@ namespace nnet {
 				for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
 					M(other_reactant_id, reactant_id) -= this_rate*other_n_reactant_consumed;
 
-
 				// insert production rates
 				for (auto const [product_id, n_product_produced] : Reaction.products)
 					M(product_id, reactant_id) += this_rate*n_product_produced;
@@ -253,7 +259,7 @@ namespace nnet {
 	 */
 	template<class vector, typename Float>
 	std::tuple<vector, Float> solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
-		const vector &BE, const vector &Y, 
+		const vector &BE, const vector &Y,                         /* debugging */ const vector &A, 
 		const Float T, const Float cv, const Float rho, const Float value_1, const Float dt) {
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
@@ -273,26 +279,35 @@ namespace nnet {
 		Eigen::Matrix<Float, -1, -1> Mp = Eigen::Matrix<Float, -1, -1>::Zero(dimension + 1, dimension + 1);
 
 		// main matrix part
-		Mp(Eigen::seq(1,dimension), Eigen::seq(1,dimension)) = order_1_dY_from_reactions(reactions, rates, Y, rho);
+		auto MpYY = order_1_dY_from_reactions(reactions, rates, Y, rho);
+		Mp(Eigen::seq(1,dimension), Eigen::seq(1,dimension)) = MpYY;
 
 		// right hand side
-		Eigen::Matrix<Float, -1, -1> M = order_0_from_reactions(reactions, rates, Y, rho);
+		auto M = order_0_from_reactions(reactions, rates, Y, rho);
 		vector RHS(dimension + 1), dY_dt = M*Y;
-		RHS(Eigen::seq(1, dimension)) = dY_dt;
-		RHS(0) = T*value_1/cv + BE.dot(dY_dt)/cv;
+		RHS(Eigen::seq(1, dimension)) = dY_dt*dt;
+		RHS(0) = (T*value_1 + BE.dot(dY_dt))/cv*dt;
 
 		// include Y -> T terms
-		Mp(0, Eigen::seq(1, dimension)) = M.transpose()*BE/cv;
+		Mp(0, Eigen::seq(1, dimension)) = BE/cv;
 		Mp(0, 0) = value_1/cv;
 
 		// include rate derivative
 		Eigen::Matrix<Float, -1, -1> dM_dT = order_0_from_reactions(reactions, drates_dT, Y, rho);
 		Mp(Eigen::seq(1, dimension), 0) = dM_dT*Y;
 
-		//std::cout << "Mp=\n" << Mp << "\n\nM=\n" << M << "\n\n"; 
+
+		// !!!!!!!!!!!!!!!!!!
+		// debug:
+		if (net14_debug) {
+			std::cout << "Mp=\n" << Mp << "\n\nM=\n" << M << "\n\ndM_dT=\n" << dM_dT << "\n\n";
+			std::cout << "Mp.T*A=" << (MpYY.transpose()*A).transpose() << "\nM.T*A=" << (M.transpose()*A).transpose() << "\n(dM/dT).T*A=" << (dM_dT.transpose()*A).transpose() << "\n"; 
+			std::cout << "(dM/dT)*Y=" << (dM_dT*Y).transpose() << "\n\n";
+		}
+
 
 		// construct M
-		Eigen::Matrix<Float, -1, -1> M_sys = Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1)/dt - constants::theta*Mp;
+		Eigen::Matrix<Float, -1, -1> M_sys = Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1) - constants::theta*Mp*dt;
 
 		// normalize
 		utils::normalize(M_sys, RHS);
@@ -326,7 +341,7 @@ namespace nnet {
 		// actual solving
 		while (true) {
 			// solve the system
-			auto [next_Y, next_T] = solve_system(reactions, rates, drates_dT, BE, Y, T, cv, rho, value_1, dt);
+			auto [next_Y, next_T] = solve_system(reactions, rates, drates_dT, BE, Y, /* debugging */A/* debugging */, T, cv, rho, value_1, dt);
 
 			// mass temperature variation
 			Float dm_m = std::abs((next_Y.dot(A) - m_in)/m_in);

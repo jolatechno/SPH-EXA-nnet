@@ -9,9 +9,9 @@ int main() {
 
 	// mass excedents
 	Eigen::VectorXd BE(3);
-	BE(0) = 3;
-	BE(1) = 4;
-	BE(2) = 9;
+	BE(0) = 9;
+	BE(1) = 7;
+	BE(2) = 5;
 
 	// molar masses
 	Eigen::VectorXd m(3);
@@ -33,6 +33,8 @@ int main() {
 
 	double E_tot, E_tot_0 = last_Y.dot(m + BE) + cv*last_T;
 	double m_tot, m_tot_0 = last_Y.dot(m);
+
+	nnet::constants::theta = 0.6;
 
 
 	/* -----------------
@@ -94,31 +96,26 @@ int main() {
 			1    + drates[5]*T_,
 		};
 
-		// generate matrix
-		Eigen::MatrixXd M = nnet::first_order_from_reactions<double>(reactions, rates, Y_, m, rho);
-		Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(reactions, drates, Y_, m, rho);
-
-		// add temperature to the problem
-		Eigen::MatrixXd Mp = nnet::include_temp(M, Y_, BE, cv, value_1);
-
-		return std::tuple<Eigen::MatrixXd, Eigen::MatrixXd>{Mp, dM_dT};
+		return std::tuple<std::vector<double>, std::vector<double>>{rates, drates};
 	};
 
-	double dt=5e-2, T_max = 2;
-	int n_max = T_max/dt;
+	double dt=5e-8, T_max = 2;
+	int n_max = 20; //T_max/dt;
 	const int n_print = 20;
 	for (int i = 0; i < n_max; ++i) {
 
-		auto [Mp, dM_dT] = construct_system(last_Y, last_T);
+		auto [rate, drates_dT] = construct_system(last_Y, last_T);
 
 		// solve the system
-		auto [Y, T] = nnet::solve_system(Mp, dM_dT, last_Y, last_T, dt);
+		auto [Y, T] = nnet::solve_system(reactions, rate, drates_dT,
+			BE, m, last_Y, 
+			last_T, cv, rho, value_1, dt);
 
 		E_tot = Y.dot(m + BE) + cv*T;
 		m_tot = Y.dot(m);
 
-		if (n_print >= n_max || (n_max - i) % (int)((float)T_max / (dt*(float)n_print)) == 0)
-			std::cout << Y.transpose() << ",\t(E_tot=" << E_tot << ",\tDelta_E_tot=" << E_tot_0 - E_tot << "),\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot_0 - m_tot << "),\t" << T << "\n";
+		if (n_print >= n_max || (n_max - i) % (int)((float)n_max / ((float)n_print)) == 0)
+			std::cout << Y.transpose() << ",\t(E_tot=" << E_tot << ",\tDelta_E_tot=" << E_tot - E_tot_0 << "),\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot - m_tot_0 << "),\t" << T << "\n";
 
 		last_Y = Y;
 		last_T = T;

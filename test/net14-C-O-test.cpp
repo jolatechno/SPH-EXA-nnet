@@ -6,7 +6,7 @@
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
 	const double rho = 1e9; // rho, g/cm^3
-	const double cv = 2e6; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
+	const double cv = 1e30; // 1e6; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
 	double last_T = 1e9;
 
 	// initial state
@@ -19,7 +19,7 @@ int main() {
 	double m_in = last_Y.dot(nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
-	int n_max = 100000; //100000;
+	int n_max = 100000;
 	const int n_print = 30, n_save=4000;
 
 
@@ -31,28 +31,14 @@ int main() {
 	--------------------- */
 #ifdef DEBUG
 	{		
+		auto BE = nnet::net14::get_corrected_BE(last_T);
+
 		net14_debug = true;
-		auto [rates, drates] = nnet::net14::compute_reaction_rates(last_T);
-		Eigen::MatrixXd M =     nnet::first_order_from_reactions<double>(nnet::net14::reaction_list,  rates, last_Y, nnet::net14::constants::A, rho);
+		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates(last_T);
+		solve_system(nnet::net14::reaction_list, rate, drates_dT,
+			BE, last_Y,  /* debugging */nnet::net14::constants::A/* debugging */, 
+			last_T, cv, rho, value_1, dt);
 		net14_debug = false;
-		Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, drates, last_Y, nnet::net14::constants::A, rho);
-
-		// include temperature
-		Eigen::VectorXd BE = nnet::net14::BE + nnet::net14::ideal_gaz_correction(last_T);
-		auto Mp =  nnet::include_temp(M, last_Y, BE, cv, value_1);
-		auto MpT = nnet::include_rate_derivative(Mp, dM_dT, last_Y);
-
-		// construct vector
-		Eigen::VectorXd Y_T(14 + 1);
-		Y_T << last_T, last_Y;
-
-		Eigen::VectorXd RHS = Mp*Y_T*0.01;
-
-		std::cout << "\nBE(T=" << last_T <<") =\t" << BE.transpose() << "\n\n";
-		std::cout << "M.T*A =" << (M.transpose()*nnet::net14::constants::A).transpose() << "\t-> sum=\t" << (M.transpose()*nnet::net14::constants::A).sum() << "\n\n";
-		std::cout << "phi =\n" << MpT << "\n\n";
-		std::cout << "RHS =\t\t" << RHS.transpose() << "\n\n";
-		std::cout << "Mp*{T,Y} =\t" << (Mp*Y_T).transpose() << "\n\n\n"; 
 	}
 #endif
 	/* ---------------------
@@ -92,15 +78,6 @@ int main() {
 			std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
 			for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
 			std::cout << "\t(m_tot=" << m_tot << ",\tDelta_m_tot/m_tot=" << dm_m << "),\t" << T << "\n";
-
-
-#ifdef DEBUG
-			auto [rates, drates] = nnet::net14::compute_reaction_rates(T);
-			Eigen::MatrixXd M =     nnet::first_order_from_reactions<double>(nnet::net14::reaction_list,  rates, Y, nnet::net14::constants::A, rho);
-			Eigen::MatrixXd dM_dT = nnet::first_order_from_reactions<double>(nnet::net14::reaction_list, drates, Y, nnet::net14::constants::A, rho);
-
-			std::cout << (M*Y).dot(nnet::net14::constants::A) << "=(m*Y).A, " << (dM_dT*Y).dot(nnet::net14::constants::A) << "=(dM_dT*Y).A\n";
-#endif
 		}
 
 		last_Y = Y;
