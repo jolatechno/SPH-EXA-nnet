@@ -46,9 +46,9 @@ namespace nnet {
 
 
 		/// the value that is considered null inside a system
-		double epsilon_system = 1e-80;
+		double epsilon_system = 1e-50;
 		/// the value that is considered null inside a state
-		double epsilon_vector = 1e-40;
+		double epsilon_vector = 1e-10;
 	}
 
 
@@ -258,8 +258,8 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class vector, typename Float>
-	std::tuple<vector, Float> solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
-		const vector &BE, const vector &Y,                         /* debugging */ const vector &A, 
+	std::tuple<vector, Float, /* debugging */Float/* debugging */> solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
+		const vector &BE, const vector &Y,                         /* debugging */const vector &A/* debugging */, 
 		const Float T, const Float cv, const Float rho, const Float value_1, const Float dt) {
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
@@ -318,10 +318,7 @@ namespace nnet {
 		// add values
 		vector next_Y = Y + DY_T(Eigen::seq(1, dimension));
 		Float next_T = T + DY_T(0);
-
-		// cleanup
-		utils::clip(next_Y, nnet::constants::epsilon_vector);
-		return {next_Y, next_T};
+		return {next_Y, next_T, /* debugging */dY_dt.dot(A)/* debugging */};
 	}
 
 
@@ -333,7 +330,7 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class vector, class vector_int, typename Float>
-	std::tuple<vector, Float, Float> solve_system_var_timestep(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
+	std::tuple<vector, Float, Float, /* debugging */Float/* debugging */> solve_system_var_timestep(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
 		const vector &BE, const vector_int &A, const vector &Y,
 		const Float T, const Float cv, const Float rho, const Float value_1, Float &dt) {
 		const Float m_in = Y.dot(A);
@@ -341,9 +338,15 @@ namespace nnet {
 		// actual solving
 		while (true) {
 			// solve the system
-			auto [next_Y, next_T] = solve_system(reactions, rates, drates_dT, BE, Y, /* debugging */A/* debugging */, T, cv, rho, value_1, dt);
+			auto [next_Y, next_T, /* debugging */dm/* debugging */] = solve_system(reactions, rates, drates_dT, BE, Y, /* debugging */A/* debugging */, T, cv, rho, value_1, dt);
 
-			// mass temperature variation
+			// minimum value
+			Float min_coef = next_Y.minCoeff();
+
+			// cleanup vector
+			utils::clip(next_Y, nnet::constants::epsilon_vector);
+
+			// mass and temperature variation
 			Float dm_m = std::abs((next_Y.dot(A) - m_in)/m_in);
 			Float dT_T = std::abs((next_T - T)/((1 - constants::theta)*T + constants::theta*next_T));
 
@@ -352,8 +355,11 @@ namespace nnet {
 			Float dt_multiplier = std::min(
 				(Float)constants::max_dt_step,
 				std::min(
-					dT_T == 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T,
-					dm_m == 0 ? (Float)constants::max_dt_step : constants::dm_m_target/dm_m
+					std::min(
+						dT_T == 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T,
+						dm_m == 0 ? (Float)constants::max_dt_step : constants::dm_m_target/dm_m
+					),
+					min_coef >= -(Float)constants::epsilon_vector ? (Float)constants::max_dt_step : -constants::epsilon_vector/min_coef
 				));
 			dt = std::min(
 				(Float)constants::max_dt,
@@ -365,7 +371,7 @@ namespace nnet {
 			// exit on condition
 			if (actual_dt <= constants::min_dt ||
 				(dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol))
-				return {next_Y, next_T, actual_dt};
+				return {next_Y, next_T, actual_dt, /* debugging */dm/* debugging */};
 		}
 	}
 }

@@ -108,7 +108,7 @@ int main() {
 
 		// solve the system
 		net14_debug = i == 0;
-		auto [Y, T] = nnet::solve_system(reactions, rate, drates_dT,
+		auto [Y, T, _] = nnet::solve_system(reactions, rate, drates_dT,
 			BE, last_Y, m,
 			last_T, cv, rho, value_1, dt);
 		net14_debug = false;
