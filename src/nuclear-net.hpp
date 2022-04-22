@@ -7,7 +7,14 @@
 #include <vector>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
-#include <unsupported/Eigen/CXX11/Tensor>
+
+// solvers
+#include <Eigen/SparseLU>
+#ifndef SOLVER
+	#define SOLVER Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>
+	// #define SOLVER Eigen::SparseLU<Eigen::SparseMatrix<Float>, Eigen::COLAMDOrdering<int>> 
+#endif
+
 
 
 /* !!!!!!!!!!!!
@@ -17,11 +24,6 @@ bool net14_debug = false;
 
 namespace nnet {
 	namespace constants {
-		/// safety factor when determining the maximum timestep.
-		double safety_margin = 0.3;
-
-
-
 		/// theta for the implicit method
 		double theta = 0.7;
 		/// tolerance of the implicit solver
@@ -33,13 +35,15 @@ namespace nnet {
 		double max_dt = 1e-2;
 		/// maximum timestep evolution
 		double max_dt_step = 1.5;
+		/// minimum timestep evolution
+		double min_dt_step = 1e-2;
 
 		/// relative temperature variation target of the implicit solver
-		double dT_T_target = 4e-3;
+		double dT_T_target = 4e-4;
 		/// relative mass conservation target of the implicit solver
 		double dm_m_target = 1e-5;
 		/// relative temperature variation tolerance of the implicit solver
-		double dT_T_tol = 1e-1;
+		double dT_T_tol = 1e-3;
 		/// relative mass conservation tolerance of the implicit solver
 		double dm_m_tol = 1e-3;
 
@@ -48,7 +52,7 @@ namespace nnet {
 		/// the value that is considered null inside a system
 		double epsilon_system = 1e-200;
 		/// the value that is considered null inside a state
-		double epsilon_vector = 1e-15;
+		double epsilon_vector = 1e-16;
 	}
 
 
@@ -108,10 +112,8 @@ namespace nnet {
 
 				// find maximum
 				Float max_ = std::abs(M(0, i));
-				for (int j = 1; j < dimension; ++j) {
-					Float val = std::abs(M(j, i));
-					if (val > max_) max_ = val;
-				}
+				for (int j = 1; j < dimension; ++j)
+					max_ = std::max(max_, std::abs(M(j, i)));
 
 				// normalize
 				RHS[i] /= max_;
@@ -134,9 +136,9 @@ namespace nnet {
 			auto sparse_M = utils::sparsify(M, epsilon);
 
 			// now solve M*X = RHS
-			Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>  BCGST;
-			BCGST.compute(sparse_M);
-			return BCGST.solve(RHS);
+			SOLVER solver;
+			solver.compute(sparse_M);
+			return solver.solve(RHS);
 		}
 
 
@@ -299,6 +301,31 @@ namespace nnet {
 
 		// !!!!!!!!!!!!!!!!!!
 		// debug:
+		double tol = 1e-4;
+		Float d1 = (MpYY.transpose()*A).sum();
+		Float d2 = (M.transpose()*A).sum();
+		Float d3 = (dM_dT.transpose()*A).sum();
+		if (std::abs(d1) > tol || std::abs(d2) > tol || std::abs(d3) > tol)
+			std::cout << "Mp.T*A=" << d1 << ", M.T*A=" << d2 << ", (dM/dT).T*A=" << d3 << "\n";
+
+		if (std::abs(d1) > 1 || std::abs(d2) > 1 || std::abs(d3) > 1) {
+			std::cout << "\n";
+
+			for (int i = 0; i < reactions.size(); ++i)
+				std::cout << "rate=" << rates[i] << ", drate/dt=" << drates_dT[i] << "\n";
+
+			std::cout << "\nT=" << T << ", dt=" << dt << "\n";
+			std::cout << "Y=" << Y.transpose() << "\n\n";
+
+			std::cout << "Mp=\n" << Mp << "\n\nM=\n" << M << "\n\ndM_dT=\n" << dM_dT << "\n\n";
+			std::cout << "Mp.T*A=" << (MpYY.transpose()*A).transpose() << "\nM.T*A=" << (M.transpose()*A).transpose() << "\n(dM/dT).T*A=" << (dM_dT.transpose()*A).transpose() << "\n"; 
+			std::cout << "(dM/dT)*Y=" << (dM_dT*Y).transpose() << "\n\n";
+
+			throw;
+		}
+
+		// !!!!!!!!!!!!!!!!!!
+		// debug:
 		if (net14_debug) {
 			std::cout << "Mp=\n" << Mp << "\n\nM=\n" << M << "\n\ndM_dT=\n" << dM_dT << "\n\n";
 			std::cout << "Mp.T*A=" << (MpYY.transpose()*A).transpose() << "\nM.T*A=" << (M.transpose()*A).transpose() << "\n(dM/dT).T*A=" << (dM_dT.transpose()*A).transpose() << "\n"; 
@@ -310,7 +337,7 @@ namespace nnet {
 		Eigen::Matrix<Float, -1, -1> M_sys = Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1) - constants::theta*Mp*dt;
 
 		// normalize
-		utils::normalize(M_sys, RHS);
+		//utils::normalize(M_sys, RHS);
 
 		// now solve M*D{T, Y} = RHS
 		vector DY_T = utils::solve(M_sys, RHS, constants::epsilon_system);
@@ -345,7 +372,7 @@ namespace nnet {
 
 			// !!!!!!!!!!!!!!!!!!
 			// debug:
-			// if (min_coef < 0) std::cout << min_coef << "=min_coef\n";
+			// if (min_coef < -constants::epsilon_vector) std::cout << min_coef << "=min_coef\n";
 
 			// !!!!!!!!!!!!!!!!!!
 			// debug: (mass variation)
@@ -361,20 +388,27 @@ namespace nnet {
 			utils::clip(next_Y, nnet::constants::epsilon_vector);
 
 			// mass and temperature variation
-			Float dm_m = std::abs((next_Y.dot(A) - m_in)/m_in);
+			Float dm_m = std::abs(1 - next_Y.dot(A)/m_in);
 			Float dT_T = std::abs((next_T - T)/((1 - constants::theta)*T + constants::theta*next_T));
 
 			// timestep tweeking
 			Float actual_dt = dt;
-			Float dt_multiplier = std::min(
-				(Float)constants::max_dt_step,
+			Float dt_multiplier = 
 				std::min(
 					std::min(
-						dT_T == 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T,
-						dm_m == 0 ? (Float)constants::max_dt_step : constants::dm_m_target/dm_m
+						dT_T ==                                 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T,
+						dm_m ==                                 0 ? (Float)constants::max_dt_step : constants::dm_m_target/dm_m
 					),
 					min_coef >= -(Float)constants::epsilon_vector ? (Float)constants::max_dt_step : -constants::epsilon_vector/min_coef
-				));
+				);
+			dt_multiplier = 
+				std::min(
+					std::max(
+						(Float)constants::min_dt_step, 
+						dt_multiplier
+					),
+					(Float)constants::max_dt_step
+				);
 			dt = std::min(
 				(Float)constants::max_dt,
 				std::max(
@@ -384,7 +418,7 @@ namespace nnet {
 
 			// exit on condition
 			if (actual_dt <= constants::min_dt ||
-				(dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol && min_coef >= -nnet::constants::epsilon_vector))
+			(dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol && min_coef >= -nnet::constants::epsilon_vector))
 				return {next_Y, next_T, actual_dt, /* debugging */dm/* debugging */};
 		}
 	}

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Eigen/Dense>
-#include <unsupported/Eigen/CXX11/Tensor>
 
 namespace nnet {
 	namespace net14 {
