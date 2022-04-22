@@ -296,12 +296,12 @@ namespace nnet {
 
 		// include rate derivative
 		Eigen::Matrix<Float, -1, -1> dM_dT = order_0_from_reactions(reactions, drates_dT, Y, rho);
-		Mp(Eigen::seq(1, dimension), 0) = dM_dT*Y;
+		// Mp(Eigen::seq(1, dimension), 0) = dM_dT*Y;
 
 
 		// !!!!!!!!!!!!!!!!!!
 		// debug:
-		double tol = 1e-4;
+		double tol = 1e-1;
 		Float d1 = (MpYY.transpose()*A).sum();
 		Float d2 = (M.transpose()*A).sum();
 		Float d3 = (dM_dT.transpose()*A).sum();
@@ -337,7 +337,7 @@ namespace nnet {
 		Eigen::Matrix<Float, -1, -1> M_sys = Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1) - constants::theta*Mp*dt;
 
 		// normalize
-		//utils::normalize(M_sys, RHS);
+		utils::normalize(M_sys, RHS);
 
 		// now solve M*D{T, Y} = RHS
 		vector DY_T = utils::solve(M_sys, RHS, constants::epsilon_system);
@@ -369,20 +369,6 @@ namespace nnet {
 
 			// minimum value
 			Float min_coef = next_Y.minCoeff();
-
-			// !!!!!!!!!!!!!!!!!!
-			// debug:
-			// if (min_coef < -constants::epsilon_vector) std::cout << min_coef << "=min_coef\n";
-
-			// !!!!!!!!!!!!!!!!!!
-			// debug: (mass variation)
-			// dm = 0;
-			/* if (min_coef < 0) 
-				for (int i = 0; i < Y.size(); ++i) {
-					Float ya = next_Y(i)*A(i);
-					if (ya < 0)
-						dm -= ya;
-				}/**/
 
 			// cleanup vector
 			utils::clip(next_Y, nnet::constants::epsilon_vector);
