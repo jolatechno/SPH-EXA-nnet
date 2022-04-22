@@ -5,7 +5,7 @@
 
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
-	const double cv = 1e200; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
+	const double cv = 1e100; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
 	const double rho0 = 1e7; // rho, g/cm^3
 	double last_T = 6e9;
 
@@ -19,7 +19,7 @@ int main() {
 	double m_in = last_Y.dot(nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
-	int n_max = 1000;
+	int n_max = 10000;
 	const int n_print = 30, n_save=400;
 
 	nnet::constants::theta = 0.55;
@@ -40,7 +40,7 @@ int main() {
 		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates(last_T);
 
 		// solve the system
-		auto [Y, T, actual_dt, dm] = nnet::solve_system_var_timestep(nnet::net14::reaction_list, rate, drates_dT,
+		auto [Y, T, actual_dt, dm] = nnet::solve_system_var_timestep(nnet::net14::reaction_list, rate, {0.},
 			BE, nnet::net14::constants::A, last_Y, 
 			last_T, cv, rho, value_1, dt);
 		t += actual_dt;

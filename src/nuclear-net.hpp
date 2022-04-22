@@ -288,15 +288,26 @@ namespace nnet {
 		auto M = order_0_from_reactions(reactions, rates, Y, rho);
 		vector RHS(dimension + 1), dY_dt = M*Y;
 		RHS(Eigen::seq(1, dimension)) = dY_dt*dt;
-		RHS(0) = (T*value_1 + BE.dot(dY_dt))/cv*dt;
+		RHS(0) = (T*value_1 + dY_dt.dot(BE))*dt;
 
 		// include Y -> T terms
-		Mp(0, Eigen::seq(1, dimension)) = BE/cv;
-		Mp(0, 0) = value_1/cv;
+		Mp(0, Eigen::seq(1, dimension)) = BE;
+		Mp(0, 0) = value_1;
 
 		// include rate derivative
 		Eigen::Matrix<Float, -1, -1> dM_dT = order_0_from_reactions(reactions, drates_dT, Y, rho);
-		// Mp(Eigen::seq(1, dimension), 0) = dM_dT*Y;
+		Mp(Eigen::seq(1, dimension), 0) = dM_dT*Y/cv;
+
+		// construct M
+		Eigen::Matrix<Float, -1, -1> M_sys = Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1);
+		M_sys(0, 0) = cv;
+		M_sys -= constants::theta*Mp*dt;
+
+		// normalize
+		// utils::normalize(M_sys, RHS);
+
+		// now solve M*D{T, Y} = RHS
+		vector DY_T = utils::solve(M_sys, RHS, constants::epsilon_system);
 
 
 		// !!!!!!!!!!!!!!!!!!
@@ -333,14 +344,7 @@ namespace nnet {
 		}
 
 
-		// construct M
-		Eigen::Matrix<Float, -1, -1> M_sys = Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1) - constants::theta*Mp*dt;
 
-		// normalize
-		utils::normalize(M_sys, RHS);
-
-		// now solve M*D{T, Y} = RHS
-		vector DY_T = utils::solve(M_sys, RHS, constants::epsilon_system);
 
 		// add values
 		vector next_Y = Y + DY_T(Eigen::seq(1, dimension));
