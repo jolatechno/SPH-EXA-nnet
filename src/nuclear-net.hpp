@@ -46,9 +46,9 @@ namespace nnet {
 
 
 		/// the value that is considered null inside a system
-		double epsilon_system = 1e-50;
+		double epsilon_system = 1e-200;
 		/// the value that is considered null inside a state
-		double epsilon_vector = 1e-10;
+		double epsilon_vector = 1e-15;
 	}
 
 
@@ -152,7 +152,7 @@ namespace nnet {
 			const int dimension = X.size();
 
 			for (int i = 0; i < dimension; ++i)
-				if (X(i) < epsilon)
+				if (std::abs(X(i)) <= epsilon)
 					X(i) = 0;
 		}
 	}
@@ -318,7 +318,7 @@ namespace nnet {
 		// add values
 		vector next_Y = Y + DY_T(Eigen::seq(1, dimension));
 		Float next_T = T + DY_T(0);
-		return {next_Y, next_T, /* debugging */dY_dt.dot(A)/* debugging */};
+		return {next_Y, next_T, /* debugging */DY_T(Eigen::seq(1, dimension)).dot(A)/* debugging */};
 	}
 
 
@@ -342,6 +342,20 @@ namespace nnet {
 
 			// minimum value
 			Float min_coef = next_Y.minCoeff();
+
+			// !!!!!!!!!!!!!!!!!!
+			// debug:
+			// if (min_coef < 0) std::cout << min_coef << "=min_coef\n";
+
+			// !!!!!!!!!!!!!!!!!!
+			// debug: (mass variation)
+			// dm = 0;
+			/* if (min_coef < 0) 
+				for (int i = 0; i < Y.size(); ++i) {
+					Float ya = next_Y(i)*A(i);
+					if (ya < 0)
+						dm -= ya;
+				}/**/
 
 			// cleanup vector
 			utils::clip(next_Y, nnet::constants::epsilon_vector);
@@ -370,7 +384,7 @@ namespace nnet {
 
 			// exit on condition
 			if (actual_dt <= constants::min_dt ||
-				(dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol))
+				(dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol && min_coef >= -nnet::constants::epsilon_vector))
 				return {next_Y, next_T, actual_dt, /* debugging */dm/* debugging */};
 		}
 	}

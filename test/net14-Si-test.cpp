@@ -22,7 +22,7 @@ int main() {
 	int n_max = 45000;
 	const int n_print = 30, n_save=4000;
 
-	nnet::constants::theta = 0.9;
+	nnet::constants::theta = 0.6;
 
 	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
 
