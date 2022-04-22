@@ -184,12 +184,13 @@ namespace nnet {
 			// compute rate
 			Float this_rate = rate;
 			this_rate *= std::pow(Y(reactant_id), n_reactant_consumed - 1);
-			for (auto &[other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
+			for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
 				if (other_reactant_id != reactant_id)
 					this_rate *= std::pow(Y(other_reactant_id), other_n_reactant_consumed);
 
-				// insert consumption rate
-			M(reactant_id, reactant_id) -= this_rate*n_reactant_consumed;
+			// insert consumption rates
+			for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
+				M(other_reactant_id, reactant_id) -= this_rate*other_n_reactant_consumed;
 
 			// insert production rates
 			for (auto const [product_id, n_product_produced] : Reaction.products)
@@ -228,8 +229,10 @@ namespace nnet {
 					if (other_reactant_id != reactant_id)
 						this_rate *= std::pow(Y(other_reactant_id), other_n_reactant_consumed);
 
-				// insert consumption rate
-				M(reactant_id, reactant_id) -= this_rate*n_reactant_consumed;
+				// insert consumption rates
+				for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
+					M(other_reactant_id, reactant_id) -= this_rate*other_n_reactant_consumed;
+
 
 				// insert production rates
 				for (auto const [product_id, n_product_produced] : Reaction.products)
