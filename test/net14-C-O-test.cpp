@@ -23,43 +23,18 @@ int main() {
 	const int n_print = 30, n_save=4000;
 
 
-
-
-
-	/* ---------------------
-	begin test
-	--------------------- */
-#ifdef DEBUG
-	{		
-		auto BE = nnet::net14::get_corrected_BE(last_T);
-
-		net14_debug = true;
-		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates(last_T);
-		solve_system(nnet::net14::reaction_list, rate, drates_dT,
-			BE, last_Y,  /* debugging */nnet::net14::constants::A/* debugging */, 
-			last_T, cv, rho, value_1, dt);
-		net14_debug = false;
-	}
-#endif
-	/* ---------------------
-	end test
-	--------------------- */
-
-
-
-
-
-
 	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
 
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
+		net14_debug = i == 0;
 		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates(last_T);
 		auto BE = nnet::net14::get_corrected_BE(last_T);
 		auto [Y, T, actual_dt] = nnet::solve_system_var_timestep(nnet::net14::reaction_list, rate, drates_dT,
 			BE, nnet::net14::constants::A, last_Y, 
 			last_T, cv, rho, value_1, dt);
 		t += actual_dt;
+		net14_debug = false;
 
 		double m_tot = Y.dot(nnet::net14::constants::A);
 		double dm_m = (m_tot - m_in)/m_in;

@@ -26,12 +26,14 @@ int main() {
 
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
+		net14_debug = i == 0;
 		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates(last_T);
 		auto BE = nnet::net14::get_corrected_BE(last_T);
 		auto [Y, T, actual_dt] = nnet::solve_system_var_timestep(nnet::net14::reaction_list, rate, drates_dT,
 			BE, nnet::net14::constants::A, last_Y, 
 			last_T, cv, rho, value_1, dt);
 		t += actual_dt;
+		net14_debug = false;
 
 		double m_tot = Y.dot(nnet::net14::constants::A);
 		double dm_m = (m_tot - m_in)/m_in;

@@ -4,14 +4,14 @@
 
 int main() {
 	double value_1 = 0;
-	double cv = 1;
+	double cv = 1e-1;
 	double rho = 1;
 
 	// mass excedents
 	Eigen::VectorXd BE(3);
-	BE(0) = 9;
-	BE(1) = 7;
-	BE(2) = 5;
+	BE(0) = 0;
+	BE(1) = 1;
+	BE(2) = 4;
 
 	// molar masses
 	Eigen::VectorXd m(3);
@@ -99,23 +99,25 @@ int main() {
 		return std::tuple<std::vector<double>, std::vector<double>>{rates, drates};
 	};
 
-	double dt=5e-8, T_max = 2;
-	int n_max = 20; //T_max/dt;
+	double dt=2e-2, T_max = 2;
+	int n_max = 100; //T_max/dt;
 	const int n_print = 20;
 	for (int i = 0; i < n_max; ++i) {
 
 		auto [rate, drates_dT] = construct_system(last_Y, last_T);
 
 		// solve the system
+		net14_debug = i == 0;
 		auto [Y, T] = nnet::solve_system(reactions, rate, drates_dT,
-			BE, m, last_Y, 
+			BE, last_Y, m,
 			last_T, cv, rho, value_1, dt);
+		net14_debug = false;
 
 		E_tot = Y.dot(m + BE) + cv*T;
 		m_tot = Y.dot(m);
 
 		if (n_print >= n_max || (n_max - i) % (int)((float)n_max / ((float)n_print)) == 0)
-			std::cout << Y.transpose() << ",\t(E_tot=" << E_tot << ",\tDelta_E_tot=" << E_tot - E_tot_0 << "),\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << m_tot - m_tot_0 << "),\t" << T << "\n";
+			std::cout << Y.transpose() << ",\t(E_tot=" << E_tot << ",\tDelta_E_tot=" << (E_tot - E_tot_0)/E_tot_0 << "),\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << (m_tot - m_tot_0)/m_tot_0 << "),\t" << T << "\n";
 
 		last_Y = Y;
 		last_T = T;
