@@ -390,7 +390,7 @@ namespace nnet {
 						dT_T ==                                 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T,
 						dm_m ==                                 0 ? (Float)constants::max_dt_step : constants::dm_m_target/dm_m
 					),
-					min_coef >= -(Float)constants::epsilon_vector ? (Float)constants::max_dt_step : -constants::epsilon_vector/min_coef
+					(Float)constants::max_dt_step // min_coef >= -(Float)constants::epsilon_vector ? (Float)constants::max_dt_step : -constants::epsilon_vector/min_coef
 				);
 			dt_multiplier = 
 				std::min(

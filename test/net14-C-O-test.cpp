@@ -7,7 +7,7 @@ int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
 	const double cv = 2e7; // 1e6; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
 	const double rho0 = 1e9; // rho, g/cm^3
-	double last_T = 2e9;
+	double last_T = 1e9;
 
 	// initial state
 	Eigen::VectorXd last_Y(14), X = Eigen::VectorXd::Zero(14);
@@ -19,7 +19,7 @@ int main() {
 	double m_in = last_Y.dot(nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
-	int n_max = 6000;
+	int n_max = 10000;
 	const int n_print = 30, n_save=4000;
 
 	nnet::constants::theta = 0.55;
