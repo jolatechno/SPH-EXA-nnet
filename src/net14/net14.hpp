@@ -157,7 +157,7 @@ namespace nnet {
 					rates.push_back(eff[i]);
 
 					deff[i] = eff[i]*dcoefs[i - 4];
-					drates.push_back(eff[i]);
+					drates.push_back(deff[i]);
 
 					// debuging :
 					if (net14_debug) std::cout << "dir(" << i << ")=" << eff[i] << ", coef(" << i << ")=" << coefs[i - 4];

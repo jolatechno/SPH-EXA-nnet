@@ -26,8 +26,6 @@ namespace nnet {
 	namespace constants {
 		/// theta for the implicit method
 		double theta = 0.7;
-		/// tolerance of the implicit solver
-		double implicit_tol = 1e-9;
 
 		/// minimum timestep
 		double min_dt = 1e-20;
@@ -46,8 +44,6 @@ namespace nnet {
 		double dT_T_tol = 1e-3;
 		/// relative mass conservation tolerance of the implicit solver
 		double dm_m_tol = 1e-3;
-
-
 
 		/// the value that is considered null inside a system
 		double epsilon_system = 1e-200;
@@ -131,12 +127,13 @@ namespace nnet {
 		 * ...TODO
 		 */
 		template<typename Float, int n, int m>
-		Eigen::Vector<Float, m> solve(Eigen::Matrix<Float, n, n> &M, Eigen::Vector<Float, m> &RHS, const Float epsilon) {
+		Eigen::Vector<Float, m> solve(Eigen::Matrix<Float, n, n> &M, Eigen::Vector<Float, m> &RHS, const Float epsilon_system, const Float epsilon_vector) {
 			// sparcify M
-			auto sparse_M = utils::sparsify(M, epsilon);
+			auto sparse_M = utils::sparsify(M, epsilon_system);
 
 			// now solve M*X = RHS
 			SOLVER solver;
+			solver.setTolerance(epsilon_vector);
 			solver.compute(sparse_M);
 			return solver.solve(RHS);
 		}
@@ -296,7 +293,7 @@ namespace nnet {
 
 		// include rate derivative
 		Eigen::Matrix<Float, -1, -1> dM_dT = order_0_from_reactions(reactions, drates_dT, Y, rho);
-		Mp(Eigen::seq(1, dimension), 0) = dM_dT*Y/cv;
+		Mp(Eigen::seq(1, dimension), 0) = dM_dT*Y /* why divide by cv ? */;
 
 		// construct M
 		Eigen::Matrix<Float, -1, -1> M_sys = Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1);
@@ -304,10 +301,10 @@ namespace nnet {
 		M_sys -= constants::theta*Mp*dt;
 
 		// normalize
-		// utils::normalize(M_sys, RHS);
+		utils::normalize(M_sys, RHS);
 
 		// now solve M*D{T, Y} = RHS
-		vector DY_T = utils::solve(M_sys, RHS, constants::epsilon_system);
+		vector DY_T = utils::solve(M_sys, RHS, constants::epsilon_system, constants::epsilon_vector);
 
 
 		// !!!!!!!!!!!!!!!!!!
