@@ -126,6 +126,18 @@ namespace nnet {
 				const Float t9i43=t9i23*t9i23;
 				const Float lt9=std::log(t9);
 
+				// debuging :
+				if (net14_debug) std::cout << "t9=" << t9
+					<< ", t913=" << t913
+					<< ", t923=" << t923
+					<< ", t953=" << t953
+					<< ", t9i=" << t9i
+					<< ", t9i2=" << t9i2
+					<< ", t9i13=" << t9i13
+					<< ", t9i23=" << t9i23
+					<< ", lt9=" << lt9 << "\n\n";
+
+
 				/* fusion rates computed:
 					- Ne + He -> Mg
 					- Mg + He -> Si

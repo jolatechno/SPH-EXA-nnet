@@ -11,8 +11,10 @@
 // solvers
 #include <Eigen/SparseLU>
 #ifndef SOLVER
+	#define ITERATIVE_SOLVER _
 	#define SOLVER Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>
-	// #define SOLVER Eigen::SparseLU<Eigen::SparseMatrix<Float>, Eigen::COLAMDOrdering<int>> 
+
+	// #define SOLVER Eigen::SparseLU<Eigen::SparseMatrix<Float>, Eigen::COLAMDOrdering<int>>
 #endif
 
 
@@ -133,7 +135,9 @@ namespace nnet {
 
 			// now solve M*X = RHS
 			SOLVER solver;
+#ifdef ITERATIVE_SOLVER
 			solver.setTolerance(epsilon_vector);
+#endif
 			solver.compute(sparse_M);
 			return solver.solve(RHS);
 		}
@@ -293,7 +297,7 @@ namespace nnet {
 
 		// include rate derivative
 		Eigen::Matrix<Float, -1, -1> dM_dT = order_0_from_reactions(reactions, drates_dT, Y, rho);
-		Mp(Eigen::seq(1, dimension), 0) = dM_dT*Y /* why divide by cv ? */;
+		Mp(Eigen::seq(1, dimension), 0) = dM_dT*Y;
 
 		// construct M
 		Eigen::Matrix<Float, -1, -1> M_sys = Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1);
