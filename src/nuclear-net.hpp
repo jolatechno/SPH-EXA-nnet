@@ -162,50 +162,42 @@ namespace nnet {
 
 
 
-
-
-
 	/// create a first order system from a list of reaction.
 	/**
 	 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y.
 	 * ...TODO
 	 */
-	template<typename Float>
-	Eigen::Matrix<Float, -1, -1> order_0_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Eigen::Vector<Float, -1> const &Y, const Float rho) {
+	template<typename Float, class vector>
+	vector derivatives_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, vector const &Y, const Float rho) {
 		const int dimension = Y.size();
 
-		Eigen::Matrix<Float, -1, -1> M = Eigen::Matrix<Float, -1, -1>::Zero(dimension, dimension);
+		vector dY = vector::Zero(dimension);
 
 		for (int i = 0; i < reactions.size() && i < rates.size(); ++i) {
 			const reaction &Reaction = reactions[i];
 			Float rate = rates[i];
 
-			// compute order and correct for rho
+			// compute rate and order
 			int order = 0;
-			for (auto const [_, n_reactant_consumed] : Reaction.reactants)
+			for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants) {
+				rate *= std::pow(Y(reactant_id), n_reactant_consumed);
 				order += n_reactant_consumed;
+			}
+
+			// correct for rho
 			rate *= std::pow(rho, order - 1);
 
-			auto const [reactant_id, n_reactant_consumed] = Reaction.reactants[0];
-			// compute rate
-			Float this_rate = rate;
-			this_rate *= std::pow(Y(reactant_id), n_reactant_consumed - 1);
-			for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
-				if (other_reactant_id != reactant_id)
-					this_rate *= std::pow(Y(other_reactant_id), other_n_reactant_consumed);
-
 			// insert consumption rates
-			for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
-				M(other_reactant_id, reactant_id) -= this_rate*other_n_reactant_consumed;
+			for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants)
+				dY(reactant_id) -= rate*n_reactant_consumed;
 
 			// insert production rates
 			for (auto const [product_id, n_product_produced] : Reaction.products)
-				M(product_id, reactant_id) += this_rate*n_product_produced;
+				dY(product_id) += rate*n_product_produced;
 		}
 
-		return M;
+		return dY;
 	}
-
 
 
 
@@ -286,8 +278,7 @@ namespace nnet {
 		Mp(Eigen::seq(1,dimension), Eigen::seq(1,dimension)) = MpYY;
 
 		// right hand side
-		auto M = order_0_from_reactions(reactions, rates, Y, rho);
-		vector RHS(dimension + 1), dY_dt = M*Y;
+		vector RHS(dimension + 1), dY_dt = derivatives_from_reactions(reactions, rates, Y, rho);
 		RHS(Eigen::seq(1, dimension)) = dY_dt*dt;
 		RHS(0) = (T*value_1 + dY_dt.dot(BE))*dt;
 
@@ -296,8 +287,8 @@ namespace nnet {
 		Mp(0, 0) = value_1;
 
 		// include rate derivative
-		Eigen::Matrix<Float, -1, -1> dM_dT = order_0_from_reactions(reactions, drates_dT, Y, rho);
-		Mp(Eigen::seq(1, dimension), 0) = dM_dT*Y;
+		Eigen::Vector<Float, -1> dY_dT = derivatives_from_reactions(reactions, drates_dT, Y, rho);
+		Mp(Eigen::seq(1, dimension), 0) = dY_dT;
 
 		// construct M
 		Eigen::Matrix<Float, -1, -1> M_sys = Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1);
@@ -309,43 +300,6 @@ namespace nnet {
 
 		// now solve M*D{T, Y} = RHS
 		vector DY_T = utils::solve(M_sys, RHS, constants::epsilon_system, constants::epsilon_vector);
-
-
-		// !!!!!!!!!!!!!!!!!!
-		// debug:
-		double tol = 1e-1;
-		Float d1 = (MpYY.transpose()*A).sum();
-		Float d2 = (M.transpose()*A).sum();
-		Float d3 = (dM_dT.transpose()*A).sum();
-		if (std::abs(d1) > tol || std::abs(d2) > tol || std::abs(d3) > tol)
-			std::cout << "Mp.T*A=" << d1 << ", M.T*A=" << d2 << ", (dM/dT).T*A=" << d3 << "\n";
-
-		if (std::abs(d1) > 1 || std::abs(d2) > 1 || std::abs(d3) > 1) {
-			std::cout << "\n";
-
-			for (int i = 0; i < reactions.size(); ++i)
-				std::cout << "rate=" << rates[i] << ", drate/dt=" << drates_dT[i] << "\n";
-
-			std::cout << "\nT=" << T << ", dt=" << dt << "\n";
-			std::cout << "Y=" << Y.transpose() << "\n\n";
-
-			std::cout << "Mp=\n" << Mp << "\n\nM=\n" << M << "\n\ndM_dT=\n" << dM_dT << "\n\n";
-			std::cout << "Mp.T*A=" << (MpYY.transpose()*A).transpose() << "\nM.T*A=" << (M.transpose()*A).transpose() << "\n(dM/dT).T*A=" << (dM_dT.transpose()*A).transpose() << "\n"; 
-			std::cout << "(dM/dT)*Y=" << (dM_dT*Y).transpose() << "\n\n";
-
-			throw;
-		}
-
-		// !!!!!!!!!!!!!!!!!!
-		// debug:
-		if (net14_debug) {
-			std::cout << "Mp=\n" << Mp << "\n\nM=\n" << M << "\n\ndM_dT=\n" << dM_dT << "\n\n";
-			std::cout << "Mp.T*A=" << (MpYY.transpose()*A).transpose() << "\nM.T*A=" << (M.transpose()*A).transpose() << "\n(dM/dT).T*A=" << (dM_dT.transpose()*A).transpose() << "\n"; 
-			std::cout << "(dM/dT)*Y=" << (dM_dT*Y).transpose() << "\n\n";
-		}
-
-
-
 
 		// add values
 		vector next_Y = Y + DY_T(Eigen::seq(1, dimension));
@@ -390,7 +344,7 @@ namespace nnet {
 						dT_T ==                                 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T,
 						dm_m ==                                 0 ? (Float)constants::max_dt_step : constants::dm_m_target/dm_m
 					),
-					(Float)constants::max_dt_step // min_coef >= -(Float)constants::epsilon_vector ? (Float)constants::max_dt_step : -constants::epsilon_vector/min_coef
+					min_coef >= -(Float)constants::epsilon_vector ? (Float)constants::max_dt_step : -constants::epsilon_vector/min_coef
 				);
 			dt_multiplier = 
 				std::min(
