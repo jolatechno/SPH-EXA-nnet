@@ -19,7 +19,7 @@ int main() {
 	double m_in = last_Y.dot(nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
-	int n_max = 10000;
+	int n_max = 4000;
 	const int n_print = 30, n_save=4000;
 
 	nnet::constants::theta = 0.55;
@@ -36,8 +36,8 @@ int main() {
 #endif
 
 		// construct system
-		auto BE = nnet::net14::get_corrected_BE(last_T);
-		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates(last_T);
+		Eigen::VectorXd BE = nnet::net14::get_corrected_BE(last_T);
+		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates<double>(last_T);
 
 		// solve the system
 		auto [Y, T, actual_dt, dm] = nnet::solve_system_var_timestep(nnet::net14::reaction_list, rate, drates_dT,
@@ -54,7 +54,7 @@ int main() {
 
 		// formated print (stderr)
 		if (n_save >= n_max || (n_max - i) % (int)((float)n_max/(float)n_save) == 0) {
-			for (int i = 0; i < 14; ++i) X(i) = Y(i)*nnet::net14::constants::A(i)/X.sum();
+			for (int i = 0; i < 14; ++i) X(i) = Y(i)*nnet::net14::constants::A(i)/Y.dot(nnet::net14::constants::A);
 			std::cerr << -t << "," << dt << ",," << T << ",,";
 			for (int i = 0; i < 14; ++i) std::cerr << X(i) << ",";
 			std::cerr << "," << dm_m << "\n";
@@ -62,8 +62,8 @@ int main() {
 
 		// debug print
 		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0) {
-			for (int i = 0; i < 14; ++i) X(i) = Y(i)*nnet::net14::constants::A(i)/X.sum();
-			std::cout << "\n(t=" << -t << ", dt=" << dt << "):\t";
+			for (int i = 0; i < 14; ++i) X(i) = Y(i)*nnet::net14::constants::A(i)/Y.dot(nnet::net14::constants::A);
+			std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
 			for (int i = 0; i < 14; ++i) std::cout << X(i) << ", ";
 			std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << ", dmth_m0=" << dm_tot/m_in << ", dm_m/dt=" << dm_m_dt << "),\t" << T << "\n";
 		}

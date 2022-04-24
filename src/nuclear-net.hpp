@@ -10,11 +10,14 @@
 
 // solvers
 #include <Eigen/SparseLU>
+// #include<Eigen/SparseCholesky>
 #ifndef SOLVER
-	#define ITERATIVE_SOLVER _
-	#define SOLVER Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>
+	// #define ITERATIVE_SOLVER _
+	// #define SOLVER Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>
 
-	// #define SOLVER Eigen::SparseLU<Eigen::SparseMatrix<Float>, Eigen::COLAMDOrdering<int>>
+	#define SOLVER Eigen::SparseLU<Eigen::SparseMatrix<Float>, Eigen::COLAMDOrdering<int>>
+
+	// #define SOLVER Eigen::SimplicialL<Eigen::SparseMatrix<Float>>
 #endif
 
 
@@ -39,11 +42,11 @@ namespace nnet {
 		double min_dt_step = 1e-2;
 
 		/// relative temperature variation target of the implicit solver
-		double dT_T_target = 4e-4;
+		double dT_T_target = 4e-3;
 		/// relative mass conservation target of the implicit solver
 		double dm_m_target = 1e-5;
 		/// relative temperature variation tolerance of the implicit solver
-		double dT_T_tol = 1e-3;
+		double dT_T_tol = 1e-2;
 		/// relative mass conservation tolerance of the implicit solver
 		double dm_m_tol = 1e-3;
 
@@ -155,7 +158,7 @@ namespace nnet {
 			const int dimension = X.size();
 
 			for (int i = 0; i < dimension; ++i)
-				if (std::abs(X(i)) <= epsilon)
+				if (X(i) <= epsilon) //if (std::abs(X(i)) <= epsilon)
 					X(i) = 0;
 		}
 	}
@@ -208,7 +211,9 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<typename Float>
-	Eigen::Matrix<Float, -1, -1> order_1_dY_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Eigen::Vector<Float, -1> const &Y, const Float rho) {
+	Eigen::Matrix<Float, -1, -1> order_1_dY_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates,
+		Eigen::Vector<Float, -1> const &Y,        /* debugging */Eigen::Vector<Float, -1> const &A/* debugging */,
+		const Float rho) {
 		const int dimension = Y.size();
 
 		Eigen::Matrix<Float, -1, -1> M = Eigen::Matrix<Float, -1, -1>::Zero(dimension, dimension);
@@ -228,18 +233,23 @@ namespace nnet {
 				Float this_rate = rate;
 				this_rate *= std::pow(Y(reactant_id), n_reactant_consumed - 1);
 				for (auto &[other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
-					if (other_reactant_id != reactant_id)
-						this_rate *= std::pow(Y(other_reactant_id), other_n_reactant_consumed);
+					/* debugging */if (other_reactant_id != reactant_id)/* debugging */
+					this_rate *= std::pow(Y(other_reactant_id), other_n_reactant_consumed);
 
 				// insert consumption rates
 				for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
-					M(other_reactant_id, reactant_id) -= this_rate*other_n_reactant_consumed;
+					if (other_reactant_id != reactant_id)
+						M(other_reactant_id, reactant_id) -= this_rate*other_n_reactant_consumed;
 
 				// insert production rates
 				for (auto const [product_id, n_product_produced] : Reaction.products)
 					M(product_id, reactant_id) += this_rate*n_product_produced;
 			}
 		}
+
+		auto dM_dt = M.transpose()*A;
+		for (int i = 0; i < dimension; ++i)
+			M(i, i) = -dM_dt(i)/A(i);
 
 		return M;
 	}
@@ -274,29 +284,30 @@ namespace nnet {
 		Eigen::Matrix<Float, -1, -1> Mp = Eigen::Matrix<Float, -1, -1>::Zero(dimension + 1, dimension + 1);
 
 		// main matrix part
-		auto MpYY = order_1_dY_from_reactions(reactions, rates, Y, rho);
+		auto MpYY = order_1_dY_from_reactions(reactions, rates, Y, /* debugging */A/* debugging */, rho);
 		Mp(Eigen::seq(1,dimension), Eigen::seq(1,dimension)) = MpYY;
 
 		// right hand side
 		vector RHS(dimension + 1), dY_dt = derivatives_from_reactions(reactions, rates, Y, rho);
 		RHS(Eigen::seq(1, dimension)) = dY_dt*dt;
-		RHS(0) = (T*value_1 + dY_dt.dot(BE))*dt;
+		RHS(0) = (T*value_1 + dY_dt.dot(BE))/cv*dt;
 
 		// include Y -> T terms
-		Mp(0, Eigen::seq(1, dimension)) = BE;
-		Mp(0, 0) = value_1;
+		Mp(0, Eigen::seq(1, dimension)) = BE/cv;
+		Mp(0, 0) = value_1/cv;
 
 		// include rate derivative
 		Eigen::Vector<Float, -1> dY_dT = derivatives_from_reactions(reactions, drates_dT, Y, rho);
 		Mp(Eigen::seq(1, dimension), 0) = dY_dT;
 
+		// std::cout << dY_dt.dot(A) << "=dM_dt, " << dY_dT.dot(A) << "=dM_dT, " << (MpYY*Y).dot(A) << "=dMyy_dt\n";
+
 		// construct M
 		Eigen::Matrix<Float, -1, -1> M_sys = Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1);
-		M_sys(0, 0) = cv;
 		M_sys -= constants::theta*Mp*dt;
 
 		// normalize
-		utils::normalize(M_sys, RHS);
+		// utils::normalize(M_sys, RHS);
 
 		// now solve M*D{T, Y} = RHS
 		vector DY_T = utils::solve(M_sys, RHS, constants::epsilon_system, constants::epsilon_vector);
@@ -326,9 +337,6 @@ namespace nnet {
 			// solve the system
 			auto [next_Y, next_T, /* debugging */dm/* debugging */] = solve_system(reactions, rates, drates_dT, BE, Y, /* debugging */A/* debugging */, T, cv, rho, value_1, dt);
 
-			// minimum value
-			Float min_coef = next_Y.minCoeff();
-
 			// cleanup vector
 			utils::clip(next_Y, nnet::constants::epsilon_vector);
 
@@ -340,11 +348,8 @@ namespace nnet {
 			Float actual_dt = dt;
 			Float dt_multiplier = 
 				std::min(
-					std::min(
-						dT_T ==                                 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T,
-						dm_m ==                                 0 ? (Float)constants::max_dt_step : constants::dm_m_target/dm_m
-					),
-					min_coef >= -(Float)constants::epsilon_vector ? (Float)constants::max_dt_step : -constants::epsilon_vector/min_coef
+					dT_T == 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T,
+					dm_m == 0 ? (Float)constants::max_dt_step : constants::dm_m_target/dm_m
 				);
 			dt_multiplier = 
 				std::min(
@@ -363,7 +368,7 @@ namespace nnet {
 
 			// exit on condition
 			if (actual_dt <= constants::min_dt ||
-			(dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol && min_coef >= -nnet::constants::epsilon_vector))
+			(dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol))
 				return {next_Y, next_T, actual_dt, /* debugging */dm/* debugging */};
 		}
 	}
