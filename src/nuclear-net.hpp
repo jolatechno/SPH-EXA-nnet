@@ -68,8 +68,8 @@ namespace nnet {
 		 * retursn a "sparsified" version of Min, with non-zero elements having a higher absolute value thab epsilon.
 		 * ...TODO
 		 */
-		template<typename Float, int n>
-		Eigen::SparseMatrix<Float> sparsify(const Eigen::Matrix<Float, n, n> &Min, const Float epsilon) {
+		template<typename Float>
+		Eigen::SparseMatrix<Float> sparsify(const Eigen::Matrix<Float, -1, -1> &Min, const Float epsilon) {
 			std::vector<Eigen::Triplet<Float>> coefs;
 
 			for (int i = 0; i < Min.cols(); ++i)
@@ -85,49 +85,27 @@ namespace nnet {
 
 
 
-		/// normalizes a system.
-		/**
-		 * normalizes each equation of a system represented by a matrix (M) and a Right Hand Side (RHS).
-		 * ...TODO
-		 */
-		template<typename Float, int n, int m>
-		void normalize(Eigen::Matrix<Float, n, n> &M, Eigen::Vector<Float, m> &RHS) {
-			const int dimension = RHS.size();
-
-			for (int i = 0; i < dimension; ++i) {
-
-				// find maximum
-				Float max_ = std::abs(M(0, i));
-				for (int j = 1; j < dimension; ++j)
-					max_ = std::max(max_, std::abs(M(j, i)));
-
-				// normalize
-				RHS[i] /= max_;
-				for (int j = 0; j < dimension; ++j)
-					M(j, i) /= max_;
-			}
-		}
-
-
-
-
 		/// solves a system
 		/**
 		 * solves a system represented by a matrix (M) and a Right Hand Side (RHS).
 		 * ...TODO
 		 */
-		template<typename Float, int n, int m>
-		Eigen::Vector<Float, m> solve(Eigen::Matrix<Float, n, n> &M, Eigen::Vector<Float, m> &RHS, const Float epsilon_system, const Float epsilon_vector) {
+		template<typename Float>
+		Eigen::Vector<Float, -1> solve(Eigen::Matrix<Float, -1, -1> &M, Eigen::Vector<Float, -1> &RHS, const Float epsilon_system, const Float epsilon_vector) {
+#ifdef USE_EIGEN
 			// sparcify M
 			Eigen::SparseMatrix<Float> sparse_M = utils::sparsify(M, epsilon_system);
 
 			// now solve M*X = RHS
 			SOLVER solver;
-#ifdef ITERATIVE_SOLVER
+	#ifdef ITERATIVE_SOLVER
 			solver.setTolerance(epsilon_vector);
-#endif
+	#endif
 			solver.compute(sparse_M);
 			return solver.solve(RHS);
+#else
+			return eigen::solve(M, RHS);
+#endif
 		}
 
 
@@ -138,8 +116,8 @@ namespace nnet {
 		 * clip the values in a vector, to make 0 any negative value, or values smaller than a tolerance epsilon
 		 * ...TODO
 		 */
-		template<typename Float, int n>
-		void clip(Eigen::Vector<Float, n> &X, const Float epsilon) {
+		template<typename Float>
+		void clip(Eigen::Vector<Float, -1> &X, const Float epsilon) {
 			const int dimension = X.size();
 
 			for (int i = 0; i < dimension; ++i)
@@ -295,11 +273,6 @@ namespace nnet {
 		// construct M
 		Eigen::Matrix<Float, -1, -1> M_sys = Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1);
 		M_sys -= constants::theta*Mp*dt;
-
-#ifdef NORMALIZE
-		// normalize
-		utils::normalize(M_sys, RHS);
-#endif
 
 		// now solve M*D{T, Y} = RHS
 		vector DY_T = utils::solve(M_sys, RHS, constants::epsilon_system, constants::epsilon_vector);
