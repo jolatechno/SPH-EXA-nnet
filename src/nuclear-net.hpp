@@ -27,13 +27,13 @@ namespace nnet {
 		double min_dt_step = 1e-2;
 
 		/// relative temperature variation target of the implicit solver
-		double dT_T_target = 4e-3;
+		double dT_T_target = 5e-3;
 		/// relative mass conservation target of the implicit solver
 		double dm_m_target = 1e-5;
 		/// relative temperature variation tolerance of the implicit solver
 		double dT_T_tol = 1e-2;
 		/// relative mass conservation tolerance of the implicit solver
-		double dm_m_tol = 1e-3;
+		double dm_m_tol = 1e-4;
 
 		/// the value that is considered null inside a system
 		double epsilon_system = 1e-200;
@@ -307,7 +307,7 @@ namespace nnet {
 
 			// mass and temperature variation
 			Float dm_m = std::abs(1 - next_Y.dot(A)/m_in);
-			Float dT_T = std::abs((next_T - T)/((1 - constants::theta)*T + constants::theta*next_T));
+			Float dT_T = std::abs((next_T - T)/T);
 
 			// timestep tweeking
 			Float actual_dt = dt;

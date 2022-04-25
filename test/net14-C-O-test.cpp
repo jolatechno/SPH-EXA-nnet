@@ -29,7 +29,7 @@ int main() {
 	double dm_tot = 0, last_m_tot = 0;
 	for (int i = 1; i <= n_max; ++i) {
 		// normalize rho
-		double rho = rho0/last_Y.dot(nnet::net14::constants::A);
+		double rho = rho0; // /last_Y.dot(nnet::net14::constants::A);
 
 #ifdef DEBUG
 		net14_debug = i == 1;
