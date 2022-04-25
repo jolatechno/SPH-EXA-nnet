@@ -36,11 +36,11 @@ int main() {
 #endif
 
 		// construct system
-		auto BE = nnet::net14::get_corrected_BE(last_T);
-		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates(last_T);
+		Eigen::VectorXd BE = nnet::net14::get_corrected_BE(last_T);
+		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates<double>(last_T);
 
 		// solve the system
-		auto [Y, T, actual_dt, dm] = nnet::solve_system_var_timestep(nnet::net14::reaction_list, rate, {0.},
+		auto [Y, T, actual_dt, dm] = nnet::solve_system_var_timestep(nnet::net14::reaction_list, rate, drates_dT,
 			BE, nnet::net14::constants::A, last_Y, 
 			last_T, cv, rho, value_1, dt);
 		t += actual_dt;
