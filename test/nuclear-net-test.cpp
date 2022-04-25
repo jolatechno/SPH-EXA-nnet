@@ -3,12 +3,12 @@
 #include "../src/nuclear-net.hpp"
 
 int main() {
-	double value_1 = 0;
-	double cv = 1e-1;
-	double rho = 1;
+	const double value_1 = 0;
+	const double cv = 1e-2;
+	const double rho = 1;
 
 	// mass excedents
-	std::vector<double> BE = {.3, .2, .7};
+	std::vector<double> BE = {.6, .4, .2};
 
 	// molar masses
 	std::vector<double> m = {2, 2, 4};
@@ -19,8 +19,8 @@ int main() {
 
 	std::cout << last_Y[0] << " " << last_Y[1] << " " << last_Y[2] << ",\t" << last_T << std::endl;
 
-	double  m_tot,  m_tot_0 = eigen::dot(last_Y, m);
-	double BE_tot, BE_tot_0 = eigen::dot(last_Y, BE);
+	double  m_tot,  m_tot_0 =     eigen::dot(last_Y, m);
+	double BE_tot, BE_tot_0 = rho*eigen::dot(last_Y, BE);
 	double  E_tot,  E_tot_0 = -BE_tot_0 + m_tot_0 + cv*last_T;
 
 	nnet::constants::theta = 0.6;
@@ -95,14 +95,12 @@ int main() {
 		auto [rate, drates_dT] = construct_system(last_T);
 
 		// solve the system
-		net14_debug = i == 0;
 		auto [Y, T] = nnet::solve_system(reactions, rate, drates_dT,
 			BE, m, last_Y,
 			last_T, cv, rho, value_1, dt);
-		net14_debug = false;
 
 		 m_tot = eigen::dot(Y, m);
-		BE_tot = eigen::dot(last_Y, BE);
+		BE_tot = rho*eigen::dot(last_Y, BE);
 		 E_tot = -BE_tot + m_tot + cv*T;
 
 		if (n_print >= n_max || (n_max - i) % (int)((float)n_max / ((float)n_print)) == 0)

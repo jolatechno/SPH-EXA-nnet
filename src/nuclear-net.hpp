@@ -222,7 +222,7 @@ namespace nnet {
 			RHS[i] = dY_dt[i - 1]*dt;
 
 		// energy equation
-		Mp(0, 0) = 1 - constants::theta*dt*value_1/cv;
+		Mp(0, 0) = 1. - constants::theta*dt*value_1/cv;
 		for (int i = 1; i <= dimension; ++i)
 			Mp(0, i) = -constants::theta*dt*BE[i - 1]/cv;
 

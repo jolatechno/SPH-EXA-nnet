@@ -17,7 +17,7 @@ int main() {
 	for (int i = 0; i < 14; ++i) last_Y[i] = X[i]/nnet::net14::constants::A[i];
 
 	std::vector<double> BE_ = nnet::net14::get_corrected_BE(last_T);
-	double E_in = eigen::dot(last_Y, BE_) + cv*last_T;
+	double E_in = rho0*eigen::dot(last_Y, BE_) + cv*last_T;
 	double m_in = eigen::dot(last_Y, nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
@@ -48,8 +48,10 @@ int main() {
 
 		net14_debug = false;
 
-		double E_tot = eigen::dot(Y, BE) + cv*T;
+
+		double E_tot = rho*eigen::dot(Y, BE) + cv*T;
 		double dE_E = (E_tot - E_in)/E_in;
+
 		double m_tot = eigen::dot(Y, nnet::net14::constants::A);
 		double dm_m = (m_tot - m_in)/m_in;
 
