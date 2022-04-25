@@ -6,6 +6,7 @@
 //#include <ranges> // drop
 
 #include <vector>
+#include <tuple>
 
 /* !!!!!!!!!!!!
 debuging :
@@ -258,7 +259,7 @@ namespace nnet {
 	std::tuple<Vector, Float, Float> solve_system_var_timestep(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
 		const Vector &BE, const Vector_int &A, const Vector &Y,
 		const Float T, const Float cv, const Float rho, const Float value_1, Float &dt) {
-		const Float m_in = Y.dot(A);
+		const Float m_in = eigen::dot(Y, A);
 
 		// actual solving
 		while (true) {
@@ -269,7 +270,7 @@ namespace nnet {
 			utils::clip(next_Y, nnet::constants::epsilon_vector);
 
 			// mass and temperature variation
-			Float dm_m = std::abs(1 - next_Y.dot(A)/m_in);
+			Float dm_m = std::abs(1 - eigen::dot(next_Y, A)/m_in);
 			Float dT_T = std::abs((next_T - T)/T);
 
 			// timestep tweeking

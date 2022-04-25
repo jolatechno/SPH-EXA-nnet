@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "../nuclear-net.hpp"
 #include "net14-constants.hpp"
 
@@ -26,10 +28,10 @@ namespace nnet {
 
 		/// ideal gaz correction
 		template<typename Float>
-		Float[14] ideal_gaz_correction(const Float T) {
-			Float BE_correction[14];
+		std::vector<Float> ideal_gaz_correction(const Float T) {
+			std::vector<Float> BE_correction(14);
 
-			Float correction -constants::Na*constants::Kb*T;
+			Float correction = -constants::Na*constants::Kb*T;
 			for (int i = 0; i < 14; ++i) BE_correction[i] = correction;
 
 			return BE_correction;
@@ -117,7 +119,7 @@ namespace nnet {
 
 		/// compute a list of reactions for net14
 		template<typename Float>
-		std::tuple<std::vector<Float>, std::vector<Float>> compute_reaction_rates(const Float T) {
+		std::pair<std::vector<Float>, std::vector<Float>> compute_reaction_rates(const Float T) {
 			std::vector<Float> rates, drates;
 			rates.reserve(reaction_list.size());
 			drates.reserve(reaction_list.size());
@@ -624,9 +626,9 @@ namespace nnet {
 
 		/// function to compute the corrected BE
 		template<typename Float>
-		Float[14] get_corrected_BE(Float const T) {
-			Float corrected_BE[14] = ideal_gaz_correction<Float>(T);
-			for (int i = 0; i < 14; ++i) corrected_BE[i] += constants::BE[i];
+		std::vector<Float> get_corrected_BE(Float const T) {
+			std::vector<Float> corrected_BE = ideal_gaz_correction<Float>(T);
+			for (int i = 0; i < 14; ++i) corrected_BE[i] += BE[i];
 
 			return corrected_BE;
 		}

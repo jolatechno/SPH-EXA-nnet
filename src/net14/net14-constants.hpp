@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 namespace nnet {
 	namespace net14 {
 		namespace constants {
@@ -9,10 +11,10 @@ namespace nnet {
 			const double Mev_to_cJ = 9.648529392e17;
 
 			/// constant atomic number values
-			const double Z[14] = {2, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30};
+			const std::vector<double> Z = {2, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30};
 
 			/// constant number of masses values
-			const double A[14] = {4, 12, 16, 20, 24, 28, 32,  36, 40, 44, 48, 52, 56, 60};
+			const std::vector<double> A = {4, 12, 16, 20, 24, 28, 32,  36, 40, 44, 48, 52, 56, 60};
 
 			namespace fits {
 				int inline get_temperature_range(double T) {
