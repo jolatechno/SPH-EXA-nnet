@@ -192,11 +192,12 @@ namespace nnet {
  	<=>                               D{T, Y} = Dt*((M' + theta*dM/dT*DT)*{T_in,Y_in}  + theta*M'*D{T,Y})
  	<=> (I - Dt*theta*(M' + dM/dT*Y))*D{T, Y} = Dt*M'*{T_in,Y_in}
 
- 		To include temperature:
+ 		Energy equation:
 
 		dY/dt = (M + dM/dT*dT)*Y + dM*dY
 		dT/dt = value_1/cv*T + (dY/dt).BE/cv
-	<=> DT = value_1/cv*T + DY.BE/cv
+	<=> DT = value_1/cv*(T + theta*DT) + DY.BE/cv
+	<=> DT*(cv - value_1) - DY.BE = value_1*T
 		------------------- */
 		const int dimension = Y.size();
 
@@ -217,14 +218,14 @@ namespace nnet {
 
 		// right hand side
 		Vector RHS(dimension + 1), dY_dt = derivatives_from_reactions(reactions, rates, Y, rho);
-		RHS[0] = (T*value_1 + eigen::dot(dY_dt, BE))/cv*dt;
 		for (int i = 1; i <= dimension; ++i)
 			RHS[i] = dY_dt[i - 1]*dt;
 
 		// energy equation
-		Mp(0, 0) = 1. - constants::theta*dt*value_1/cv;
+		RHS[0] = T*value_1;
+		Mp(0, 0) = cv - constants::theta*value_1;
 		for (int i = 1; i <= dimension; ++i)
-			Mp(0, i) = -constants::theta*dt*BE[i - 1]/cv;
+			Mp(0, i) = -BE[i - 1];
 
 		// include rate derivative
 		Vector dY_dT = derivatives_from_reactions(reactions, drates_dT, Y, rho);

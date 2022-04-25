@@ -9,7 +9,7 @@
 namespace nnet {
 	namespace net14 {
 		/// constant mass-excendent values
-		const double BE[14] = {
+		const std::vector<double> BE = {
 			0.0*constants::Mev_to_cJ, 
 			7.27440*constants::Mev_to_cJ,
 			14.43580*constants::Mev_to_cJ,
