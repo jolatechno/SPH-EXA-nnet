@@ -16,7 +16,7 @@ int main() {
 
 	for (int i = 0; i < 14; ++i) last_Y[i] = X[i]/nnet::net14::constants::A[i];
 
-	std::vector<double> BE_ = nnet::net14::get_corrected_BE(last_T);
+	std::vector<double> BE_ = nnet::net14::get_corrected_BE(last_T, last_Y);
 	double E_in = rho0*eigen::dot(last_Y, BE_) + cv*last_T;
 	double m_in = eigen::dot(last_Y, nnet::net14::constants::A);
 
@@ -37,7 +37,7 @@ int main() {
 #endif
 
 		// construct system
-		std::vector<double> BE = nnet::net14::get_corrected_BE(last_T);
+		std::vector<double> BE = nnet::net14::get_corrected_BE(last_T, last_Y);
 		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates(last_T);
 
 		// solve the system

@@ -26,15 +26,13 @@ namespace nnet {
 			90.55480*constants::Mev_to_cJ
 		};
 
-		/// ideal gaz correction
-		template<typename Float>
-		std::vector<Float> ideal_gaz_correction(const Float T) {
-			std::vector<Float> BE_correction(14);
+		/// function to compute the corrected BE
+		template<typename Float, class vector>
+		vector get_corrected_BE(Float const T, vector const &Y) {
+			vector corrected_BE = constants::ideal_gaz_correction<Float>(T);
+			for (int i = 0; i < 14; ++i) corrected_BE[i] += BE[i];
 
-			Float correction = -constants::Na*constants::Kb*T;
-			for (int i = 0; i < 14; ++i) BE_correction[i] = correction;
-
-			return BE_correction;
+			return corrected_BE;
 		}
 
 		// constant list of ordered reaction
@@ -308,7 +306,7 @@ namespace nnet {
 					const Float t9a=t9/(1. + 0.0396*t9);
 				    const Float t9a13=std::pow(t9a, 1./3.);
 				    const Float t9a56=std::pow(t9a, 5./6.);
-			    
+
 		      		eff[14]=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
 		      		rates.push_back(eff[14]);
 
@@ -625,15 +623,6 @@ namespace nnet {
 			}
 
 			return {rates, drates};
-		}
-
-		/// function to compute the corrected BE
-		template<typename Float>
-		std::vector<Float> get_corrected_BE(Float const T) {
-			std::vector<Float> corrected_BE = ideal_gaz_correction<Float>(T);
-			for (int i = 0; i < 14; ++i) corrected_BE[i] += BE[i];
-
-			return corrected_BE;
 		}
 	}
 }

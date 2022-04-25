@@ -236,10 +236,16 @@ namespace nnet {
 		// !!!!!!!!!!
 		// debuging:
 		if (net14_debug) {
-			std::cout << "M=\n";
+			std::cout << "BE=";
+			for (int i = 0; i < dimension; ++i)
+				std::cout << "\t" << BE[i];
+
+			std::cout << "\nM=";
 			for (int i = 0; i <= dimension; ++i) {
+				if (i > 0)
+					std::cout << "  ";
 				for (int j = 0; j <= dimension; ++j)
-					std::cout << Mp(i, j) << "\t";
+					std::cout << "\t" << Mp(i, j);
 				std::cout << "\n";
 			}
 		}
@@ -249,10 +255,15 @@ namespace nnet {
 		// now solve M*D{T, Y} = RHS
 		Vector DY_T = eigen::solve(Mp, RHS);
 
-		// add values
-		Float next_T = T + DY_T[0];
+		// increment values
 		for (int i = 1; i <= dimension; ++i)
 			next_Y[i - 1] = Y[i - 1] + DY_T[i];
+
+		// update temperature
+		// Float next_T = T + DY_T[0];
+		Float next_T = T;
+		for (int i = 0; i < dimension; ++i)
+			next_T += DY_T[i + 1]*BE[i]/cv;
 
 		return {next_Y, next_T};
 	}

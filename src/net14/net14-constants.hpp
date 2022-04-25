@@ -16,6 +16,17 @@ namespace nnet {
 			/// constant number of masses values
 			const std::vector<double> A = {4, 12, 16, 20, 24, 28, 32,  36, 40, 44, 48, 52, 56, 60};
 
+			/// ideal gaz correction
+			template<typename Float>
+			std::vector<Float> ideal_gaz_correction(const Float T) {
+				std::vector<Float> BE_correction(14);
+
+				Float correction = -1.5*Na*Kb*T;
+				for (int i = 0; i < 14; ++i) BE_correction[i] = correction;
+
+				return BE_correction;
+			}
+
 			namespace fits {
 				int inline get_temperature_range(double T) {
 					if (T < 1.5e8) return 0;
