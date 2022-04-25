@@ -13,17 +13,17 @@ int main() {
 	std::vector<double> last_Y(14, 0), X(14, 0);
 	X[5] = 1;
 
+
 	for (int i = 0; i < 14; ++i) last_Y[i] = X[i]/nnet::net14::constants::A[i];
 
-	std::vector<double> BE_ = nnet::net14::get_corrected_BE(last_T, last_Y);
-	double E_in = eigen::dot(last_Y, BE_) + cv*last_T;
+	double E_in = eigen::dot(last_Y, nnet::net14::BE) + cv*last_T;
 	double m_in = eigen::dot(last_Y, nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
 	int n_max = 400;
 	const int n_print = 30, n_save=400;
 
-	nnet::constants::theta = 0.7;
+	nnet::constants::theta = 1;
 
 	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
 
@@ -48,7 +48,7 @@ int main() {
 		net14_debug = false;
 
 
-		double E_tot = eigen::dot(Y, BE) + cv*T;
+		double E_tot = eigen::dot(Y, nnet::net14::BE) + cv*T;
 		double dE_E = (E_tot - E_in)/E_in;
 
 		double m_tot = eigen::dot(Y, nnet::net14::constants::A);
