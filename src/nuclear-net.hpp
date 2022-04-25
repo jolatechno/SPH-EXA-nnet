@@ -30,11 +30,11 @@ namespace nnet {
 		/// relative temperature variation target of the implicit solver
 		double dT_T_target = 5e-3;
 		/// relative mass conservation target of the implicit solver
-		double dm_m_target = 1e-5;
+		double dm_m_target = 1e-8;
 		/// relative temperature variation tolerance of the implicit solver
 		double dT_T_tol = 1e-2;
 		/// relative mass conservation tolerance of the implicit solver
-		double dm_m_tol = 1e-4;
+		double dm_m_tol = 1e-7;
 
 		/// the value that is considered null inside a system
 		double epsilon_system = 1e-200;
