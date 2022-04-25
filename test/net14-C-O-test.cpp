@@ -19,8 +19,8 @@ int main() {
 	double m_in = last_Y.dot(nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
-	int n_max = 4000;
-	const int n_print = 30, n_save=4000;
+	int n_max = 1000;
+	const int n_print = 30, n_save=1000;
 
 	nnet::constants::theta = 0.55;
 
@@ -55,7 +55,7 @@ int main() {
 		// formated print (stderr)
 		if (n_save >= n_max || (n_max - i) % (int)((float)n_max/(float)n_save) == 0) {
 			for (int i = 0; i < 14; ++i) X(i) = Y(i)*nnet::net14::constants::A(i)/Y.dot(nnet::net14::constants::A);
-			std::cerr << -t << "," << dt << ",," << T << ",,";
+			std::cerr << t << "," << dt << ",," << T << ",,";
 			for (int i = 0; i < 14; ++i) std::cerr << X(i) << ",";
 			std::cerr << "," << dm_m << "\n";
 		}

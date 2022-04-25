@@ -1,26 +1,11 @@
 #pragma once
 
+#include "eigen.hpp"
 
 #include <cmath> // factorial
 //#include <ranges> // drop
 
 #include <vector>
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
-
-// solvers
-#include <Eigen/SparseLU>
-// #include<Eigen/SparseCholesky>
-#ifndef SOLVER
-	// #define ITERATIVE_SOLVER _
-	// #define SOLVER Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>
-
-	#define SOLVER Eigen::SparseLU<Eigen::SparseMatrix<Float>, Eigen::COLAMDOrdering<int>>
-
-	// #define SOLVER Eigen::SimplicialL<Eigen::SparseMatrix<Float>>
-#endif
-
-
 
 /* !!!!!!!!!!!!
 debuging :
@@ -134,7 +119,7 @@ namespace nnet {
 		template<typename Float, int n, int m>
 		Eigen::Vector<Float, m> solve(Eigen::Matrix<Float, n, n> &M, Eigen::Vector<Float, m> &RHS, const Float epsilon_system, const Float epsilon_vector) {
 			// sparcify M
-			auto sparse_M = utils::sparsify(M, epsilon_system);
+			Eigen::SparseMatrix<Float> sparse_M = utils::sparsify(M, epsilon_system);
 
 			// now solve M*X = RHS
 			SOLVER solver;
@@ -247,9 +232,16 @@ namespace nnet {
 			}
 		}
 
-		auto dM_dt = M.transpose()*A;
-		for (int i = 0; i < dimension; ++i)
-			M(i, i) = -dM_dt(i)/A(i);
+		// correct mass gain rate
+		for (int i = 0; i < dimension; ++i) {
+			// compute the discripency
+			Float mass_gain_rate = 0;
+			for (int j = 0; j < dimension; ++j)
+				mass_gain_rate += M(j, i)*A(j);
+
+			// correct it
+			M(i, i) -= mass_gain_rate/A(i);
+		}
 
 		return M;
 	}
@@ -284,7 +276,7 @@ namespace nnet {
 		Eigen::Matrix<Float, -1, -1> Mp = Eigen::Matrix<Float, -1, -1>::Zero(dimension + 1, dimension + 1);
 
 		// main matrix part
-		auto MpYY = order_1_dY_from_reactions(reactions, rates, Y, /* debugging */A/* debugging */, rho);
+		Eigen::Matrix<Float, -1, -1> MpYY = order_1_dY_from_reactions(reactions, rates, Y, /* debugging */A/* debugging */, rho);
 		Mp(Eigen::seq(1,dimension), Eigen::seq(1,dimension)) = MpYY;
 
 		// right hand side
@@ -300,14 +292,14 @@ namespace nnet {
 		Eigen::Vector<Float, -1> dY_dT = derivatives_from_reactions(reactions, drates_dT, Y, rho);
 		Mp(Eigen::seq(1, dimension), 0) = dY_dT;
 
-		// std::cout << dY_dt.dot(A) << "=dM_dt, " << dY_dT.dot(A) << "=dM_dT, " << (MpYY*Y).dot(A) << "=dMyy_dt\n";
-
 		// construct M
 		Eigen::Matrix<Float, -1, -1> M_sys = Eigen::Matrix<Float, -1, -1>::Identity(dimension + 1, dimension + 1);
 		M_sys -= constants::theta*Mp*dt;
 
+#ifdef NORMALIZE
 		// normalize
-		// utils::normalize(M_sys, RHS);
+		utils::normalize(M_sys, RHS);
+#endif
 
 		// now solve M*D{T, Y} = RHS
 		vector DY_T = utils::solve(M_sys, RHS, constants::epsilon_system, constants::epsilon_vector);

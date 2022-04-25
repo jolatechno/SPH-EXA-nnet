@@ -19,7 +19,7 @@ int main() {
 	double m_in = last_Y.dot(nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
-	int n_max = 10000;
+	int n_max = 400;
 	const int n_print = 30, n_save=400;
 
 	nnet::constants::theta = 0.55;

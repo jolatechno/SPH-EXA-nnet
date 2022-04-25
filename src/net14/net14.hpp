@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Eigen/Dense>
+#include "../eigen.hpp"
 
 #include "../nuclear-net.hpp"
 #include "net14-constants.hpp"
