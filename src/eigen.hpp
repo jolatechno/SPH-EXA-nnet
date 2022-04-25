@@ -1,60 +1,82 @@
 #pragma once
 
-// avoid aproximations
-#define EIGEN_FAST_MATH 0
-
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
-
-// solvers
-#include <Eigen/SparseLU>
-// #include<Eigen/SparseCholesky>
-#ifndef SOLVER
-	// #define ITERATIVE_SOLVER _
-	// #define SOLVER Eigen::BiCGSTAB<Eigen::SparseMatrix<Float>>
-
-	#define SOLVER Eigen::SparseLU<Eigen::SparseMatrix<Float>, Eigen::COLAMDOrdering<int>>
-
-	// #define SOLVER Eigen::SimplicialL<Eigen::SparseMatrix<Float>>
-#endif
+#include <vector>
 
 namespace eigen {
+	/// custom matrix type
+	template<typename Type>
+	class matrix {
+	private:
+		std::vector<Type> weights;
+
+	public:
+		int n, m;
+
+		matrix(int n_, int m_) : n(n_), m(m_) {
+			weights.resize(n*m, 0);
+		}
+
+		Type &operator()(int i, int j) {
+			return weights[i + j*n];
+		}
+
+		Type operator()(int i, int j) const {
+			return weights[i + j*n];
+		}
+	};
+
+
+
+	/// dot product function
+	template<class vector>
+	double dot(vector const &X, vector const &Y) {
+		double res = 0;
+		const int dimension = std::min(X.size(), Y.size());
+
+		for (int i = 0; i < dimension; ++i)
+			res += X[i]*Y[i];
+
+		return res;
+	}
+
+
+
 	/// custom analytical solver
-	template<typename Float>
-	Eigen::Vector<Float, -1> solve(Eigen::Matrix<Float, -1, -1> &M, Eigen::Vector<Float, -1> &RHS) {
-		const int dimension = RHS.size();
-		Eigen::Vector<Float, -1> X(dimension);
+	template<class vector, class matrix>
+	vector solve(matrix M, vector RHS) {
+		const int n = RHS.size();
+		vector X(n);
 
 		// reduce into upper triangular
-		for (int i = 0; i < dimension; ++i) {
+		for (int i = 0; i < n; ++i) {
 			for (int j = 0; j < i; ++j) {
 				// include the jth line
-				Float weight = M(i, j);
+				double weight = M(i, j);
 				M(i, j) = 0;
 
-				RHS(i) -= weight*RHS(j);
-				for (int k = j + 1; k < dimension; ++k)
+				RHS[i] -= weight*RHS[j];
+				for (int k = j + 1; k < n; ++k)
 					M(i, k) -= weight*M(j, k);
 			}
 
 			// normalize ith line
-			Float diagonal = M(i, i);
+			double diagonal = M(i, i);
 			M(i, i) = 1;
 
 			// normalize
 			RHS[i] /= diagonal;
-			for (int j = i + 1; j < dimension; ++j)
+			for (int j = i + 1; j < n; ++j)
 				M(i, j) /= diagonal;
 		}
 
 		// "back propagate" to solve
-		for (int i = dimension - 1; i >= 0; --i) {
-			Float res = RHS(i);
+		for (int i = n - 1; i >= 0; --i) {
+			double res = RHS[i];
 
-			for (int j = i + 1; j < dimension; ++j)
-				res -= M(i, j)*X(j);
+			for (int j = i + 1; j < n; ++j)
+				res -= M(i, j)*X[j];
 
-			X(i) = res;
+			X[i] = res;
 		}
 
 		return X;

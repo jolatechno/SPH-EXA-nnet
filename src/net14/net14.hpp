@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../eigen.hpp"
-
 #include "../nuclear-net.hpp"
 #include "net14-constants.hpp"
 
@@ -9,12 +7,31 @@
 namespace nnet {
 	namespace net14 {
 		/// constant mass-excendent values
-		const Eigen::VectorXd BE = Eigen::Vector<double, 14>(std::vector<double>{0.0, 7.27440, 14.43580, 19.16680, 28.48280, 38.46680, 45.41480, 52.05380, 59.09380, 64.22080, 71.91280, 79.85180, 87.84680, 90.55480}.data())*constants::Mev_to_cJ;
+		const double BE[14] = {
+			0.0*constants::Mev_to_cJ, 
+			7.27440*constants::Mev_to_cJ,
+			14.43580*constants::Mev_to_cJ,
+			19.16680*constants::Mev_to_cJ,
+			28.48280*constants::Mev_to_cJ,
+			38.46680*constants::Mev_to_cJ,
+			45.41480*constants::Mev_to_cJ,
+			52.05380*constants::Mev_to_cJ,
+			59.09380*constants::Mev_to_cJ,
+			64.22080*constants::Mev_to_cJ,
+			71.91280*constants::Mev_to_cJ,
+			79.85180*constants::Mev_to_cJ,
+			87.84680*constants::Mev_to_cJ,
+			90.55480*constants::Mev_to_cJ
+		};
 
 		/// ideal gaz correction
-		Eigen::VectorXd ideal_gaz_correction(const double T) {
-			Eigen::VectorXd BE_correction(14);
-			for (int i = 0; i < 14; ++i) BE_correction(i) = -constants::Na * constants::Kb * T;
+		template<typename Float>
+		Float[14] ideal_gaz_correction(const Float T) {
+			Float BE_correction[14];
+
+			Float correction -constants::Na*constants::Kb*T;
+			for (int i = 0; i < 14; ++i) BE_correction[i] = correction;
+
 			return BE_correction;
 		}
 
@@ -606,8 +623,11 @@ namespace nnet {
 		}
 
 		/// function to compute the corrected BE
-		Eigen::VectorXd get_corrected_BE(double const T) {
-			Eigen::VectorXd corrected_BE = BE + ideal_gaz_correction(T);
+		template<typename Float>
+		Float[14] get_corrected_BE(Float const T) {
+			Float corrected_BE[14] = ideal_gaz_correction<Float>(T);
+			for (int i = 0; i < 14; ++i) corrected_BE[i] += constants::BE[i];
+
 			return corrected_BE;
 		}
 	}
