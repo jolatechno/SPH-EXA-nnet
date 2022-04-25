@@ -210,6 +210,7 @@ namespace nnet {
 				const Float val3=val1*t9i*1e-9;
 				const Float val4=1.5e-9*t9i;
 
+
 				/* fision rates computed:
 					- Ne + He <- Mg
 					- Mg + He <- Si
@@ -221,8 +222,8 @@ namespace nnet {
 					- Cr + He <- Fe
 					- Fe + He <- Ni
 					- Ni + He <- Zn */
+				const int k = constants::fits::get_temperature_range(T);
 				for (int i = 4; i < 14; ++i) {
-					int k = constants::fits::get_temperature_range(T);
 					l[i] = constants::fits::choose[i - 4][k]/constants::fits::choose[i + 1 - 4][k]*
 						std::exp(
 							  coefs               [i - 4]
@@ -268,10 +269,6 @@ namespace nnet {
 	      		const Float t9rm1=1./t9r;
 	      		const Float t9r32=t9*std::sqrt(t9r);
 
-	      		const Float t9a=t9/(1. + 0.0396*t9);
-			    const Float t9a13=std::pow(t9a, 1./3.);
-			    const Float t9a56=std::pow(t9a, 5./6.);
-
 
 			    /* !!!!!!!!!!!!!!!!!!!!!!!!
 				O + He <-> Ne fusion and fission
@@ -308,6 +305,10 @@ namespace nnet {
 				2C -> Ne + He fusion
 				!!!!!!!!!!!!!!!!!!!!!!!! */
 				{
+					const Float t9a=t9/(1. + 0.0396*t9);
+				    const Float t9a13=std::pow(t9a, 1./3.);
+				    const Float t9a56=std::pow(t9a, 5./6.);
+			    
 		      		eff[14]=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
 		      		rates.push_back(eff[14]);
 
@@ -320,14 +321,16 @@ namespace nnet {
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
 				C + O -> Mg + He fusion
 				!!!!!!!!!!!!!!!!!!!!!!!! */
-				{
-					if (T > 5e8) {
+				{	
+					eff[15] = 0;
+					if (T >= 5e8) {
 			            const Float t9ap=t9/(1. + 0.055*t9);
 			            const Float t9a2p=t9ap*t9ap;
 			            const Float t9a13p=std::pow(t9ap, 1./3.);
-			            const Float t9a23p=t9a13*t9a13;
+			            const Float t9a23p=t9a13p*t9a13p;
 			            const Float t9a56ap=std::pow(t9ap, 5./6.);
-			            eff[15]=1.72e+31*t9a56ap*t9i32*std::exp(-106.594/t9a13p)/(std::exp(-0.18*t9a2p) + 1.06e-03*std::exp(2.562*t9a23p));
+			            eff[15]=1.72e+31*t9a56ap*t9i32*std::exp(-106.594/t9a13p)/(std::exp(-0.18*t9a2p) +
+			            	1.06e-03*std::exp(2.562*t9a23p));
 			        }
 			        rates.push_back(eff[15]);
 

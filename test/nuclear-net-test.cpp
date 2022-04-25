@@ -8,7 +8,7 @@ int main() {
 	double rho = 1;
 
 	// mass excedents
-	std::vector<double> BE = {3, 2, 4};
+	std::vector<double> BE = {.3, .2, .7};
 
 	// molar masses
 	std::vector<double> m = {2, 2, 4};
@@ -19,8 +19,9 @@ int main() {
 
 	std::cout << last_Y[0] << " " << last_Y[1] << " " << last_Y[2] << ",\t" << last_T << std::endl;
 
-	double m_tot, m_tot_0 = eigen::dot(last_Y, m);
-	double E_tot, E_tot_0 = eigen::dot(last_Y, BE) + m_tot_0 + cv*last_T;
+	double  m_tot,  m_tot_0 = eigen::dot(last_Y, m);
+	double BE_tot, BE_tot_0 = eigen::dot(last_Y, BE);
+	double  E_tot,  E_tot_0 = -BE_tot_0 + m_tot_0 + cv*last_T;
 
 	nnet::constants::theta = 0.6;
 
@@ -100,11 +101,12 @@ int main() {
 			last_T, cv, rho, value_1, dt);
 		net14_debug = false;
 
-		m_tot = eigen::dot(Y, m);
-		E_tot = eigen::dot(Y, BE) + m_tot + cv*T;
+		 m_tot = eigen::dot(Y, m);
+		BE_tot = eigen::dot(last_Y, BE);
+		 E_tot = -BE_tot + m_tot + cv*T;
 
 		if (n_print >= n_max || (n_max - i) % (int)((float)n_max / ((float)n_print)) == 0)
-			std::cout << Y[0] << " " << Y[1] << " " << Y[2] << ",\t(E_tot=" << E_tot << ",\tDelta_E_tot=" << (E_tot - E_tot_0)/E_tot_0 << "),\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << (m_tot - m_tot_0)/m_tot_0 << "),\t" << T << "\n";
+			std::cout << Y[0] << " " << Y[1] << " " << Y[2] << ",\t(E_tot=" << E_tot << ",\tDelta_E_tot=" << E_tot - E_tot_0 << ",\tDelta_BE_tot=" << BE_tot - BE_tot_0 << ",\t(m_tot=" << m_tot << ",\tDelta_m_tot=" << (m_tot - m_tot_0)/m_tot_0 << "),\t" << T << "\n";
 
 		last_Y = Y;
 		last_T = T;

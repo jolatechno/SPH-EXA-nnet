@@ -18,14 +18,10 @@ namespace nnet {
 		/// theta for the implicit method
 		double theta = 0.7;
 
-		/// minimum timestep
-		double min_dt = 1e-20;
 		/// maximum timestep
 		double max_dt = 1e-2;
 		/// maximum timestep evolution
 		double max_dt_step = 1.5;
-		/// minimum timestep evolution
-		double min_dt_step = 1e-2;
 
 		/// relative temperature variation target of the implicit solver
 		double dT_T_target = 5e-3;
@@ -199,7 +195,8 @@ namespace nnet {
  		To include temperature:
 
 		dY/dt = (M + dM/dT*dT)*Y + dM*dY
-		dT/dt = value_1/cv*T + (dY/dt).Be/cv = value_1/cv*T + (M*Y).Be = value_1/cv*T + (M.T*Be)*Y
+		dT/dt = value_1/cv*T + (dY/dt).BE/cv
+	<=> DT = value_1/cv*T + DY.BE/cv
 		------------------- */
 		const int dimension = Y.size();
 
@@ -208,34 +205,46 @@ namespace nnet {
 
 		// main matrix part
 		eigen::matrix<Float> MpYY = order_1_dY_from_reactions(reactions, rates, A, Y, rho);
-		for (int i = 1; i <= dimension; ++i)
+		for (int i = 1; i <= dimension; ++i) {
+			// diagonal terms
+			Mp(i, i) = 1.     -constants::theta*dt*MpYY(i - 1, i - 1);
+
+			// other terms
 			for (int j = 1; j <= dimension; ++j)
-				Mp(i, j) = MpYY(i - 1, j - 1);
+				if (i != j)
+					Mp(i, j) = -constants::theta*dt*MpYY(i - 1, j - 1);
+		}
 
 		// right hand side
 		Vector RHS(dimension + 1), dY_dt = derivatives_from_reactions(reactions, rates, Y, rho);
+		RHS[0] = (T*value_1 + eigen::dot(dY_dt, BE))/cv*dt;
 		for (int i = 1; i <= dimension; ++i)
 			RHS[i] = dY_dt[i - 1]*dt;
-		RHS[0] = (T*value_1 + eigen::dot(dY_dt, BE))/cv*dt;
 
-		// include Y -> T terms
+		// energy equation
+		Mp(0, 0) = 1 - constants::theta*dt*value_1/cv;
 		for (int i = 1; i <= dimension; ++i)
-			Mp(0, i) = BE[i - 1]/cv;
-		Mp(0, 0) = value_1/cv;
+			Mp(0, i) = -constants::theta*dt*BE[i - 1]/cv;
 
 		// include rate derivative
 		Vector dY_dT = derivatives_from_reactions(reactions, drates_dT, Y, rho);
 		for (int i = 1; i <= dimension; ++i)
-			Mp(i, 0) = dY_dT[i - 1];
+			Mp(i, 0) = -constants::theta*dt*dY_dT[i - 1];
 
-		// construct M
-		for (int i = 0; i <= dimension; ++i)
-			for (int j = 0; j <= dimension; ++j)
-				if (i == j) {
-					// diagonal terms
-					Mp(i, i) = 1. - constants::theta*dt*Mp(i, i);
-				} else
-					Mp(i, j) = 	   -constants::theta*dt*Mp(i, j);
+
+
+		// !!!!!!!!!!
+		// debuging:
+		if (net14_debug) {
+			std::cout << "M=\n";
+			for (int i = 0; i <= dimension; ++i) {
+				for (int j = 0; j <= dimension; ++j)
+					std::cout << Mp(i, j) << "\t";
+				std::cout << "\n";
+			}
+		}
+
+
 
 		// now solve M*D{T, Y} = RHS
 		Vector DY_T = eigen::solve(Mp, RHS);
@@ -244,6 +253,7 @@ namespace nnet {
 		Float next_T = T + DY_T[0];
 		for (int i = 1; i <= dimension; ++i)
 			next_Y[i - 1] = Y[i - 1] + DY_T[i];
+
 		return {next_Y, next_T};
 	}
 
@@ -274,31 +284,17 @@ namespace nnet {
 			Float dT_T = std::abs((next_T - T)/T);
 
 			// timestep tweeking
-			Float actual_dt = dt;
-			Float dt_multiplier = 
-				std::min(
+			Float previous_dt = dt;
+			dt = std::min(
 					dT_T == 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T,
 					dm_m == 0 ? (Float)constants::max_dt_step : constants::dm_m_target/dm_m
-				);
-			dt_multiplier = 
-				std::min(
-					std::max(
-						(Float)constants::min_dt_step, 
-						dt_multiplier
-					),
-					(Float)constants::max_dt_step
-				);
-			dt = std::min(
-				(Float)constants::max_dt,
-				std::max(
-					(Float)constants::min_dt,
-					dt*dt_multiplier
-				));
+				)*previous_dt;
+			dt = std::min(dt, previous_dt*constants::max_dt_step);
+			dt = std::min(dt, (Float)constants::max_dt);
 
 			// exit on condition
-			if (actual_dt <= constants::min_dt ||
-			(dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol))
-				return {next_Y, next_T, actual_dt};
+			if (dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol)
+				return {next_Y, next_T, previous_dt};
 		}
 	}
 }
