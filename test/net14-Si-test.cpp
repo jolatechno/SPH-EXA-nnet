@@ -23,15 +23,17 @@ int main() {
 	int n_max = 400;
 	const int n_print = 30, n_save=400;
 
-
-
 	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
 
-	for (int i = 1; i <= n_max; ++i) {
+
+
 #ifdef DEBUG
-		net14_debug = i == 1;
+		net14_debug = true;
 #endif
 
+
+
+	for (int i = 1; i <= n_max; ++i) {
 		// construct system
 		std::vector<double> BE = nnet::net14::compute_BE(last_Y, last_T);
 		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates(last_T);

@@ -23,6 +23,8 @@ int main() {
 	int n_max = 2000;
 	const int n_print = 30, n_save=1000;
 
+	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
+
 
 
 	auto const eos = [&](const std::vector<double> &Y_, const double T) {
@@ -31,14 +33,11 @@ int main() {
 
 
 
-	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
-
 	for (int i = 1; i <= n_max; ++i) {
-		t += dt;
-
 		// solve the system
 		auto [Y, T] = nnet::solve_system_superstep(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, eos,
 			nnet::net14::constants::A, last_Y, last_T, dt, small_dt);
+		t += dt;
 
 
 		double E_tot = eigen::dot(Y, nnet::net14::BE) + cv*T;
