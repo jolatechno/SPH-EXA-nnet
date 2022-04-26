@@ -25,17 +25,20 @@ namespace nnet {
 
 		/// relative temperature variation target of the implicit solver
 		double dT_T_target = 5e-3;
-		/// relative mass conservation target of the implicit solver
-		double dm_m_target = 1e-8;
 		/// relative temperature variation tolerance of the implicit solver
 		double dT_T_tol = 10; //1e-1;
-		/// relative mass conservation tolerance of the implicit solver
-		double dm_m_tol = 1e-7;
 
 		/// the value that is considered null inside a system
 		double epsilon_system = 1e-200;
 		/// the value that is considered null inside a state
 		double epsilon_vector = 1e-16;
+
+		/// minimum number of newton raphson iterations
+		uint min_NR_it = 2;
+		/// maximum number of newton raphson iterations
+		uint max_NR_it = 10;
+		/// tolerance for the correction to break out of the newton raphson loop
+		double NR_tol = 1e-8;
 
 		/// timestep tolerance for superstepping
 		double dt_tol = 1e-5;
@@ -179,15 +182,16 @@ namespace nnet {
 
 
 
-	/// solves a system non-iteratively.
+	/// solves a system non-iteratively (with rates computed at a specific "guess").
 	/**
-	 *  solves non-iteratively and partialy implicitly the system represented by M.
+	 *  solves non-iteratively and partialy implicitly the system represented by M (computed at a specific "guess").
 	 * ...TODO
 	 */
 	template<class Vector, typename Float>
-	std::pair<Vector, Float> solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
-		const Vector &BE, const Vector &A, const Vector &Y,
-		const Float T, const Float cv, const Float rho, const Float value_1, const Float dt) {
+	std::pair<Vector, Float> solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
+		const Vector &BE, const Vector &A, 
+		const Vector &Y, const Float T, const Vector &Y_guess, const Float T_guess,
+		const Float cv, const Float rho, const Float value_1, const Float dt) {
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
 
@@ -278,6 +282,25 @@ namespace nnet {
 
 
 
+
+	/// solves a system non-iteratively.
+	/**
+	 *  solves non-iteratively and partialy implicitly the system represented by M.
+	 * ...TODO
+	 */
+	template<class Vector, typename Float>
+	std::pair<Vector, Float> solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
+		const Vector &BE, const Vector &A, const Vector &Y,
+		const Float T, const Float cv, const Float rho, const Float value_1, const Float dt) {
+		return solve_system_from_guess(reactions, rates, drates_dT, 
+			BE, A, 
+			Y, T, Y, T,
+			cv, rho, value_1, dt);
+	}
+
+
+
+
 	/// fully solves a system, with timestep tweeking
 	/**
 	 *  solves iteratively and fully implicitly a single iteration of the system constructed by construct_system, with added timestep tweeking
@@ -298,25 +321,74 @@ namespace nnet {
 			utils::clip(next_Y, nnet::constants::epsilon_vector);
 
 			// mass and temperature variation
-			Float dm_m = std::abs(1 - eigen::dot(next_Y, A)/m_in);
 			Float dT_T = std::abs((next_T - T)/T);
 
 			// timestep tweeking
 			Float previous_dt = dt;
-			dt = std::min(
-					dT_T == 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T,
-					dm_m == 0 ? (Float)constants::max_dt_step : constants::dm_m_target/dm_m
-				)*previous_dt;
+			dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T)*previous_dt;
 			dt = std::min(dt, previous_dt*constants::max_dt_step);
 			dt = std::min(dt, (Float)constants::max_dt);
 
 			// exit on condition
-			if (dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol)
+			if (dT_T <= constants::dT_T_tol)
 				return {next_Y, next_T, previous_dt};
 		}
 	}
 
 
+
+
+	/// solve with  newton raphson
+	/**
+	 * Superstepping using solve_system_var_timestep, might move it to SPH-EXA
+	 * ...TODO
+	 */
+	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
+	std::tuple<Vector, Float, Float> solve_system_NR(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const Vector &A, const Vector &Y, const Float T, Float &dt) {
+
+		Vector final_Y = Y;
+		Float final_T = T;
+
+		while (true) {
+			// actual solving
+			for (int i = 0; i < constants::max_NR_it; ++i) {
+				/* TODO */
+
+				// compute rate
+				auto [rates, drates_dT] = construct_rates(final_T);
+				auto BE = construct_BE(final_Y, final_T);
+				auto [cv, rho, value_1] = eos(final_Y, final_T);
+
+				// solve the system
+				std::tie(final_Y, final_T) = solve_system_from_guess(reactions, rates, drates_dT, 
+					BE, A, 
+					Y, T, final_Y, final_T,
+					cv, rho, value_1, dt);
+
+				// cleanup Vector
+				utils::clip(final_Y, nnet::constants::epsilon_vector);
+
+				Float correction = 0;
+
+				if (i >= constants::min_NR_it && correction < constants::NR_tol)
+					break;
+			}
+
+			// mass and temperature variation
+			Float dT_T = std::abs((final_T - T)/T);
+
+			// timestep tweeking
+			Float previous_dt = dt;
+			dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T)*previous_dt;
+			dt = std::min(dt, previous_dt*constants::max_dt_step);
+			dt = std::min(dt, (Float)constants::max_dt);
+
+			// exit on condition
+			if (dT_T <= constants::dT_T_tol)
+				return {final_Y, final_T, previous_dt};
+		}
+	}
 
 
 
