@@ -5,7 +5,7 @@
 
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
-	const double cv = 2e30; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
+	const double cv = 1e9; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
 	const double rho = 5e5; // rho, g/cm^3
 	double last_T = 1e9;
 
@@ -20,8 +20,8 @@ int main() {
 	double m_in = eigen::dot(last_Y, nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
-	int n_max = 400;
-	const int n_print = 30, n_save=400;
+	int n_max = 1000;
+	const int n_print = 30, n_save=1000;
 
 	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
 
