@@ -16,7 +16,7 @@ bool net14_debug = false;
 namespace nnet {
 	namespace constants {
 		/// theta for the implicit method
-		double theta = 0.7;
+		double theta = 1;
 
 		/// maximum timestep
 		double max_dt = 1e-2;
@@ -24,7 +24,7 @@ namespace nnet {
 		double max_dt_step = 1.5;
 
 		/// relative temperature variation target of the implicit solver
-		double dT_T_target = 2e-2;
+		double dT_T_target = 5e-3;
 		/// relative mass conservation target of the implicit solver
 		double dm_m_target = 1e-8;
 		/// relative temperature variation tolerance of the implicit solver
@@ -36,6 +36,9 @@ namespace nnet {
 		double epsilon_system = 1e-200;
 		/// the value that is considered null inside a state
 		double epsilon_vector = 1e-16;
+
+		/// timestep tolerance for superstepping
+		double dt_tol = 1e-5;
 	}
 
 
@@ -280,9 +283,9 @@ namespace nnet {
 	 *  solves iteratively and fully implicitly a single iteration of the system constructed by construct_system, with added timestep tweeking
 	 * ...TODO
 	 */
-	template<class Vector, class Vector_int, typename Float>
+	template<class Vector, typename Float>
 	std::tuple<Vector, Float, Float> solve_system_var_timestep(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
-		const Vector &BE, const Vector_int &A, const Vector &Y,
+		const Vector &BE, const Vector &A, const Vector &Y,
 		const Float T, const Float cv, const Float rho, const Float value_1, Float &dt) {
 		const Float m_in = eigen::dot(Y, A);
 
@@ -311,5 +314,53 @@ namespace nnet {
 			if (dm_m <= constants::dm_m_tol && dT_T <= constants::dT_T_tol)
 				return {next_Y, next_T, previous_dt};
 		}
+	}
+
+
+
+
+
+	/// function to supperstep
+	/**
+	 * Superstepping using solve_system_var_timestep, might move it to SPH-EXA
+	 * ...TODO
+	 */
+	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
+	std::tuple<Vector, Float> solve_system_superstep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const Vector &A, const Vector &Y, const Float T, Float const dt_tot, Float &dt) {
+
+		Float elapsed_t = 0;
+		Float used_dt = dt;
+
+		Vector final_Y = Y;
+		Float final_T = T;
+
+		while (true) {
+			// insure convergence to the right time
+			bool update_dt = (dt_tot - elapsed_t) > used_dt;
+			if (!update_dt)
+				used_dt = dt_tot - elapsed_t;
+
+			// compute rate
+			auto [rates, drates_dT] = construct_rates(final_T);
+			auto BE = construct_BE(final_Y, final_T);
+			auto [cv, rho, value_1] = eos(final_Y, final_T);
+
+			// solve system
+			auto [next_Y, next_T, this_dt] = solve_system_var_timestep(reactions, rates, drates_dT,
+				BE, A, final_Y,
+				final_T, cv, rho, value_1, used_dt);
+			elapsed_t += this_dt;
+			final_Y = next_Y;
+			final_T = next_T;
+
+			// update dt
+			if (update_dt)
+				dt = used_dt;
+
+			// exit condition
+			if ((dt_tot - elapsed_t)/dt_tot < constants::dt_tol)
+				return {final_Y, final_T};
+		} 
 	}
 }

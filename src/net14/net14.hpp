@@ -27,9 +27,9 @@ namespace nnet {
 		};
 
 		/// function to compute the corrected BE
-		template<typename Float, class vector>
-		vector get_corrected_BE(Float const T, vector const &Y) {
-			vector corrected_BE = constants::ideal_gaz_correction<Float>(T);
+		template<typename Float>
+		std::vector<Float> compute_BE(std::vector<Float> const &Y, Float const T) {
+			std::vector<Float> corrected_BE = constants::ideal_gaz_correction<Float>(T);
 			for (int i = 0; i < 14; ++i) corrected_BE[i] += BE[i];
 
 			return corrected_BE;

@@ -6,7 +6,7 @@
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
 	const double cv = 1e20; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
-	const double rho0 = 1e7; // rho, g/cm^3
+	const double rho = 1e7; // rho, g/cm^3
 	double last_T = 6e9;
 
 	// initial state
@@ -23,20 +23,17 @@ int main() {
 	int n_max = 400;
 	const int n_print = 30, n_save=400;
 
-	nnet::constants::theta = 1;
+
 
 	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
 
 	for (int i = 1; i <= n_max; ++i) {
-		// normalize rho
-		double rho = rho0; // /last_Y.dot(nnet::net14::constants::A);
-
 #ifdef DEBUG
 		net14_debug = i == 1;
 #endif
 
 		// construct system
-		std::vector<double> BE = nnet::net14::get_corrected_BE(last_T, last_Y);
+		std::vector<double> BE = nnet::net14::compute_BE(last_Y, last_T);
 		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates(last_T);
 
 		// solve the system
