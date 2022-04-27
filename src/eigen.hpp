@@ -28,8 +28,8 @@ namespace eigen {
 
 
 	/// dot product function
-	template<class vector>
-	double dot(vector const &X, vector const &Y) {
+	template<class Vector>
+	double dot(Vector const &X, Vector const &Y) {
 		double res = 0;
 		const int dimension = std::min(X.size(), Y.size());
 
@@ -42,16 +42,16 @@ namespace eigen {
 
 
 	/// custom analytical solver
-	template<class vector, class matrix>
-	vector solve(matrix M, vector RHS) {
+	template<typename Float, class Vector>
+	Vector solve(matrix<Float> M, Vector RHS) {
 		const int n = RHS.size();
-		vector X(n);
+		Vector X(n);
 
 		// reduce into upper triangular
 		for (int i = 0; i < n; ++i) {
 			for (int j = 0; j < i; ++j) {
 				// include the jth line
-				double weight = M(i, j);
+				Float weight = M(i, j);
 				M(i, j) = 0;
 
 				RHS[i] -= weight*RHS[j];
@@ -60,7 +60,7 @@ namespace eigen {
 			}
 
 			// normalize ith line
-			double diagonal = M(i, i);
+			Float diagonal = M(i, i);
 			M(i, i) = 1;
 
 			// normalize
@@ -71,7 +71,7 @@ namespace eigen {
 
 		// "back propagate" to solve
 		for (int i = n - 1; i >= 0; --i) {
-			double res = RHS[i];
+			Float res = RHS[i];
 
 			for (int j = i + 1; j < n; ++j)
 				res -= M(i, j)*X[j];

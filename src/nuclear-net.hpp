@@ -24,24 +24,39 @@ namespace nnet {
 		double max_dt_step = 1.5;
 
 		/// relative temperature variation target of the implicit solver
-		double dT_T_target = 5e-3;
+		double dT_T_target = 4e-3;
 		/// relative temperature variation tolerance of the implicit solver
-		double dT_T_tol = 10; //1e-1;
+		double dT_T_tol = 1e-1;
 
 		/// the value that is considered null inside a system
 		double epsilon_system = 1e-200;
 		/// the value that is considered null inside a state
 		double epsilon_vector = 1e-16;
 
-		/// minimum number of newton raphson iterations
-		uint min_NR_it = 2;
-		/// maximum number of newton raphson iterations
-		uint max_NR_it = 10;
-		/// tolerance for the correction to break out of the newton raphson loop
-		double NR_tol = 1e-8;
-
 		/// timestep tolerance for superstepping
 		double dt_tol = 1e-5;
+
+		namespace NR {
+			/// theta for the implicit method
+			double theta = 0.7;
+
+			/// maximum timestep
+			double max_dt = 4e-2;
+			/// maximum timestep evolution
+			double max_dt_step = 1.5;
+
+			/// relative temperature variation target of the implicit solver
+			double dT_T_target = 4e-2;
+			/// relative temperature variation tolerance of the implicit solver
+			double dT_T_tol = 1e-1;
+
+			/// minimum number of newton raphson iterations
+			uint min_it = 2;
+			/// maximum number of newton raphson iterations
+			uint max_it = 8;
+			/// tolerance for the correction to break out of the newton raphson loop
+			double it_tol = 1e-4;
+		}
 	}
 
 
@@ -211,7 +226,7 @@ namespace nnet {
 		Vector next_Y(dimension);
 
 		// main matrix part
-		eigen::matrix<Float> MpYY = order_1_dY_from_reactions(reactions, rates, A, Y, rho);
+		eigen::matrix<Float> MpYY = order_1_dY_from_reactions(reactions, rates, A, Y_guess, rho);
 		for (int i = 1; i <= dimension; ++i) {
 			// diagonal terms
 			Mp(i, i) = 1.     -constants::theta*dt*MpYY(i - 1, i - 1);
@@ -223,20 +238,22 @@ namespace nnet {
 		}
 
 		// right hand side
-		Vector RHS(dimension + 1), dY_dt = derivatives_from_reactions(reactions, rates, Y, rho);
+		Vector RHS(dimension + 1), dY_dt = derivatives_from_reactions(reactions, rates, Y_guess, rho);
 		for (int i = 1; i <= dimension; ++i)
 			RHS[i] = dY_dt[i - 1]*dt;
 
 		// energy equation
-		RHS[0] = T*value_1;
-		Mp(0, 0) = cv - constants::theta*value_1;
-		for (int i = 1; i <= dimension; ++i)
-			Mp(0, i) = -BE[i - 1];
+		RHS[0] = T*value_1/cv;
+		Mp(0, 0) = 1 - constants::theta*value_1/cv;
+		for (int i = 0; i < dimension; ++i)
+			Mp(0, i + 1) = -BE[i]/cv;
 
 		// include rate derivative
-		Vector dY_dT = derivatives_from_reactions(reactions, drates_dT, Y, rho);
-		for (int i = 1; i <= dimension; ++i)
-			Mp(i, 0) = -constants::theta*dt*dY_dT[i - 1];
+		Vector dY_dT = derivatives_from_reactions(reactions, drates_dT, Y_guess, rho);
+		for (int i = 0; i < dimension; ++i) {
+			Mp(i + 1, 0) = -constants::theta*dt*dY_dT[i]; // *Dt = -__*(next_T - T_guess) = -__*(next_T - T + T - T_guess) = -__*(next_T - T) - __*(T - T_guess)
+			RHS[i + 1]  += -constants::theta*dt*dY_dT[i]*(T_guess - T);
+		}
 
 
 
@@ -267,14 +284,11 @@ namespace nnet {
 		Vector DY_T = eigen::solve(Mp, RHS);
 
 		// increment values
-		for (int i = 1; i <= dimension; ++i)
-			next_Y[i - 1] = Y[i - 1] + DY_T[i];
+		for (int i = 0; i < dimension; ++i)
+			next_Y[i] = Y[i] + DY_T[i + 1];
 
 		// update temperature
-		// Float next_T = T + DY_T[0];
-		Float next_T = T;
-		for (int i = 0; i < dimension; ++i)
-			next_T += DY_T[i + 1]*BE[i]/cv;
+		Float next_T = T + DY_T[0];
 
 		return {next_Y, next_T};
 	}
@@ -345,47 +359,52 @@ namespace nnet {
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
 	std::tuple<Vector, Float, Float> solve_system_NR(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &A, const Vector &Y, const Float T, Float &dt) {
-
-		Vector final_Y = Y;
-		Float final_T = T;
+		const Vector &A, const Vector &Y, Float T, Float &dt) {
+		const int dimension = Y.size();
 
 		while (true) {
+			Vector Y_theta(dimension), final_Y = Y;
+			Float T_theta, final_T = T;
+
 			// actual solving
-			for (int i = 0; i < constants::max_NR_it; ++i) {
-				/* TODO */
+			for (int i = 0; i < constants::NR::max_it; ++i) {
+				// compute n+theta values
+				T_theta = T; //(1 - constants::theta)*T + constants::theta*final_T;
+				for (int j = 0; j < dimension; ++j)
+					Y_theta[j] = (1 - constants::NR::theta)*Y[j] + constants::NR::theta*final_Y[j];
 
 				// compute rate
-				auto [rates, drates_dT] = construct_rates(final_T);
-				auto BE = construct_BE(final_Y, final_T);
-				auto [cv, rho, value_1] = eos(final_Y, final_T);
+				auto [rates, drates_dT] = construct_rates(T_theta);
+				auto BE = construct_BE(Y_theta, T_theta);
+				auto [cv, rho, value_1] = eos(Y_theta, T_theta);
 
 				// solve the system
+				Float last_T = final_T;
 				std::tie(final_Y, final_T) = solve_system_from_guess(reactions, rates, drates_dT, 
-					BE, A, 
-					Y, T, final_Y, final_T,
+					BE, A,
+					Y, T, Y_theta, T_theta,
 					cv, rho, value_1, dt);
 
 				// cleanup Vector
 				utils::clip(final_Y, nnet::constants::epsilon_vector);
 
-				Float correction = 0;
-
-				if (i >= constants::min_NR_it && correction < constants::NR_tol)
+				// exit loop on condition
+				Float correction = std::abs((final_T - last_T)/final_T);
+				if (i >= constants::NR::min_it && correction < constants::NR::it_tol)
 					break;
 			}
 
 			// mass and temperature variation
-			Float dT_T = std::abs((final_T - T)/T);
+			Float dT_T = std::abs((final_T - T)/final_T);
 
 			// timestep tweeking
 			Float previous_dt = dt;
-			dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T)*previous_dt;
-			dt = std::min(dt, previous_dt*constants::max_dt_step);
-			dt = std::min(dt, (Float)constants::max_dt);
+			dt = (dT_T == 0 ? (Float)constants::NR::max_dt_step : constants::NR::dT_T_target/dT_T)*previous_dt;
+			dt = std::min(dt, previous_dt*constants::NR::max_dt_step);
+			dt = std::min(dt, (Float)constants::NR::max_dt);
 
 			// exit on condition
-			if (dT_T <= constants::dT_T_tol)
+			if (dT_T <= constants::NR::dT_T_tol)
 				return {final_Y, final_T, previous_dt};
 		}
 	}
@@ -413,15 +432,9 @@ namespace nnet {
 			if (!update_dt)
 				used_dt = dt_tot - elapsed_t;
 
-			// compute rate
-			auto [rates, drates_dT] = construct_rates(final_T);
-			auto BE = construct_BE(final_Y, final_T);
-			auto [cv, rho, value_1] = eos(final_Y, final_T);
-
 			// solve system
-			auto [next_Y, next_T, this_dt] = solve_system_var_timestep(reactions, rates, drates_dT,
-				BE, A, final_Y,
-				final_T, cv, rho, value_1, used_dt);
+			auto [next_Y, next_T, this_dt] = solve_system_NR(reactions, construct_rates, construct_BE, eos,
+				A, final_Y, final_T, used_dt);
 			elapsed_t += this_dt;
 			final_Y = next_Y;
 			final_T = next_T;
