@@ -24,7 +24,7 @@ namespace nnet {
 		double max_dt_step = 1.5;
 
 		/// relative temperature variation target of the implicit solver
-		double dT_T_target = 4e-3;
+		double dT_T_target = 1e-2;
 		/// relative temperature variation tolerance of the implicit solver
 		double dT_T_tol = 1e-1;
 
@@ -116,7 +116,17 @@ namespace nnet {
 			// compute rate and order
 			int order = 0;
 			for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants) {
+				// divide by factorial
+				rate /= std::tgamma(n_reactant_consumed + 1);
+
+				if (net14_debug && n_reactant_consumed != 1) {
+						std::cout << std::tgamma(n_reactant_consumed + 1) << " = " << n_reactant_consumed << "!\n";
+					}
+
+				// multiply by abundance
 				rate *= std::pow(Y[reactant_id], n_reactant_consumed);
+
+				// increment order
 				order += n_reactant_consumed;
 			}
 
@@ -157,8 +167,14 @@ namespace nnet {
 
 			// compute order and correct for rho
 			int order = 0;
-			for (auto const [_, n_reactant_consumed] : Reaction.reactants)
+			for (auto const [_, n_reactant_consumed] : Reaction.reactants) {
+				// divide by factorial
+				if (n_reactant_consumed != 1)
+					rate /= std::tgamma(n_reactant_consumed + 1);
+
+				// increment order
 				order += n_reactant_consumed;
+			}
 			rate *= std::pow(rho, order - 1);
 
 			for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
@@ -166,8 +182,9 @@ namespace nnet {
 				Float this_rate = rate;
 				this_rate *= std::pow(Y[reactant_id], n_reactant_consumed - 1);
 				for (auto &[other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
-					/* debugging */if (other_reactant_id != reactant_id)/* debugging */
-					this_rate *= std::pow(Y[other_reactant_id], other_n_reactant_consumed);
+					// multiply by abundance
+					if (other_reactant_id != reactant_id)
+						this_rate *= std::pow(Y[other_reactant_id], other_n_reactant_consumed);
 
 				// insert consumption rates
 				for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)

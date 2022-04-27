@@ -5,7 +5,7 @@
 
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
-	const double cv = 2e7; // 1e6; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
+	const double cv = 3.1e7; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
 	const double rho = 1e9; // rho, g/cm^3
 	double last_T = 1e9;
 
