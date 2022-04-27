@@ -38,7 +38,7 @@ namespace nnet {
 
 		namespace NR {
 			/// theta for the implicit method
-			double theta = 0.7;
+			double theta = 0.5;
 
 			/// maximum timestep
 			double max_dt = 4e-2;
@@ -46,7 +46,7 @@ namespace nnet {
 			double max_dt_step = 1.5;
 
 			/// relative temperature variation target of the implicit solver
-			double dT_T_target = 4e-2;
+			double dT_T_target = 2e-3;
 			/// relative temperature variation tolerance of the implicit solver
 			double dT_T_tol = 1e-1;
 
@@ -203,8 +203,7 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class Vector, typename Float>
-	std::pair<Vector, Float> solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
-		const Vector &BE, const Vector &A, 
+	std::pair<Vector, Float> solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE, const Vector &A, 
 		const Vector &Y, const Float T, const Vector &Y_guess, const Float T_guess,
 		const Float cv, const Float rho, const Float value_1, const Float dt) {
 		/* -------------------
@@ -303,9 +302,9 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class Vector, typename Float>
-	std::pair<Vector, Float> solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
-		const Vector &BE, const Vector &A, const Vector &Y,
-		const Float T, const Float cv, const Float rho, const Float value_1, const Float dt) {
+	std::pair<Vector, Float> solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE, const Vector &A, 
+		const Vector &Y, const Float T,
+		const Float cv, const Float rho, const Float value_1, const Float dt) {
 		return solve_system_from_guess(reactions, rates, drates_dT, 
 			BE, A, 
 			Y, T, Y, T,
@@ -321,9 +320,9 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class Vector, typename Float>
-	std::tuple<Vector, Float, Float> solve_system_var_timestep(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT,
-		const Vector &BE, const Vector &A, const Vector &Y,
-		const Float T, const Float cv, const Float rho, const Float value_1, Float &dt) {
+	std::tuple<Vector, Float, Float> solve_system_var_timestep(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE, const Vector &A, 
+		const Vector &Y, const Float T,
+		const Float cv, const Float rho, const Float value_1, Float &dt) {
 		const Float m_in = eigen::dot(Y, A);
 
 		// actual solving
@@ -368,20 +367,21 @@ namespace nnet {
 
 			// actual solving
 			for (int i = 0; i < constants::NR::max_it; ++i) {
+
 				// compute n+theta values
-				T_theta = T; //(1 - constants::theta)*T + constants::theta*final_T;
+				T_theta =        (1 - constants::NR::theta)*T    + constants::NR::theta*final_T;
 				for (int j = 0; j < dimension; ++j)
 					Y_theta[j] = (1 - constants::NR::theta)*Y[j] + constants::NR::theta*final_Y[j];
 
 				// compute rate
-				auto [rates, drates_dT] = construct_rates(T_theta);
-				auto BE = construct_BE(Y_theta, T_theta);
-				auto [cv, rho, value_1] = eos(Y_theta, T_theta);
+				auto [rates, drates_dT] = construct_rates(         T_theta);
+				auto BE                 = construct_BE   (Y_theta, T_theta);
+				auto [cv, rho, value_1] = eos            (Y_theta, T_theta);
 
 				// solve the system
 				Float last_T = final_T;
-				std::tie(final_Y, final_T) = solve_system_from_guess(reactions, rates, drates_dT, 
-					BE, A,
+				std::tie(final_Y, final_T) = solve_system_from_guess(
+					reactions, rates, drates_dT, BE, A,
 					Y, T, Y_theta, T_theta,
 					cv, rho, value_1, dt);
 
@@ -401,7 +401,7 @@ namespace nnet {
 			Float previous_dt = dt;
 			dt = (dT_T == 0 ? (Float)constants::NR::max_dt_step : constants::NR::dT_T_target/dT_T)*previous_dt;
 			dt = std::min(dt, previous_dt*constants::NR::max_dt_step);
-			dt = std::min(dt, (Float)constants::NR::max_dt);
+			dt = std::min(dt,      (Float)constants::NR::max_dt);
 
 			// exit on condition
 			if (dT_T <= constants::NR::dT_T_tol)
