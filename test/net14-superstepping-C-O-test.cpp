@@ -41,23 +41,14 @@ int main() {
 			nnet::net14::constants::A, last_Y, last_T, dt, small_dt);
 		t += dt;
 
-
-		double E_tot = eigen::dot(Y, nnet::net14::BE) + cv*T;
-		double dE_E = (E_tot - E_in)/E_in;
-
-		double m_tot = eigen::dot(Y, nnet::net14::constants::A);
-		double dm_m = (m_tot - m_in)/m_in;
-
-		// formated print (stderr)
-		if (n_save >= n_max || (n_max - i) % (int)((float)n_max/(float)n_save) == 0) {
-			for (int i = 0; i < 14; ++i) X[i] = Y[i]*nnet::net14::constants::A[i]/eigen::dot(Y, nnet::net14::constants::A);
-			std::cerr << t << "," << small_dt << ",," << T << ",,";
-			for (int i = 0; i < 14; ++i) std::cerr << X[i] << ",";
-			std::cerr << "," << dm_m << "\n";
-		}
-
 		// debug print
 		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0) {
+			double E_tot = eigen::dot(Y, nnet::net14::BE) + cv*T;
+			double dE_E = (E_tot - E_in)/E_in;
+
+			double m_tot = eigen::dot(Y, nnet::net14::constants::A);
+			double dm_m = (m_tot - m_in)/m_in;
+		
 			for (int i = 0; i < 14; ++i) X[i] = Y[i]*nnet::net14::constants::A[i]/eigen::dot(Y, nnet::net14::constants::A);
 			std::cout << "\n(t=" << t << ", dt=" << small_dt << "):\t";
 			for (int i = 0; i < 14; ++i) std::cout << X[i] << ", ";

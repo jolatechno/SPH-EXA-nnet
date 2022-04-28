@@ -20,8 +20,8 @@ int main() {
 	double m_in = eigen::dot(last_Y, nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
-	int n_max = 400;
-	const int n_print = 30, n_save=400;
+	int n_max = 100;
+	const int n_print = 30, n_save=100;
 
 	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
 
