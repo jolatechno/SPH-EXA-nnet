@@ -25,23 +25,20 @@ int main() {
 
 	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
 
-
-
 #ifdef DEBUG
 		net14_debug = true;
 #endif
 
 
+	auto const eos = [&](const std::vector<double> &Y_, const double T) {
+		return std::tuple<double, double, double>{cv, rho, value_1};
+	};
+
 
 	for (int i = 1; i <= n_max; ++i) {
-		// construct system
-		std::vector<double> BE = nnet::net14::compute_BE(last_Y, last_T);
-		auto [rate, drates_dT] = nnet::net14::compute_reaction_rates(last_T);
-
 		// solve the system
-		auto [Y, T, current_dt] = nnet::solve_system_var_timestep(nnet::net14::reaction_list, rate, drates_dT,
-			BE, nnet::net14::constants::A, last_Y, 
-			last_T, cv, rho, value_1, dt);
+		auto [Y, T, current_dt] = solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, eos,
+				nnet::net14::constants::A, last_Y, last_T, dt);
 		t += current_dt;
 
 		net14_debug = false;

@@ -16,7 +16,7 @@ bool net14_debug = false;
 namespace nnet {
 	namespace constants {
 		/// theta for the implicit method
-		double theta = 1;
+		double theta = 0.9;
 
 		/// maximum timestep
 		double max_dt = 1e-2;
@@ -52,9 +52,9 @@ namespace nnet {
 			/// minimum number of newton raphson iterations
 			uint min_it = 2;
 			/// maximum number of newton raphson iterations
-			uint max_it = 6;
+			uint max_it = 10;
 			/// tolerance for the correction to break out of the newton raphson loop
-			double it_tol = 1e-2;
+			double it_tol = 1e-5;
 		}
 	}
 
@@ -249,9 +249,8 @@ namespace nnet {
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
 
-		                              D{T, Y} = Dt*(M'  + theta*dM/dT*DT)*{T_in+theta*DT, Y_in+theta*DY}
- 	<=>                               D{T, Y} = Dt*((M' + theta*dM/dT*DT)*{T_in,Y_in}  + theta*M'*D{T,Y})
- 	<=> (I - Dt*theta*(M' + dM/dT*Y))*D{T, Y} = Dt*M'*{T_in,Y_in}
+ 	<=>                               D{T, Y} = Dt*(M + theta*dM/dT*DT)*{T_in,Y_in} + theta*Dt*Myy*D{T,Y})
+ 	<=> (I - Dt*theta*(Myy + dM/dT*Y))*D{T, Y} = Dt*M*{T_in,Y_in}
 
  		Energy equation:
 
@@ -280,7 +279,6 @@ namespace nnet {
 				if (i != j)
 					Mp(i + 1, j + 1) = -constants::theta*dt*MpYY(i, j);
 
-
 			//     dY = ... + theta*dt*Mp*(next_Y - Y_guess) = ... + theta*dt*Mp*(next_Y - Y + Y - Y_guess) = ... + theta*dt*Mp*dY - theta*dt*Mp*(Y_guess - Y)
 			// <=> dY*(I - theta*dt*Mp) = ... - theta*Mp*dt*(Y_guess - Y)
 			Float RHS_correction = 0;
@@ -298,7 +296,9 @@ namespace nnet {
 		// include rate derivative
 		Vector dY_dT = derivatives_from_reactions(reactions, drates_dT, Y_guess, rho);
 		for (int i = 0; i < dimension; ++i) {
-			Mp(i + 1, 0) = -constants::theta*dt*dY_dT[i]; // *Dt = -__*(next_T - T_guess) = -__*(next_T - T + T - T_guess) = -__*(next_T - T) - __*(T - T_guess)
+			Mp(i + 1, 0) = -constants::theta*dt*dY_dT[i];
+
+			// *Dt = -__*(next_T - T_guess) = -__*(next_T - T + T - T_guess) = -__*(next_T - T) - __*(T - T_guess)
 			RHS[i + 1]  += -constants::theta*dt*dY_dT[i]*(T_guess - T);
 		}
 

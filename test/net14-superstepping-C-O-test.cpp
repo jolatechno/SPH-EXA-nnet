@@ -27,10 +27,12 @@ int main() {
 
 
 
+
+
+
 	auto const eos = [&](const std::vector<double> &Y_, const double T) {
 		return std::tuple<double, double, double>{cv, rho, value_1};
 	};
-
 
 
 	for (int i = 1; i <= n_max; ++i) {
