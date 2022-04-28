@@ -19,7 +19,7 @@ int main() {
 	double E_in = eigen::dot(last_Y, nnet::net14::BE) + cv*last_T ;
 	double m_in = eigen::dot(last_Y, nnet::net14::constants::A);
 
-	double t = -1.27 - 1.73e-4 + 1.22e-7 - 2e-11, dt=1e-12;
+	double t = 0, dt=1e-12;
 	int n_max = 1000;
 	const int n_print = 30, n_save=1000;
 

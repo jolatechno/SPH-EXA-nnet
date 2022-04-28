@@ -22,6 +22,8 @@ namespace nnet {
 		double max_dt = 1e-2;
 		/// maximum timestep evolution
 		double max_dt_step = 1.5;
+		/// timestep jump when a nan is in the solution
+		double nan_dt_step = 1e-1;
 
 		/// relative temperature variation target of the implicit solver
 		double dT_T_target = 1e-2;
@@ -93,6 +95,26 @@ namespace nnet {
 			for (int i = 0; i < dimension; ++i)
 				if (X[i] <= epsilon) //if (std::abs(X(i)) <= epsilon)
 					X[i] = 0;
+		}
+
+
+
+
+		/// function to check if there is a nan in both temperature and abundances
+		/**
+		 * ...TODO
+		 */
+		template<typename Float, class Vector>
+		bool contain_nan(const Vector &Y, const Float T) {
+			if (std::isnan(T))
+				return true;
+
+			const int dimension = Y.size();
+			for (int i = 0; i < dimension; ++i)
+				if (std::isnan(Y[i]))
+					return true;
+
+			return false;
 		}
 	}
 
@@ -402,13 +424,24 @@ namespace nnet {
 					Y, T, Y_theta, T_theta,
 					cv, rho, value_1, dt);
 
-				// cleanup Vector
-				utils::clip(final_Y, nnet::constants::epsilon_vector);
+				// check for nan
+				if (utils::contain_nan(final_Y, final_T)) {
+					// set timestep
+					dt *= constants::nan_dt_step;
 
-				// exit loop on condition
-				Float correction = std::abs((final_T - last_T)/final_T);
-				if (i >= constants::NR::min_it && correction < constants::NR::it_tol)
-					break;
+					// jump back
+					final_Y = Y;
+					final_T = T;
+					i = 0;
+				} else {
+					// cleanup Vector
+					utils::clip(final_Y, nnet::constants::epsilon_vector);
+
+					// exit loop on condition
+					Float correction = std::abs((final_T - last_T)/final_T);
+					if (i >= constants::NR::min_it && correction < constants::NR::it_tol)
+						break;
+				}
 			}
 
 			// mass and temperature variation
