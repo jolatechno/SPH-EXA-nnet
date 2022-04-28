@@ -26,7 +26,7 @@ namespace nnet {
 		double nan_dt_step = 1e-1;
 
 		/// relative temperature variation target of the implicit solver
-		double dT_T_target = 1e-2;
+		double dT_T_target = 4e-3;
 		/// relative temperature variation tolerance of the implicit solver
 		double dT_T_tol = 1e-1;
 
@@ -39,29 +39,24 @@ namespace nnet {
 		double dt_tol = 1e-5;
 
 		namespace NR {
-			/// theta for the implicit method
-			double theta = 0.5;
-
 			/// maximum timestep
-			double max_dt = 4e-2;
+			double max_dt = 1e-2;
 			/// maximum timestep evolution
 			double max_dt_step = 1.5;
 
 			/// relative temperature variation target of the implicit solver
-			double dT_T_target = 2e-3;
+			double dT_T_target = 2e-2;
 			/// relative temperature variation tolerance of the implicit solver
 			double dT_T_tol = 1e-1;
 
 			/// minimum number of newton raphson iterations
 			uint min_it = 2;
 			/// maximum number of newton raphson iterations
-			uint max_it = 8;
+			uint max_it = 6;
 			/// tolerance for the correction to break out of the newton raphson loop
-			double it_tol = 1e-4;
+			double it_tol = 1e-2;
 		}
 	}
-
-
 
 
 	/// reaction class
@@ -131,7 +126,11 @@ namespace nnet {
 
 		Vector dY(dimension);
 
-		for (int i = 0; i < reactions.size() && i < rates.size(); ++i) {
+		const int num_reactions = reactions.size();
+		if (num_reactions != rates.size())
+			throw;
+
+		for (int i = 0; i < num_reactions; ++i) {
 			const reaction &Reaction = reactions[i];
 			Float rate = rates[i];
 
@@ -140,10 +139,6 @@ namespace nnet {
 			for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants) {
 				// divide by factorial
 				rate /= std::tgamma(n_reactant_consumed + 1);
-
-				if (net14_debug && n_reactant_consumed != 1) {
-						std::cout << std::tgamma(n_reactant_consumed + 1) << " = " << n_reactant_consumed << "!\n";
-					}
 
 				// multiply by abundance
 				rate *= std::pow(Y[reactant_id], n_reactant_consumed);
@@ -183,11 +178,15 @@ namespace nnet {
 
 		eigen::matrix<Float> M(dimension, dimension);
 
-		for (int i = 0; i < reactions.size() && i < rates.size(); ++i) {
+		const int num_reactions = reactions.size();
+		if (num_reactions != rates.size())
+			throw;
+
+		for (int i = 0; i < num_reactions; ++i) {
 			const reaction &Reaction = reactions[i];
 			Float rate = rates[i];
 
-			// compute order and correct for rho
+			// compute rate and order
 			int order = 0;
 			for (auto const [_, n_reactant_consumed] : Reaction.reactants) {
 				// divide by factorial
@@ -197,6 +196,8 @@ namespace nnet {
 				// increment order
 				order += n_reactant_consumed;
 			}
+
+			// correct for rho
 			rate *= std::pow(rho, order - 1);
 
 			for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
@@ -263,22 +264,30 @@ namespace nnet {
 		eigen::matrix<Float> Mp(dimension + 1, dimension + 1);
 		Vector next_Y(dimension);
 
-		// main matrix part
-		eigen::matrix<Float> MpYY = order_1_dY_from_reactions(reactions, rates, A, Y_guess, rho);
-		for (int i = 1; i <= dimension; ++i) {
-			// diagonal terms
-			Mp(i, i) = 1.     -constants::theta*dt*MpYY(i - 1, i - 1);
-
-			// other terms
-			for (int j = 1; j <= dimension; ++j)
-				if (i != j)
-					Mp(i, j) = -constants::theta*dt*MpYY(i - 1, j - 1);
-		}
-
 		// right hand side
 		Vector RHS(dimension + 1), dY_dt = derivatives_from_reactions(reactions, rates, Y_guess, rho);
 		for (int i = 1; i <= dimension; ++i)
 			RHS[i] = dY_dt[i - 1]*dt;
+
+		// main matrix part
+		eigen::matrix<Float> MpYY = order_1_dY_from_reactions(reactions, rates, A, Y_guess, rho);
+		for (int i = 0; i < dimension; ++i) {
+			// diagonal terms
+			Mp(i + 1, i + 1) = 1.      -constants::theta*dt*MpYY(i, i);
+
+			// other terms
+			for (int j = 0; j < dimension; ++j)
+				if (i != j)
+					Mp(i + 1, j + 1) = -constants::theta*dt*MpYY(i, j);
+
+
+			//     dY = ... + theta*dt*Mp*(next_Y - Y_guess) = ... + theta*dt*Mp*(next_Y - Y + Y - Y_guess) = ... + theta*dt*Mp*dY - theta*dt*Mp*(Y_guess - Y)
+			// <=> dY*(I - theta*dt*Mp) = ... - theta*Mp*dt*(Y_guess - Y)
+			Float RHS_correction = 0;
+			for (int j = 0; j < dimension; ++j)
+				RHS_correction += MpYY(i, j)*(Y_guess[j] - Y[j]);
+			RHS[i + 1] += -constants::theta*dt*RHS_correction;
+		}
 
 		// energy equation
 		RHS[0] = T*value_1/cv;
@@ -407,10 +416,13 @@ namespace nnet {
 			// actual solving
 			for (int i = 0; i < constants::NR::max_it; ++i) {
 
+				if (dt == 0)
+					throw;
+
 				// compute n+theta values
-				T_theta =        (1 - constants::NR::theta)*T    + constants::NR::theta*final_T;
+				T_theta =        (1 - constants::theta)*T    + constants::theta*final_T;
 				for (int j = 0; j < dimension; ++j)
-					Y_theta[j] = (1 - constants::NR::theta)*Y[j] + constants::NR::theta*final_Y[j];
+					Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
 
 				// compute rate
 				auto [rates, drates_dT] = construct_rates(         T_theta);
