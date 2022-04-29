@@ -5,7 +5,7 @@
 
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
-	const double cv = 2e7; // 1e6; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
+	const double cv = 3.1e7; // 1e6; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
 	double rho = 1e9; // rho, g/cm^3
 	double last_T = 1e9;
 
@@ -19,9 +19,9 @@ int main() {
 	double E_in = eigen::dot(last_Y, nnet::net14::BE) + cv*last_T ;
 	double m_in = eigen::dot(last_Y, nnet::net14::constants::A);
 
-	double t = 0, dt=1e-3, small_dt=1e-12;
-	int n_max = 5000;
-	const int n_print = 30, n_save=1000;
+	double t = 0, dt=1e-2, small_dt=1e-12;
+	int n_max = 500;
+	const int n_print = 30;
 
 	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
 
@@ -31,14 +31,17 @@ int main() {
 
 
 	auto const eos = [&](const std::vector<double> &Y_, const double T, const double rho_) {
-		return std::tuple<double, double, double>{cv, 0, value_1};
+		struct eos_output {
+			double cv, dP_dT;
+		} res{cv, 0};
+		return res;
 	};
 
 
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
 		auto [Y, T] = nnet::solve_system_superstep(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, eos,
-			nnet::net14::constants::A, last_Y, last_T, rho, dt, small_dt);
+			nnet::net14::constants::A, last_Y, last_T, rho, rho, dt, small_dt);
 		t += dt;
 
 		// debug print

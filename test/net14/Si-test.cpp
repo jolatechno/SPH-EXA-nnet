@@ -31,14 +31,17 @@ int main() {
 
 
 	auto const eos = [&](const std::vector<double> &Y_, const double T, const double rho_) {
-		return std::tuple<double, double, double>{cv, 0, value_1};
+		struct eos_output {
+			double cv, dP_dT;
+		} res{cv, 0};
+		return res;
 	};
 
 
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
 		auto [Y, T, current_dt] = solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, eos,
-				nnet::net14::constants::A, last_Y, last_T, rho, dt);
+				nnet::net14::constants::A, last_Y, last_T, rho, rho, dt);
 		t += current_dt;
 
 		net14_debug = false;

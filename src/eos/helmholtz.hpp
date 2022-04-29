@@ -295,12 +295,15 @@ namespace nnet::eos {
 	template<typename Float>
 	struct helmotz {
 		std::vector<Float> A, Z;
+		struct eos_output {
+			double cv, dP_dT, P; //...
+		};
 
 		helmotz(const std::vector<Float> A_, const std::vector<Float> Z_) : A(A_), Z(Z_) {
 			/* TODO */
 		}
 
-		std::tuple<Float, Float, Float>operator()(const std::vector<Float> &Y, const Float T, const Float rho) {
+		eos_output operator()(const std::vector<Float> &Y, const Float T, const Float rho) {
 			// compute abar and zbar
 			Float abar = eigen::dot(Y, A);
 			Float zbar = eigen::dot(Y, Z);
@@ -309,8 +312,14 @@ namespace nnet::eos {
 			auto const [jat, iat] = get_table_indices(T, rho, abar, zbar);
 			move_polynomial_coefs(jat, iat);
 
-			/* TODO */
-			return std::tuple<Float, Float, Float>{/*cv*/2e7, /*drho/dt*/0., /*value_1*/0};
+			/* TODO... */
+			eos_output res;
+			res.cv = 2e7;
+			res.dP_dT = 0;
+			res.P = 0;
+
+			return res;
 		}
 	};
 }
+
