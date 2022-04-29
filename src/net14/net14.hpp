@@ -7,10 +7,12 @@
 
 
 namespace nnet::net14 {
+	bool skip_coulombian_correction = false;
+
 	/// constant mass-excendent values
 	const std::vector<double> BE = {
 		0.0*constants::Mev_to_cJ, 
-		7.27440*constants::Mev_to_cJ,
+			7.27440*constants::Mev_to_cJ,
 		14.43580*constants::Mev_to_cJ,
 		19.16680*constants::Mev_to_cJ,
 		28.48280*constants::Mev_to_cJ,
@@ -27,7 +29,7 @@ namespace nnet::net14 {
 
 	/// function to compute the corrected BE
 	template<typename Float>
-	std::vector<Float> compute_BE(std::vector<Float> const &Y, Float const T) {
+	std::vector<Float> compute_BE(std::vector<Float> const &Y, Float const T, Float const rho) {
 		std::vector<Float> corrected_BE(14);
 
 		Float correction = -1.5*constants::Na*constants::Kb*T;
@@ -119,7 +121,7 @@ namespace nnet::net14 {
 
 	/// compute a list of reactions for net14
 	template<typename Float>
-	std::pair<std::vector<Float>, std::vector<Float>> compute_reaction_rates(const Float T) {
+	std::pair<std::vector<Float>, std::vector<Float>> compute_reaction_rates(const Float T, const Float rho) {
 		std::vector<Float> rates, drates;
 		rates.reserve(reaction_list.size());
 		drates.reserve(reaction_list.size());
@@ -128,7 +130,10 @@ namespace nnet::net14 {
 		fusions and fissions reactions from fits
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 
-		Float coefs[14 - 4], dcoefs[14- 4], eff[17]={0.}, deff[17]={0.}, l[17]={0.}, dl[17]={0.}, deltamukbt[17]={1.};
+		Float coefs[14 - 4], dcoefs[14- 4],
+			eff[17]={0.}, deff[17]={0.},
+			l[17]={0.}, dl[17]={0.},
+			mukbt[16]={0.}, deltamukbt[16]={0.};
 
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -604,17 +609,67 @@ namespace nnet::net14 {
 
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		correction for direct rate for columbian correction
+		correction for direct rate for coulumbian correction
 		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{
-			/* TODO
+		if (!skip_coulombian_correction) {
 
-			// coulombian correction
-			Float EF=std::exp(deltamukbt[i]);
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			compute deltamukbt */
+			{
+				const double ne  = rho*constants::Na/2.;
+		    	const double kbt = T*constants::Kb;
+		    	const double ae  = std::pow(3./(4.*std::numbers::pi*ne), 1./3.);
+		    	const double gam = constants::e2/(kbt*ae);
 
-			eff[i] *= *EF; // coulombian correction
-			deff[i] -= 2.*eff[i]*deltamukbt[i]/T; // coulombian correction
-			*/
+		    	const double a1 = -.898004;
+		    	const double b1 = .96786;
+		    	const double c1 = .220703;
+		    	const double d1 = -.86097;
+		    	const double e1 = 2.520058332;
+
+		    	for (int i = 0; i < 14; ++i) {
+		    		mukbt[i] = 0.;
+		    		deltamukbt[i] = 0;
+		    	}
+		    	deltamukbt[15] = 0.;
+      			deltamukbt[16] = 0.;
+
+
+		    	// compute mukbt
+				for (int i = 0; i < 14; ++i) {
+					const double gamp = gam*std::pow(constants::Z[i], 5./3.);
+			        const double sqrootgamp = std::sqrt(gamp);
+			        const double sqroot2gamp = std::sqrt(sqrootgamp);
+			        if(gamp <= 1) {
+			            mukbt[i] = -(1./std::sqrt(3.))*gamp*sqrootgamp + std::pow(gamp, 1.9885)*.29561/1.9885;
+			        } else
+			            mukbt[i]=a1*gamp + 4.*(b1*sqroot2gamp - c1/sqroot2gamp) + d1*std::log(gamp) - e1;
+				}
+
+				// compute deltamukbt
+				for (int i = 0; i < 14; ++i)
+					deltamukbt[i] = mukbt[i] + mukbt[0] - mukbt[i + 1];
+
+				// Triple alpha correction
+				deltamukbt[0] += mukbt[0];
+
+				// 2C -> Mg and 2O -> S
+				deltamukbt[13] = 2.*mukbt[1] - mukbt[3];
+				deltamukbt[14] = mukbt[1] + mukbt[2] - mukbt[4];
+				deltamukbt[15] = 2.*mukbt[2] - mukbt[5];
+			}
+
+
+			/* correction for direct rate for coulumbian correction
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			for (int i = 1; i < 17; ++i) {
+				Float EF = std::exp(deltamukbt[i - 1]);
+		        eff [i] = eff [i]*EF;
+		        deff[i] = deff[i]*EF - 2.*eff[i]*deltamukbt[i - 1]/T;
+
+		        // debuging :
+				if (net14_debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i - 1] << ", mukbt[" << i << "]=" << mukbt[i - 1] << (i == 16 ? "\n\n" : "\n");
+			}
 		}
 
 

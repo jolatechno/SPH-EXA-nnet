@@ -425,8 +425,8 @@ namespace nnet {
 					Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
 
 				// compute rate
-				auto [rates, drates_dT] = construct_rates(         T_theta);
-				auto BE                 = construct_BE   (Y_theta, T_theta);
+				auto [rates, drates_dT] = construct_rates(         T_theta, rho);
+				auto BE                 = construct_BE   (Y_theta, T_theta, rho);
 				auto eos_struct         = eos            (Y_theta, T_theta, rho);
 
 				// compute value_1
