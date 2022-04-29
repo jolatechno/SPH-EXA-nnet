@@ -69,7 +69,7 @@ namespace nnet::eos {
         const double a2    =  0.29561;
         const double b2    =  1.9885;
         const double c2    =  0.288675;
-        const double esqu  =  qe * qe;
+        const double esqu  =  qe*qe;
 
 		// tables
 		double fi[36],
@@ -278,15 +278,13 @@ namespace nnet::eos {
 	*...TODO
 	 */
 	template<typename Float>
-	struct helmholtz {
+	class helmholtz {
+	private:
 		std::vector<Float> A, Z;
-		struct eos_output {
-			Float cv, dP_dT, P; //...
-		};
 
+	public:
 		helmholtz(const std::vector<Float> &A_, const std::vector<Float> &Z_) : A(A_), Z(Z_) {}
-
-		eos_output operator()(const std::vector<Float> &Y, const Float T, const Float rho) {
+		auto operator()(const std::vector<Float> &Y, const Float T, const Float rho) {
 			const int dimension = Y.size();
 
 			// compute abar and zbar
@@ -788,11 +786,137 @@ namespace nnet::eos {
 
 
 
-			/* TODO... */
-			eos_output res;
-			res.cv = 2e7;
-			res.dP_dT = 0;
-			res.P = 0;
+
+
+			// bomb proof
+			x   = prad + pion + pele + pcoul;
+			y   = erad + eion + eele + ecoul;
+			z   = srad + sion + sele + scoul;
+
+			// if (x .le. 0.0 .or. y .le. 0.0 .or. z .le. 0.0) then
+			// if (x .le. 0.0) then
+			if (x <= 0. || y <= 0.) {
+				pcoul    = 0.;
+				dpcouldd = 0.;
+				dpcouldt = 0.;
+				dpcoulda = 0.;
+				dpcouldz = 0.;
+				ecoul    = 0.;
+				decouldd = 0.;
+				decouldt = 0.;
+				decoulda = 0.;
+				decouldz = 0.;
+				scoul    = 0.;
+				dscouldd = 0.;
+				dscouldt = 0.;
+				dscoulda = 0.;
+				dscouldz = 0.;
+			}
+
+
+			// sum all the gas components
+			Float pgas    = pion + pele + pcoul;
+			Float egas    = eion + eele + ecoul;
+			Float sgas    = sion + sele + scoul;
+
+			Float dpgasdd = dpiondd + dpepdd + dpcouldd;
+			Float dpgasdt = dpiondt + dpepdt + dpcouldt;
+			Float dpgasda = dpionda + dpepda + dpcoulda;
+			Float dpgasdz = dpiondz + dpepdz + dpcouldz;
+
+			Float degasdd = deiondd + deepdd + decouldd;
+			Float degasdt = deiondt + deepdt + decouldt;
+			Float degasda = deionda + deepda + decoulda;
+			Float degasdz = deiondz + deepdz + decouldz;
+
+			Float dsgasdd = dsiondd + dsepdd + dscouldd;
+			Float dsgasdt = dsiondt + dsepdt + dscouldt;
+			Float dsgasda = dsionda + dsepda + dscoulda;
+			Float dsgasdz = dsiondz + dsepdz + dscouldz;
+
+
+
+
+			// add in radiation to get the total
+			Float pres    = prad + pgas;
+			Float ener    = erad + egas;
+			Float entr    = srad + sgas;
+
+			Float dpresdd = dpraddd + dpgasdd;
+			Float dpresdt = dpraddt + dpgasdt;
+			Float dpresda = dpradda + dpgasda;
+			Float dpresdz = dpraddz + dpgasdz;
+
+			Float rhoerdd = deraddd + degasdd;
+			Float rhoerdt = deraddt + degasdt;
+			Float rhoerda = deradda + degasda;
+			Float rhoerdz = deraddz + degasdz;
+
+			Float rhotrdd = dsraddd + dsgasdd;
+			Float rhotrdt = dsraddt + dsgasdt;
+			Float rhotrda = dsradda + dsgasda;
+			Float rhotrdz = dsraddz + dsgasdz;
+
+
+			// for the gas
+			// the temperature and rhosity exponents (c&g 9.81 9.82)
+			// the specific heat at constant volume (c&g 9.92)
+			// the third adiabatic exponent (c&g 9.93)
+			// the first adiabatic exponent (c&g 9.97)
+			// the second adiabatic exponent (c&g 9.105)
+			// the specific heat at constant pressure (c&g 9.98)
+			// and relativistic formula for the sound speed (c&g 14.29)
+
+			struct eos_output {
+				Float cv, dP_dT, P;
+				Float cp, sound;
+
+				Float dse, dpe, dsp;
+				Float cv_gaz, cp_gaz, sound_gaz; 
+			} res;
+
+
+			Float zz            = pgas*rhoi;
+			Float zzi           = rho/pgas;
+			Float chit_gas      = T/pgas*dpgasdt;
+			Float chid_gas      = dpgasdd*zzi;
+			res.cv_gaz    = degasdt;
+			x             = zz*chit_gas/(T*res.cv_gaz);
+			Float gam3_gas      = x + 1.;
+			Float gam1_gas      = chit_gas*x + chid_gas;
+			Float nabad_gas     = x/gam1_gas;
+			Float gam2_gas      = 1./(1. - nabad_gas);
+			res.cp_gaz    = res.cv_gaz*gam1_gas/chid_gas;
+			z             = 1. + (egas + helmholtz_constants::clight*helmholtz_constants::clight)*zzi;
+			res.sound_gaz = helmholtz_constants::clight*std::sqrt(gam1_gas/z);
+
+
+
+			// for the totals
+			zz    = pres*rhoi;
+			zzi   = rho/pres;
+			Float chit  = T/pres*dpresdt;
+			Float chid  = dpresdd*zzi;
+			res.cv    = rhoerdt;
+			x     = zz*chit/(T*res.cv);
+			Float gam3  = x + 1.;
+			Float gam1  = chit*x + chid;
+			Float nabad = x/gam1;
+			Float gam2  = 1./(1. - nabad);
+			res.cp    = res.cv*gam1/chid;
+			z     = 1. + (ener + helmholtz_constants::clight*helmholtz_constants::clight)*zzi;
+			res.sound = helmholtz_constants::clight*std::sqrt(gam1/z);
+
+
+
+			// maxwell relations; each is zero if the consistency is perfect
+			x   = rho*rho;
+			res.dse = T*rhotrdt/rhoerdt - 1.;
+			res.dpe = (rhoerdd*x + T*dpresdt)/pres - 1.;
+			res.dsp = -rhotrdd*x/dpresdt - 1.;
+
+			// Needed output
+			res.dP_dT /*dUdYe*/=degasdz*abar;
 
 			return res;
 		}
