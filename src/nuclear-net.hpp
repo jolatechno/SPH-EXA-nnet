@@ -406,7 +406,7 @@ namespace nnet {
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
 	std::tuple<Vector, Float, Float> solve_system_NR(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &A, const Vector &Y, Float T, const Float rho, const Float previous_rho, Float &dt) {
+		const Vector &A, const Vector &Y, Float T, const Float rho, const Float drho_dt, Float &dt) {
 		const int dimension = Y.size();
 
 		while (true) {
@@ -430,7 +430,7 @@ namespace nnet {
 				auto eos_struct         = eos            (Y_theta, T_theta, rho);
 
 				// compute value_1
-				double value_1 = (rho - previous_rho)/(rho*rho)*eos_struct.dP_dT;
+				double value_1 = drho_dt/(rho*rho)*eos_struct.dP_dT;
 
 				// solve the system
 				Float last_T = final_T;
@@ -483,7 +483,7 @@ namespace nnet {
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
 	std::tuple<Vector, Float> solve_system_superstep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &A, const Vector &Y, const Float T, const Float rho, const Float previous_rho, Float const dt_tot, Float &dt) {
+		const Vector &A, const Vector &Y, const Float T, const Float rho, const Float drho_dt, Float const dt_tot, Float &dt) {
 
 		Float elapsed_t = 0;
 		Float used_dt = dt;
@@ -499,7 +499,7 @@ namespace nnet {
 
 			// solve system
 			auto [next_Y, next_T, this_dt] = solve_system_NR(reactions, construct_rates, construct_BE, eos,
-				A, final_Y, final_T, rho, previous_rho, used_dt);
+				A, final_Y, final_T, rho, drho_dt, used_dt);
 			elapsed_t += this_dt;
 			final_Y = next_Y;
 			final_T = next_T;
