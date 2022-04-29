@@ -21,7 +21,7 @@
 
 
 namespace nnet::eos {
-	namespace helmotz_constants {
+	namespace helmholtz_constants {
 		// table size
 		const int imax = IMAX, jmax = JMAX;
 
@@ -34,6 +34,31 @@ namespace nnet::eos {
 		const double dhi   = 15.;
 		const double dstp  = (dhi - dlo)/(double)(imax - 1);
 		const double dstpi = 1./dstp;
+
+		// physical constants
+		const double g       = 6.6742867e-8;
+        const double h       = 6.6260689633e-27;
+        const double hbar    = 0.5 * h/std::numbers::pi;
+        const double qe      = 4.8032042712e-10;
+        const double avo     = 6.0221417930e23;
+        const double clight  = 2.99792458e10;
+        const double kerg    = 1.380650424e-16;
+        const double ev2erg  = 1.60217648740e-12;
+        const double kev     = kerg/ev2erg;
+        const double amu     = 1.66053878283e-24;
+        const double mn      = 1.67492721184e-24;
+        const double mp      = 1.67262163783e-24;
+        const double me      = 9.1093821545e-28;
+        const double rbohr   = hbar*hbar/(me * qe * qe);
+        const double fine    = qe*qe/(hbar*clight);
+        const double hion    = 13.605698140;
+        const double ssol    = 5.6704e-5;
+        const double asol    = 4.0 * ssol / clight;
+        const double weinlam = h*clight/(kerg * 4.965114232);
+        const double weinfre = 2.821439372*kerg/h;
+        const double rhonuc  = 2.342e14;
+        const double kergavo = kerg*avo;
+		const double sioncon = (2.0*std::numbers::pi*amu*kerg)/(h*h);
 
 		// tables
 		double fi[36],
@@ -52,7 +77,7 @@ namespace nnet::eos {
 
 	   		xf[imax][jmax], xfd[imax][jmax], xft[imax][jmax], xfdt[imax][jmax];
 
-		// read helmotz constants table
+		// read helmholtz constants table
 		void read_table(const char *file_path){
 	   		// read file
 			std::ifstream helm_table; 
@@ -61,17 +86,6 @@ namespace nnet::eos {
         		std::cerr << "Helm. table not found !\n";
         		throw;
 	   		}
-
-	   		// standard table limits
-			const double tlo   = 3.0;
-			const double thi   = 13.0;
-			const double tstp  = (thi - tlo)/(double)(jmax-1);
-			const double tstpi = 1.0/tstp;
-			const double dlo   = -12.0;
-			const double dhi   = 15.0;
-			const double dstp  = (dhi - dlo)/(double)(imax-1);
-			const double dstpi = 1.0/dstp;
-
 
 			// read the helmholtz free energy and its derivatives
 			for (int i = 0; i < imax; ++i) {
@@ -288,29 +302,108 @@ namespace nnet::eos {
 
 
 
-	/// helmotz eos
+	/// helmholtz eos
 	/**
 	 * ...TODO
 	 */
 	template<typename Float>
-	struct helmotz {
+	struct helmholtz {
 		std::vector<Float> A, Z;
 		struct eos_output {
-			double cv, dP_dT, P; //...
+			Float cv, dP_dT, P; //...
 		};
 
-		helmotz(const std::vector<Float> A_, const std::vector<Float> Z_) : A(A_), Z(Z_) {
-			/* TODO */
-		}
-
 		eos_output operator()(const std::vector<Float> &Y, const Float T, const Float rho) {
+			const int dimension = Y.size();
+
 			// compute abar and zbar
-			Float abar = eigen::dot(Y, A);
-			Float zbar = eigen::dot(Y, Z);
+			Float abar=0, zbar=0;
+			for (int i = 0; i < dimension; ++i) {
+				abar += Y[i];
+				zbar += Y[i]*Z[i];
+			}
+			abar = 1/abar;
+			zbar = abar*zbar;
 
 			// compute polynoms rates
 			auto const [jat, iat] = get_table_indices(T, rho, abar, zbar);
 			move_polynomial_coefs(jat, iat);
+
+
+			const Float ytot1 = 1/abar;
+
+			// initialize
+			const Float deni    = 1./rho;
+			const Float tempi   = 1./T;
+			const Float kt      = helmholtz_constants::kerg*T;
+			const Float ktinv   = 1./kt;
+
+
+			// adiation section:
+			const Float prad    = helmholtz_constants::asol*T*T*T*T/3;
+			const Float dpraddd = 0.;
+			const Float dpraddt = 4.*prad*tempi;
+			const Float dpradda = 0.;
+			const Float dpraddz = 0.;
+
+			const Float erad    = 3.*prad*deni;
+			const Float deraddd = -erad*deni;
+			const Float deraddt = 3.*dpraddt*deni;
+			const Float deradda = 0.;
+			const Float deraddz = 0.;
+
+			const Float srad    = (prad*deni + erad)*tempi;
+			const Float dsraddd = (dpraddd*deni - prad*deni*deni + deraddd)*tempi;
+			const Float dsraddt = (dpraddt*deni + deraddt - srad)*tempi;
+			const Float dsradda = 0.;
+			const Float dsraddz = 0.;
+
+
+			// ion section:
+			const Float xni     = helmholtz_constants::avo*ytot1*rho;
+			const Float dxnidd  = helmholtz_constants::avo*ytot1;
+			const Float dxnida  = -xni*ytot1;
+
+			const Float pion    = xni*kt;
+			const Float dpiondd = dxnidd*kt;
+			const Float dpiondt = xni*helmholtz_constants::kerg;
+			const Float dpionda = dxnida*kt;
+			const Float dpiondz = 0.;
+
+			const Float eion    = 1.5*pion*deni;
+			const Float deiondd = (1.5*dpiondd - eion)*deni;
+			const Float deiondt = 1.5*dpiondt*deni;
+			const Float deionda = 1.5*dpionda*deni;
+			const Float deiondz = 0.;
+
+
+			// sackur-tetrode equation for the ion entropy of
+			// a single ideal gas characterized by abar
+			      Float x = abar*abar*std::sqrt(abar) * deni/helmholtz_constants::avo;
+			const Float s = helmholtz_constants::sioncon*T;
+			const Float z = x*s*std::sqrt(s);
+			const Float y = std::log(z);
+
+			// y       = 1.0/(abar*kt)
+			// yy      = y * sqrt(y)
+			// z       = xni * sifac * yy
+			// etaion  = log(z)
+
+
+			const Float sion    = (pion*deni + eion)*tempi + helmholtz_constants::kergavo*ytot1*y;
+			const Float dsiondd = (dpiondd*deni - pion*deni*deni + deiondd)*tempi - helmholtz_constants::kergavo*deni*ytot1;
+			const Float dsiondt = (dpiondt*deni + deiondt)*tempi - (pion*deni + eion)*tempi*tempi + 1.5*helmholtz_constants::kergavo*tempi*ytot1;
+			            x       = helmholtz_constants::avo*helmholtz_constants::kerg/abar;
+			const Float dsionda = (dpionda*deni + deionda)*tempi + helmholtz_constants::kergavo*ytot1*ytot1*(2.5 - y);
+			const Float dsiondz = 0.;
+
+
+
+			// electron-positron section:
+
+
+			// assume complete ionization
+			const Float xnem    = xni * zbar;
 
 			/* TODO... */
 			eos_output res;
