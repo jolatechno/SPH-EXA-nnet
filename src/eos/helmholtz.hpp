@@ -38,7 +38,7 @@ namespace nnet::eos {
 		// physical constants
 		const double g       = 6.6742867e-8;
         const double h       = 6.6260689633e-27;
-        const double hbar    = 0.5 * h/std::numbers::pi;
+        const double hbar    = 0.5*h/std::numbers::pi;
         const double qe      = 4.8032042712e-10;
         const double avo     = 6.0221417930e23;
         const double clight  = 2.99792458e10;
@@ -49,16 +49,27 @@ namespace nnet::eos {
         const double mn      = 1.67492721184e-24;
         const double mp      = 1.67262163783e-24;
         const double me      = 9.1093821545e-28;
-        const double rbohr   = hbar*hbar/(me * qe * qe);
+        const double rbohr   = hbar*hbar/(me*qe*qe);
         const double fine    = qe*qe/(hbar*clight);
         const double hion    = 13.605698140;
         const double ssol    = 5.6704e-5;
-        const double asol    = 4.0 * ssol / clight;
-        const double weinlam = h*clight/(kerg * 4.965114232);
+        const double asol    = 4.0*ssol / clight;
+        const double weinlam = h*clight/(kerg*4.965114232);
         const double weinfre = 2.821439372*kerg/h;
         const double rhonuc  = 2.342e14;
         const double kergavo = kerg*avo;
 		const double sioncon = (2.0*std::numbers::pi*amu*kerg)/(h*h);
+
+		// parameters
+		const double a1    = -0.898004;
+        const double b1    =  0.96786;
+        const double c1    =  0.220703;
+        const double d1    = -0.86097;
+        const double e1    =  2.5269;
+        const double a2    =  0.29561;
+        const double b2    =  1.9885;
+        const double c2    =  0.288675;
+        const double esqu  =  qe * qe;
 
 		// tables
 		double fi[36],
@@ -103,7 +114,7 @@ namespace nnet::eos {
 				}
 			}
 
-			// read the pressure derivative with density table
+			// read the pressure derivative with rhosity table
 			for (int j = 0; j < jmax; ++j)
 				for (int i = 0; i < imax; ++i) {
 					helm_table >> dpdf[i][j] >> dpdfd[i][j] >> dpdft[i][j] >> dpdfdt[i][j];
@@ -115,18 +126,18 @@ namespace nnet::eos {
 					helm_table >> ef[i][j] >> efd[i][j] >> eft[i][j] >> efdt[i][j];
 				}
 
-			// read the number density table
+			// read the number rhosity table
 			for (int j = 0; j < jmax; ++j)
 				for (int i = 0; i < imax; ++i) {
 					helm_table >> xf[i][j] >> xfd[i][j] >> xft[i][j] >> xfdt[i][j];
 				}
 
-			// construct the temperature and density deltas and their inverses
+			// construct the temperature and rhosity deltas and their inverses
 			for (int j = 0; j < jmax - 1; ++j) {
 				const double dth  = t[j + 1] - t[j];
 				const double dt2  = dth*dth;
-				const double dti  = 1.0/dth;
-				const double dt2i = 1.0/dt2;
+				const double dti  = 1./dth;
+				const double dt2i = 1./dt2;
 				const double dt3i = dt2i*dti;
 
 				dt_sav[j]   = dth;
@@ -136,12 +147,12 @@ namespace nnet::eos {
 				dt3i_sav[j] = dt3i;
 			}
 
-			// construct the temperature and density deltas and their inverses
+			// construct the temperature and rhosity deltas and their inverses
 			for (int i = 0; i < imax - 1; ++i) {
 				const double dd   = d[i + 1] - d[i];
 				const double dd2  = dd*dd;
-				const double ddi  = 1.0/dd;
-				const double dd2i = 1.0/dd2;
+				const double ddi  = 1./dd;
+				const double dd2i = 1./dd2;
 				const double dd3i = dd2i*ddi;
 
 				dd_sav[i]   = dd;
@@ -217,7 +228,7 @@ namespace nnet::eos {
 		// cubic hermite polynomial statement functions
 		// psi0 and its derivatives
 		auto const xpsi0 = [](const double z) {
-			return z*z*(2.*z - 3.) + 1.0;
+			return z*z*(2.*z - 3.) + 1.;
 		};
 		auto const xdpsi0 = [](const double z) {
 			return z*(6.*z - 6.);
@@ -264,7 +275,7 @@ namespace nnet::eos {
 
 	/// helmholtz eos
 	/**
-	 * ...TODO
+	*...TODO
 	 */
 	template<typename Float>
 	struct helmholtz {
@@ -288,7 +299,7 @@ namespace nnet::eos {
 			zbar = abar*zbar;
 
 			// compute polynoms rates
-			auto const [jat, iat] = nnet::eos::helmholtz_constants::get_table_indices(T, rho, abar, zbar);
+			auto const [jat, iat] = helmholtz_constants::get_table_indices(T, rho, abar, zbar);
 
 
 			Float ytot1 = 1/abar;
@@ -296,7 +307,7 @@ namespace nnet::eos {
 			Float din = ye*rho;
 
 			// initialize
-			Float deni    = 1./rho;
+			Float rhoi    = 1./rho;
 			Float tempi   = 1./T;
 			Float kt      = helmholtz_constants::kerg*T;
 			Float ktinv   = 1./kt;
@@ -309,15 +320,15 @@ namespace nnet::eos {
 			Float dpradda = 0.;
 			Float dpraddz = 0.;
 
-			Float erad    = 3.*prad*deni;
-			Float deraddd = -erad*deni;
-			Float deraddt = 3.*dpraddt*deni;
+			Float erad    = 3.*prad*rhoi;
+			Float deraddd = -erad*rhoi;
+			Float deraddt = 3.*dpraddt*rhoi;
 			Float deradda = 0.;
 			Float deraddz = 0.;
 
-			Float srad    = (prad*deni + erad)*tempi;
-			Float dsraddd = (dpraddd*deni - prad*deni*deni + deraddd)*tempi;
-			Float dsraddt = (dpraddt*deni + deraddt - srad)*tempi;
+			Float srad    = (prad*rhoi + erad)*tempi;
+			Float dsraddd = (dpraddd*rhoi - prad*rhoi*rhoi + deraddd)*tempi;
+			Float dsraddt = (dpraddt*rhoi + deraddt - srad)*tempi;
 			Float dsradda = 0.;
 			Float dsraddz = 0.;
 
@@ -333,31 +344,31 @@ namespace nnet::eos {
 			Float dpionda = dxnida*kt;
 			Float dpiondz = 0.;
 
-			Float eion    = 1.5*pion*deni;
-			Float deiondd = (1.5*dpiondd - eion)*deni;
-			Float deiondt = 1.5*dpiondt*deni;
-			Float deionda = 1.5*dpionda*deni;
+			Float eion    = 1.5*pion*rhoi;
+			Float deiondd = (1.5*dpiondd - eion)*rhoi;
+			Float deiondt = 1.5*dpiondt*rhoi;
+			Float deionda = 1.5*dpionda*rhoi;
 			Float deiondz = 0.;
 
 
 			// sackur-tetrode equation for the ion entropy of
 			// a single ideal gas characterized by abar
-			      Float x = abar*abar*std::sqrt(abar) * deni/helmholtz_constants::avo;
+			      Float x = abar*abar*std::sqrt(abar)*rhoi/helmholtz_constants::avo;
 			Float s = helmholtz_constants::sioncon*T;
 			Float z = x*s*std::sqrt(s);
 			Float y = std::log(z);
 
-			// y       = 1.0/(abar*kt)
-			// yy      = y * sqrt(y)
-			// z       = xni * sifac * yy
+			// y       = 1./(abar*kt)
+			// yy      = y*sqrt(y)
+			// z       = xni*sifac*yy
 			// etaion  = log(z)
 
 
-			Float sion    = (pion*deni + eion)*tempi + helmholtz_constants::kergavo*ytot1*y;
-			Float dsiondd = (dpiondd*deni - pion*deni*deni + deiondd)*tempi - helmholtz_constants::kergavo*deni*ytot1;
-			Float dsiondt = (dpiondt*deni + deiondt)*tempi - (pion*deni + eion)*tempi*tempi + 1.5*helmholtz_constants::kergavo*tempi*ytot1;
+			Float sion    = (pion*rhoi + eion)*tempi + helmholtz_constants::kergavo*ytot1*y;
+			Float dsiondd = (dpiondd*rhoi - pion*rhoi*rhoi + deiondd)*tempi - helmholtz_constants::kergavo*rhoi*ytot1;
+			Float dsiondt = (dpiondt*rhoi + deiondt)*tempi - (pion*rhoi + eion)*tempi*tempi + 1.5*helmholtz_constants::kergavo*tempi*ytot1;
 			            x       = helmholtz_constants::avo*helmholtz_constants::kerg/abar;
-			Float dsionda = (dpionda*deni + deionda)*tempi + helmholtz_constants::kergavo*ytot1*ytot1*(2.5 - y);
+			Float dsionda = (dpionda*rhoi + deionda)*tempi + helmholtz_constants::kergavo*ytot1*ytot1*(2.5 - y);
 			Float dsiondz = 0.;
 
 
@@ -366,7 +377,7 @@ namespace nnet::eos {
 
 
 			// assume complete ionization
-			Float xnem    = xni * zbar;
+			Float xnem    = xni*zbar;
 
 
 
@@ -420,7 +431,7 @@ namespace nnet::eos {
 			Float mxt = 1. - xt;
 			Float mxd = 1. - xd;
 
-			// the six density and six temperature basis functions;
+			// the six rhosity and six temperature basis functions;
 			Float si0t =   helmholtz_constants::psi0(xt);
 			Float si1t =   helmholtz_constants::psi1(xt)*helmholtz_constants::dt_sav[jat];
 			Float si2t =   helmholtz_constants::psi2(xt)*helmholtz_constants::dt2_sav[jat];
@@ -477,7 +488,7 @@ namespace nnet::eos {
 				si0t,   si1t,   si2t,   si0mt,   si1mt,   si2mt,
 				si0d,   si1d,   si2d,   si0md,   si1md,   si2md);
 
-			// derivative with respect to density
+			// derivative with respect to rhosity
 			Float df_d  = helmholtz_constants::h5(iat,jat,
 				si0t,   si1t,   si2t,   si0mt,   si1mt,   si2mt,
 				dsi0d,  dsi1d,  dsi2d,  dsi0md,  dsi1md,  dsi2md);
@@ -488,7 +499,7 @@ namespace nnet::eos {
 				dsi0t,  dsi1t,  dsi2t,  dsi0mt,  dsi1mt,  dsi2mt,
 				si0d,   si1d,   si2d,   si0md,   si1md,   si2md);
 
-			// derivative with respect to density**2
+			// derivative with respect to rhosity**2
 			// df_dd = h5(iat,jat,
 			//		si0t,   si1t,   si2t,   si0mt,   si1mt,   si2mt,
 			//		ddsi0d, ddsi1d, ddsi2d, ddsi0md, ddsi1md, ddsi2md)
@@ -498,15 +509,15 @@ namespace nnet::eos {
 				ddsi0t, ddsi1t, ddsi2t, ddsi0mt, ddsi1mt, ddsi2mt,
 				si0d,   si1d,   si2d,   si0md,   si1md,   si2md);
 
-			// derivative with respect to temperature and density
+			// derivative with respect to temperature and rhosity
 			Float df_dt = helmholtz_constants::h5(iat,jat,
 				dsi0t,  dsi1t,  dsi2t,  dsi0mt,  dsi1mt,  dsi2mt,
 				dsi0d,  dsi1d,  dsi2d,  dsi0md,  dsi1md,  dsi2md);
 
 
 
-			// now get the pressure derivative with density, chemical potential, and
-			// electron positron number densities
+			// now get the pressure derivative with rhosity, chemical potential, and
+			// electron positron number rhosities
 			// get the interpolation weight functions
 			si0t   =  helmholtz_constants::xpsi0(xt);
 			si1t   =  helmholtz_constants::xpsi1(xt)*helmholtz_constants::dt_sav[jat];
@@ -562,7 +573,7 @@ namespace nnet::eos {
 			Float dpepdd  = helmholtz_constants::h3(iat, jat,
                 si0t,   si1t,   si0mt,   si1mt,
                 si0d,   si1d,   si0md,   si1md);
-  			dpepdd  = std::max(ye * dpepdd,1.e-30);
+  			dpepdd  = std::max(ye*dpepdd,1.e-30);
 
 
 
@@ -597,7 +608,7 @@ namespace nnet::eos {
 				si0d,   si1d,   si0md,   si1md);
 
 
-			// derivative with respect to density
+			// derivative with respect to rhosity
 			x = helmholtz_constants::h3(iat, jat,
 				si0t,   si1t,   si0mt,   si1mt,
 				dsi0d,  dsi1d,  dsi0md,  dsi1md);
@@ -636,6 +647,144 @@ namespace nnet::eos {
 
 
 
+
+
+			// electron + positron number rhosities
+			Float xnefer = helmholtz_constants::h3(iat,jat,
+            	si0t,   si1t,   si0mt,   si1mt,
+            	si0d,   si1d,   si0md,   si1md);
+
+			// derivative with respect to rhosity
+			x = helmholtz_constants::h3(iat,jat,
+            	si0t,   si1t,   si0mt,   si1mt,
+            	dsi0d,  dsi1d,  dsi0md,  dsi1md);
+			x = std::max(x, 1e-30);
+			Float dxnedd   = ye*x;
+
+			// derivative with respect to temperature
+			Float dxnedt   = helmholtz_constants::h3(iat,jat,
+           		dsi0t,  dsi1t,  dsi0mt,  dsi1mt,
+            	si0d,   si1d,   si0md,   si1md);
+
+			// derivative with respect to abar and zbar
+			Float dxneda = -x*din*ytot1;
+			Float dxnedz =  x *rho*ytot1;
+
+
+			// the desired electron-positron thermodynamic quantities
+
+			// dpepdd at high temperatures and low rhosities is below the
+			// floating point limit of the subtraction of two large terms.
+			// since dpresdd doesn't enter the maxwell relations at all, use the
+			// bicubic interpolation done above instead of the formally correct expression
+			x       = din*din;
+			Float pele    = x*df_d;
+			Float dpepdt  = x*df_dt;
+			// dpepdd  = ye*(x*df_dd + 2.0*din*df_d)
+			s       = dpepdd/ye - 2.0*din*df_d;
+			Float dpepda  = -ytot1*(2.0*pele + s*din);
+			Float dpepdz  = rho*ytot1*(2.0*din*df_d  +  s);
+
+
+			x       = ye*ye;
+			Float sele    = -df_t*ye;
+			Float dsepdt  = -df_tt*ye;
+			Float dsepdd  = -df_dt*x;
+			Float dsepda  = ytot1*(ye*df_dt*din - sele);
+			Float dsepdz  = -ytot1*(ye*df_dt*rho  + df_t);
+
+
+			Float eele    = ye*free + T*sele;
+			Float deepdt  = T*dsepdt;
+			Float deepdd  = x*df_d + T*dsepdd;
+			Float deepda  = -ye*ytot1*(free +  df_d*din) + T*dsepda;
+			Float deepdz  = ytot1* (free + ye*df_d*rho) + T*dsepdz;
+
+
+
+
+			// coulomb section:
+
+			// uniform background corrections only
+			// from yakovlev & shalybkov 1989
+			// lami is the average ion seperation
+			// plasg is the plasma coupling parameter
+
+			z        = std::numbers::pi/4.;
+			s        = z*xni;
+			Float dsdd     = z*dxnidd;
+			Float dsda     = z*dxnida;
+
+			Float lami     = std::pow(1./s, 1./3.);
+			Float inv_lami = 1./lami;
+			z        = -lami/3;
+			Float lamidd   = z*dsdd/s;
+			Float lamida   = z*dsda/s;
+
+			Float plasg    = zbar*zbar*helmholtz_constants::esqu*ktinv*inv_lami;
+			z        = -plasg*inv_lami;
+			Float plasgdd  = z*lamidd;
+			Float plasgda  = z*lamida;
+			Float plasgdt  = -plasg*ktinv*helmholtz_constants::kerg;
+			Float plasgdz  = 2.0*plasg/zbar;
+
+			Float ecoul, pcoul, scoul,
+				decouldd, decouldt, decoulda, decouldz,
+				dpcouldd, dpcouldt, dpcoulda, dpcouldz,
+				dscouldd, dscouldt, dscoulda, dscouldz;
+
+			// yakovlev & shalybkov 1989 equations 82, 85, 86, 87
+			if (plasg >= 1.) {
+				x        = std::pow(plasg, 0.25);
+				y        = helmholtz_constants::avo*ytot1*helmholtz_constants::kerg;
+				ecoul    = y*T*(helmholtz_constants::a1*plasg + helmholtz_constants::b1*x + helmholtz_constants::c1/x + helmholtz_constants::d1);
+				pcoul    = rho*ecoul/3.;
+				scoul    = -y*(3.0*helmholtz_constants::b1*x - 5.0*helmholtz_constants::c1/x + helmholtz_constants::d1*(std::log(plasg) - 1.) - helmholtz_constants::e1);
+
+				y        = helmholtz_constants::avo*ytot1*kt*(helmholtz_constants::a1 + 0.25/plasg*(helmholtz_constants::b1*x - helmholtz_constants::c1/x));
+				decouldd = y*plasgdd;
+				decouldt = y*plasgdt + ecoul/T;
+				decoulda = y*plasgda - ecoul/abar;
+				decouldz = y*plasgdz;
+
+				y        = rho/3.;
+				dpcouldd = ecoul + y*decouldd/3.;
+				dpcouldt = y*decouldt;
+				dpcoulda = y*decoulda;
+				dpcouldz = y*decouldz;
+
+
+				y        = -helmholtz_constants::avo*helmholtz_constants::kerg/(abar*plasg)*(0.75*helmholtz_constants::b1*x + 1.25*helmholtz_constants::c1/x + helmholtz_constants::d1);
+				dscouldd = y*plasgdd;
+				dscouldt = y*plasgdt;
+				dscoulda = y*plasgda - scoul/abar;
+				dscouldz = y*plasgdz;
+			} else if (plasg < 1.) { //yakovlev & shalybkov 1989 equations 102, 103, 104
+				x        = plasg*std::sqrt(plasg);
+				y        = std::pow(plasg, helmholtz_constants::b2);
+				z        = helmholtz_constants::c2*x - helmholtz_constants::a2*y/3.;
+				pcoul    = -pion*z;
+				ecoul    = 3.0*pcoul/rho;
+				scoul    = -helmholtz_constants::avo/abar*helmholtz_constants::kerg*(helmholtz_constants::c2*x - helmholtz_constants::a2*(helmholtz_constants::b2 - 1.)/helmholtz_constants::b2*y);
+
+				s        = 1.5*helmholtz_constants::c2*x/plasg - helmholtz_constants::a2*helmholtz_constants::b2*y/plasg/3.;
+				dpcouldd = -dpiondd*z - pion*s*plasgdd;
+				dpcouldt = -dpiondt*z - pion*s*plasgdt;
+				dpcoulda = -dpionda*z - pion*s*plasgda;
+				dpcouldz = -dpiondz*z - pion*s*plasgdz;
+
+				s        = 3.0/rho;
+				decouldd = s*dpcouldd - ecoul/rho;
+				decouldt = s*dpcouldt;
+				decoulda = s*dpcoulda;
+				decouldz = s*dpcouldz;
+
+				s        = -helmholtz_constants::avo*helmholtz_constants::kerg/(abar*plasg)*(1.5*helmholtz_constants::c2*x - helmholtz_constants::a2*(helmholtz_constants::b2 - 1.)*y);
+				dscouldd = s*plasgdd;
+				dscouldt = s*plasgdt;
+				dscoulda = s*plasgda - scoul/abar;
+				dscouldz = s*plasgdz;
+			}
 
 
 
