@@ -166,7 +166,6 @@ namespace nnet::eos {
 		// biquintic hermite polynomial statement function
 		auto const h5 = [](const double i, const double j,
 			const double w0t, const double w1t, const double w2t, const double w0mt, const double w1mt, const double w2mt, const double w0d, const double w1d, const double w2d, const double w0md, const double w1md, const double w2md) {
-
 		    return fi[1]*w0d*w0t  +  fi[2]*w0md*w0t
 		    	+  fi[3]*w0d*w0mt +  fi[4]*w0md*w0mt
 		    	+  fi[5]*w0d*w1t  +  fi[6]*w0md*w1t
@@ -190,13 +189,33 @@ namespace nnet::eos {
 
 		// cubic hermite polynomial statement functions
 		// psi0 and its derivatives
-		/* TODO */
+		auto const xpsi0 = [](const double z) {
+			return z*z*(2.*z - 3.) + 1.0;
+		};
+		auto const xdpsi0 = [](const double z) {
+			return z*(6.*z - 6.);
+		};
 
 		// psi1 & derivatives
-		/* TODO */
+		auto const xpsi1 = [](const double z) {
+			return z*(z*(z - 2.) + 1.);
+		};
+		auto const xdpsi1 = [](const double z) {
+			return z*(3.*z - 4.) + 1.;
+		};
 
 		// bicubic hermite polynomial statement function
-		/* TODO */
+		auto const h3 = [](const double i, const double j,
+			const double w0t, const double w1t, const double w0mt, const double w1mt, const double w0d, const double w1d, const double w0md, const double w1md) {
+		    return fi[1]*w0d*w0t  +  fi[2]*w0md*w0t
+		    	+  fi[3]*w0d*w0mt +  fi[4]*w0md*w0mt
+		    	+  fi[5]*w0d*w1t  +  fi[6]*w0md*w1t
+		    	+  fi[7]*w0d*w1mt +  fi[8]*w0md*w1mt
+		    	+  fi[9]*w1d*w0t  + fi[10]*w1md*w0t
+		    	+ fi[11]*w1d*w0mt + fi[12]*w1md*w0mt
+		    	+ fi[13]*w1d*w1t  + fi[14]*w1md*w1t
+		    	+ fi[15]*w1d*w1mt + fi[16]*w1md*w1mt;
+		};
 
 
 		// compute coeffcient
