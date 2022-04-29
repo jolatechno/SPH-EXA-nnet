@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "../eigen.hpp"
+
 #include <sstream>
 #include <string>
 #include <fstream>
@@ -22,6 +24,16 @@ namespace nnet::eos {
 	namespace helmotz_constants {
 		// table size
 		const int imax = IMAX, jmax = JMAX;
+
+		// table limits
+		const double tlo   = 3.;
+		const double thi   = 13.;
+		const double tstp  = (thi - tlo)/(double)(jmax - 1);
+		const double tstpi = 1./tstp;
+		const double dlo   = -12.;
+		const double dhi   = 15.;
+		const double dstp  = (dhi - dlo)/(double)(imax - 1);
+		const double dstpi = 1./dstp;
 
 		// tables
 		double fi[36],
@@ -218,13 +230,23 @@ namespace nnet::eos {
 		};
 
 
-		// compute coeffcient
-		void compute_polynomial_coefs(const double T, const double tlo, const double tstpi, const double din, const double dlo, const double dstpi) {
+		// get correspong table indices
+		std::pair<int, int> get_table_indices(const double T, const double rho, const double abar, const double zbar) {
+			const double ye = std::max(1e-16, zbar/abar);
+			const double din = ye*rho;
+
 			int jat = int((std::log10(T) - tlo)*tstpi) + 1;
 			jat = std::max(1, std::min(jat, jmax - 1));
+
 			int iat = int((std::log10(din) - dlo)*dstpi) + 1;
 			iat = std::max(1, std::min(iat, imax - 1));
 
+			return {jat, iat};
+		}
+
+		// move table values into coefficient table
+		void move_polynomial_coefs(const int jat, const int iat) {
+			// move table values into coefficient table
 			fi[1]  = f[iat][jat];
 			fi[2]  = f[iat + 1][jat];
 			fi[3]  = f[iat][jat + 1];
@@ -272,11 +294,21 @@ namespace nnet::eos {
 	 */
 	template<typename Float>
 	struct helmotz {
-		helmotz() {
+		std::vector<Float> A, Z;
+
+		helmotz(const std::vector<Float> A_, const std::vector<Float> Z_) : A(A_), Z(Z_) {
 			/* TODO */
 		}
 
 		std::tuple<Float, Float, Float>operator()(const std::vector<Float> &Y, const Float T, const Float rho) {
+			// compute abar and zbar
+			Float abar = eigen::dot(Y, A);
+			Float zbar = eigen::dot(Y, Z);
+
+			// compute polynoms rates
+			auto const [jat, iat] = get_table_indices(T, rho, abar, zbar);
+			move_polynomial_coefs(jat, iat);
+
 			/* TODO */
 			return std::tuple<Float, Float, Float>{/*cv*/2e7, /*drho/dt*/0., /*value_1*/0};
 		}
