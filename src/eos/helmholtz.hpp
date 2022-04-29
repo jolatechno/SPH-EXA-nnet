@@ -273,6 +273,8 @@ namespace nnet::eos {
 			Float cv, dP_dT, P; //...
 		};
 
+		helmholtz(const std::vector<Float> &A_, const std::vector<Float> &Z_) : A(A_), Z(Z_) {}
+
 		eos_output operator()(const std::vector<Float> &Y, const Float T, const Float rho) {
 			const int dimension = Y.size();
 
@@ -286,8 +288,7 @@ namespace nnet::eos {
 			zbar = abar*zbar;
 
 			// compute polynoms rates
-			auto const [jat, iat] = get_table_indices(T, rho, abar, zbar);
-			move_polynomial_coefs(jat, iat);
+			auto const [jat, iat] = nnet::eos::helmholtz_constants::get_table_indices(T, rho, abar, zbar);
 
 
 			Float ytot1 = 1/abar;
@@ -414,60 +415,60 @@ namespace nnet::eos {
 
 
 			// various differences
-			Float xt  = std::max( (T - t(jat))*dti_sav(jat), 0.);
-			Float xd  = std::max( (din - d(iat))*ddi_sav(iat), 0.);
+			Float xt  = std::max( (T - helmholtz_constants::t[jat])*helmholtz_constants::dti_sav[jat], 0.);
+			Float xd  = std::max( (din - helmholtz_constants::d[iat])*helmholtz_constants::ddi_sav[iat], 0.);
 			Float mxt = 1. - xt;
 			Float mxd = 1. - xd;
 
 			// the six density and six temperature basis functions;
 			Float si0t =   helmholtz_constants::psi0(xt);
-			Float si1t =   helmholtz_constants::psi1(xt)*dt_sav(jat);
-			Float si2t =   helmholtz_constants::psi2(xt)*dt2_sav(jat);
+			Float si1t =   helmholtz_constants::psi1(xt)*helmholtz_constants::dt_sav[jat];
+			Float si2t =   helmholtz_constants::psi2(xt)*helmholtz_constants::dt2_sav[jat];
 
 			Float si0mt =  helmholtz_constants::psi0(mxt);
-			Float si1mt = -helmholtz_constants::psi1(mxt)*dt_sav(jat);
-			Float si2mt =  helmholtz_constants::psi2(mxt)*dt2_sav(jat);
+			Float si1mt = -helmholtz_constants::psi1(mxt)*helmholtz_constants::dt_sav[jat];
+			Float si2mt =  helmholtz_constants::psi2(mxt)*helmholtz_constants::dt2_sav[jat];
 
 			Float si0d =   helmholtz_constants::psi0(xd);
-			Float si1d =   helmholtz_constants::psi1(xd)*dd_sav(iat);
-			Float si2d =   helmholtz_constants::psi2(xd)*dd2_sav(iat);
+			Float si1d =   helmholtz_constants::psi1(xd)*helmholtz_constants::dd_sav[iat];
+			Float si2d =   helmholtz_constants::psi2(xd)*helmholtz_constants::dd2_sav[iat];
 
 			Float si0md =  helmholtz_constants::psi0(mxd);
-			Float si1md = -helmholtz_constants::psi1(mxd)*dd_sav(iat);
-			Float si2md =  helmholtz_constants::psi2(mxd)*dd2_sav(iat);
+			Float si1md = -helmholtz_constants::psi1(mxd)*helmholtz_constants::dd_sav[iat];
+			Float si2md =  helmholtz_constants::psi2(mxd)*helmholtz_constants::dd2_sav[iat];
 
 			// derivatives of the weight functions
-			Float dsi0t =   helmholtz_constants::dpsi0(xt)*dti_sav(jat);
+			Float dsi0t =   helmholtz_constants::dpsi0(xt)*helmholtz_constants::dti_sav[jat];
 			Float dsi1t =   helmholtz_constants::dpsi1(xt);
-			Float dsi2t =   helmholtz_constants::dpsi2(xt)*dt_sav(jat);
+			Float dsi2t =   helmholtz_constants::dpsi2(xt)*helmholtz_constants::dt_sav[jat];
 
-			Float dsi0mt = -helmholtz_constants::dpsi0(mxt)*dti_sav(jat);
+			Float dsi0mt = -helmholtz_constants::dpsi0(mxt)*helmholtz_constants::dti_sav[jat];
 			Float dsi1mt =  helmholtz_constants::dpsi1(mxt);
-			Float dsi2mt = -helmholtz_constants::dpsi2(mxt)*dt_sav(jat);
+			Float dsi2mt = -helmholtz_constants::dpsi2(mxt)*helmholtz_constants::dt_sav[jat];
 
-			Float dsi0d =   helmholtz_constants::dpsi0(xd)*ddi_sav(iat);
+			Float dsi0d =   helmholtz_constants::dpsi0(xd)*helmholtz_constants::ddi_sav[iat];
 			Float dsi1d =   helmholtz_constants::dpsi1(xd);
-			Float dsi2d =   helmholtz_constants::dpsi2(xd)*dd_sav(iat);
+			Float dsi2d =   helmholtz_constants::dpsi2(xd)*helmholtz_constants::dd_sav[iat];
 
-			Float dsi0md = -helmholtz_constants::dpsi0(mxd)*ddi_sav(iat);
+			Float dsi0md = -helmholtz_constants::dpsi0(mxd)*helmholtz_constants::ddi_sav[iat];
 			Float dsi1md =  helmholtz_constants::dpsi1(mxd);
-			Float dsi2md = -helmholtz_constants::dpsi2(mxd)*dd_sav(iat);
+			Float dsi2md = -helmholtz_constants::dpsi2(mxd)*helmholtz_constants::dd_sav[iat];
 
 			// second derivatives of the weight functions
-			Float ddsi0t =   helmholtz_constants::ddpsi0(xt)*dt2i_sav(jat);
-			Float ddsi1t =   helmholtz_constants::ddpsi1(xt)*dti_sav(jat);
+			Float ddsi0t =   helmholtz_constants::ddpsi0(xt)*helmholtz_constants::dt2i_sav[jat];
+			Float ddsi1t =   helmholtz_constants::ddpsi1(xt)*helmholtz_constants::dti_sav[jat];
 			Float ddsi2t =   helmholtz_constants::ddpsi2(xt);
 
-			Float ddsi0mt =  helmholtz_constants::ddpsi0(mxt)*dt2i_sav(jat);
-			Float ddsi1mt = -helmholtz_constants::ddpsi1(mxt)*dti_sav(jat);
+			Float ddsi0mt =  helmholtz_constants::ddpsi0(mxt)*helmholtz_constants::dt2i_sav[jat];
+			Float ddsi1mt = -helmholtz_constants::ddpsi1(mxt)*helmholtz_constants::dti_sav[jat];
 			Float ddsi2mt =  helmholtz_constants::ddpsi2(mxt);
 
-			// ddsi0d =   ddpsi0(xd)*dd2i_sav(iat);
-			// ddsi1d =   ddpsi1(xd)*ddi_sav(iat);
+			// ddsi0d =   ddpsi0(xd)*dd2i_sav[iat];
+			// ddsi1d =   ddpsi1(xd)*ddi_sav[iat];
 			// ddsi2d =   ddpsi2(xd);
 
-			// ddsi0md =  ddpsi0(mxd)*dd2i_sav(iat);
-			// ddsi1md = -ddpsi1(mxd)*ddi_sav(iat);
+			// ddsi0md =  ddpsi0(mxd)*dd2i_sav[iat];
+			// ddsi1md = -ddpsi1(mxd)*ddi_sav[iat];
 			// ddsi2md =  ddpsi2(mxd);
 
 
@@ -508,29 +509,29 @@ namespace nnet::eos {
 			// electron positron number densities
 			// get the interpolation weight functions
 			si0t   =  helmholtz_constants::xpsi0(xt);
-			si1t   =  helmholtz_constants::xpsi1(xt)*dt_sav(jat);
+			si1t   =  helmholtz_constants::xpsi1(xt)*helmholtz_constants::dt_sav[jat];
 
 			si0mt  =  helmholtz_constants::xpsi0(mxt);
-			si1mt  =  -helmholtz_constants::xpsi1(mxt)*dt_sav(jat);
+			si1mt  =  -helmholtz_constants::xpsi1(mxt)*helmholtz_constants::dt_sav[jat];
 
 			si0d   =  helmholtz_constants::xpsi0(xd);
-			si1d   =  helmholtz_constants::xpsi1(xd)*dd_sav(iat);
+			si1d   =  helmholtz_constants::xpsi1(xd)*helmholtz_constants::dd_sav[iat];
 
 			si0md  =  helmholtz_constants::xpsi0(mxd);
-			si1md  =  -helmholtz_constants::xpsi1(mxd)*dd_sav(iat);
+			si1md  =  -helmholtz_constants::xpsi1(mxd)*helmholtz_constants::dd_sav[iat];
 
 
 			// derivatives of weight functions
-			dsi0t  = helmholtz_constants::xdpsi0(xt)*dti_sav(jat);
+			dsi0t  = helmholtz_constants::xdpsi0(xt)*helmholtz_constants::dti_sav[jat];
 			dsi1t  = helmholtz_constants::xdpsi1(xt);
 
-			dsi0mt = -helmholtz_constants::xdpsi0(mxt)*dti_sav(jat);
+			dsi0mt = -helmholtz_constants::xdpsi0(mxt)*helmholtz_constants::dti_sav[jat];
 			dsi1mt = helmholtz_constants::xdpsi1(mxt);
 
-			dsi0d  = helmholtz_constants::xdpsi0(xd)*ddi_sav(iat);
+			dsi0d  = helmholtz_constants::xdpsi0(xd)*helmholtz_constants::ddi_sav[iat];
 			dsi1d  = helmholtz_constants::xdpsi1(xd);
 
-			dsi0md = -helmholtz_constants::xdpsi0(mxd)*ddi_sav(iat);
+			dsi0md = -helmholtz_constants::xdpsi0(mxd)*helmholtz_constants::ddi_sav[iat];
 			dsi1md = helmholtz_constants::xdpsi1(mxd);
 
 
@@ -564,7 +565,78 @@ namespace nnet::eos {
   			dpepdd  = std::max(ye * dpepdd,1.e-30);
 
 
-  			
+
+
+
+			// move table values into coefficient table
+			helmholtz_constants::fi[1]  = helmholtz_constants::ef[iat][jat];
+			helmholtz_constants::fi[2]  = helmholtz_constants::ef[iat+1][jat];
+			helmholtz_constants::fi[3]  = helmholtz_constants::ef[iat][jat+1];
+			helmholtz_constants::fi[4]  = helmholtz_constants::ef[iat+1][jat+1];
+			helmholtz_constants::fi[5]  = helmholtz_constants::eft[iat][jat];
+			helmholtz_constants::fi[6]  = helmholtz_constants::eft[iat+1][jat];
+			helmholtz_constants::fi[7]  = helmholtz_constants::eft[iat][jat+1];
+			helmholtz_constants::fi[8]  = helmholtz_constants::eft[iat+1][jat+1];
+			helmholtz_constants::fi[9]  = helmholtz_constants::efd[iat][jat];
+			helmholtz_constants::fi[10] = helmholtz_constants::efd[iat+1][jat];
+			helmholtz_constants::fi[11] = helmholtz_constants::efd[iat][jat+1];
+			helmholtz_constants::fi[12] = helmholtz_constants::efd[iat+1][jat+1];
+			helmholtz_constants::fi[13] = helmholtz_constants::efdt[iat][jat];
+			helmholtz_constants::fi[14] = helmholtz_constants::efdt[iat+1][jat];
+			helmholtz_constants::fi[15] = helmholtz_constants::efdt[iat][jat+1];
+			helmholtz_constants::fi[16] = helmholtz_constants::efdt[iat+1][jat+1];
+
+
+
+
+
+
+			// electron chemical potential etaele
+			Float etaele  = helmholtz_constants::h3(iat, jat,
+				si0t,   si1t,   si0mt,   si1mt,
+				si0d,   si1d,   si0md,   si1md);
+
+
+			// derivative with respect to density
+			x = helmholtz_constants::h3(iat, jat,
+				si0t,   si1t,   si0mt,   si1mt,
+				dsi0d,  dsi1d,  dsi0md,  dsi1md);
+			Float detadd  = ye*x;
+
+			// derivative with respect to temperature
+			Float detadt  = helmholtz_constants::h3(iat, jat,
+				dsi0t,  dsi1t,  dsi0mt,  dsi1mt,
+				si0d,   si1d,   si0md,   si1md);
+
+			// derivative with respect to abar and zbar
+			Float detada = -x*din*ytot1;
+			Float detadz =  x*rho*ytot1;
+
+
+
+
+
+			// move table values into coefficient table
+			helmholtz_constants::fi[1]  = helmholtz_constants::xf[iat][jat];
+			helmholtz_constants::fi[2]  = helmholtz_constants::xf[iat+1][jat];
+			helmholtz_constants::fi[3]  = helmholtz_constants::xf[iat][jat+1];
+			helmholtz_constants::fi[4]  = helmholtz_constants::xf[iat+1][jat+1];
+			helmholtz_constants::fi[5]  = helmholtz_constants::xft[iat][jat];
+			helmholtz_constants::fi[6]  = helmholtz_constants::xft[iat+1][jat];
+			helmholtz_constants::fi[7]  = helmholtz_constants::xft[iat][jat+1];
+			helmholtz_constants::fi[8]  = helmholtz_constants::xft[iat+1][jat+1];
+			helmholtz_constants::fi[9]  = helmholtz_constants::xfd[iat][jat];
+			helmholtz_constants::fi[10] = helmholtz_constants::xfd[iat+1][jat];
+			helmholtz_constants::fi[11] = helmholtz_constants::xfd[iat][jat+1];
+			helmholtz_constants::fi[12] = helmholtz_constants::xfd[iat+1][jat+1];
+			helmholtz_constants::fi[13] = helmholtz_constants::xfdt[iat][jat];
+			helmholtz_constants::fi[14] = helmholtz_constants::xfdt[iat+1][jat];
+			helmholtz_constants::fi[15] = helmholtz_constants::xfdt[iat][jat+1];
+			helmholtz_constants::fi[16] = helmholtz_constants::xfdt[iat+1][jat+1];
+
+
+
+
 
 
 			/* TODO... */
