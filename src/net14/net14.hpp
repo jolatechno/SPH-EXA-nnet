@@ -28,8 +28,11 @@ namespace nnet::net14 {
 	/// function to compute the corrected BE
 	template<typename Float>
 	std::vector<Float> compute_BE(std::vector<Float> const &Y, Float const T) {
-		std::vector<Float> corrected_BE = constants::ideal_gaz_correction<Float>(T);
-		for (int i = 0; i < 14; ++i) corrected_BE[i] += BE[i];
+		std::vector<Float> corrected_BE(14);
+
+		Float correction = -1.5*constants::Na*constants::Kb*T;
+		for (int i = 0; i < 14; ++i)
+			corrected_BE[i] = BE[i] + correction;
 
 		return corrected_BE;
 	}
@@ -125,7 +128,8 @@ namespace nnet::net14 {
 		fusions and fissions reactions from fits
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 
-		Float coefs[14 - 4], dcoefs[14- 4], eff[17]={0.}, deff[17]={0.}, l[17]={0.}, dl[17]={0.};
+		Float coefs[14 - 4], dcoefs[14- 4], eff[17]={0.}, deff[17]={0.}, l[17]={0.}, dl[17]={0.}, deltamukbt[17]={1.};
+
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		fusions reactions rate and rate derivative from fits */
@@ -182,10 +186,8 @@ namespace nnet::net14 {
 					             + constants::fits::fit     [i - 4][6]*t9i)*1e-9;
 
 				eff[i] = std::exp(constants::fits::fit[i - 4][0] + coefs[i - 4]);
-				rates.push_back(eff[i]);
 
 				deff[i] = eff[i]*dcoefs[i - 4];
-				drates.push_back(deff[i]);
 
 				// debuging :
 				if (net14_debug) std::cout << "dir(" << i << ")=" << eff[i] << ", coef(" << i << ")=" << coefs[i - 4];
@@ -228,13 +230,11 @@ namespace nnet::net14 {
 						- constants::fits::q  [i - 4]*val1
 						+ val2
 					);
-				rates.push_back(l[i]);
 
 				dl[i] = l[i]*(
 					  dcoefs            [i - 4]
 					+ constants::fits::q[i - 4]*val3
 					+ val4);
-				drates.push_back(dl[i]);
 
 				// debuging :
 				if (net14_debug) std::cout << (i == 4 ? "\n" : "") << "inv(" << i << ")=" << l[i];
@@ -283,14 +283,12 @@ namespace nnet::net14 {
 			    } else
 		      		eff[1]=2.90e-16*(r2abe*rbeac)*(0.01 + 0.2*(1. + 4.*std::exp(-std::pow(0.025*t9i, 3.263)))/(1. + 4.*std::exp(-std::pow(t9/0.025, 9.227))))
 		      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
-				rates.push_back(eff[1]);
 
 
 				/* 3He <- C fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
 		      	const Float rev = 2.e20*std::exp(-84.419412e0*t9i);
 		      	l[1] = eff[1]*rev*t93;
-		      	rates.push_back(l[1]);
 
 
 		      	// debuging :
@@ -307,7 +305,6 @@ namespace nnet::net14 {
 			    const Float t9a56=std::pow(t9a, 5./6.);
 
 	      		eff[14]=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
-	      		rates.push_back(eff[14]);
 
 
 	      		// debuging :
@@ -329,7 +326,6 @@ namespace nnet::net14 {
 		            eff[15]=1.72e+31*t9a56ap*t9i32*std::exp(-106.594/t9a13p)/(std::exp(-0.18*t9a2p) +
 		            	1.06e-03*std::exp(2.562*t9a23p));
 		        }
-		        rates.push_back(eff[15]);
 
 
 		        // debuging :
@@ -342,7 +338,6 @@ namespace nnet::net14 {
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			{
 				eff[16]=7.10e+36*t9i23*std::exp(-135.93*t9i13 - 0.629*t923 - 0.445*t943 + 0.0103*t92);
-				rates.push_back(eff[16]);
 
 
 				// debuging :
@@ -360,13 +355,11 @@ namespace nnet::net14 {
 	            	+ 1.76e+08/(t92*std::pow(1. + 0.2654*t9i23, 2.))*std::exp(-32.120*t9i13)
 	           			+ 1.25e+03*t9i32*std::exp(-27.499*t9i)
 	           			+ 1.43e-02*t95*std::exp(-15.541*t9i);
-				rates.push_back(eff[2]);
 
 
 				/* C + He <- O fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
 				l[2] = eff[2]*5.13e+10*t9r32*std::exp(-83.108047*t9rm1);
-				rates.push_back(l[2]);
 
 
 				// debuging :
@@ -381,13 +374,11 @@ namespace nnet::net14 {
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
 				   O + He -> Ne fusion */
 				eff[3]=(9.37e+09*t9i23*std::exp(-39.757*t9i13-t92/2.515396) + 62.1*t9i32*std::exp(-10.297*t9i) + 538.*t9i32*std::exp(-12.226*t9i) + 13.*t92*std::exp(-20.093*t9i));
-    			rates.push_back(eff[3]);
 
 
 				/* O + He <- Ne fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
 				l[3]=eff[3]*5.65e+10*t9r32*std::exp(-54.93807*t9rm1);
-				rates.push_back(l[3]);
 
 
 				// debuging :
@@ -449,8 +440,6 @@ namespace nnet::net14 {
 			    const Float drbeac=std::exp(vE)*(-195.*t9i52 + 130.*t9i32*dvE) + 2.510e7*std::exp(vF)*(-2.*t9i53*vG/3. + t9i23*dvF*vG + t9i23*dvG);
 			    deff[1] =(2.90e-16*(dr2abe*rbeac + r2abe*drbeac) + 1.35e-8*std::exp(vA)*(-1.5*t9i52 + t9i32*dvA))*1.e-9;
 
-	      		drates.push_back(deff[1]);
-
 		      	// debuging :
 				if (net14_debug) std::cout << "\ndr3a=" << deff[1] << "\n";
 	      	}
@@ -475,7 +464,6 @@ namespace nnet::net14 {
 			    const Float dvG=15.541*t9i2;
 
 	      		dl[1] = 2.00e20*std::exp(vA)*t93*(dvA*eff[1] + 3.*t9i*eff[1] + deff[1])*1.e-9;
-	      		drates.push_back(dl[1]);
 
 		      	// debuging :
 				if (net14_debug) std::cout << "drg3a=" << dl[1] << "\n";
@@ -494,7 +482,6 @@ namespace nnet::net14 {
 			    const Float dvB=28.055*dvA*std::pow(vA, -4./3.) - 6.36e-3*t92;
 
 			    deff[14]=4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
-	      		drates.push_back(deff[14]);
 
 	      		// debuging :
 				if (net14_debug) std::cout << "dr24=" << deff[14] << "\n";
@@ -522,7 +509,6 @@ namespace nnet::net14 {
 
 			        deff[15]=1.72e31*t9i32*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i+vA56*(dvB - dval/val))*std::exp(vB)/val*1.e-9;
 			    }
-	      		drates.push_back(deff[15]);
 
 		        // debuging :
 				if (net14_debug) std::cout << "dr1216=" << deff[15] << "\n";
@@ -536,7 +522,6 @@ namespace nnet::net14 {
 				const Float vA=-135.93e0*t9i13 - .629*t923 - .445*t943 + .0103*t92;
 				const Float dvA=45.31*t9i43 - .629*t9i13*2./3. - .445*t913*4./3. + .0206*t9;
 				deff[16]=7.10e36*std::exp(vA)*t9i23*(-t9i*2./3. + dvA)*1.e-9;
-	      		drates.push_back(deff[16]);
 
 				// debuging :
 				if (net14_debug) std::cout << "dr32=" << deff[16] << "\n";
@@ -566,7 +551,6 @@ namespace nnet::net14 {
        				+ 1.76e8*std::exp(vE)*t9i2*(-2.*t9i + dvE - dvD/vD)/vD
        				+ 1.25e3*std::exp(vF)*(-1.5*t9i52 + dvF*t9i32)
        				+ 1.43e-2*std::exp(vG)*(5.*t94 + dvG*t95))*1.e-9;
-	      		drates.push_back(deff[2]);
 
 	      		// debuging :
 				if (net14_debug) std::cout << "drcag=" << deff[2] << "\n";
@@ -588,7 +572,6 @@ namespace nnet::net14 {
 				/* C + He <- O fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
 				dl[2]=5.13e10*std::exp(vA)*(deff[2]*t932 + eff[2]*1.5*t912 + eff[2]*t932*dvA)*1.e-9;
-	      		drates.push_back(dl[2]);
 
 				// debuging :
 				if (net14_debug) std::cout << "droga=" << dl[2] << "\n";
@@ -600,7 +583,6 @@ namespace nnet::net14 {
 		      		+ 62.1*std::exp(vC)*(-1.5*t9i52 + t9i32*dvC)
 		      		+ 538.*std::exp(vD)*(-1.5*t9i52 + t9i32*dvD)
        				+ 13.*std::exp(vE)*(2.*t9 + t92*dvE))*1.e-9;
-	      		drates.push_back(deff[3]);
 
 	      		// debuging :
 				if (net14_debug) std::cout << "droag=" << deff[3] << "\n";
@@ -614,11 +596,68 @@ namespace nnet::net14 {
   				const Float dvA=54.903255*t9i2;
 
   				dl[3]=5.65e10*std::exp(vA)*(deff[3]*t932 + 1.5*eff[3]*t912 + eff[3]*t932*dvA)*1.e-9;
-	      		drates.push_back(dl[3]);
 
 				// debuging :
 				if (net14_debug) std::cout << "drnega=" << dl[3] << "\n\n";
 			}
+		}
+
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		correction for direct rate for columbian correction
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		{
+			/* TODO
+
+			// coulombian correction
+			Float EF=std::exp(deltamukbt[i]);
+
+			eff[i] *= *EF; // coulombian correction
+			deff[i] -= 2.*eff[i]*deltamukbt[i]/T; // coulombian correction
+			*/
+		}
+
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		push back rates
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		{
+			for (int i = 4; i < 14; ++i) {
+				rates.push_back(eff[i]);
+				drates.push_back(deff[i]);
+			}
+
+			for (int i = 4; i < 14; ++i) {
+				rates.push_back(l[i]);
+				drates.push_back(dl[i]);
+			}
+
+			rates.push_back(eff[1]);
+			drates.push_back(deff[1]);
+
+			rates.push_back(l[1]);
+			drates.push_back(dl[1]);
+
+	      	rates.push_back(eff[14]);
+	      	drates.push_back(deff[14]);
+
+		    rates.push_back(eff[15]);
+		    drates.push_back(deff[15]);
+
+			rates.push_back(eff[16]);
+			drates.push_back(deff[16]);
+
+			rates.push_back(eff[2]);
+			drates.push_back(deff[2]);
+
+			rates.push_back(l[2]);
+			drates.push_back(dl[2]);
+
+    		rates.push_back(eff[3]);
+    		drates.push_back(deff[3]);
+
+			rates.push_back(l[3]);
+			drates.push_back(dl[3]);
 		}
 
 		return {rates, drates};
