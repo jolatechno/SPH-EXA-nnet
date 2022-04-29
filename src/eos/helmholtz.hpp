@@ -271,18 +271,14 @@ namespace nnet::eos {
 	 * ...TODO
 	 */
 	template<typename Float>
-	class helmotz {
-	private:
-		double rho = 1e9;
-
-	public:
-		helmotz(Float initial_rho) : rho(initial_rho) {
+	struct helmotz {
+		helmotz() {
 			/* TODO */
 		}
 
-		std::tuple<Float, Float, Float>operator()(const std::vector<Float> &Y, const Float T) {
+		std::tuple<Float, Float, Float>operator()(const std::vector<Float> &Y, const Float T, const Float rho) {
 			/* TODO */
-			return std::tuple<Float, Float, Float>{/*cv*/2e7, rho, /*value_1*/0};
+			return std::tuple<Float, Float, Float>{/*cv*/2e7, /*drho/dt*/0., /*value_1*/0};
 		}
 	};
 }

@@ -406,8 +406,10 @@ namespace nnet {
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
 	std::tuple<Vector, Float, Float> solve_system_NR(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &A, const Vector &Y, Float T, Float &dt) {
+		const Vector &A, const Vector &Y, Float T, Float &rho, Float &dt) {
 		const int dimension = Y.size();
+
+		double cv, value_1, rho_theta, final_rho = rho;
 
 		while (true) {
 			Vector Y_theta(dimension), final_Y = Y;
@@ -420,14 +422,17 @@ namespace nnet {
 					throw;
 
 				// compute n+theta values
+				rho_theta =      (1 - constants::theta)*rho  + constants::theta*final_rho;
 				T_theta =        (1 - constants::theta)*T    + constants::theta*final_T;
 				for (int j = 0; j < dimension; ++j)
 					Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
 
 				// compute rate
-				auto [rates, drates_dT] = construct_rates(         T_theta);
-				auto BE                 = construct_BE   (Y_theta, T_theta);
-				auto [cv, rho, value_1] = eos            (Y_theta, T_theta);
+				auto [rates, drates_dT]     = construct_rates(         T_theta);
+				auto BE                     = construct_BE   (Y_theta, T_theta);
+				auto [cv, drho_dt, value_1] = eos            (Y_theta, T_theta, rho_theta);
+
+				final_rho = rho + dt*drho_dt;
 
 				// solve the system
 				Float last_T = final_T;
@@ -466,8 +471,10 @@ namespace nnet {
 			dt = std::min(dt,      (Float)constants::NR::max_dt);
 
 			// exit on condition
-			if (dT_T <= constants::NR::dT_T_tol)
+			if (dT_T <= constants::NR::dT_T_tol) {
+				rho = final_rho;
 				return {final_Y, final_T, previous_dt};
+			}
 		}
 	}
 
@@ -480,7 +487,7 @@ namespace nnet {
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
 	std::tuple<Vector, Float> solve_system_superstep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &A, const Vector &Y, const Float T, Float const dt_tot, Float &dt) {
+		const Vector &A, const Vector &Y, const Float T, Float &rho, Float const dt_tot, Float &dt) {
 
 		Float elapsed_t = 0;
 		Float used_dt = dt;
@@ -496,7 +503,7 @@ namespace nnet {
 
 			// solve system
 			auto [next_Y, next_T, this_dt] = solve_system_NR(reactions, construct_rates, construct_BE, eos,
-				A, final_Y, final_T, used_dt);
+				A, final_Y, final_T, rho, used_dt);
 			elapsed_t += this_dt;
 			final_Y = next_Y;
 			final_T = next_T;

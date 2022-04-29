@@ -6,7 +6,7 @@
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
 	const double cv = 2e7; // 1e6; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
-	const double rho = 1e9; // rho, g/cm^3
+	double rho = 1e9; // rho, g/cm^3
 	double last_T = 1e9;
 
 	// initial state
@@ -30,15 +30,15 @@ int main() {
 
 
 
-	auto const eos = [&](const std::vector<double> &Y_, const double T) {
-		return std::tuple<double, double, double>{cv, rho, value_1};
+	auto const eos = [&](const std::vector<double> &Y_, const double T, const double rho_) {
+		return std::tuple<double, double, double>{cv, 0, value_1};
 	};
 
 
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
 		auto [Y, T] = nnet::solve_system_superstep(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, eos,
-			nnet::net14::constants::A, last_Y, last_T, dt, small_dt);
+			nnet::net14::constants::A, last_Y, last_T, rho, dt, small_dt);
 		t += dt;
 
 		// debug print
