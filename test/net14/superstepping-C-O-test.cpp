@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "../src/nuclear-net.hpp"
-#include "../src/net14/net14.hpp"
+#include "../../src/nuclear-net.hpp"
+#include "../../src/net14/net14.hpp"
 
 int main() {
 	const double value_1 = 0; // typical v1 from net14 fortran
