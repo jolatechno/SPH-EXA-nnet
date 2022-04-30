@@ -96,7 +96,7 @@ int main() {
 
 		// solve the system
 		auto [Y, T] = nnet::solve_system(reactions, rate, drates_dT,
-			BE, m, last_Y,
+			BE, last_Y,
 			last_T, cv, rho, value_1, dt);
 
 		 m_tot = eigen::dot(Y, m);

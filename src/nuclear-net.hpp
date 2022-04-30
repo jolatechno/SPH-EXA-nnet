@@ -172,7 +172,7 @@ namespace nnet {
 	 */
 	template<typename Float, class Vector>
 	eigen::matrix<Float> order_1_dY_from_reactions(const std::vector<reaction> &reactions, const Vector &rates,
-		Vector const &A, Vector const &Y,
+		Vector const &Y,
 		const Float rho) {
 		const int dimension = Y.size();
 
@@ -211,24 +211,12 @@ namespace nnet {
 
 				// insert consumption rates
 				for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
-					if (other_reactant_id != reactant_id)
-						M(other_reactant_id, reactant_id) -= this_rate*other_n_reactant_consumed;
+					M(other_reactant_id, reactant_id) -= this_rate*other_n_reactant_consumed;
 
 				// insert production rates
 				for (auto const [product_id, n_product_produced] : Reaction.products)
 					M(product_id, reactant_id) += this_rate*n_product_produced;
 			}
-		}
-
-		// correct mass gain rate
-		for (int i = 0; i < dimension; ++i) {
-			// compute the discripency
-			Float mass_gain_rate = 0;
-			for (int j = 0; j < dimension; ++j)
-				mass_gain_rate += M(j, i)*A[j];
-
-			// correct it
-			M(i, i) -= mass_gain_rate/A[i];
 		}
 
 		return M;
@@ -243,7 +231,7 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class Vector, typename Float>
-	std::pair<Vector, Float> solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE, const Vector &A, 
+	std::pair<Vector, Float> solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE, 
 		const Vector &Y, const Float T, const Vector &Y_guess, const Float T_guess,
 		const Float cv, const Float rho, const Float value_1, const Float dt) {
 		/* -------------------
@@ -269,7 +257,7 @@ namespace nnet {
 			RHS[i] = dY_dt[i - 1]*dt;
 
 		// main matrix part
-		eigen::matrix<Float> MpYY = order_1_dY_from_reactions(reactions, rates, A, Y_guess, rho);
+		eigen::matrix<Float> MpYY = order_1_dY_from_reactions(reactions, rates, Y_guess, rho);
 		for (int i = 0; i < dimension; ++i) {
 			// diagonal terms
 			Mp(i + 1, i + 1) = 1.      -constants::theta*dt*MpYY(i, i);
@@ -350,11 +338,11 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class Vector, typename Float>
-	std::pair<Vector, Float> solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE, const Vector &A, 
+	std::pair<Vector, Float> solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE,
 		const Vector &Y, const Float T,
 		const Float cv, const Float rho, const Float value_1, const Float dt) {
 		return solve_system_from_guess(reactions, rates, drates_dT, 
-			BE, A, 
+			BE,
 			Y, T, Y, T,
 			cv, rho, value_1, dt);
 	}
@@ -368,15 +356,14 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class Vector, typename Float>
-	std::tuple<Vector, Float, Float> solve_system_var_timestep(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE, const Vector &A, 
+	std::tuple<Vector, Float, Float> solve_system_var_timestep(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE,
 		const Vector &Y, const Float T,
 		const Float cv, const Float rho, const Float value_1, Float &dt) {
-		const Float m_in = eigen::dot(Y, A);
 
 		// actual solving
 		while (true) {
 			// solve the system
-			auto [next_Y, next_T] = solve_system(reactions, rates, drates_dT, BE, A, Y, T, cv, rho, value_1, dt);
+			auto [next_Y, next_T] = solve_system(reactions, rates, drates_dT, BE, Y, T, cv, rho, value_1, dt);
 
 			// cleanup Vector
 			utils::clip(next_Y, nnet::constants::epsilon_vector);
@@ -406,7 +393,7 @@ namespace nnet {
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
 	std::tuple<Vector, Float, Float> solve_system_NR(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &A, const Vector &Y, Float T, const Float rho, const Float drho_dt, Float &dt) {
+		const Vector &Y, Float T, const Float rho, const Float drho_dt, Float &dt) {
 		const int dimension = Y.size();
 
 		while (true) {
@@ -435,7 +422,7 @@ namespace nnet {
 				// solve the system
 				Float last_T = final_T;
 				std::tie(final_Y, final_T) = solve_system_from_guess(
-					reactions, rates, drates_dT, BE, A,
+					reactions, rates, drates_dT, BE,
 					Y, T, Y_theta, T_theta,
 					eos_struct.cv, rho, value_1, dt);
 
@@ -483,7 +470,7 @@ namespace nnet {
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
 	std::tuple<Vector, Float> solve_system_superstep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &A, const Vector &Y, const Float T, const Float rho, const Float drho_dt, Float const dt_tot, Float &dt) {
+		const Vector &Y, const Float T, const Float rho, const Float drho_dt, Float const dt_tot, Float &dt) {
 
 		Float elapsed_t = 0;
 		Float used_dt = dt;
@@ -499,7 +486,7 @@ namespace nnet {
 
 			// solve system
 			auto [next_Y, next_T, this_dt] = solve_system_NR(reactions, construct_rates, construct_BE, eos,
-				A, final_Y, final_T, rho, drho_dt, used_dt);
+				final_Y, final_T, rho, drho_dt, used_dt);
 			elapsed_t += this_dt;
 			final_Y = next_Y;
 			final_T = next_T;
