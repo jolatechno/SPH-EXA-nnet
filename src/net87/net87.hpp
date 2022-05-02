@@ -203,10 +203,10 @@ namespace nnet::net87::constants {
 		fusions and fissions reactions from fits
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 
-		Float coefs[14 - 4], dcoefs[14- 4],
-			eff[16]={0.}, deff[16]={0.},
-			l[16]={0.}, dl[16]={0.},
-			mukbt[16]={0.}, deltamukbt[16]={0.};
+		Float coefs[157 - 7], dcoefs[157 - 7],
+			eff[157]={0.}, deff[157]={0.},
+			l[157]={0.}, dl[157]={0.},
+			mukbt[157]={0.}, deltamukbt[157]={0.};
 
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -247,7 +247,7 @@ namespace nnet::net87::constants {
 				- Cr + He -> Fe
 				- Fe + He -> Ni
 				- Ni + He -> Zn */
-			for (int i = 4; i < 14; ++i) {
+			for (int i = 7; i < 157; ++i) {
 				coefs[i - 4] = 
 					  constants::fits::fit[i - 4][1]*t9i
 					+ constants::fits::fit[i - 4][2]*t9i13
@@ -300,7 +300,7 @@ namespace nnet::net87::constants {
 				- Fe + He <- Ni
 				- Ni + He <- Zn */
 			const int k = constants::fits::get_temperature_range(T);
-			for (int i = 4; i < 14; ++i) {
+			for (int i = 7; i < 157; ++i) {
 				l[i - 1] = constants::fits::choose[i - 4][k]/constants::fits::choose[i + 1 - 4][k]*
 					std::exp(
 						  coefs               [i - 4]
@@ -700,16 +700,8 @@ namespace nnet::net87::constants {
 		    	const double d1 = -.86097;
 		    	const double e1 = 2.520058332;
 
-		    	for (int i = 0; i < 14; ++i) {
-		    		mukbt[i] = 0.;
-		    		deltamukbt[i] = 0;
-		    	}
-		    	deltamukbt[15] = 0.;
-      			deltamukbt[16] = 0.;
-
-
 		    	// compute mukbt
-				for (int i = 0; i < 14; ++i) {
+				for (int i = 1; i < 87; ++i) {
 					const double gamp = gam*std::pow(constants::Z[i], 5./3.);
 			        const double sqrootgamp = std::sqrt(gamp);
 			        const double sqroot2gamp = std::sqrt(sqrootgamp);
@@ -719,9 +711,13 @@ namespace nnet::net87::constants {
 			            mukbt[i]=a1*gamp + 4.*(b1*sqroot2gamp - c1/sqroot2gamp) + d1*std::log(gamp) - e1;
 				}
 
+				// mu for neutrons must be zero
+				mukbt[2] = 0;
+
 				// compute deltamukbt
-				for (int i = 0; i < 14; ++i)
-					deltamukbt[i] = mukbt[i] + mukbt[0] - mukbt[i + 1];
+				for (int i = 0; i < 157; ++i)
+					if (i != 3 && i != 4)
+						deltamukbt[i] = mukbt[i] + mukbt[0] - mukbt[i + 1];
 
 				// Triple alpha correction
 				deltamukbt[0] += mukbt[0];
@@ -750,12 +746,12 @@ namespace nnet::net87::constants {
 		push back rates
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 		{
-			for (int i = 4; i < 14; ++i) {
+			for (int i = 7; i < 157; ++i) {
 				 rates.push_back(eff [i - 1]);
 				drates.push_back(deff[i - 1]);
 			}
 
-			for (int i = 4; i < 14; ++i) {
+			for (int i = 7; i < 157; ++i) {
 				 rates.push_back(l [i - 1]);
 				drates.push_back(dl[i - 1]);
 			}

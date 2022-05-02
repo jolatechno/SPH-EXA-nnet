@@ -627,14 +627,6 @@ namespace nnet::net14 {
 		    	const double d1 = -.86097;
 		    	const double e1 = 2.520058332;
 
-		    	for (int i = 0; i < 14; ++i) {
-		    		mukbt[i] = 0.;
-		    		deltamukbt[i] = 0;
-		    	}
-		    	deltamukbt[15] = 0.;
-      			deltamukbt[16] = 0.;
-
-
 		    	// compute mukbt
 				for (int i = 0; i < 14; ++i) {
 					const double gamp = gam*std::pow(constants::Z[i], 5./3.);
