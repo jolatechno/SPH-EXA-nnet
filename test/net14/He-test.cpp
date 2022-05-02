@@ -42,7 +42,7 @@ int main() {
 
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
-		auto [Y, T, current_dt] = solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, eos,
+		auto [Y, T, current_dt] = solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, /*helm_eos*/ eos,
 			last_Y, last_T, rho, 0., dt);
 		t += current_dt;
 

@@ -131,8 +131,8 @@ namespace nnet::net14 {
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 
 		Float coefs[14 - 4], dcoefs[14- 4],
-			eff[17]={0.}, deff[17]={0.},
-			l[17]={0.}, dl[17]={0.},
+			eff[16]={0.}, deff[16]={0.},
+			l[16]={0.}, dl[16]={0.},
 			mukbt[16]={0.}, deltamukbt[16]={0.};
 
 
@@ -190,13 +190,13 @@ namespace nnet::net14 {
 					             + constants::fits::fit     [i - 4][4]
 					             + constants::fits::fit     [i - 4][6]*t9i)*1e-9;
 
-				eff[i] = std::exp(constants::fits::fit[i - 4][0] + coefs[i - 4]);
+				eff[i - 1] = std::exp(constants::fits::fit[i - 4][0] + coefs[i - 4]);
 
-				deff[i] = eff[i]*dcoefs[i - 4];
+				deff[i - 1] = eff[i - 1]*dcoefs[i - 4];
 
 				// debuging :
-				if (debug) std::cout << "dir(" << i << ")=" << eff[i] << ", coef(" << i << ")=" << coefs[i - 4];
-				if (debug) std::cout << "\tddir(" << i << ")=" << deff[i] << ", dcoef(" << i << ")=" << dcoefs[i - 4] << "\n";
+				if (debug) std::cout << "dir(" << i << ")=" << eff[i - 1] << ", coef(" << i << ")=" << coefs[i - 4];
+				if (debug) std::cout << "\tddir(" << i << ")=" << deff[i - 1] << ", dcoef(" << i << ")=" << dcoefs[i - 4] << "\n";
 			}
 		}
 
@@ -228,7 +228,7 @@ namespace nnet::net14 {
 				- Ni + He <- Zn */
 			const int k = constants::fits::get_temperature_range(T);
 			for (int i = 4; i < 14; ++i) {
-				l[i] = constants::fits::choose[i - 4][k]/constants::fits::choose[i + 1 - 4][k]*
+				l[i - 1] = constants::fits::choose[i - 4][k]/constants::fits::choose[i + 1 - 4][k]*
 					std::exp(
 						  coefs               [i - 4]
 						+ constants::fits::fit[i - 4][7]
@@ -236,14 +236,14 @@ namespace nnet::net14 {
 						+ val2
 					);
 
-				dl[i] = l[i]*(
+				dl[i - 1] = l[i - 1]*(
 					  dcoefs            [i - 4]
 					+ constants::fits::q[i - 4]*val3
 					+ val4);
 
 				// debuging :
-				if (debug) std::cout << (i == 4 ? "\n" : "") << "inv(" << i << ")=" << l[i];
-				if (debug) std::cout << "\tdinv(" << i << ")=" << dl[i] << "\n";
+				if (debug) std::cout << (i == 4 ? "\n" : "") << "inv(" << i << ")=" << l[i - 1];
+				if (debug) std::cout << "\tdinv(" << i << ")=" << dl[i - 1] << "\n";
 			}
 		}
 
@@ -283,21 +283,21 @@ namespace nnet::net14 {
 	      		Float rbeac = (130.*t9i32)*std::exp(-3.3364*t9i)
 	      			+ 2.510e+07*t9i23*std::exp(-23.57*t9i13 - t92/0.055225)*(1. + 0.018*t913 + 5.249*t923 + 0.650*t9 + 19.176*t943 + 6.034*t953);
 				if(T > 8e7) {
-		      		eff[1]=2.90e-16*(r2abe*rbeac)
+		      		eff[0]=2.90e-16*(r2abe*rbeac)
 		      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
 			    } else
-		      		eff[1]=2.90e-16*(r2abe*rbeac)*(0.01 + 0.2*(1. + 4.*std::exp(-std::pow(0.025*t9i, 3.263)))/(1. + 4.*std::exp(-std::pow(t9/0.025, 9.227))))
+		      		eff[0]=2.90e-16*(r2abe*rbeac)*(0.01 + 0.2*(1. + 4.*std::exp(-std::pow(0.025*t9i, 3.263)))/(1. + 4.*std::exp(-std::pow(t9/0.025, 9.227))))
 		      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
 
 
 				/* 3He <- C fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
 		      	const Float rev = 2.e20*std::exp(-84.419412e0*t9i);
-		      	l[1] = eff[1]*rev*t93;
+		      	l[0] = eff[0]*rev*t93;
 
 
 		      	// debuging :
-				if (debug) std::cout << "\nr3a=" << eff[1] << ", rg3a=" << l[1] << "\n";
+				if (debug) std::cout << "\nr3a=" << eff[0] << ", rg3a=" << l[0] << "\n";
 		    }
 
 		    
@@ -309,11 +309,11 @@ namespace nnet::net14 {
 			    const Float t9a13=std::pow(t9a, 1./3.);
 			    const Float t9a56=std::pow(t9a, 5./6.);
 
-	      		eff[14]=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
+	      		eff[13]=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
 
 
 	      		// debuging :
-				if (debug) std::cout << "r24=" << eff[14];
+				if (debug) std::cout << "r24=" << eff[13];
 			}
 
 
@@ -321,20 +321,20 @@ namespace nnet::net14 {
 			C + O -> Mg + He fusion
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			{	
-				eff[15] = 0;
+				eff[14] = 0;
 				if (T >= 5e8) {
 		            const Float t9ap=t9/(1. + 0.055*t9);
 		            const Float t9a2p=t9ap*t9ap;
 		            const Float t9a13p=std::pow(t9ap, 1./3.);
 		            const Float t9a23p=t9a13p*t9a13p;
 		            const Float t9a56ap=std::pow(t9ap, 5./6.);
-		            eff[15]=1.72e+31*t9a56ap*t9i32*std::exp(-106.594/t9a13p)/(std::exp(-0.18*t9a2p) +
+		            eff[14]=1.72e+31*t9a56ap*t9i32*std::exp(-106.594/t9a13p)/(std::exp(-0.18*t9a2p) +
 		            	1.06e-03*std::exp(2.562*t9a23p));
 		        }
 
 
 		        // debuging :
-				if (debug) std::cout << ", r1216=" << eff[15] << "\n";
+				if (debug) std::cout << ", r1216=" << eff[14] << "\n";
 			}
 
 
@@ -342,11 +342,11 @@ namespace nnet::net14 {
 			2O -> Si + He fusion
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			{
-				eff[16]=7.10e+36*t9i23*std::exp(-135.93*t9i13 - 0.629*t923 - 0.445*t943 + 0.0103*t92);
+				eff[15]=7.10e+36*t9i23*std::exp(-135.93*t9i13 - 0.629*t923 - 0.445*t943 + 0.0103*t92);
 
 
 				// debuging :
-				if (debug) std::cout << "r32=" << eff[16] << "\n";
+				if (debug) std::cout << "r32=" << eff[15] << "\n";
 			}
 
 
@@ -356,7 +356,7 @@ namespace nnet::net14 {
 			{
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
 				   C + He -> O fusion */
-				eff[2] = 1.04e+08/(t92*std::pow(1. + 0.0489*t9i23, 2.))*std::exp(-32.120*t9i13-t92/12.222016)
+				eff[1] = 1.04e+08/(t92*std::pow(1. + 0.0489*t9i23, 2.))*std::exp(-32.120*t9i13-t92/12.222016)
 	            	+ 1.76e+08/(t92*std::pow(1. + 0.2654*t9i23, 2.))*std::exp(-32.120*t9i13)
 	           			+ 1.25e+03*t9i32*std::exp(-27.499*t9i)
 	           			+ 1.43e-02*t95*std::exp(-15.541*t9i);
@@ -364,11 +364,11 @@ namespace nnet::net14 {
 
 				/* C + He <- O fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
-				l[2] = eff[2]*5.13e+10*t9r32*std::exp(-83.108047*t9rm1);
+				l[1] = eff[1]*5.13e+10*t9r32*std::exp(-83.108047*t9rm1);
 
 
 				// debuging :
-				if (debug) std::cout << "rcag=" << eff[2] << ", roga=" << l[2] << "\n";
+				if (debug) std::cout << "rcag=" << eff[1] << ", roga=" << l[1] << "\n";
 			}
 
 
@@ -378,16 +378,16 @@ namespace nnet::net14 {
 			{
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
 				   O + He -> Ne fusion */
-				eff[3]=(9.37e+09*t9i23*std::exp(-39.757*t9i13-t92/2.515396) + 62.1*t9i32*std::exp(-10.297*t9i) + 538.*t9i32*std::exp(-12.226*t9i) + 13.*t92*std::exp(-20.093*t9i));
+				eff[2]=(9.37e+09*t9i23*std::exp(-39.757*t9i13-t92/2.515396) + 62.1*t9i32*std::exp(-10.297*t9i) + 538.*t9i32*std::exp(-12.226*t9i) + 13.*t92*std::exp(-20.093*t9i));
 
 
 				/* O + He <- Ne fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
-				l[3]=eff[3]*5.65e+10*t9r32*std::exp(-54.93807*t9rm1);
+				l[2]=eff[2]*5.65e+10*t9r32*std::exp(-54.93807*t9rm1);
 
 
 				// debuging :
-				if (debug) std::cout << "roag=" << eff[3] << ", rnega=" << l[3] << "\n\n";
+				if (debug) std::cout << "roag=" << eff[2] << ", rnega=" << l[2] << "\n\n";
 			}
 		}
 
@@ -443,10 +443,10 @@ namespace nnet::net14 {
 			    const Float rbeac=130.*t9i32*std::exp(vE) + 2.510e7*t9i23*vG*std::exp(vF);
 			    const Float dr2abe=std::exp(vB)*(-1.11e6*t9i52 + 7.4e5*t9i32*dvB) + 4.164e9*std::exp(vC)*(-t9i53*vD*2./3. + t9i23*dvC*vD + t9i23*dvD);
 			    const Float drbeac=std::exp(vE)*(-195.*t9i52 + 130.*t9i32*dvE) + 2.510e7*std::exp(vF)*(-2.*t9i53*vG/3. + t9i23*dvF*vG + t9i23*dvG);
-			    deff[1] =(2.90e-16*(dr2abe*rbeac + r2abe*drbeac) + 1.35e-8*std::exp(vA)*(-1.5*t9i52 + t9i32*dvA))*1.e-9;
+			    deff[0] =(2.90e-16*(dr2abe*rbeac + r2abe*drbeac) + 1.35e-8*std::exp(vA)*(-1.5*t9i52 + t9i32*dvA))*1.e-9;
 
 		      	// debuging :
-				if (debug) std::cout << "\ndr3a=" << deff[1] << "\n";
+				if (debug) std::cout << "\ndr3a=" << deff[0] << "\n";
 	      	}
 
 
@@ -468,10 +468,10 @@ namespace nnet::net14 {
 			    const Float dvF=27.499*t9i2;
 			    const Float dvG=15.541*t9i2;
 
-	      		dl[1] = 2.00e20*std::exp(vA)*t93*(dvA*eff[1] + 3.*t9i*eff[1] + deff[1])*1.e-9;
+	      		dl[0] = 2.00e20*std::exp(vA)*t93*(dvA*eff[0] + 3.*t9i*eff[0] + deff[0])*1.e-9;
 
 		      	// debuging :
-				if (debug) std::cout << "drg3a=" << dl[1] << "\n";
+				if (debug) std::cout << "drg3a=" << dl[0] << "\n";
 			}
 
 		    
@@ -486,10 +486,10 @@ namespace nnet::net14 {
 			    const Float dvA=vA*vA*t9i2;
 			    const Float dvB=28.055*dvA*std::pow(vA, -4./3.) - 6.36e-3*t92;
 
-			    deff[14]=4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
+			    deff[13]=4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
 
 	      		// debuging :
-				if (debug) std::cout << "dr24=" << deff[14] << "\n";
+				if (debug) std::cout << "dr24=" << deff[13] << "\n";
 			}
 
 
@@ -512,11 +512,11 @@ namespace nnet::net14 {
 			        const Float dval=dvC*std::exp(vC)+1.06e-3*dvD*std::exp(vD);
 
 
-			        deff[15]=1.72e31*t9i32*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i+vA56*(dvB - dval/val))*std::exp(vB)/val*1.e-9;
+			        deff[14]=1.72e31*t9i32*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i+vA56*(dvB - dval/val))*std::exp(vB)/val*1.e-9;
 			    }
 
 		        // debuging :
-				if (debug) std::cout << "dr1216=" << deff[15] << "\n";
+				if (debug) std::cout << "dr1216=" << deff[14] << "\n";
 			}
 
 
@@ -526,10 +526,10 @@ namespace nnet::net14 {
 			{
 				const Float vA=-135.93e0*t9i13 - .629*t923 - .445*t943 + .0103*t92;
 				const Float dvA=45.31*t9i43 - .629*t9i13*2./3. - .445*t913*4./3. + .0206*t9;
-				deff[16]=7.10e36*std::exp(vA)*t9i23*(-t9i*2./3. + dvA)*1.e-9;
+				deff[15]=7.10e36*std::exp(vA)*t9i23*(-t9i*2./3. + dvA)*1.e-9;
 
 				// debuging :
-				if (debug) std::cout << "dr32=" << deff[16] << "\n";
+				if (debug) std::cout << "dr32=" << deff[15] << "\n";
 			}
 
 
@@ -552,13 +552,13 @@ namespace nnet::net14 {
 			    const Float dvG=15.541*t9i2;
 
 				
-	      		deff[2]=(1.04e8*std::exp(vC)*t9i2*(-2.*t9i + dvC - dvB/vB)/vB
+	      		deff[1]=(1.04e8*std::exp(vC)*t9i2*(-2.*t9i + dvC - dvB/vB)/vB
        				+ 1.76e8*std::exp(vE)*t9i2*(-2.*t9i + dvE - dvD/vD)/vD
        				+ 1.25e3*std::exp(vF)*(-1.5*t9i52 + dvF*t9i32)
        				+ 1.43e-2*std::exp(vG)*(5.*t94 + dvG*t95))*1.e-9;
 
 	      		// debuging :
-				if (debug) std::cout << "drcag=" << deff[2] << "\n";
+				if (debug) std::cout << "drcag=" << deff[1] << "\n";
 	      	}
 
 			
@@ -576,21 +576,21 @@ namespace nnet::net14 {
 
 				/* C + He <- O fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
-				dl[2]=5.13e10*std::exp(vA)*(deff[2]*t932 + eff[2]*1.5*t912 + eff[2]*t932*dvA)*1.e-9;
+				dl[1]=5.13e10*std::exp(vA)*(deff[2]*t932 + eff[1]*1.5*t912 + eff[1]*t932*dvA)*1.e-9;
 
 				// debuging :
-				if (debug) std::cout << "droga=" << dl[2] << "\n";
+				if (debug) std::cout << "droga=" << dl[1] << "\n";
 
 
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
 				   O + He -> Ne fusion */
-    			deff[3] = (9.37e9*std::exp(vB)*(-t9i53*2./3. + t9i23*dvB)
+    			deff[2] = (9.37e9*std::exp(vB)*(-t9i53*2./3. + t9i23*dvB)
 		      		+ 62.1*std::exp(vC)*(-1.5*t9i52 + t9i32*dvC)
 		      		+ 538.*std::exp(vD)*(-1.5*t9i52 + t9i32*dvD)
        				+ 13.*std::exp(vE)*(2.*t9 + t92*dvE))*1.e-9;
 
 	      		// debuging :
-				if (debug) std::cout << "droag=" << deff[3] << "\n";
+				if (debug) std::cout << "droag=" << deff[2] << "\n";
 			}
 
 
@@ -600,10 +600,10 @@ namespace nnet::net14 {
 	      		const Float vA=-54.903255*t9i;
   				const Float dvA=54.903255*t9i2;
 
-  				dl[3]=5.65e10*std::exp(vA)*(deff[3]*t932 + 1.5*eff[3]*t912 + eff[3]*t932*dvA)*1.e-9;
+  				dl[2]=5.65e10*std::exp(vA)*(deff[2]*t932 + 1.5*eff[2]*t912 + eff[2]*t932*dvA)*1.e-9;
 
 				// debuging :
-				if (debug) std::cout << "drnega=" << dl[3] << "\n\n";
+				if (debug) std::cout << "drnega=" << dl[2] << "\n\n";
 			}
 		}
 
@@ -662,13 +662,13 @@ namespace nnet::net14 {
 
 			/* correction for direct rate for coulumbian correction
 			!!!!!!!!!!!!!!!!!!!!!!!! */
-			for (int i = 1; i < 17; ++i) {
+			for (int i = 0; i < 16; ++i) {
 				Float EF = std::exp(deltamukbt[i - 1]);
 		        eff [i] = eff [i]*EF;
-		        deff[i] = deff[i]*EF - 2.*eff[i]*deltamukbt[i - 1]/T;
+		        deff[i] = deff[i]*EF - 2.*eff[i]*deltamukbt[i]/T;
 
 		        // debuging :
-				if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i - 1] << ", mukbt[" << i << "]=" << mukbt[i - 1] << (i == 16 ? "\n\n" : "\n");
+				if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 15 ? "\n\n" : "\n");
 			}
 		}
 
@@ -678,41 +678,41 @@ namespace nnet::net14 {
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 		{
 			for (int i = 4; i < 14; ++i) {
-				rates.push_back(eff[i]);
-				drates.push_back(deff[i]);
+				 rates.push_back(eff [i - 1]);
+				drates.push_back(deff[i - 1]);
 			}
 
 			for (int i = 4; i < 14; ++i) {
-				rates.push_back(l[i]);
-				drates.push_back(dl[i]);
+				 rates.push_back(l [i - 1]);
+				drates.push_back(dl[i - 1]);
 			}
 
-			rates.push_back(eff[1]);
+			 rates.push_back(eff [0]);
+			drates.push_back(deff[0]);
+
+			 rates.push_back(l [0]);
+			drates.push_back(dl[0]);
+
+	      	 rates.push_back(eff [13]);
+	      	drates.push_back(deff[13]);
+
+		     rates.push_back(eff [14]);
+		    drates.push_back(deff[14]);
+
+			 rates.push_back(eff [15]);
+			drates.push_back(deff[15]);
+
+			 rates.push_back(eff [1]);
 			drates.push_back(deff[1]);
 
-			rates.push_back(l[1]);
+			 rates.push_back(l [1]);
 			drates.push_back(dl[1]);
 
-	      	rates.push_back(eff[14]);
-	      	drates.push_back(deff[14]);
+    		 rates.push_back(eff [2]);
+    		drates.push_back(deff[2]);
 
-		    rates.push_back(eff[15]);
-		    drates.push_back(deff[15]);
-
-			rates.push_back(eff[16]);
-			drates.push_back(deff[16]);
-
-			rates.push_back(eff[2]);
-			drates.push_back(deff[2]);
-
-			rates.push_back(l[2]);
+			 rates.push_back(l [2]);
 			drates.push_back(dl[2]);
-
-    		rates.push_back(eff[3]);
-    		drates.push_back(deff[3]);
-
-			rates.push_back(l[3]);
-			drates.push_back(dl[3]);
 		}
 
 		return {rates, drates};
