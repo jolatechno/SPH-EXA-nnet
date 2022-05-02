@@ -335,7 +335,7 @@ namespace nnet::eos {
 
 	public:
 		helmholtz(const std::vector<Float> &A_, const std::vector<Float> &Z_) : A(A_), Z(Z_) {}
-		auto operator()(const std::vector<Float> &Y, const Float T, const Float rho) {
+		auto operator()(const std::vector<Float> &Y, const Float T, const Float rho) const {
 			const int dimension = Y.size();
 
 			// compute abar and zbar
@@ -808,7 +808,9 @@ namespace nnet::eos {
 				dscouldt = y*plasgdt;
 				dscoulda = y*plasgda - scoul/abar;
 				dscouldz = y*plasgdz;
-			} else if (plasg < 1.) { //yakovlev & shalybkov 1989 equations 102, 103, 104
+
+			//yakovlev & shalybkov 1989 equations 102, 103, 104
+			} else if (plasg < 1.) {
 				x        = plasg*std::sqrt(plasg);
 				y        = std::pow(plasg, helmholtz_constants::b2);
 				z        = helmholtz_constants::c2*x - helmholtz_constants::a2*y/3.;

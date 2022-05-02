@@ -8,12 +8,13 @@
 #include <vector>
 #include <tuple>
 
-/* !!!!!!!!!!!!
-debuging :
-!!!!!!!!!!!! */
-bool net14_debug = false;
 
 namespace nnet {
+	/* !!!!!!!!!!!!
+	debuging :
+	!!!!!!!!!!!! */
+	bool debug = false;
+
 	namespace constants {
 		/// theta for the implicit method
 		double theta = 0.9;
@@ -294,7 +295,7 @@ namespace nnet {
 
 		// !!!!!!!!!!
 		// debuging:
-		if (net14_debug) {
+		if (debug) {
 			std::cout << "BE=";
 			for (int i = 0; i < dimension; ++i)
 				std::cout << "\t" << BE[i];

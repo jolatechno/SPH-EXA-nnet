@@ -152,7 +152,7 @@ namespace nnet::net14 {
 			const Float lt9=std::log(t9);
 
 			// debuging :
-			if (net14_debug) std::cout << "t9=" << t9
+			if (debug) std::cout << "t9=" << t9
 				<< ", t913=" << t913
 				<< ", t923=" << t923
 				<< ", t953=" << t953
@@ -195,8 +195,8 @@ namespace nnet::net14 {
 				deff[i] = eff[i]*dcoefs[i - 4];
 
 				// debuging :
-				if (net14_debug) std::cout << "dir(" << i << ")=" << eff[i] << ", coef(" << i << ")=" << coefs[i - 4];
-				if (net14_debug) std::cout << "\tddir(" << i << ")=" << deff[i] << ", dcoef(" << i << ")=" << dcoefs[i - 4] << "\n";
+				if (debug) std::cout << "dir(" << i << ")=" << eff[i] << ", coef(" << i << ")=" << coefs[i - 4];
+				if (debug) std::cout << "\tddir(" << i << ")=" << deff[i] << ", dcoef(" << i << ")=" << dcoefs[i - 4] << "\n";
 			}
 		}
 
@@ -242,8 +242,8 @@ namespace nnet::net14 {
 					+ val4);
 
 				// debuging :
-				if (net14_debug) std::cout << (i == 4 ? "\n" : "") << "inv(" << i << ")=" << l[i];
-				if (net14_debug) std::cout << "\tdinv(" << i << ")=" << dl[i] << "\n";
+				if (debug) std::cout << (i == 4 ? "\n" : "") << "inv(" << i << ")=" << l[i];
+				if (debug) std::cout << "\tdinv(" << i << ")=" << dl[i] << "\n";
 			}
 		}
 
@@ -297,7 +297,7 @@ namespace nnet::net14 {
 
 
 		      	// debuging :
-				if (net14_debug) std::cout << "\nr3a=" << eff[1] << ", rg3a=" << l[1] << "\n";
+				if (debug) std::cout << "\nr3a=" << eff[1] << ", rg3a=" << l[1] << "\n";
 		    }
 
 		    
@@ -313,7 +313,7 @@ namespace nnet::net14 {
 
 
 	      		// debuging :
-				if (net14_debug) std::cout << "r24=" << eff[14];
+				if (debug) std::cout << "r24=" << eff[14];
 			}
 
 
@@ -334,7 +334,7 @@ namespace nnet::net14 {
 
 
 		        // debuging :
-				if (net14_debug) std::cout << ", r1216=" << eff[15] << "\n";
+				if (debug) std::cout << ", r1216=" << eff[15] << "\n";
 			}
 
 
@@ -346,7 +346,7 @@ namespace nnet::net14 {
 
 
 				// debuging :
-				if (net14_debug) std::cout << "r32=" << eff[16] << "\n";
+				if (debug) std::cout << "r32=" << eff[16] << "\n";
 			}
 
 
@@ -368,7 +368,7 @@ namespace nnet::net14 {
 
 
 				// debuging :
-				if (net14_debug) std::cout << "rcag=" << eff[2] << ", roga=" << l[2] << "\n";
+				if (debug) std::cout << "rcag=" << eff[2] << ", roga=" << l[2] << "\n";
 			}
 
 
@@ -387,7 +387,7 @@ namespace nnet::net14 {
 
 
 				// debuging :
-				if (net14_debug) std::cout << "roag=" << eff[3] << ", rnega=" << l[3] << "\n\n";
+				if (debug) std::cout << "roag=" << eff[3] << ", rnega=" << l[3] << "\n\n";
 			}
 		}
 
@@ -446,7 +446,7 @@ namespace nnet::net14 {
 			    deff[1] =(2.90e-16*(dr2abe*rbeac + r2abe*drbeac) + 1.35e-8*std::exp(vA)*(-1.5*t9i52 + t9i32*dvA))*1.e-9;
 
 		      	// debuging :
-				if (net14_debug) std::cout << "\ndr3a=" << deff[1] << "\n";
+				if (debug) std::cout << "\ndr3a=" << deff[1] << "\n";
 	      	}
 
 
@@ -471,7 +471,7 @@ namespace nnet::net14 {
 	      		dl[1] = 2.00e20*std::exp(vA)*t93*(dvA*eff[1] + 3.*t9i*eff[1] + deff[1])*1.e-9;
 
 		      	// debuging :
-				if (net14_debug) std::cout << "drg3a=" << dl[1] << "\n";
+				if (debug) std::cout << "drg3a=" << dl[1] << "\n";
 			}
 
 		    
@@ -489,7 +489,7 @@ namespace nnet::net14 {
 			    deff[14]=4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
 
 	      		// debuging :
-				if (net14_debug) std::cout << "dr24=" << deff[14] << "\n";
+				if (debug) std::cout << "dr24=" << deff[14] << "\n";
 			}
 
 
@@ -516,7 +516,7 @@ namespace nnet::net14 {
 			    }
 
 		        // debuging :
-				if (net14_debug) std::cout << "dr1216=" << deff[15] << "\n";
+				if (debug) std::cout << "dr1216=" << deff[15] << "\n";
 			}
 
 
@@ -529,7 +529,7 @@ namespace nnet::net14 {
 				deff[16]=7.10e36*std::exp(vA)*t9i23*(-t9i*2./3. + dvA)*1.e-9;
 
 				// debuging :
-				if (net14_debug) std::cout << "dr32=" << deff[16] << "\n";
+				if (debug) std::cout << "dr32=" << deff[16] << "\n";
 			}
 
 
@@ -558,7 +558,7 @@ namespace nnet::net14 {
        				+ 1.43e-2*std::exp(vG)*(5.*t94 + dvG*t95))*1.e-9;
 
 	      		// debuging :
-				if (net14_debug) std::cout << "drcag=" << deff[2] << "\n";
+				if (debug) std::cout << "drcag=" << deff[2] << "\n";
 	      	}
 
 			
@@ -579,7 +579,7 @@ namespace nnet::net14 {
 				dl[2]=5.13e10*std::exp(vA)*(deff[2]*t932 + eff[2]*1.5*t912 + eff[2]*t932*dvA)*1.e-9;
 
 				// debuging :
-				if (net14_debug) std::cout << "droga=" << dl[2] << "\n";
+				if (debug) std::cout << "droga=" << dl[2] << "\n";
 
 
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -590,7 +590,7 @@ namespace nnet::net14 {
        				+ 13.*std::exp(vE)*(2.*t9 + t92*dvE))*1.e-9;
 
 	      		// debuging :
-				if (net14_debug) std::cout << "droag=" << deff[3] << "\n";
+				if (debug) std::cout << "droag=" << deff[3] << "\n";
 			}
 
 
@@ -603,7 +603,7 @@ namespace nnet::net14 {
   				dl[3]=5.65e10*std::exp(vA)*(deff[3]*t932 + 1.5*eff[3]*t912 + eff[3]*t932*dvA)*1.e-9;
 
 				// debuging :
-				if (net14_debug) std::cout << "drnega=" << dl[3] << "\n\n";
+				if (debug) std::cout << "drnega=" << dl[3] << "\n\n";
 			}
 		}
 
@@ -668,7 +668,7 @@ namespace nnet::net14 {
 		        deff[i] = deff[i]*EF - 2.*eff[i]*deltamukbt[i - 1]/T;
 
 		        // debuging :
-				if (net14_debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i - 1] << ", mukbt[" << i << "]=" << mukbt[i - 1] << (i == 16 ? "\n\n" : "\n");
+				if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i - 1] << ", mukbt[" << i << "]=" << mukbt[i - 1] << (i == 16 ? "\n\n" : "\n");
 			}
 		}
 
