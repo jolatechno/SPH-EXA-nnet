@@ -27,6 +27,28 @@ namespace eigen {
 
 
 
+	/// custom fixed-size matrix type
+	template<typename Type, int n, int m>
+	class fixed_size_matrix {
+	private:
+		std::vector<Type> weights;
+
+	public:
+		fixed_size_matrix() {
+			weights.resize(n*m, 0);
+		}
+
+		Type &operator()(int i, int j) {
+			return weights[i + j*n];
+		}
+
+		Type operator()(int i, int j) const {
+			return weights[i + j*n];
+		}
+	};
+
+
+
 	/// dot product function
 	template<class Vector>
 	double dot(Vector const &X, Vector const &Y) {
