@@ -116,7 +116,7 @@ namespace nnet::net87::constants {
 	const std::vector<nnet::reaction> reaction_list = []() {
 		std::vector<nnet::reaction> reactions;
 
-		for (int i = 0; i < 157 + /*l[5] and l[6]*/2; ++i)
+		for (int i = 0; i < 157; ++i)
 			if (i == 0) {
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
 				2C fusion
@@ -141,16 +141,17 @@ namespace nnet::net87::constants {
 				!!!!!!!!!!!!!!!!!!!!!!!! */
 				reactions.push_back(nnet::reaction{{{3, 3}}, {{4}}});
 
-			} else if (i < 138) {
+			} else
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
 				direct reaction
 				!!!!!!!!!!!!!!!!!!!!!!!! */
 				reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}, {{constants::main_product[i]}}});
-			} else
-				/* !!!!!!!!!!!!!!!!!!!!!!!!
-				reversed reaction
-				!!!!!!!!!!!!!!!!!!!!!!!! */
-				reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}}, {{constants::main_product[i]}, {constants::secondary_product[i]}}});
+		
+		for (int i = 5; i < 157; ++i)
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			inverse reaction
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			reactions.push_back(nnet::reaction{{{constants::main_product[i]}}, {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
 
 		return reactions;
 	}();
@@ -167,8 +168,8 @@ namespace nnet::net87::constants {
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 
 		Float coefs[157 - 7], dcoefs[157 - 7],
-			eff[157 + /*l[5] and l[6]*/2]={0.}, deff[157 + /*l[5] and l[6]*/2]={0.},
-			// l[157]={0.}, dl[157]={0.},
+			eff[157]={0.}, deff[157]={0.},
+			l[157]={0.}, dl[157]={0.}, /* should be removed */
 			mukbt[157]={0.}, deltamukbt[157]={0.};
 
 
@@ -355,11 +356,11 @@ namespace nnet::net87::constants {
 
 				/* C + He <- O fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
-				/*l[5]*/ eff[157] = eff[5]*5.13e+10*t9r32*std::exp(-83.108047*t9rm1);
+				l[5] = eff[5]*5.13e+10*t9r32*std::exp(-83.108047*t9rm1);
 
 
 				// debuging :
-				if (debug) std::cout << "rcag=" << eff[5] << ", roga=" << /*l[5]*/ eff[157] << "\n";
+				if (debug) std::cout << "rcag=" << eff[5] << ", roga=" << l[5] << "\n";
 			}
 
 
@@ -374,11 +375,11 @@ namespace nnet::net87::constants {
 
 				/* O + He <- Ne fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
-				/*l[6]*/ eff[158] = eff[6]*5.65e+10*t9r32*std::exp(-54.93807*t9rm1);
+				l[6] = eff[6]*5.65e+10*t9r32*std::exp(-54.93807*t9rm1);
 
 
 				// debuging :
-				if (debug) std::cout << "roag=" << eff[6] << ", rnega=" << /*l[6]*/ eff[158] << "\n\n";
+				if (debug) std::cout << "roag=" << eff[6] << ", rnega=" << l[6] << "\n\n";
 			}
 		}
 
@@ -567,10 +568,10 @@ namespace nnet::net87::constants {
 
 				/* C + He <- O fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
-				/*dl[5]*/ deff[157] = 5.13e10*std::exp(vA)*(deff[5]*t932 + eff[5]*1.5*t912 + eff[5]*t932*dvA)*1.e-9;
+				dl[5]=5.13e10*std::exp(vA)*(deff[5]*t932 + eff[5]*1.5*t912 + eff[5]*t932*dvA)*1.e-9;
 
 				// debuging :
-				if (debug) std::cout << "droga=" << /*dl[5]*/ deff[157] << "\n";
+				if (debug) std::cout << "droga=" << dl[5] << "\n";
 
 
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -591,11 +592,35 @@ namespace nnet::net87::constants {
 	      		const Float vA=-54.903255*t9i;
   				const Float dvA=54.903255*t9i2;
 
-  				/*dl[6]*/ deff[158] = 5.65e10*std::exp(vA)*(deff[6]*t932 + 1.5*eff[6]*t912 + eff[6]*t932*dvA)*1.e-9;
+  				dl[6] = 5.65e10*std::exp(vA)*(deff[6]*t932 + 1.5*eff[6]*t912 + eff[6]*t932*dvA)*1.e-9;
 
 				// debuging :
-				if (debug) std::cout << "drnega=" << /*dl[6]*/ deff[158] << "\n\n";
+				if (debug) std::cout << "drnega=" << dl[6] << "\n\n";
 			}
+		}
+
+
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		compute reversed rates
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		{
+			/*
+			do i=8,137
+		        fin=final(i)
+		        ini=target(i)
+		        part=choose(ini,k)/choose(fin,k)
+		        l(i)=part*exp(fit(i,8)+coef(i)-val1*q(i)+val2)
+		        dl(i)=l(i)*(dcoef(i)+val3*q(i)+val4)
+		    enddo
+		    do i=138,157   !These are not photodesintegrations so they don't have val2
+		        fin=final(i)
+		        ini=target(i)
+		        part=choose(ini,k)/choose(fin,k)
+		        l(i)=part*exp(fit(i,8)+coef(i)-val1*q(i))
+		        dl(i)=l(i)*(dcoef(i)+val3*q(i))
+		    enddo
+		    */
 		}
 
 
@@ -662,9 +687,17 @@ namespace nnet::net87::constants {
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		push back rates
 		!!!!!!!!!!!!!!!!!!!!!!!! */
-		for (int i = 0; i < 157 + /*l[5] and l[6]*/2; ++i) {
+		for (int i = 0; i < 157; ++i) {
 			 rates.push_back(eff [i]);
 			drates.push_back(deff[i]);
+		}
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		push inverse reaction rates
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		for (int i = 5; i < 157; ++i) {
+			 rates.push_back(l [i]);
+			drates.push_back(dl[i]);
 		}
 
 		return {rates, drates};
