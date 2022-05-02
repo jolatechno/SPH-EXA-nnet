@@ -255,24 +255,24 @@ namespace nnet::eos {
 		auto const h5 = [](const double i, const double j,
 			const double w0t, const double w1t, const double w2t, const double w0mt, const double w1mt, const double w2mt,
 			const double w0d,const double w1d, const double w2d, const double w0md, const double w1md, const double w2md) {
-		    return fi[1]*w0d*w0t  +  fi[2]*w0md*w0t
-		    	+  fi[3]*w0d*w0mt +  fi[4]*w0md*w0mt
-		    	+  fi[5]*w0d*w1t  +  fi[6]*w0md*w1t
-		    	+  fi[7]*w0d*w1mt +  fi[8]*w0md*w1mt
-		    	+  fi[9]*w0d*w2t  + fi[10]*w0md*w2t
-		    	+ fi[11]*w0d*w2mt + fi[12]*w0md*w2mt
-		    	+ fi[13]*w1d*w0t  + fi[14]*w1md*w0t
-		    	+ fi[15]*w1d*w0mt + fi[16]*w1md*w0mt
-		    	+ fi[17]*w2d*w0t  + fi[18]*w2md*w0t
-		    	+ fi[19]*w2d*w0mt + fi[20]*w2md*w0mt
-		    	+ fi[21]*w1d*w1t  + fi[22]*w1md*w1t
-		    	+ fi[23]*w1d*w1mt + fi[24]*w1md*w1mt
-		    	+ fi[25]*w2d*w1t  + fi[26]*w2md*w1t
-		    	+ fi[27]*w2d*w1mt + fi[28]*w2md*w1mt
-		    	+ fi[29]*w1d*w2t  + fi[30]*w1md*w2t
-		    	+ fi[31]*w1d*w2mt + fi[32]*w1md*w2mt
-		    	+ fi[33]*w2d*w2t  + fi[34]*w2md*w2t
-		    	+ fi[35]*w2d*w2mt + fi[36]*w2md*w2mt;
+		    return fi[0]*w0d*w0t  +  fi[1]*w0md*w0t
+		    	+  fi[2]*w0d*w0mt +  fi[3]*w0md*w0mt
+		    	+  fi[4]*w0d*w1t  +  fi[5]*w0md*w1t
+		    	+  fi[6]*w0d*w1mt +  fi[7]*w0md*w1mt
+		    	+  fi[8]*w0d*w2t  +  fi[9]*w0md*w2t
+		    	+ fi[10]*w0d*w2mt + fi[11]*w0md*w2mt
+		    	+ fi[12]*w1d*w0t  + fi[13]*w1md*w0t
+		    	+ fi[14]*w1d*w0mt + fi[15]*w1md*w0mt
+		    	+ fi[16]*w2d*w0t  + fi[17]*w2md*w0t
+		    	+ fi[18]*w2d*w0mt + fi[19]*w2md*w0mt
+		    	+ fi[20]*w1d*w1t  + fi[21]*w1md*w1t
+		    	+ fi[22]*w1d*w1mt + fi[23]*w1md*w1mt
+		    	+ fi[24]*w2d*w1t  + fi[25]*w2md*w1t
+		    	+ fi[26]*w2d*w1mt + fi[27]*w2md*w1mt
+		    	+ fi[28]*w1d*w2t  + fi[29]*w1md*w2t
+		    	+ fi[30]*w1d*w2mt + fi[31]*w1md*w2mt
+		    	+ fi[32]*w2d*w2t  + fi[33]*w2md*w2t
+		    	+ fi[34]*w2d*w2mt + fi[35]*w2md*w2mt;
 		};
 
 
@@ -296,14 +296,14 @@ namespace nnet::eos {
 		// bicubic hermite polynomial statement function
 		auto const h3 = [](const double i, const double j,
 			const double w0t, const double w1t, const double w0mt, const double w1mt, const double w0d, const double w1d, const double w0md, const double w1md) {
-		    return fi[1]*w0d*w0t  +  fi[2]*w0md*w0t
-		    	+  fi[3]*w0d*w0mt +  fi[4]*w0md*w0mt
-		    	+  fi[5]*w0d*w1t  +  fi[6]*w0md*w1t
-		    	+  fi[7]*w0d*w1mt +  fi[8]*w0md*w1mt
-		    	+  fi[9]*w1d*w0t  + fi[10]*w1md*w0t
-		    	+ fi[11]*w1d*w0mt + fi[12]*w1md*w0mt
-		    	+ fi[13]*w1d*w1t  + fi[14]*w1md*w1t
-		    	+ fi[15]*w1d*w1mt + fi[16]*w1md*w1mt;
+		    return fi[0]*w0d*w0t  +  fi[1]*w0md*w0t
+		    	+  fi[2]*w0d*w0mt +  fi[3]*w0md*w0mt
+		    	+  fi[4]*w0d*w1t  +  fi[5]*w0md*w1t
+		    	+  fi[6]*w0d*w1mt +  fi[7]*w0md*w1mt
+		    	+  fi[8]*w1d*w0t  +  fi[9]*w1md*w0t
+		    	+ fi[10]*w1d*w0mt + fi[11]*w1md*w0mt
+		    	+ fi[12]*w1d*w1t  + fi[13]*w1md*w1t
+		    	+ fi[14]*w1d*w1mt + fi[15]*w1md*w1mt;
 		};
 
 
@@ -312,11 +312,11 @@ namespace nnet::eos {
 			const double ye = std::max(1e-16, zbar/abar);
 			const double din = ye*rho;
 
-			int jat = int((std::log10(T) - tlo)*tstpi) + 1;
-			jat = std::max(1, std::min(jat, jmax - 1));
+			int jat = int((std::log10(T) - tlo)*tstpi);
+			jat = std::max(0, std::min(jat, jmax - 2));
 
-			int iat = int((std::log10(din) - dlo)*dstpi) + 1;
-			iat = std::max(1, std::min(iat, imax - 1));
+			int iat = int((std::log10(din) - dlo)*dstpi);
+			iat = std::max(0, std::min(iat, imax - 2));
 
 			return {jat, iat};
 		}
@@ -434,42 +434,42 @@ namespace nnet::eos {
 
 
 			// move table values into coefficient table
-			helmholtz_constants::fi[1]  = helmholtz_constants::f(iat, jat);
-			helmholtz_constants::fi[2]  = helmholtz_constants::f(iat + 1, jat);
-			helmholtz_constants::fi[3]  = helmholtz_constants::f(iat, jat + 1);
-			helmholtz_constants::fi[4]  = helmholtz_constants::f(iat + 1, jat + 1);
-			helmholtz_constants::fi[5]  = helmholtz_constants::ft(iat, jat);
-			helmholtz_constants::fi[6]  = helmholtz_constants::ft(iat + 1, jat);
-			helmholtz_constants::fi[7]  = helmholtz_constants::ft(iat, jat + 1);
-			helmholtz_constants::fi[8]  = helmholtz_constants::ft(iat + 1, jat + 1);
-			helmholtz_constants::fi[9]  = helmholtz_constants::ftt(iat, jat);
-			helmholtz_constants::fi[10] = helmholtz_constants::ftt(iat + 1, jat);
-			helmholtz_constants::fi[11] = helmholtz_constants::ftt(iat, jat + 1);
-			helmholtz_constants::fi[12] = helmholtz_constants::ftt(iat + 1, jat + 1);
-			helmholtz_constants::fi[13] = helmholtz_constants::fd(iat, jat);
-			helmholtz_constants::fi[14] = helmholtz_constants::fd(iat + 1, jat);
-			helmholtz_constants::fi[15] = helmholtz_constants::fd(iat, jat + 1);
-			helmholtz_constants::fi[16] = helmholtz_constants::fd(iat + 1, jat + 1);
-			helmholtz_constants::fi[17] = helmholtz_constants::fdd(iat, jat);
-			helmholtz_constants::fi[18] = helmholtz_constants::fdd(iat + 1, jat);
-			helmholtz_constants::fi[19] = helmholtz_constants::fdd(iat, jat + 1);
-			helmholtz_constants::fi[20] = helmholtz_constants::fdd(iat + 1, jat + 1);
-			helmholtz_constants::fi[21] = helmholtz_constants::fdt(iat, jat);
-			helmholtz_constants::fi[22] = helmholtz_constants::fdt(iat + 1, jat);
-			helmholtz_constants::fi[23] = helmholtz_constants::fdt(iat, jat + 1);
-			helmholtz_constants::fi[24] = helmholtz_constants::fdt(iat + 1, jat + 1);
-			helmholtz_constants::fi[25] = helmholtz_constants::fddt(iat, jat);
-			helmholtz_constants::fi[26] = helmholtz_constants::fddt(iat + 1, jat);
-			helmholtz_constants::fi[27] = helmholtz_constants::fddt(iat, jat + 1);
-			helmholtz_constants::fi[28] = helmholtz_constants::fddt(iat + 1, jat + 1);
-			helmholtz_constants::fi[29] = helmholtz_constants::fdtt(iat, jat);
-			helmholtz_constants::fi[30] = helmholtz_constants::fdtt(iat + 1, jat);
-			helmholtz_constants::fi[31] = helmholtz_constants::fdtt(iat, jat + 1);
-			helmholtz_constants::fi[32] = helmholtz_constants::fdtt(iat + 1, jat + 1);
-			helmholtz_constants::fi[33] = helmholtz_constants::fddtt(iat, jat);
-			helmholtz_constants::fi[34] = helmholtz_constants::fddtt(iat + 1, jat);
-			helmholtz_constants::fi[35] = helmholtz_constants::fddtt(iat, jat + 1);
-			helmholtz_constants::fi[36] = helmholtz_constants::fddtt(iat + 1, jat + 1);
+			helmholtz_constants::fi[0]  = helmholtz_constants::f(iat, jat);
+			helmholtz_constants::fi[1]  = helmholtz_constants::f(iat + 1, jat);
+			helmholtz_constants::fi[2]  = helmholtz_constants::f(iat, jat + 1);
+			helmholtz_constants::fi[3]  = helmholtz_constants::f(iat + 1, jat + 1);
+			helmholtz_constants::fi[4]  = helmholtz_constants::ft(iat, jat);
+			helmholtz_constants::fi[5]  = helmholtz_constants::ft(iat + 1, jat);
+			helmholtz_constants::fi[6]  = helmholtz_constants::ft(iat, jat + 1);
+			helmholtz_constants::fi[7]  = helmholtz_constants::ft(iat + 1, jat + 1);
+			helmholtz_constants::fi[8]  = helmholtz_constants::ftt(iat, jat);
+			helmholtz_constants::fi[9]  = helmholtz_constants::ftt(iat + 1, jat);
+			helmholtz_constants::fi[10] = helmholtz_constants::ftt(iat, jat + 1);
+			helmholtz_constants::fi[11] = helmholtz_constants::ftt(iat + 1, jat + 1);
+			helmholtz_constants::fi[12] = helmholtz_constants::fd(iat, jat);
+			helmholtz_constants::fi[13] = helmholtz_constants::fd(iat + 1, jat);
+			helmholtz_constants::fi[14] = helmholtz_constants::fd(iat, jat + 1);
+			helmholtz_constants::fi[15] = helmholtz_constants::fd(iat + 1, jat + 1);
+			helmholtz_constants::fi[16] = helmholtz_constants::fdd(iat, jat);
+			helmholtz_constants::fi[17] = helmholtz_constants::fdd(iat + 1, jat);
+			helmholtz_constants::fi[18] = helmholtz_constants::fdd(iat, jat + 1);
+			helmholtz_constants::fi[19] = helmholtz_constants::fdd(iat + 1, jat + 1);
+			helmholtz_constants::fi[20] = helmholtz_constants::fdt(iat, jat);
+			helmholtz_constants::fi[21] = helmholtz_constants::fdt(iat + 1, jat);
+			helmholtz_constants::fi[22] = helmholtz_constants::fdt(iat, jat + 1);
+			helmholtz_constants::fi[23] = helmholtz_constants::fdt(iat + 1, jat + 1);
+			helmholtz_constants::fi[24] = helmholtz_constants::fddt(iat, jat);
+			helmholtz_constants::fi[25] = helmholtz_constants::fddt(iat + 1, jat);
+			helmholtz_constants::fi[26] = helmholtz_constants::fddt(iat, jat + 1);
+			helmholtz_constants::fi[27] = helmholtz_constants::fddt(iat + 1, jat + 1);
+			helmholtz_constants::fi[28] = helmholtz_constants::fdtt(iat, jat);
+			helmholtz_constants::fi[29] = helmholtz_constants::fdtt(iat + 1, jat);
+			helmholtz_constants::fi[30] = helmholtz_constants::fdtt(iat, jat + 1);
+			helmholtz_constants::fi[31] = helmholtz_constants::fdtt(iat + 1, jat + 1);
+			helmholtz_constants::fi[32] = helmholtz_constants::fddtt(iat, jat);
+			helmholtz_constants::fi[33] = helmholtz_constants::fddtt(iat + 1, jat);
+			helmholtz_constants::fi[34] = helmholtz_constants::fddtt(iat, jat + 1);
+			helmholtz_constants::fi[35] = helmholtz_constants::fddtt(iat + 1, jat + 1);
 
 
 
@@ -599,22 +599,22 @@ namespace nnet::eos {
 
 
 			// move table values into coefficient table
-			helmholtz_constants::fi[1]  = helmholtz_constants::dpdf(iat, jat);
-			helmholtz_constants::fi[2]  = helmholtz_constants::dpdf(iat+1, jat);
-			helmholtz_constants::fi[3]  = helmholtz_constants::dpdf(iat, jat+1);
-			helmholtz_constants::fi[4]  = helmholtz_constants::dpdf(iat+1, jat+1);
-			helmholtz_constants::fi[5]  = helmholtz_constants::dpdft(iat, jat);
-			helmholtz_constants::fi[6]  = helmholtz_constants::dpdft(iat+1, jat);
-			helmholtz_constants::fi[7]  = helmholtz_constants::dpdft(iat, jat+1);
-			helmholtz_constants::fi[8]  = helmholtz_constants::dpdft(iat+1, jat+1);
-			helmholtz_constants::fi[9]  = helmholtz_constants::dpdfd(iat, jat);
-			helmholtz_constants::fi[10] = helmholtz_constants::dpdfd(iat+1, jat);
-			helmholtz_constants::fi[11] = helmholtz_constants::dpdfd(iat, jat+1);
-			helmholtz_constants::fi[12] = helmholtz_constants::dpdfd(iat+1, jat+1);
-			helmholtz_constants::fi[13] = helmholtz_constants::dpdfdt(iat, jat);
-			helmholtz_constants::fi[14] = helmholtz_constants::dpdfdt(iat+1, jat);
-			helmholtz_constants::fi[15] = helmholtz_constants::dpdfdt(iat, jat+1);
-			helmholtz_constants::fi[16] = helmholtz_constants::dpdfdt(iat+1, jat+1);
+			helmholtz_constants::fi[0]  = helmholtz_constants::dpdf(iat, jat);
+			helmholtz_constants::fi[1]  = helmholtz_constants::dpdf(iat+1, jat);
+			helmholtz_constants::fi[2]  = helmholtz_constants::dpdf(iat, jat+1);
+			helmholtz_constants::fi[3]  = helmholtz_constants::dpdf(iat+1, jat+1);
+			helmholtz_constants::fi[4]  = helmholtz_constants::dpdft(iat, jat);
+			helmholtz_constants::fi[5]  = helmholtz_constants::dpdft(iat+1, jat);
+			helmholtz_constants::fi[6]  = helmholtz_constants::dpdft(iat, jat+1);
+			helmholtz_constants::fi[7]  = helmholtz_constants::dpdft(iat+1, jat+1);
+			helmholtz_constants::fi[8]  = helmholtz_constants::dpdfd(iat, jat);
+			helmholtz_constants::fi[9]  = helmholtz_constants::dpdfd(iat+1, jat);
+			helmholtz_constants::fi[10] = helmholtz_constants::dpdfd(iat, jat+1);
+			helmholtz_constants::fi[11] = helmholtz_constants::dpdfd(iat+1, jat+1);
+			helmholtz_constants::fi[12] = helmholtz_constants::dpdfdt(iat, jat);
+			helmholtz_constants::fi[13] = helmholtz_constants::dpdfdt(iat+1, jat);
+			helmholtz_constants::fi[14] = helmholtz_constants::dpdfdt(iat, jat+1);
+			helmholtz_constants::fi[15] = helmholtz_constants::dpdfdt(iat+1, jat+1);
 
 
 
@@ -629,22 +629,22 @@ namespace nnet::eos {
 
 
 			// move table values into coefficient table
-			helmholtz_constants::fi[1]  = helmholtz_constants::ef(iat, jat);
-			helmholtz_constants::fi[2]  = helmholtz_constants::ef(iat+1, jat);
-			helmholtz_constants::fi[3]  = helmholtz_constants::ef(iat, jat+1);
-			helmholtz_constants::fi[4]  = helmholtz_constants::ef(iat+1, jat+1);
-			helmholtz_constants::fi[5]  = helmholtz_constants::eft(iat, jat);
-			helmholtz_constants::fi[6]  = helmholtz_constants::eft(iat+1, jat);
-			helmholtz_constants::fi[7]  = helmholtz_constants::eft(iat, jat+1);
-			helmholtz_constants::fi[8]  = helmholtz_constants::eft(iat+1, jat+1);
-			helmholtz_constants::fi[9]  = helmholtz_constants::efd(iat, jat);
-			helmholtz_constants::fi[10] = helmholtz_constants::efd(iat+1, jat);
-			helmholtz_constants::fi[11] = helmholtz_constants::efd(iat, jat+1);
-			helmholtz_constants::fi[12] = helmholtz_constants::efd(iat+1, jat+1);
-			helmholtz_constants::fi[13] = helmholtz_constants::efdt(iat, jat);
-			helmholtz_constants::fi[14] = helmholtz_constants::efdt(iat+1, jat);
-			helmholtz_constants::fi[15] = helmholtz_constants::efdt(iat, jat+1);
-			helmholtz_constants::fi[16] = helmholtz_constants::efdt(iat+1, jat+1);
+			helmholtz_constants::fi[0]  = helmholtz_constants::ef(iat, jat);
+			helmholtz_constants::fi[1]  = helmholtz_constants::ef(iat+1, jat);
+			helmholtz_constants::fi[2]  = helmholtz_constants::ef(iat, jat+1);
+			helmholtz_constants::fi[3]  = helmholtz_constants::ef(iat+1, jat+1);
+			helmholtz_constants::fi[4]  = helmholtz_constants::eft(iat, jat);
+			helmholtz_constants::fi[5]  = helmholtz_constants::eft(iat+1, jat);
+			helmholtz_constants::fi[6]  = helmholtz_constants::eft(iat, jat+1);
+			helmholtz_constants::fi[7]  = helmholtz_constants::eft(iat+1, jat+1);
+			helmholtz_constants::fi[8]  = helmholtz_constants::efd(iat, jat);
+			helmholtz_constants::fi[9]  = helmholtz_constants::efd(iat+1, jat);
+			helmholtz_constants::fi[10] = helmholtz_constants::efd(iat, jat+1);
+			helmholtz_constants::fi[11] = helmholtz_constants::efd(iat+1, jat+1);
+			helmholtz_constants::fi[12] = helmholtz_constants::efdt(iat, jat);
+			helmholtz_constants::fi[13] = helmholtz_constants::efdt(iat+1, jat);
+			helmholtz_constants::fi[14] = helmholtz_constants::efdt(iat, jat+1);
+			helmholtz_constants::fi[15] = helmholtz_constants::efdt(iat+1, jat+1);
 
 
 
@@ -677,22 +677,22 @@ namespace nnet::eos {
 
 
 			// move table values into coefficient table
-			helmholtz_constants::fi[1]  = helmholtz_constants::xf(iat, jat);
-			helmholtz_constants::fi[2]  = helmholtz_constants::xf(iat+1, jat);
-			helmholtz_constants::fi[3]  = helmholtz_constants::xf(iat, jat+1);
-			helmholtz_constants::fi[4]  = helmholtz_constants::xf(iat+1, jat+1);
-			helmholtz_constants::fi[5]  = helmholtz_constants::xft(iat, jat);
-			helmholtz_constants::fi[6]  = helmholtz_constants::xft(iat+1, jat);
-			helmholtz_constants::fi[7]  = helmholtz_constants::xft(iat, jat+1);
-			helmholtz_constants::fi[8]  = helmholtz_constants::xft(iat+1, jat+1);
-			helmholtz_constants::fi[9]  = helmholtz_constants::xfd(iat, jat);
-			helmholtz_constants::fi[10] = helmholtz_constants::xfd(iat+1, jat);
-			helmholtz_constants::fi[11] = helmholtz_constants::xfd(iat, jat+1);
-			helmholtz_constants::fi[12] = helmholtz_constants::xfd(iat+1, jat+1);
-			helmholtz_constants::fi[13] = helmholtz_constants::xfdt(iat, jat);
-			helmholtz_constants::fi[14] = helmholtz_constants::xfdt(iat+1, jat);
-			helmholtz_constants::fi[15] = helmholtz_constants::xfdt(iat, jat+1);
-			helmholtz_constants::fi[16] = helmholtz_constants::xfdt(iat+1, jat+1);
+			helmholtz_constants::fi[0]  = helmholtz_constants::xf(iat, jat);
+			helmholtz_constants::fi[1]  = helmholtz_constants::xf(iat+1, jat);
+			helmholtz_constants::fi[2]  = helmholtz_constants::xf(iat, jat+1);
+			helmholtz_constants::fi[3]  = helmholtz_constants::xf(iat+1, jat+1);
+			helmholtz_constants::fi[4]  = helmholtz_constants::xft(iat, jat);
+			helmholtz_constants::fi[5]  = helmholtz_constants::xft(iat+1, jat);
+			helmholtz_constants::fi[6]  = helmholtz_constants::xft(iat, jat+1);
+			helmholtz_constants::fi[7]  = helmholtz_constants::xft(iat+1, jat+1);
+			helmholtz_constants::fi[8]  = helmholtz_constants::xfd(iat, jat);
+			helmholtz_constants::fi[9]  = helmholtz_constants::xfd(iat+1, jat);
+			helmholtz_constants::fi[10] = helmholtz_constants::xfd(iat, jat+1);
+			helmholtz_constants::fi[11] = helmholtz_constants::xfd(iat+1, jat+1);
+			helmholtz_constants::fi[12] = helmholtz_constants::xfdt(iat, jat);
+			helmholtz_constants::fi[13] = helmholtz_constants::xfdt(iat+1, jat);
+			helmholtz_constants::fi[14] = helmholtz_constants::xfdt(iat, jat+1);
+			helmholtz_constants::fi[15] = helmholtz_constants::xfdt(iat+1, jat+1);
 
 
 
