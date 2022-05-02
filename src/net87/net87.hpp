@@ -113,84 +113,47 @@ namespace nnet::net87::constants {
 	}
 
 	// constant list of ordered reaction
-	const std::vector<nnet::reaction> reaction_list = {
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		fusions reactions from fits */
-		{{{0}, {3}},  {{4}}},  // Ne + He -> Mg
-		{{{0}, {4}},  {{5}}},  // Mg + He -> Si
-		{{{0}, {5}},  {{6}}},  // Si + He -> S
-		{{{0}, {6}},  {{7}}},  // S  + He -> Ar
-		{{{0}, {7}},  {{8}}},  // Ar + He -> Ca
-		{{{0}, {8}},  {{9}}},  // Ca + He -> Ti
-		{{{0}, {9}},  {{10}}}, // Ti + He -> Cr
-		{{{0}, {10}}, {{11}}}, // Cr + He -> Fe
-		{{{0}, {11}}, {{12}}}, // Fe + He -> Ni
-		{{{0}, {12}}, {{13}}}, // Ni + He -> Zn
+	const std::vector<nnet::reaction> reaction_list = []() {
+		std::vector<nnet::reaction> reactions;
 
+		for (int i = 0; i < 157 + /*l[5] and l[6]*/2; ++i)
+			if (i == 0) {
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				2C fusion
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+				reactions.push_back(nnet::reaction{{{4, 2}}, {{9}}});
 
+			} else if (i == 2) {
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				2O fusion
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+				reactions.push_back(nnet::reaction{{{5, 2}}, {{25}}});
 
-		/* fission reactions from fits
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{{{4}},  {{0}, {3}}},  // Ne + He <- Mg
-		{{{5}},  {{0}, {4}}},  // Mg + He <- Si
-		{{{6}},  {{0}, {5}}},  // Si + He <- S
-		{{{7}},  {{0}, {6}}},  // S  + He <- Ar
-		{{{8}},  {{0}, {7}}},  // Ar + He <- Ca
-		{{{9}},  {{0}, {8}}},  // Ca + He <- Ti
-		{{{10}}, {{0}, {9}}},  // Ti + He <- Cr
-		{{{11}}, {{0}, {10}}}, // Cr + He <- Fe
-		{{{12}}, {{0}, {11}}}, // Fe + He <- Ni
-		{{{13}}, {{0}, {12}}}, // Ni + He <- Zn
+			} else if (i == 3) {
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				C -> 3He fission
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+				reactions.push_back(nnet::reaction{{{4}}, {{3, 3}}});
 
+			} else if (i == 4) {
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				3He -> C fusion
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+				reactions.push_back(nnet::reaction{{{3, 3}}, {{4}}});
 
+			} else if (i < 138) {
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				direct reaction
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+				reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}, {{constants::main_product[i]}}});
+			} else
+				/* !!!!!!!!!!!!!!!!!!!!!!!!
+				reversed reaction
+				!!!!!!!!!!!!!!!!!!!!!!!! */
+				reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}}, {{constants::main_product[i]}, {constants::secondary_product[i]}}});
 
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		   3He -> C fusion */
-		{{{0, 3}}, {{1}}},
-
-		/* 3He <- C fission
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{{{1}}, {{0, 3}}},
-
-
-
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		2C -> Ne + He fusion
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{{{1, 2}}, {{3}, {0}}},
-
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		C + O -> Mg + He fusion
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{{{1}, {2}}, {{4}, {0}}},
-
-
-
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		2O -> Si + He fusion
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{{{2, 2}}, {{5}, {0}}},
-
-
-
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		   C + He -> O fusion */
-		{{{0}, {1}}, {{2}}},
-
-		/* C + He <- O fission
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{{{2}},  {{0}, {1}}},
-
-
-
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		   O + He -> Ne fusion */
-		{{{0}, {2}}, {{3}}},
-
-		/* O + He <- Ne fission
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{{{3}},  {{0}, {2}}}
-	};
+		return reactions;
+	}();
 
 	/// compute a list of reactions for net14
 	template<typename Float>
@@ -204,8 +167,8 @@ namespace nnet::net87::constants {
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 
 		Float coefs[157 - 7], dcoefs[157 - 7],
-			eff[157]={0.}, deff[157]={0.},
-			l[157]={0.}, dl[157]={0.},
+			eff[157 + /*l[5] and l[6]*/2]={0.}, deff[157 + /*l[5] and l[6]*/2]={0.},
+			// l[157]={0.}, dl[157]={0.},
 			mukbt[157]={0.}, deltamukbt[157]={0.};
 
 
@@ -248,77 +211,32 @@ namespace nnet::net87::constants {
 				- Fe + He -> Ni
 				- Ni + He -> Zn */
 			for (int i = 7; i < 157; ++i) {
-				coefs[i - 4] = 
-					  constants::fits::fit[i - 4][1]*t9i
-					+ constants::fits::fit[i - 4][2]*t9i13
-					+ constants::fits::fit[i - 4][3]*t913
-					+ constants::fits::fit[i - 4][4]*t9
-					+ constants::fits::fit[i - 4][5]*t953
-					+ constants::fits::fit[i - 4][6]*lt9;
+				coefs[i - 7] = 
+					  constants::fits::fit[i - 7][1]*t9i
+					+ constants::fits::fit[i - 7][2]*t9i13
+					+ constants::fits::fit[i - 7][3]*t913
+					+ constants::fits::fit[i - 7][4]*t9
+					+ constants::fits::fit[i - 7][5]*t953
+					+ constants::fits::fit[i - 7][6]*lt9;
 
-				dcoefs[i - 4] = (- constants::fits::fit     [i - 4][1]*t9i2 
-					             + (-   constants::fits::fit[i - 4][2]*t9i43
-					                +   constants::fits::fit[i - 4][3]*t9i23
-					                + 5*constants::fits::fit[i - 4][5]*t923)*(1./3.)
-					             + constants::fits::fit     [i - 4][4]
-					             + constants::fits::fit     [i - 4][6]*t9i)*1e-9;
+				dcoefs[i - 7] = (- constants::fits::fit     [i - 7][1]*t9i2 
+					             + (-   constants::fits::fit[i - 7][2]*t9i43
+					                +   constants::fits::fit[i - 7][3]*t9i23
+					                + 5*constants::fits::fit[i - 7][5]*t923)*(1./3.)
+					             + constants::fits::fit     [i - 7][4]
+					             + constants::fits::fit     [i - 7][6]*t9i)*1e-9;
 
-				eff[i - 1] = std::exp(constants::fits::fit[i - 4][0] + coefs[i - 4]);
+				eff[i] = std::exp(constants::fits::fit[i - 7][0] + coefs[i - 7]);
 
-				deff[i - 1] = eff[i - 1]*dcoefs[i - 4];
+				deff[i] = eff[i - 1]*dcoefs[i - 7];
 
 				// debuging :
-				if (debug) std::cout << "dir(" << i << ")=" << eff[i - 1] << ", coef(" << i << ")=" << coefs[i - 4];
-				if (debug) std::cout << "\tddir(" << i << ")=" << deff[i - 1] << ", dcoef(" << i << ")=" << dcoefs[i - 4] << "\n";
+				if (debug) std::cout << "dir(" << i << ")=" << eff[i] << ", coef(" << i << ")=" << coefs[i - 7];
+				if (debug) std::cout << "\tddir(" << i << ")=" << deff[i] << ", dcoef(" << i << ")=" << dcoefs[i - 7] << "\n";
 			}
 		}
 
 
-		/* fission reactions rate and rate derivative from fits
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{
-			// constants:
-			const Float t9=T/1.e9;
-			const Float t9i=1.e0/t9;
-			const Float lt9=std::log(t9);
-
-			const Float val1=11.6045e0*t9i;
-			const Float val2=1.5e0*lt9;
-			const Float val3=val1*t9i*1e-9;
-			const Float val4=1.5e-9*t9i;
-
-
-			/* fision rates computed:
-				- Ne + He <- Mg
-				- Mg + He <- Si
-				- Si + He <- S
-				-  S + He <- Ar
-				- Ar + He <- Ca
-				- Ca + He <- Ti
-				- Ti + He <- Cr
-				- Cr + He <- Fe
-				- Fe + He <- Ni
-				- Ni + He <- Zn */
-			const int k = constants::fits::get_temperature_range(T);
-			for (int i = 7; i < 157; ++i) {
-				l[i - 1] = constants::fits::choose[i - 4][k]/constants::fits::choose[i + 1 - 4][k]*
-					std::exp(
-						  coefs               [i - 4]
-						+ constants::fits::fit[i - 4][7]
-						- constants::fits::q  [i - 4]*val1
-						+ val2
-					);
-
-				dl[i - 1] = l[i - 1]*(
-					  dcoefs            [i - 4]
-					+ constants::fits::q[i - 4]*val3
-					+ val4);
-
-				// debuging :
-				if (debug) std::cout << (i == 4 ? "\n" : "") << "inv(" << i << ")=" << l[i - 1];
-				if (debug) std::cout << "\tdinv(" << i << ")=" << dl[i - 1] << "\n";
-			}
-		}
 
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -356,21 +274,21 @@ namespace nnet::net87::constants {
 	      		Float rbeac = (130.*t9i32)*std::exp(-3.3364*t9i)
 	      			+ 2.510e+07*t9i23*std::exp(-23.57*t9i13 - t92/0.055225)*(1. + 0.018*t913 + 5.249*t923 + 0.650*t9 + 19.176*t943 + 6.034*t953);
 				if(T > 8e7) {
-		      		eff[0]=2.90e-16*(r2abe*rbeac)
+		      		eff[4]=2.90e-16*(r2abe*rbeac)
 		      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
 			    } else
-		      		eff[0]=2.90e-16*(r2abe*rbeac)*(0.01 + 0.2*(1. + 4.*std::exp(-std::pow(0.025*t9i, 3.263)))/(1. + 4.*std::exp(-std::pow(t9/0.025, 9.227))))
+		      		eff[4]=2.90e-16*(r2abe*rbeac)*(0.01 + 0.2*(1. + 4.*std::exp(-std::pow(0.025*t9i, 3.263)))/(1. + 4.*std::exp(-std::pow(t9/0.025, 9.227))))
 		      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
 
 
 				/* 3He <- C fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
 		      	const Float rev = 2.e20*std::exp(-84.419412e0*t9i);
-		      	l[0] = eff[0]*rev*t93;
+		      	eff[3] = eff[4]*rev*t93;
 
 
 		      	// debuging :
-				if (debug) std::cout << "\nr3a=" << eff[0] << ", rg3a=" << l[0] << "\n";
+				if (debug) std::cout << "\nr3a=" << eff[4] << ", rg3a=" << eff[3] << "\n";
 		    }
 
 		    
@@ -382,11 +300,11 @@ namespace nnet::net87::constants {
 			    const Float t9a13=std::pow(t9a, 1./3.);
 			    const Float t9a56=std::pow(t9a, 5./6.);
 
-	      		eff[13]=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
+	      		eff[0]=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
 
 
 	      		// debuging :
-				if (debug) std::cout << "r24=" << eff[13];
+				if (debug) std::cout << "r24=" << eff[0];
 			}
 
 
@@ -394,20 +312,20 @@ namespace nnet::net87::constants {
 			C + O -> Mg + He fusion
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			{	
-				eff[14] = 0;
+				eff[1] = 0;
 				if (T >= 5e8) {
 		            const Float t9ap=t9/(1. + 0.055*t9);
 		            const Float t9a2p=t9ap*t9ap;
 		            const Float t9a13p=std::pow(t9ap, 1./3.);
 		            const Float t9a23p=t9a13p*t9a13p;
 		            const Float t9a56ap=std::pow(t9ap, 5./6.);
-		            eff[14]=1.72e+31*t9a56ap*t9i32*std::exp(-106.594/t9a13p)/(std::exp(-0.18*t9a2p) +
+		            eff[1]=1.72e+31*t9a56ap*t9i32*std::exp(-106.594/t9a13p)/(std::exp(-0.18*t9a2p) +
 		            	1.06e-03*std::exp(2.562*t9a23p));
 		        }
 
 
 		        // debuging :
-				if (debug) std::cout << ", r1216=" << eff[14] << "\n";
+				if (debug) std::cout << ", r1216=" << eff[1] << "\n";
 			}
 
 
@@ -415,11 +333,11 @@ namespace nnet::net87::constants {
 			2O -> Si + He fusion
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			{
-				eff[15]=7.10e+36*t9i23*std::exp(-135.93*t9i13 - 0.629*t923 - 0.445*t943 + 0.0103*t92);
+				eff[2]=7.10e+36*t9i23*std::exp(-135.93*t9i13 - 0.629*t923 - 0.445*t943 + 0.0103*t92);
 
 
 				// debuging :
-				if (debug) std::cout << "r32=" << eff[15] << "\n";
+				if (debug) std::cout << "r32=" << eff[2] << "\n";
 			}
 
 
@@ -429,7 +347,7 @@ namespace nnet::net87::constants {
 			{
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
 				   C + He -> O fusion */
-				eff[1] = 1.04e+08/(t92*std::pow(1. + 0.0489*t9i23, 2.))*std::exp(-32.120*t9i13-t92/12.222016)
+				eff[5] = 1.04e+08/(t92*std::pow(1. + 0.0489*t9i23, 2.))*std::exp(-32.120*t9i13-t92/12.222016)
 	            	+ 1.76e+08/(t92*std::pow(1. + 0.2654*t9i23, 2.))*std::exp(-32.120*t9i13)
 	           			+ 1.25e+03*t9i32*std::exp(-27.499*t9i)
 	           			+ 1.43e-02*t95*std::exp(-15.541*t9i);
@@ -437,11 +355,11 @@ namespace nnet::net87::constants {
 
 				/* C + He <- O fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
-				l[1] = eff[1]*5.13e+10*t9r32*std::exp(-83.108047*t9rm1);
+				/*l[5]*/ eff[157] = eff[5]*5.13e+10*t9r32*std::exp(-83.108047*t9rm1);
 
 
 				// debuging :
-				if (debug) std::cout << "rcag=" << eff[1] << ", roga=" << l[1] << "\n";
+				if (debug) std::cout << "rcag=" << eff[5] << ", roga=" << /*l[5]*/ eff[157] << "\n";
 			}
 
 
@@ -451,16 +369,16 @@ namespace nnet::net87::constants {
 			{
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
 				   O + He -> Ne fusion */
-				eff[2]=(9.37e+09*t9i23*std::exp(-39.757*t9i13-t92/2.515396) + 62.1*t9i32*std::exp(-10.297*t9i) + 538.*t9i32*std::exp(-12.226*t9i) + 13.*t92*std::exp(-20.093*t9i));
+				eff[6]=(9.37e+09*t9i23*std::exp(-39.757*t9i13-t92/2.515396) + 62.1*t9i32*std::exp(-10.297*t9i) + 538.*t9i32*std::exp(-12.226*t9i) + 13.*t92*std::exp(-20.093*t9i));
 
 
 				/* O + He <- Ne fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
-				l[2]=eff[2]*5.65e+10*t9r32*std::exp(-54.93807*t9rm1);
+				/*l[6]*/ eff[158] = eff[6]*5.65e+10*t9r32*std::exp(-54.93807*t9rm1);
 
 
 				// debuging :
-				if (debug) std::cout << "roag=" << eff[2] << ", rnega=" << l[2] << "\n\n";
+				if (debug) std::cout << "roag=" << eff[6] << ", rnega=" << /*l[6]*/ eff[158] << "\n\n";
 			}
 		}
 
@@ -516,10 +434,10 @@ namespace nnet::net87::constants {
 			    const Float rbeac=130.*t9i32*std::exp(vE) + 2.510e7*t9i23*vG*std::exp(vF);
 			    const Float dr2abe=std::exp(vB)*(-1.11e6*t9i52 + 7.4e5*t9i32*dvB) + 4.164e9*std::exp(vC)*(-t9i53*vD*2./3. + t9i23*dvC*vD + t9i23*dvD);
 			    const Float drbeac=std::exp(vE)*(-195.*t9i52 + 130.*t9i32*dvE) + 2.510e7*std::exp(vF)*(-2.*t9i53*vG/3. + t9i23*dvF*vG + t9i23*dvG);
-			    deff[0] =(2.90e-16*(dr2abe*rbeac + r2abe*drbeac) + 1.35e-8*std::exp(vA)*(-1.5*t9i52 + t9i32*dvA))*1.e-9;
+			    deff[4] =(2.90e-16*(dr2abe*rbeac + r2abe*drbeac) + 1.35e-8*std::exp(vA)*(-1.5*t9i52 + t9i32*dvA))*1.e-9;
 
 		      	// debuging :
-				if (debug) std::cout << "\ndr3a=" << deff[0] << "\n";
+				if (debug) std::cout << "\ndr3a=" << deff[4] << "\n";
 	      	}
 
 
@@ -541,10 +459,10 @@ namespace nnet::net87::constants {
 			    const Float dvF=27.499*t9i2;
 			    const Float dvG=15.541*t9i2;
 
-	      		dl[0] = 2.00e20*std::exp(vA)*t93*(dvA*eff[0] + 3.*t9i*eff[0] + deff[0])*1.e-9;
+	      		deff[3] = 2.00e20*std::exp(vA)*t93*(dvA*eff[4] + 3.*t9i*eff[4] + deff[4])*1.e-9;
 
 		      	// debuging :
-				if (debug) std::cout << "drg3a=" << dl[0] << "\n";
+				if (debug) std::cout << "drg3a=" << deff[3] << "\n";
 			}
 
 		    
@@ -559,10 +477,10 @@ namespace nnet::net87::constants {
 			    const Float dvA=vA*vA*t9i2;
 			    const Float dvB=28.055*dvA*std::pow(vA, -4./3.) - 6.36e-3*t92;
 
-			    deff[13]=4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
+			    deff[0]=4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
 
 	      		// debuging :
-				if (debug) std::cout << "dr24=" << deff[13] << "\n";
+				if (debug) std::cout << "dr24=" << deff[0] << "\n";
 			}
 
 
@@ -585,11 +503,11 @@ namespace nnet::net87::constants {
 			        const Float dval=dvC*std::exp(vC)+1.06e-3*dvD*std::exp(vD);
 
 
-			        deff[14]=1.72e31*t9i32*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i+vA56*(dvB - dval/val))*std::exp(vB)/val*1.e-9;
+			        deff[1]=1.72e31*t9i32*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i+vA56*(dvB - dval/val))*std::exp(vB)/val*1.e-9;
 			    }
 
 		        // debuging :
-				if (debug) std::cout << "dr1216=" << deff[14] << "\n";
+				if (debug) std::cout << "dr1216=" << deff[1] << "\n";
 			}
 
 
@@ -599,10 +517,10 @@ namespace nnet::net87::constants {
 			{
 				const Float vA=-135.93e0*t9i13 - .629*t923 - .445*t943 + .0103*t92;
 				const Float dvA=45.31*t9i43 - .629*t9i13*2./3. - .445*t913*4./3. + .0206*t9;
-				deff[15]=7.10e36*std::exp(vA)*t9i23*(-t9i*2./3. + dvA)*1.e-9;
+				deff[2]=7.10e36*std::exp(vA)*t9i23*(-t9i*2./3. + dvA)*1.e-9;
 
 				// debuging :
-				if (debug) std::cout << "dr32=" << deff[15] << "\n";
+				if (debug) std::cout << "dr32=" << deff[2] << "\n";
 			}
 
 
@@ -649,34 +567,34 @@ namespace nnet::net87::constants {
 
 				/* C + He <- O fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
-				dl[1]=5.13e10*std::exp(vA)*(deff[2]*t932 + eff[1]*1.5*t912 + eff[1]*t932*dvA)*1.e-9;
+				/*dl[5]*/ deff[157] = 5.13e10*std::exp(vA)*(deff[5]*t932 + eff[5]*1.5*t912 + eff[5]*t932*dvA)*1.e-9;
 
 				// debuging :
-				if (debug) std::cout << "droga=" << dl[1] << "\n";
+				if (debug) std::cout << "droga=" << /*dl[5]*/ deff[157] << "\n";
 
 
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
 				   O + He -> Ne fusion */
-    			deff[2] = (9.37e9*std::exp(vB)*(-t9i53*2./3. + t9i23*dvB)
+    			deff[6] = (9.37e9*std::exp(vB)*(-t9i53*2./3. + t9i23*dvB)
 		      		+ 62.1*std::exp(vC)*(-1.5*t9i52 + t9i32*dvC)
 		      		+ 538.*std::exp(vD)*(-1.5*t9i52 + t9i32*dvD)
        				+ 13.*std::exp(vE)*(2.*t9 + t92*dvE))*1.e-9;
 
 	      		// debuging :
-				if (debug) std::cout << "droag=" << deff[2] << "\n";
+				if (debug) std::cout << "droag=" << deff[6] << "\n";
 			}
 
 
 			/* O + He <- Ne fission
-				!!!!!!!!!!!!!!!!!!!!!!!! */
+			!!!!!!!!!!!!!!!!!!!!!!!! */
 			{
 	      		const Float vA=-54.903255*t9i;
   				const Float dvA=54.903255*t9i2;
 
-  				dl[2]=5.65e10*std::exp(vA)*(deff[2]*t932 + 1.5*eff[2]*t912 + eff[2]*t932*dvA)*1.e-9;
+  				/*dl[6]*/ deff[158] = 5.65e10*std::exp(vA)*(deff[6]*t932 + 1.5*eff[6]*t912 + eff[6]*t932*dvA)*1.e-9;
 
 				// debuging :
-				if (debug) std::cout << "drnega=" << dl[2] << "\n\n";
+				if (debug) std::cout << "drnega=" << /*dl[6]*/ deff[158] << "\n\n";
 			}
 		}
 
@@ -717,15 +635,14 @@ namespace nnet::net87::constants {
 				// compute deltamukbt
 				for (int i = 0; i < 157; ++i)
 					if (i != 3 && i != 4)
-						deltamukbt[i] = mukbt[i] + mukbt[0] - mukbt[i + 1];
+						deltamukbt[i] = mukbt[constants::main_reactant[i]] + mukbt[constants::secondary_reactant[i]] - mukbt[constants::main_product[i]] - mukbt[constants::secondary_product[i]];
 
 				// Triple alpha correction
-				deltamukbt[0] += mukbt[0];
+				deltamukbt[4] += mukbt[3];
 
 				// 2C -> Mg and 2O -> S
-				deltamukbt[13] = 2.*mukbt[1] - mukbt[3];
-				deltamukbt[14] = mukbt[1] + mukbt[2] - mukbt[4];
-				deltamukbt[15] = 2.*mukbt[2] - mukbt[5];
+				deltamukbt[0] = 2.*mukbt[4] - mukbt[8];
+				deltamukbt[2] = 2.*mukbt[5] - mukbt[24];
 			}
 
 
@@ -745,43 +662,9 @@ namespace nnet::net87::constants {
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		push back rates
 		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{
-			for (int i = 7; i < 157; ++i) {
-				 rates.push_back(eff [i - 1]);
-				drates.push_back(deff[i - 1]);
-			}
-
-			for (int i = 7; i < 157; ++i) {
-				 rates.push_back(l [i - 1]);
-				drates.push_back(dl[i - 1]);
-			}
-
-			 rates.push_back(eff [0]);
-			drates.push_back(deff[0]);
-
-			 rates.push_back(l [0]);
-			drates.push_back(dl[0]);
-
-	      	 rates.push_back(eff [13]);
-	      	drates.push_back(deff[13]);
-
-		     rates.push_back(eff [14]);
-		    drates.push_back(deff[14]);
-
-			 rates.push_back(eff [15]);
-			drates.push_back(deff[15]);
-
-			 rates.push_back(eff [1]);
-			drates.push_back(deff[1]);
-
-			 rates.push_back(l [1]);
-			drates.push_back(dl[1]);
-
-    		 rates.push_back(eff [2]);
-    		drates.push_back(deff[2]);
-
-			 rates.push_back(l [2]);
-			drates.push_back(dl[2]);
+		for (int i = 0; i < 157 + /*l[5] and l[6]*/2; ++i) {
+			 rates.push_back(eff [i]);
+			drates.push_back(deff[i]);
 		}
 
 		return {rates, drates};

@@ -576,7 +576,7 @@ namespace nnet::net14 {
 
 				/* C + He <- O fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
-				dl[1]=5.13e10*std::exp(vA)*(deff[2]*t932 + eff[1]*1.5*t912 + eff[1]*t932*dvA)*1.e-9;
+				dl[1]=5.13e10*std::exp(vA)*(deff[1]*t932 + eff[1]*1.5*t912 + eff[1]*t932*dvA)*1.e-9;
 
 				// debuging :
 				if (debug) std::cout << "droga=" << dl[1] << "\n";
