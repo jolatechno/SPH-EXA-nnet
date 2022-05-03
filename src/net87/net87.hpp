@@ -605,23 +605,29 @@ namespace nnet::net87::constants {
 		compute reversed rates
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 		{
-			/*
-			do i=8,137
-		        fin=final(i)
-		        ini=target(i)
-		        part=choose(ini,k)/choose(fin,k)
-		        l(i)=part*exp(fit(i,8)+coef(i)-val1*q(i)+val2)
-		        dl(i)=l(i)*(dcoef(i)+val3*q(i)+val4)
-		    enddo
-		    do i=138,157   !These are not photodesintegrations so they don't have val2
-		        fin=final(i)
-		        ini=target(i)
-		        part=choose(ini,k)/choose(fin,k)
-		        l(i)=part*exp(fit(i,8)+coef(i)-val1*q(i))
-		        dl(i)=l(i)*(dcoef(i)+val3*q(i))
-		    enddo
-		    */
+			const Float t9=T*1.0e-09;
+			const Float t9i=1./t9;
+
+			const Float val1 = 11.6045*t9i;
+			const Float val2 = 1.5*std::log(t9);
+			const Float val3 = val1*t9i*1e-9;
+			const Float val4 = 1.5e-9*t9i;
+
+			const int k = constants::fits::get_temperature_range(T);
+
+			for (int i = 7; i < 137; ++i) {
+				const Float part = constants::fits::choose[main_reactant[i]][k]/constants::fits::choose[main_product[i]][k];
+				l[i]  = part*std::exp(constants::fits::fit[i - 7][7] + coefs[i - 7] - val1*constants::fits::q[i - 7] + val2);
+		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::q[i - 7] + val4);
+			}
+			// These are not photodesintegrations so they don't have val2
+			for (int i = 137; i < 157; ++i) {
+				const Float part = constants::fits::choose[main_reactant[i]][k]/constants::fits::choose[main_product[i]][k];
+				l[i]  = part*std::exp(constants::fits::fit[i - 7][7] + coefs[i - 7] - val1*constants::fits::q[i - 7]);
+		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::q[i - 7] + val4);
+			}
 		}
+
 
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -687,18 +693,24 @@ namespace nnet::net87::constants {
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		push back rates
 		!!!!!!!!!!!!!!!!!!!!!!!! */
-		for (int i = 0; i < 157; ++i) {
-			 rates.push_back(eff [i]);
-			drates.push_back(deff[i]);
-		}
+		{
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			push direct reaction rates
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			for (int i = 0; i < 157; ++i) {
+				 rates.push_back(eff [i]);
+				drates.push_back(deff[i]);
+			}
 
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		push inverse reaction rates
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		for (int i = 5; i < 157; ++i) {
-			 rates.push_back(l [i]);
-			drates.push_back(dl[i]);
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			push inverse reaction rates
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			for (int i = 5; i < 157; ++i) {
+				 rates.push_back(l [i]);
+				drates.push_back(dl[i]);
+			}
 		}
+		
 
 		return {rates, drates};
 	}
