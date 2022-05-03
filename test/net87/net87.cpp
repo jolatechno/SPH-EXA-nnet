@@ -7,11 +7,11 @@
 int main() {
 	std::cout << "A.size = " << nnet::net87::constants::A.size() << "\n";
 	std::cout << "Z.size = " << nnet::net87::constants::Z.size() << "\n";
-	std::cout << "BE.size = " << nnet::net87::constants::BE.size() << "\n";
+	std::cout << "BE.size = " << nnet::net87::constants::BE.size() << "\n\n";
 
-	std::cout << "\nComputing reaction rates...\n";
 	auto [rate, drates] = nnet::net87::constants::compute_reaction_rates<double>(1e9, 1e9);
-	std::cout << "\t...OK!\n\n";
+
+	std::cout << "reaction_list.size=" << nnet::net87::constants::reaction_list.size() << ", rates.size=" << rate.size() << "\n\n";
 
 	// print reactions
 	for (int i = 0; i < nnet::net87::constants::reaction_list.size(); ++i) {
