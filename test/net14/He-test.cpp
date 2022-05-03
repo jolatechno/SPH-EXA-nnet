@@ -5,6 +5,10 @@
 #include "../../src/eos/helmholtz.hpp"
 
 int main() {
+#if NO_SCREENING
+	nnet::net14::skip_coulombian_correction = true;
+#endif
+	
 	const double value_1 = 0; // typical v1 from net14 fortran
 	double rho = 5e5; // rho, g/cm^3
 	double last_T = 1e9;
