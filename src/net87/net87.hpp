@@ -228,8 +228,7 @@ namespace nnet::net87::constants {
 					             + constants::fits::fit     [i - 7][6]*t9i)*1e-9;
 
 				eff[i] = std::exp(constants::fits::fit[i - 7][0] + coefs[i - 7]);
-
-				deff[i] = eff[i - 1]*dcoefs[i - 7];
+				deff[i] = eff[i]*dcoefs[i - 7];
 
 				// debuging :
 				if (debug) std::cout << "dir(" << i << ")=" << eff[i] << ", coef(" << i << ")=" << coefs[i - 7];
@@ -616,13 +615,13 @@ namespace nnet::net87::constants {
 			const int k = constants::fits::get_temperature_range(T);
 
 			for (int i = 7; i < 137; ++i) {
-				const Float part = constants::fits::choose[main_reactant[i]][k]/constants::fits::choose[main_product[i]][k];
+				const Float part = constants::fits::choose[main_reactant[i] - 6][k]/constants::fits::choose[main_product[i] - 6][k];
 				l[i]  = part*std::exp(constants::fits::fit[i - 7][7] + coefs[i - 7] - val1*constants::fits::q[i - 7] + val2);
 		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::q[i - 7] + val4);
 			}
 			// These are not photodesintegrations so they don't have val2
 			for (int i = 137; i < 157; ++i) {
-				const Float part = constants::fits::choose[main_reactant[i]][k]/constants::fits::choose[main_product[i]][k];
+				const Float part = constants::fits::choose[main_reactant[i] - 6][k]/constants::fits::choose[main_product[i] - 6][k];
 				l[i]  = part*std::exp(constants::fits::fit[i - 7][7] + coefs[i - 7] - val1*constants::fits::q[i - 7]);
 		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::q[i - 7] + val4);
 			}
@@ -650,7 +649,7 @@ namespace nnet::net87::constants {
 		    	const double e1 = 2.520058332;
 
 		    	// compute mukbt
-				for (int i = 1; i < 87; ++i) {
+				for (int i = 1; i < 157; ++i) {
 					const double gamp = gam*std::pow(constants::Z[i], 5./3.);
 			        const double sqrootgamp = std::sqrt(gamp);
 			        const double sqroot2gamp = std::sqrt(sqrootgamp);
@@ -679,15 +678,30 @@ namespace nnet::net87::constants {
 
 			/* correction for direct rate for coulumbian correction
 			!!!!!!!!!!!!!!!!!!!!!!!! */
-			for (int i = 0; i < 16; ++i) {
+			for (int i = 0; i < 157; ++i) {
 				Float EF = std::exp(deltamukbt[i - 1]);
-		        eff [i] = eff [i]*EF;
+		        eff [i] =  eff[i]*EF;
 		        deff[i] = deff[i]*EF - 2.*eff[i]*deltamukbt[i]/T;
 
 		        // debuging :
 				if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 15 ? "\n\n" : "\n");
 			}
 		}
+
+
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		From most of the (a,p) and (a,n) we only have the inverse reaction.
+		For that reason we use the inverse of the inverse as direct reaction.
+		So the direct reactions from the tables are the inverse of our network.
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		for (int i = 137; i < 154; ++i) {
+			std::swap( eff[i],  l[i]);
+			std::swap(deff[i], dl[i]);
+		}
+		std::swap( eff[156],  l[156]);
+		std::swap(deff[156], dl[156]);
+
 
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -698,7 +712,7 @@ namespace nnet::net87::constants {
 			push direct reaction rates
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			for (int i = 0; i < 157; ++i) {
-				 rates.push_back(eff [i]);
+				rates .push_back( eff[i]);
 				drates.push_back(deff[i]);
 			}
 
@@ -706,7 +720,7 @@ namespace nnet::net87::constants {
 			push inverse reaction rates
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			for (int i = 5; i < 157; ++i) {
-				 rates.push_back(l [i]);
+				rates .push_back( l[i]);
 				drates.push_back(dl[i]);
 			}
 		}

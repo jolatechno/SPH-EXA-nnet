@@ -9,12 +9,24 @@ int main() {
 	std::cout << "Z.size = " << nnet::net87::constants::Z.size() << "\n";
 	std::cout << "BE.size = " << nnet::net87::constants::BE.size() << "\n\n";
 
-	auto [rate, drates] = nnet::net87::constants::compute_reaction_rates<double>(1e9, 1e9);
+	nnet::net87::constants::skip_coulombian_correction = true;
+	auto [rate, drates] = nnet::net87::constants::compute_reaction_rates<double>(2e9, 1e9);
 
 	std::cout << "reaction_list.size=" << nnet::net87::constants::reaction_list.size() << ", rates.size=" << rate.size() << "\n\n";
+	
+	int num_reactions = 157, num_reverse = 157 - 5;
 
 	// print reactions
-	for (int i = 0; i < nnet::net87::constants::reaction_list.size(); ++i) {
+	std::cout << "\ndirect rates rates:\n";
+	for (int i = 0; i < num_reactions + num_reverse; ++i) {
+		if (i == num_reactions)
+			std::cout << "\nreverse rates:\n";
+
+		if (i < num_reactions)
+			std::cout << "(" << i + 1 << ")\t";
+		else
+			std::cout << "(" << i - num_reactions + 6 << ")\t";
+
 		auto const reaction = nnet::net87::constants::reaction_list[i];
 
 		// print reactant
