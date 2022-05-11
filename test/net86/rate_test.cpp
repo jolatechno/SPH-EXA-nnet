@@ -9,6 +9,10 @@ int main() {
 	std::cout << "Z.size = " << nnet::net86::constants::Z.size() << "\n";
 	std::cout << "BE.size = " << nnet::net86::BE.size() << "\n\n";
 
+#if NO_SCREENING
+	nnet::net86::skip_coulombian_correction = true;
+#endif
+
 	// nnet::net86::skip_coulombian_correction = true;
 	auto [rate, drates] = nnet::net86::compute_reaction_rates<double>(2e9, 1e9);
 
