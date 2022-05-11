@@ -164,7 +164,7 @@ namespace nnet::net86::constants {
 		Float coefs[157 - 7], dcoefs[157 - 7],
 			eff[157]={0.}, deff[157]={0.},
 			l[157]={0.}, dl[157]={0.}, /* should be removed */
-			mukbt[157]={0.}, deltamukbt[157]={0.};
+			mukbt[87]={0.}, deltamukbt[157]={0.};
 
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -624,6 +624,20 @@ namespace nnet::net86::constants {
 
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		From most of the (a,p) and (a,n) we only have the inverse reaction.
+		For that reason we use the inverse of the inverse as direct reaction.
+		So the direct reactions from the tables are the inverse of our network.
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		for (int i = 137; i < 154; ++i) {
+			std::swap( eff[i],  l[i]);
+			std::swap(deff[i], dl[i]);
+		}
+		std::swap( eff[156],  l[156]);
+		std::swap(deff[156], dl[156]);
+
+
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		correction for direct rate for coulumbian correction
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 		if (!skip_coulombian_correction) {
@@ -643,59 +657,51 @@ namespace nnet::net86::constants {
 		    	const double e1 = 2.520058332;
 
 		    	// compute mukbt
-				for (int i = 1; i < 157; ++i) {
+				for (int i = 0; i < 87; ++i) {
 					const double gamp = gam*std::pow(constants::Z[i], 5./3.);
 			        const double sqrootgamp = std::sqrt(gamp);
 			        const double sqroot2gamp = std::sqrt(sqrootgamp);
 			        if(gamp <= 1) {
 			            mukbt[i] = -(1./std::sqrt(3.))*gamp*sqrootgamp + std::pow(gamp, 1.9885)*.29561/1.9885;
 			        } else
-			            mukbt[i]=a1*gamp + 4.*(b1*sqroot2gamp - c1/sqroot2gamp) + d1*std::log(gamp) - e1;
+			            mukbt[i] = a1*gamp + 4.*(b1*sqroot2gamp - c1/sqroot2gamp) + d1*std::log(gamp) - e1;
 				}
 
 				// mu for neutrons must be zero
-				mukbt[2] = 0;
+				mukbt[1] = 0;
 
 				// compute deltamukbt
 				for (int i = 0; i < 157; ++i)
-					if (i != 3 && i != 4)
-						deltamukbt[i] = mukbt[constants::main_reactant[i]] + mukbt[constants::secondary_reactant[i]] - mukbt[constants::main_product[i]] - mukbt[constants::secondary_product[i]];
+					deltamukbt[i] = mukbt[constants::main_reactant[i]] + mukbt[constants::secondary_reactant[i]] - mukbt[constants::main_product[i]] - mukbt[constants::secondary_product[i]];
 
 				// Triple alpha correction
-				deltamukbt[4] += mukbt[3];
-
-				// 2C -> Mg and 2O -> S
-				deltamukbt[0] = 2.*mukbt[4] - mukbt[8];
-				deltamukbt[2] = 2.*mukbt[5] - mukbt[24];
+				deltamukbt[5] += mukbt[constants::main_reactant[4]];
 			}
 
 
-			/* correction for direct rate for coulumbian correction
-			!!!!!!!!!!!!!!!!!!!!!!!! */
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			correction for direct rate for coulumbian correction */
 			for (int i = 0; i < 157; ++i) {
-				Float EF = std::exp(deltamukbt[i - 1]);
+				Float EF = std::exp(deltamukbt[i]);
 		        eff [i] =  eff[i]*EF;
 		        deff[i] = deff[i]*EF - 2.*eff[i]*deltamukbt[i]/T;
 
 		        // debuging :
-				if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 15 ? "\n\n" : "\n");
+				if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 156 ? "\n\n" : "\n");
+			}
+
+			/* correction for inverse rate for coulumbian correction
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			for (int i = 137; i < 157; ++i) {
+				Float EF = std::exp(deltamukbt[i]);
+		        l [i] =  l[i]*EF;
+		        dl[i] = dl[i]*EF - 2.*l[i]*deltamukbt[i]/T;
+
+		        // debuging :
+				if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 156 ? "\n\n" : "\n");
 			}
 		}
-
-
-
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		From most of the (a,p) and (a,n) we only have the inverse reaction.
-		For that reason we use the inverse of the inverse as direct reaction.
-		So the direct reactions from the tables are the inverse of our network.
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		for (int i = 137; i < 154; ++i) {
-			std::swap( eff[i],  l[i]);
-			std::swap(deff[i], dl[i]);
-		}
-		std::swap( eff[156],  l[156]);
-		std::swap(deff[156], dl[156]);
-
+		
 
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!

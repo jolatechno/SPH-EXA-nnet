@@ -9,7 +9,7 @@ int main() {
 	std::cout << "Z.size = " << nnet::net86::constants::Z.size() << "\n";
 	std::cout << "BE.size = " << nnet::net86::constants::BE.size() << "\n\n";
 
-	nnet::net86::constants::skip_coulombian_correction = true;
+	// nnet::net86::constants::skip_coulombian_correction = true;
 	auto [rate, drates] = nnet::net86::constants::compute_reaction_rates<double>(2e9, 1e9);
 
 	std::cout << "reaction_list.size=" << nnet::net86::constants::reaction_list.size() << ", rates.size=" << rate.size() << "\n\n";
