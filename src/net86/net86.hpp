@@ -6,7 +6,7 @@
 #include "../nuclear-net.hpp"
 #include "net86-constants.hpp"
 
-namespace nnet::net86::constants {
+namespace nnet::net86 {
 	/* TODO */
 
 	bool skip_coulombian_correction = false;
@@ -104,7 +104,7 @@ namespace nnet::net86::constants {
 	/// function to compute the corrected BE
 	template<typename Float>
 	std::vector<Float> compute_BE(std::vector<Float> const &Y, Float const T, Float const rho) {
-		std::vector<Float> corrected_BE(14);
+		std::vector<Float> corrected_BE(87);
 
 		Float correction = -1.5*constants::Na*constants::Kb*T;
 		for (int i = 0; i < 87; ++i)
@@ -609,13 +609,13 @@ namespace nnet::net86::constants {
 			const int k = constants::fits::get_temperature_range(T);
 
 			for (int i = 7; i < 137; ++i) {
-				const Float part = constants::fits::choose[main_reactant[i] - 5][k]/constants::fits::choose[main_product[i] - 5][k];
+				const Float part = constants::fits::choose[constants::main_reactant[i] - 5][k]/constants::fits::choose[constants::main_product[i] - 5][k];
 				l[i]  = part*std::exp(constants::fits::fit[i - 7][7] + coefs[i - 7] - val1*constants::fits::q[i - 7] + val2);
 		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::q[i - 7] + val4);
 			}
 			// These are not photodesintegrations so they don't have val2
 			for (int i = 137; i < 157; ++i) {
-				const Float part = constants::fits::choose[main_reactant[i] - 5][k]/constants::fits::choose[main_product[i] - 5][k];
+				const Float part = constants::fits::choose[constants::main_reactant[i] - 5][k]/constants::fits::choose[constants::main_product[i] - 5][k];
 				l[i]  = part*std::exp(constants::fits::fit[i - 7][7] + coefs[i - 7] - val1*constants::fits::q[i - 7]);
 		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::q[i - 7]);
 			}

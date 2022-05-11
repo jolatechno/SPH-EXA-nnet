@@ -17,7 +17,7 @@ namespace nnet {
 
 	namespace constants {
 		/// theta for the implicit method
-		double theta = 0.9;
+		double theta = 1;
 
 		/// maximum timestep
 		double max_dt = 1e-2;
@@ -144,8 +144,10 @@ namespace nnet {
 		Vector dY(dimension);
 
 		const int num_reactions = reactions.size();
-		if (num_reactions != rates.size())
+		if (num_reactions != rates.size()) {
+			std::cerr << "number of reaction and rates don't match !\n";
 			throw;
+		}
 
 		for (int i = 0; i < num_reactions; ++i) {
 			const reaction &Reaction = reactions[i];
@@ -196,8 +198,10 @@ namespace nnet {
 		eigen::matrix<Float> M(dimension, dimension);
 
 		const int num_reactions = reactions.size();
-		if (num_reactions != rates.size())
+		if (num_reactions != rates.size()) {
+			std::cerr << "number of reaction and rates don't match !\n";
 			throw;
+		}
 
 		for (int i = 0; i < num_reactions; ++i) {
 			const reaction &Reaction = reactions[i];
@@ -419,9 +423,10 @@ namespace nnet {
 
 			// actual solving
 			for (int i = 0; i < constants::NR::max_it; ++i) {
-
-				if (dt == 0)
+				if (dt == 0) {
+					std::cerr << "zero timestep !\n";
 					throw;
+				}
 
 				// compute n+theta values
 				T_theta =        (1 - constants::theta)*T    + constants::theta*final_T;
