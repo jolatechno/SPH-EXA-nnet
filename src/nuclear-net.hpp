@@ -65,6 +65,8 @@ namespace nnet {
 	 * ...TODO
 	 */
 	struct reaction {
+		friend std::ostream& operator<<(std::ostream& os, const reaction& r);
+
 		struct reactant {
 			int reactant_id, n_reactant_consumed = 1;
 		};
@@ -74,6 +76,20 @@ namespace nnet {
 		std::vector<reactant> reactants;
 		std::vector<product> products;
 	};
+
+	/// reaction class print operator
+	std::ostream& operator<<(std::ostream& os, const reaction& r) {
+		// print reactant
+		for (auto [reactant_id, n_reactant_consumed] : r.reactants)
+			os << n_reactant_consumed << "*[" << reactant_id << "] ";
+
+		os << " ->  ";
+
+		// print products
+		for (auto [product_id, n_product_produced] : r.products)
+			os << n_product_produced << "*[" << product_id << "] ";
+	    return os;
+	}
 
 
 

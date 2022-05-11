@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <iostream>
 
 #include "../nuclear-net.hpp"
 #include "net87-constants.hpp"
@@ -116,36 +117,29 @@ namespace nnet::net87::constants {
 	const std::vector<nnet::reaction> reaction_list = []() {
 		std::vector<nnet::reaction> reactions;
 
-		for (int i = 0; i < 157; ++i)
-			if (i == 0) {
-				/* !!!!!!!!!!!!!!!!!!!!!!!!
-				2C fusion
-				!!!!!!!!!!!!!!!!!!!!!!!! */
-				reactions.push_back(nnet::reaction{{{4, 2}}, {{9}}});
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		2C fusion,
+		C + O fusion,
+		2O fusion
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		for (int i = 0; i < 3; ++i)
+			reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}, {{constants::main_product[i]}}});
 
-			} else if (i == 2) {
-				/* !!!!!!!!!!!!!!!!!!!!!!!!
-				2O fusion
-				!!!!!!!!!!!!!!!!!!!!!!!! */
-				reactions.push_back(nnet::reaction{{{5, 2}}, {{25}}});
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		3He -> C fusion
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		reactions.push_back(nnet::reaction{{{constants::main_reactant[4], 3}}, {{constants::main_product[4]}}});
 
-			} else if (i == 3) {
-				/* !!!!!!!!!!!!!!!!!!!!!!!!
-				C -> 3He fission
-				!!!!!!!!!!!!!!!!!!!!!!!! */
-				reactions.push_back(nnet::reaction{{{4}}, {{3, 3}}});
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		C -> 3He fission
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		reactions.push_back(nnet::reaction{{{constants::main_product[4]}}, {{constants::main_reactant[4], 3}}});
 
-			} else if (i == 4) {
-				/* !!!!!!!!!!!!!!!!!!!!!!!!
-				3He -> C fusion
-				!!!!!!!!!!!!!!!!!!!!!!!! */
-				reactions.push_back(nnet::reaction{{{3, 3}}, {{4}}});
-
-			} else
-				/* !!!!!!!!!!!!!!!!!!!!!!!!
-				direct reaction
-				!!!!!!!!!!!!!!!!!!!!!!!! */
-				reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}, {{constants::main_product[i]}}});
+		for (int i = 5; i < 157; ++i)
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			direct reaction
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}, {{constants::main_product[i]}}});
 		
 		for (int i = 5; i < 157; ++i)
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -284,11 +278,11 @@ namespace nnet::net87::constants {
 				/* 3He <- C fission
 				!!!!!!!!!!!!!!!!!!!!!!!! */
 		      	const Float rev = 2.e20*std::exp(-84.419412e0*t9i);
-		      	eff[3] = eff[4]*rev*t93;
+		      	l[4] = eff[4]*rev*t93;
 
 
 		      	// debuging :
-				if (debug) std::cout << "\nr3a=" << eff[4] << ", rg3a=" << eff[3] << "\n";
+				if (debug) std::cout << "\nr3a=" << eff[4] << ", rg3a=" << l[4] << "\n";
 		    }
 
 		    
@@ -459,10 +453,10 @@ namespace nnet::net87::constants {
 			    const Float dvF=27.499*t9i2;
 			    const Float dvG=15.541*t9i2;
 
-	      		deff[3] = 2.00e20*std::exp(vA)*t93*(dvA*eff[4] + 3.*t9i*eff[4] + deff[4])*1.e-9;
+	      		dl[4] = 2.00e20*std::exp(vA)*t93*(dvA*eff[4] + 3.*t9i*eff[4] + deff[4])*1.e-9;
 
 		      	// debuging :
-				if (debug) std::cout << "drg3a=" << deff[3] << "\n";
+				if (debug) std::cout << "drg3a=" << dl[4] << "\n";
 			}
 
 		    
@@ -604,7 +598,7 @@ namespace nnet::net87::constants {
 		compute reversed rates
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 		{
-			const Float t9=T*1.0e-09;
+			const Float t9=T*1e-09;
 			const Float t9i=1./t9;
 
 			const Float val1 = 11.6045*t9i;
@@ -623,7 +617,7 @@ namespace nnet::net87::constants {
 			for (int i = 137; i < 157; ++i) {
 				const Float part = constants::fits::choose[main_reactant[i] - 6][k]/constants::fits::choose[main_product[i] - 6][k];
 				l[i]  = part*std::exp(constants::fits::fit[i - 7][7] + coefs[i - 7] - val1*constants::fits::q[i - 7]);
-		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::q[i - 7] + val4);
+		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::q[i - 7]);
 			}
 		}
 
@@ -709,9 +703,31 @@ namespace nnet::net87::constants {
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 		{
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			2C fusion,
+			C + O fusion
+			2O fusion
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			for (int i = 0; i < 3; ++i) {
+				rates .push_back( eff[i]);
+				drates.push_back(deff[i]);
+			}
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			3He -> C fusion
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			rates .push_back( eff[4]);
+			drates.push_back(deff[4]);
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			C -> 3He fission
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			rates .push_back( l[4]);
+			drates.push_back(dl[4]);
+
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			push direct reaction rates
 			!!!!!!!!!!!!!!!!!!!!!!!! */
-			for (int i = 0; i < 157; ++i) {
+			for (int i = 5; i < 157; ++i) {
 				rates .push_back( eff[i]);
 				drates.push_back(deff[i]);
 			}
