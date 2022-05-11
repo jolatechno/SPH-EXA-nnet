@@ -122,8 +122,9 @@ namespace nnet::net86 {
 		C + O fusion,
 		2O fusion
 		!!!!!!!!!!!!!!!!!!!!!!!! */
-		for (int i = 0; i < 3; ++i)
-			reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}, {{constants::main_product[i]}}});
+		reactions.push_back(nnet::reaction{{{constants::main_reactant[0], 2}}, {{constants::main_product[0]}}});
+		reactions.push_back(nnet::reaction{{{constants::main_reactant[1]}, {constants::secondary_reactant[1]}}, {{constants::main_product[1]}}});
+		reactions.push_back(nnet::reaction{{{constants::main_reactant[2], 2}}, {{constants::main_product[2]}}});
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		3He -> C fusion
@@ -135,17 +136,52 @@ namespace nnet::net86 {
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 		reactions.push_back(nnet::reaction{{{constants::main_product[4]}}, {{constants::main_reactant[4], 3}}});
 
-		for (int i = 5; i < 157; ++i)
-			/* !!!!!!!!!!!!!!!!!!!!!!!!
-			direct reaction
-			!!!!!!!!!!!!!!!!!!!!!!!! */
-			reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}, {{constants::main_product[i]}}});
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		direct reaction
+		!!!!!!!!!!!!!!!!!!!!!!!! */ 
+		for (int i = 5; i < 157; ++i) {
+			const int r1 = constants::main_reactant[i], r2 = constants::secondary_reactant[i], p = constants::main_product[i];
+
+			int delta_Z = constants::Z[r1] + constants::Z[r2] - constants::Z[p], delta_A = constants::A[r1] + constants::A[r2] - constants::A[p];
+
+			if (delta_Z == 0 && delta_A == 0) {
+				reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}, {{constants::main_product[i]}}});
+			} else if (delta_A == 1 && delta_Z == 0) {
+				reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}, {{constants::main_product[i]}, {constants::neutron}}});
+			} else if (delta_A == 1 && delta_Z == 1) {
+				reactions.push_back(nnet::reaction{{{constants::main_product[i]}}, {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}, {constants::proton}}});
+			} else if (delta_A == 4 && delta_Z == 2) {
+				reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}, {{constants::main_product[i]}, {constants::alpha}}});
+			} else {
+				std::cerr << "mass conservation not possible (delta_A=" << delta_A << ", delta_Z=" << delta_Z << ") !\n";
+				throw;
+			}
+
+			
+		}
 		
-		for (int i = 5; i < 157; ++i)
-			/* !!!!!!!!!!!!!!!!!!!!!!!!
-			inverse reaction
-			!!!!!!!!!!!!!!!!!!!!!!!! */
-			reactions.push_back(nnet::reaction{{{constants::main_product[i]}}, {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		inverse reaction
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		for (int i = 5; i < 157; ++i) {
+			const int r = constants::main_product[i], p1 = constants::main_reactant[i], p2 = constants::secondary_reactant[i];
+
+			int delta_Z = constants::Z[r] - (constants::Z[p1] + constants::Z[p2]), delta_A = constants::A[r] - (constants::A[p1] + constants::A[p2]);
+
+			if (delta_Z == 0 && delta_A == 0) {
+				reactions.push_back(nnet::reaction{{{constants::main_product[i]}}, {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
+			} else if (delta_A == -1 && delta_Z ==  0) {
+				reactions.push_back(nnet::reaction{{{constants::main_product[i]}, {constants::neutron}}, {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
+			} else if (delta_A == -1 && delta_Z == -1) {
+				reactions.push_back(nnet::reaction{{{constants::main_product[i]}, {constants::proton}}, {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
+			} else if (delta_A == -4 && delta_Z == -2) {
+				reactions.push_back(nnet::reaction{{{constants::main_product[i]}, {constants::alpha}}, {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
+			} else {
+				std::cerr << "mass conservation not possible (delta_A=" << delta_A << ", delta_Z=" << delta_Z << ") !\n";
+				throw;
+			}
+			
+		}
 
 		return reactions;
 	}();

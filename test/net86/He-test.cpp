@@ -22,8 +22,8 @@ int main() {
 
 	// initial state
 	std::vector<double> last_Y(86, 0), X(86, 0);
-	X[3] = 0.5;
-	X[4] = 0.5;
+	X[nnet::net86::constants::alpha] = 1;
+
 
 	for (int i = 0; i < 86; ++i) last_Y[i] = X[i]/nnet::net86::constants::A[i];
 

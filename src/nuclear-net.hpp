@@ -29,7 +29,7 @@ namespace nnet {
 		/// relative temperature variation target of the implicit solver
 		double dT_T_target = 4e-3;
 		/// relative temperature variation tolerance of the implicit solver
-		double dT_T_tol = 1e-1;
+		double dT_T_tol = 10;
 
 		/// the value that is considered null inside a system
 		double epsilon_system = 1e-200;
@@ -48,7 +48,7 @@ namespace nnet {
 			/// relative temperature variation target of the implicit solver
 			double dT_T_target = 2e-2;
 			/// relative temperature variation tolerance of the implicit solver
-			double dT_T_tol = 1e-1;
+			double dT_T_tol = 5;
 
 			/// minimum number of newton raphson iterations
 			uint min_it = 2;
@@ -399,7 +399,7 @@ namespace nnet {
 			dt = std::min(dt, (Float)constants::max_dt);
 
 			// exit on condition
-			if (dT_T <= constants::dT_T_tol)
+			if (dT_T <= constants::dT_T_target*constants::dT_T_tol)
 				return {next_Y, next_T, previous_dt};
 		}
 	}
@@ -478,7 +478,7 @@ namespace nnet {
 			dt = std::min(dt,      (Float)constants::NR::max_dt);
 
 			// exit on condition
-			if (dT_T <= constants::NR::dT_T_tol)
+			if (dT_T <= constants::NR::dT_T_target*constants::NR::dT_T_tol)
 				return {final_Y, final_T, previous_dt};
 		}
 	}
