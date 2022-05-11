@@ -675,7 +675,7 @@ namespace nnet::net86::constants {
 					deltamukbt[i] = mukbt[constants::main_reactant[i]] + mukbt[constants::secondary_reactant[i]] - mukbt[constants::main_product[i]] - mukbt[constants::secondary_product[i]];
 
 				// Triple alpha correction
-				deltamukbt[5] += mukbt[constants::main_reactant[4]];
+				deltamukbt[4] += mukbt[constants::main_reactant[4]];
 			}
 
 
