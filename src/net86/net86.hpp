@@ -4,9 +4,9 @@
 #include <iostream>
 
 #include "../nuclear-net.hpp"
-#include "net87-constants.hpp"
+#include "net86-constants.hpp"
 
-namespace nnet::net87::constants {
+namespace nnet::net86::constants {
 	/* TODO */
 
 	bool skip_coulombian_correction = false;
@@ -609,13 +609,13 @@ namespace nnet::net87::constants {
 			const int k = constants::fits::get_temperature_range(T);
 
 			for (int i = 7; i < 137; ++i) {
-				const Float part = constants::fits::choose[main_reactant[i] - 6][k]/constants::fits::choose[main_product[i] - 6][k];
+				const Float part = constants::fits::choose[main_reactant[i] - 5][k]/constants::fits::choose[main_product[i] - 5][k];
 				l[i]  = part*std::exp(constants::fits::fit[i - 7][7] + coefs[i - 7] - val1*constants::fits::q[i - 7] + val2);
 		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::q[i - 7] + val4);
 			}
 			// These are not photodesintegrations so they don't have val2
 			for (int i = 137; i < 157; ++i) {
-				const Float part = constants::fits::choose[main_reactant[i] - 6][k]/constants::fits::choose[main_product[i] - 6][k];
+				const Float part = constants::fits::choose[main_reactant[i] - 5][k]/constants::fits::choose[main_product[i] - 5][k];
 				l[i]  = part*std::exp(constants::fits::fit[i - 7][7] + coefs[i - 7] - val1*constants::fits::q[i - 7]);
 		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::q[i - 7]);
 			}

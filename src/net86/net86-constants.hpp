@@ -2,7 +2,7 @@
 
 #include <vector>
 
-namespace nnet::net87::constants {
+namespace nnet::net86::constants {
 	/* TODO */
 
 	const double Kb = 1.380658e-16;
