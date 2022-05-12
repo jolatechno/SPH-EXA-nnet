@@ -15,11 +15,7 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<int n_species, typename Float>
-	struct NuclearData {
-		// pointers to exchange data with hydro particules
-		std::vector<int> node_id;
-		std::vector<std::size_t> particule_id;
-
+	struct NuclearDataType {
 		/// hydro data
 		std::vector<Float> rho, drho_dt, T;
 
@@ -31,9 +27,6 @@ namespace sphexa::sphnnet {
 
 		/// resize the number of particules
 		void resize(const size_t N) {
-			node_id.resize(N);
-			particule_id.resize(N);
-
 			rho.resize(N);
 			drho_dt.resize(N);
 			T.resize(N);
@@ -45,34 +38,20 @@ namespace sphexa::sphnnet {
 
 
 
-		/// update node id and particule id of particule data
-		template<class ParticlesData>
-		void update_particule_pointers(ParticlesData &d) const {
-			sync_pointers(node_id, particule_id, d.node_id, d.particule_id);
-		}
-
-		/// update node id and particule id of nuclear data
-		template<class ParticlesData>
-		void update_nuclear_pointers(const ParticlesData &d) {
-			sync_pointers(d.node_id, d.particule_id, node_id, particule_id);
-		}
-
-
-
-		/// send hydro data
-		template<class ParticlesData>
-		void update_nuclear_data(const ParticlesData &d) {
-			sync_data_from_pointers(d.node_id, d.particule_id, d.rho,     rho);
-			sync_data_from_pointers(d.node_id, d.particule_id, d.drho_dt, drho_dt);
-			sync_data_from_pointers(d.node_id, d.particule_id, d.T,       T);
+		/// receive hydro data
+		template<class ParticlesDataType>
+		void getParticulesValue(ParticlesDataType &d, const mpi_partition &partition) const {
+			direct_sync_data_from_partition(partition, d.rho,     rho,     /* TODO */MPI_DOUBLE);
+			direct_sync_data_from_partition(partition, d.drho_dt, drho_dt, /* TODO */MPI_DOUBLE);
+			direct_sync_data_from_partition(partition, d.T,       T,       /* TODO */MPI_DOUBLE);
 		}
 
 		/// send back hydro data
-		template<class ParticlesData>
-		void update_hydro_data(ParticlesData &d) const {
-			sync_data_from_pointers(node_id, particule_id, rho,     d.rho);
-			sync_data_from_pointers(node_id, particule_id, drho_dt, d.drho_dt);
-			sync_data_from_pointers(node_id, particule_id, T,       d.T);
+		template<class ParticlesDataType>
+		void sendParticulesValue(ParticlesDataType &d, const mpi_partition &partition) const {
+			inverse_sync_data_from_partition(partition, rho,     d.rho,     /* TODO */MPI_DOUBLE);
+			inverse_sync_data_from_partition(partition, drho_dt, d.drho_dt, /* TODO */MPI_DOUBLE);
+			inverse_sync_data_from_partition(partition, T,       d.T,       /* TODO */MPI_DOUBLE);
 		}
 	};
 }
