@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "../../src/nuclear-net.hpp"
 #include "../../src/eos/helmholtz.hpp"
 
 int main() {
@@ -8,7 +9,11 @@ int main() {
 	std::cout << "f(2, 3)=" << nnet::eos::helmholtz_constants::f(2, 3) << "\n";
 	std::cout << "fd(0, 0)=" << nnet::eos::helmholtz_constants::fd(0, 0) << "\n";
 
-	std::vector<double> A = {2, 2}, Z = {1, 2}, Y = {.1, .2};
+#if DEBUG
+	nnet::debug = true;
+#endif
+
+	std::vector<double> A = {12, 16}, Z = {6, 8}, Y = {.5/12, .5/16};
 	nnet::eos::helmholtz eos(A, Z);
 
 	auto res = eos(Y, 1e9, 1e9);
