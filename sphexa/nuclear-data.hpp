@@ -7,14 +7,14 @@
 
 namespace sphexa::sphnnet {
 	/// nuclear abundances type, that is integrated into NuclearData, or should be integrated into ParticlesData
-	template <int n_species, typename Float>
+	template <int n_species, typename Float=double>
 	using NuclearAbundances = std::array<Float, n_species>;
 
 	/// nuclear data class for n_species nuclear network
 	/**
 	 * TODO
 	 */
-	template<int n_species, typename Float>
+	template<int n_species, typename Float=double, MPI_Datatype datatype=MPI_DOUBLE>
 	struct NuclearDataType {
 		/// hydro data
 		std::vector<Float> rho, drho_dt, T;
@@ -41,17 +41,17 @@ namespace sphexa::sphnnet {
 		/// receive hydro data
 		template<class ParticlesDataType>
 		void getParticulesValue(ParticlesDataType &d, const mpi_partition &partition) const {
-			direct_sync_data_from_partition(partition, d.rho,     rho,     /* TODO */MPI_DOUBLE);
-			direct_sync_data_from_partition(partition, d.drho_dt, drho_dt, /* TODO */MPI_DOUBLE);
-			direct_sync_data_from_partition(partition, d.T,       T,       /* TODO */MPI_DOUBLE);
+			direct_sync_data_from_partition(partition, d.rho,     rho,     datatype);
+			direct_sync_data_from_partition(partition, d.drho_dt, drho_dt, datatype);
+			direct_sync_data_from_partition(partition, d.T,       T,       datatype);
 		}
 
 		/// send back hydro data
 		template<class ParticlesDataType>
 		void sendParticulesValue(ParticlesDataType &d, const mpi_partition &partition) const {
-			inverse_sync_data_from_partition(partition, rho,     d.rho,     /* TODO */MPI_DOUBLE);
-			inverse_sync_data_from_partition(partition, drho_dt, d.drho_dt, /* TODO */MPI_DOUBLE);
-			inverse_sync_data_from_partition(partition, T,       d.T,       /* TODO */MPI_DOUBLE);
+			inverse_sync_data_from_partition(partition, rho,     d.rho,     datatype);
+			inverse_sync_data_from_partition(partition, drho_dt, d.drho_dt, datatype);
+			inverse_sync_data_from_partition(partition, T,       d.T,       datatype);
 		}
 	};
 }
