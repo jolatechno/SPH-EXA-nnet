@@ -27,7 +27,12 @@ int main() {
 	int n_max = 400;
 	const int n_print = 30, n_save=400;
 
-	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
+
+	std::cerr << "\"t\",\"dt\",,\"T\",,";
+	for (auto name : nnet::net14::constants::species_names)
+		std::cerr << "\"x(" << name << ")\",";
+	std::cerr << ",\"Dm/m\"\n";
+
 
 #ifdef DEBUG
 		nnet::debug = true;

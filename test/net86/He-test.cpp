@@ -34,7 +34,17 @@ int main() {
 	int n_max = 1000;
 	const int n_print = 30, n_save=1000;
 
-	std::cerr << "\"t\",\"dt\",,\"T\",,\"x(He)\",\"x(C)\",\"x(O)\",\"x(Ne)\",\"x(Mg)\",\"x(Si)\",\"x(S)\",\"x(Ar)\",\"x(Ca)\",\"x(Ti)\",\"x(Cr)\",\"x(Fe)\",\"x(Ni)\",\"x(Zn)\",,\"Dm/m\"\n";
+
+	std::cerr << "\"t\",\"dt\",,\"T\",";
+#ifdef SAVE_NET14
+	for (auto name : nnet::net14::constants::species_names)
+		std::cerr << ",\"x(" << name << ")\"";
+#else
+	for (auto name : nnet::net86::constants::species_names)
+		std::cerr << ",\"x(" << name << ")\"";
+#endif
+	std::cerr << ",,\"Dm/m\"\n";
+
 
 #ifdef DEBUG
 		nnet::debug = true;
@@ -74,16 +84,30 @@ int main() {
 		// formated print (stderr)
 		if (n_save >= n_max || (n_max - i) % (int)((float)n_max/(float)n_save) == 0) {
 			for (int i = 0; i < 86; ++i) X[i] = Y[i]*nnet::net86::constants::A[i]/eigen::dot(Y, nnet::net86::constants::A);
+
 			std::cerr << t << "," << dt << ",," << T << ",,";
-			for (int i = 0; i < 86; ++i) std::cerr << X[i] << ",";
+#ifdef SAVE_NET14
+			for (auto idx : net14_species_order)
+				std::cerr << X[idx] << ", ";
+#else
+			for (int i = 0; i < 86; ++i)
+				std::cerr << X[nnet::net86::constants::species_order[i]] << ", ";
+#endif
 			std::cerr << "," << dm_m << "\n";
 		}
 
 		// debug print
 		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0) {
 			for (int i = 0; i < 86; ++i) X[i] = Y[i]*nnet::net86::constants::A[i]/eigen::dot(Y, nnet::net86::constants::A);
+
 			std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
-			for (int i = 0; i < 86; ++i) std::cout << X[i] << ", ";
+#ifdef PRINT_NET86
+			for (int i = 0; i < 86; ++i)
+				std::cout << X[nnet::net86::constants::species_order[i]] << ", ";
+#else
+			for (auto idx : nnet::net86::constants::net14_species_order)
+				std::cout << X[idx] << ", ";
+#endif
 			std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << "),\tcv=" << helm_eos(last_Y, last_T, rho).cv << ",\t" << T << "\n";
 		}
 

@@ -1,6 +1,9 @@
 #pragma once
 
 #include <vector>
+#include <numeric>
+
+#include "../net14/net14-constants.hpp"
 
 namespace nnet::net86::constants {
 	const int proton = 0;
@@ -14,30 +17,108 @@ namespace nnet::net86::constants {
 
 	/// constant atomic number values
 	const std::vector<double> Z = {
-		1, 0, 2, 6, 8, 10, 11, 12, 12, 10, 11,
-		12, 11, 10, 13, 14, 14, 12, 13, 14, 13, 12, 15, 16, 16, 14,
-		15, 16, 15, 14, 17, 18, 18, 16, 17, 18, 17, 16, 19, 20, 20,
-		18, 19, 20, 19, 18, 21, 22, 22, 20, 21, 22, 21, 20, 23, 24, 24,
-		22, 23, 24, 23, 22, 25, 26, 26, 24, 25, 26, 25, 24, 27, 28,
-		28, 26, 27, 28, 27, 26, 29, 30, 30, 28, 29, 30, 29, 28, /*Z=-1 for electrons*/-1
+		 1,  0,  2,  6,  8, 10, 11,
+		12, 12, 10, 11, 12, 11, 10,
+		13, 14, 14, 12, 13, 14, 13,
+		12, 15, 16, 16, 14, 15, 16,
+		15, 14, 17, 18, 18, 16, 17,
+		18, 17, 16, 19, 20, 20, 18,
+		19, 20, 19, 18, 21, 22, 22,
+		20, 21, 22, 21, 20, 23, 24,
+		24, 22, 23, 24, 23, 22, 25,
+		26, 26, 24, 25, 26, 25, 24,
+		27, 28, 28, 26, 27, 28, 27,
+		26, 29, 30, 30, 28, 29, 30,
+		29, 28, /*Z=-1 for electrons*/-1
 	};
 
 	/// constant number of masses values
 	const std::vector<double> A = {
-		1, 1, 4, 12, 16, 20, 21,
-		24, 23, 21, 23, 22, 22, 22, 25, 28, 27,
-		25, 27, 26, 26, 26, 29, 32, 31, 29, 31,
-		30, 30, 30, 33, 36, 35, 33, 35, 34, 34,
-		34, 37, 40, 39, 37, 39, 38, 38, 38, 41,
-		44, 43, 41, 43, 42, 42, 42, 45, 48, 47,
-		45, 47, 46, 46, 46, 49, 52, 51, 49, 51,
-		50, 50, 50, 53, 56, 55, 53, 55, 54, 54,
-		54, 57, 60, 59, 57, 59, 58, 58, 58, /*A=0 for electrons*/0
+		 1,  1,  4, 12, 16, 20, 21,
+		24, 23, 21, 23, 22, 22, 22,
+		25, 28, 27, 25, 27, 26, 26,
+		26, 29, 32, 31, 29, 31, 30, 
+		30, 30, 33, 36, 35, 33, 35,
+		34, 34, 34, 37, 40, 39, 37,
+		39, 38, 38, 38, 41, 44, 43,
+		41, 43, 42, 42, 42, 45, 48, 
+		47, 45, 47, 46, 46, 46, 49,
+		52, 51, 49, 51, 50, 50, 50,
+		53, 56, 55, 53, 55, 54, 54,
+		54, 57, 60, 59, 57, 59, 58,
+		58, 58, /*A=0 for electrons*/0
 	};
+
+	/// order of nuclear species
+	const std::vector<int> species_order = []() {
+		std::vector<int> species_order_(A.size());
+		std::iota(species_order_.begin(), species_order_.end(), 0);
+		std::sort(species_order_.begin(), species_order_.end() - /*don't sort electrons*/1, 
+			[&](const int idx1, const int idx2){
+				if (Z[idx1] < Z[idx2])
+					return true;
+				if (Z[idx1] > Z[idx2])
+					return false;
+
+				return A[idx1] < A[idx2];
+			});
+
+		return species_order_;
+	}();
+
+	/// unsorted nuclear species names
+	const std::vector<std::string> unsorted_species_names = {
+		   "p",    "n",  "4He",  "12C",  "16O", "20Ne", "21Na",
+		"24Mg", "23Mg", "21Ne", "23Na", "22Mg", "22Na", "22Ne",
+		"25Al", "28Si", "27Si", "25Mg", "27Al", "26Si", "26Al",
+		"26Mg",  "29P",  "32S",  "31S", "29Si",  "31P",  "30S",
+		 "30P", "30Si", "33Cl", "36Ar", "35Ar",  "33S", "35Cl",
+		"34Ar", "34Cl",  "34S",  "37K", "40Ca", "39Ca", "37Ar",
+		 "39K", "38Ca",  "38K", "38Ar", "41Sc", "44Ti", "43Ti",
+		"41Ca", "43Sc", "42Ti", "42Sc", "42Ca",  "45V", "48Cr",
+		"47Cr", "45Ti",  "47V", "46Cr",  "46V", "46Ti", "49Mn",
+		"52Fe", "51Fe", "49Cr", "51Mn", "50Fe", "50Mn", "50Cr",
+		"53Co", "56Ni", "55Ni", "53Fe", "55Co", "54Ni", "54Co",
+		"54Fe", "57Cu", "60Zn", "59Zn", "57Ni", "59Cu", "58Zn",
+		"58Cu", "58Ni", /*electrons*/"e-"
+	};
+
+	/// nuclear species names
+	const std::vector<std::string> species_names = []() {
+		std::vector<std::string> species_names_(unsorted_species_names.size());
+
+		for (int i = 0; i < unsorted_species_names.size(); ++i)
+			species_names_[i] = unsorted_species_names[species_order[i]];
+
+		return species_names_;
+	}();
+
+	/// nuclear species index corresponding to net14 species
+	const std::vector<int> net14_species_order = []() {
+		const int net14_n_species = nnet::net14::constants::A.size();
+		const int net86_n_species = A.size();
+
+		std::vector<int> net14_species_order_(net14_n_species);
+
+		for (int i = 0; i < net14_n_species; ++i)
+			for (int j = 0; j < net86_n_species; ++j)
+				if (nnet::net14::constants::species_names[i] == unsorted_species_names[j]) {
+					net14_species_order_[i] = j;
+
+					break;
+
+					if (j == net86_n_species - 1) {
+						std::cerr << "can't find corresponding nuclear species !\n";
+						throw;
+					}
+				}
+
+		return net14_species_order_;
+	}();
 
     // reactant and products
 	const int main_reactant[157] = { // (-1 applied)
-		3, 3, 4, 0, 2, 3, 4,
+		 3,  3,  4,  0,  2,  3,  4,
 		 5,  8, 11,  5, 12,  6,  6,  9,  7, 16, 19,  7, 20, 14, 14, 17,
 		15, 24, 27, 15, 28, 22, 22, 25, 23, 32, 35, 23, 36, 30, 30, 33,
 		31, 40, 43, 31, 44, 38, 38, 41, 39, 48, 51, 39, 52, 46, 46, 49,

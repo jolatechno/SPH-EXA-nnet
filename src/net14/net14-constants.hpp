@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <numeric>
 
 namespace nnet::net14::constants {
 	const double Kb = 1.380658e-16;
@@ -13,6 +14,28 @@ namespace nnet::net14::constants {
 
 	/// constant number of masses values
 	const std::vector<double> A = {4, 12, 16, 20, 24, 28, 32,  36, 40, 44, 48, 52, 56, 60};
+
+	/// order of nuclear species
+	const std::vector<double> species_order = []() {
+		std::vector<double> species_order_(A.size());
+		std::iota(species_order_.begin(), species_order_.end(), 0);
+		std::sort(species_order_.begin(), species_order_.end(), 
+			[&](const int idx1, const int idx2){
+				if (Z[idx1] < Z[idx2])
+					return true;
+				if (Z[idx1] > Z[idx2])
+					return false;
+
+				return A[idx1] < A[idx2];
+			});
+
+		return species_order_;
+	}();
+
+	/// nuclear species names
+	const std::vector<const char*> species_names = {
+		"4He", "12C", "16O", "20Ne", "24Mg", "28Si", "32S", "36Ar", "40Ca", "44Ti", "48Cr", "52Fe", "56Ni", "60Zn"
+	};
 
 	namespace fits {
 		int inline get_temperature_range(double T) {
