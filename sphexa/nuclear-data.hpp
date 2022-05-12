@@ -6,11 +6,16 @@
 #include <array>
 
 namespace sphexa::sphnnet {
+	/// nuclear abundances type, that is integrated into NuclearData, or should be integrated into ParticlesData
+	template <int n_species, typename Float>
+	using NuclearAbundances = std::array<Float, n_species>;
+
+	/// nuclear data class for n_species nuclear network
+	/**
+	 * TODO
+	 */
 	template<int n_species, typename Float>
 	struct NuclearData {
-		/// number of particules
-		size_t n_particules = 0;
-
 		// data to exchange data with hydro particules
 		std::vector<int> node_id;
 		std::vector<std::size_t> particule_id;
@@ -19,54 +24,52 @@ namespace sphexa::sphnnet {
 		std::vector<Float> rho, drho_dt, T;
 
 		/// nuclear abundances (vector of vector)
-		std::vector<std::array<Float, n_species>> Y;
+		std::vector<NuclearAbundances<n_species, Float>> Y;
 
 		/// timesteps
 		std::vector<Float> dt;
 
 		/// resize the number of particules
 		void resize(const size_t N) {
-			n_particules = N;
+			node_id.resize(N);
+			particule_id.resize(N);
 
-			node_id.resize(n_particules);
-			particule_id.resize(n_particules);
+			rho.resize(N);
+			drho_dt.resize(N);
+			T.resize(N);
 
-			rho.resize(n_particules);
-			drho_dt.resize(n_particules);
-			T.resize(n_particules);
+			Y.resize(N);
 
-			Y.resize(n_particules);
-
-			dt.resize(n_particules, 1e-12);
+			dt.resize(N, 1e-12);
 		}
 
 
 
 		/// update node id and particule id of particule data
-		template<class ParticuleData>
-		void update_particule_pointers(ParticuleData &d) const {
+		template<class ParticlesData>
+		void update_particule_pointers(ParticlesData &d) const {
 			sync_pointers(node_id, particule_id, d.node_id, d.particule_id);
 		}
 
 		/// update node id and particule id of nuclear data
-		template<class ParticuleData>
-		void update_nuclear_pointers(const ParticuleData &d) {
+		template<class ParticlesData>
+		void update_nuclear_pointers(const ParticlesData &d) {
 			sync_pointers(d.node_id, d.particule_id, node_id, particule_id);
 		}
 
 
 
 		/// send hydro data
-		template<class ParticuleData>
-		void update_nuclear_data(const ParticuleData &d) {
+		template<class ParticlesData>
+		void update_nuclear_data(const ParticlesData &d) {
 			sync_data_from_pointers(d.node_id, d.particule_id, d.rho,     rho);
 			sync_data_from_pointers(d.node_id, d.particule_id, d.drho_dt, drho_dt);
 			sync_data_from_pointers(d.node_id, d.particule_id, d.T,       T);
 		}
 
 		/// send back hydro data
-		template<class ParticuleData>
-		void update_hydro_data(ParticuleData &d) const {
+		template<class ParticlesData>
+		void update_hydro_data(ParticlesData &d) const {
 			sync_data_from_pointers(node_id, particule_id, rho,     d.rho);
 			sync_data_from_pointers(node_id, particule_id, drho_dt, d.drho_dt);
 			sync_data_from_pointers(node_id, particule_id, T,       d.T);
