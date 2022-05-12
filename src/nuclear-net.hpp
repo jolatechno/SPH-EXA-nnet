@@ -36,9 +36,6 @@ namespace nnet {
 		/// the value that is considered null inside a state
 		double epsilon_vector = 1e-16;
 
-		/// timestep tolerance for superstepping
-		double dt_tol = 1e-5;
-
 		namespace NR {
 			/// maximum timestep
 			double max_dt = 1e-2;
@@ -56,6 +53,14 @@ namespace nnet {
 			uint max_it = 10;
 			/// tolerance for the correction to break out of the newton raphson loop
 			double it_tol = 1e-5;
+		}
+
+		namespace superstep {
+			/// timestep tolerance for superstepping
+			double dt_tol = 1e-5;
+
+			/// ratio of the nuclear timestep and "super timestep" to jump to NSE
+			double dt_nse_tol = 1e-8;
 		}
 	}
 
@@ -492,6 +497,31 @@ namespace nnet {
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
 	std::tuple<Vector, Float> solve_system_superstep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const Vector &Y, const Float T, const Float rho, const Float drho_dt, Float const dt_tot, Float &dt);
+
+
+
+	/// jump to Nuclear Statistical Equilibrium
+	/**
+	 * Used inside of solve_system_superstep
+	 * STUPID IMPLEMENTATION, TODO
+	 * ...TODO
+	 */
+	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
+	std::tuple<Vector, Float> find_nse(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const Vector &Y, const Float T, const Float rho, const Float drho_dt) {
+
+		/* TODO: real implementation
+		CURRENT: arbitrary time jump (unefficient) */
+		Float dt_tot = 1e-5, used_dt = 1e-12;
+		return solve_system_superstep(reactions, construct_rates, construct_BE, eos,
+			Y, T, rho, drho_dt, dt_tot, used_dt);
+	}
+
+
+
+	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
+	std::tuple<Vector, Float> solve_system_superstep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
 		const Vector &Y, const Float T, const Float rho, const Float drho_dt, Float const dt_tot, Float &dt) {
 
 		Float elapsed_t = 0;
@@ -518,8 +548,15 @@ namespace nnet {
 				dt = used_dt;
 
 			// exit condition
-			if ((dt_tot - elapsed_t)/dt_tot < constants::dt_tol)
+			if ((dt_tot - elapsed_t)/dt_tot < constants::superstep::dt_tol)
 				return {final_Y, final_T};
+
+			// timejump if needed
+			if (dt < dt_tot*constants::superstep::dt_nse_tol) {
+				dt = constants::max_dt;
+				return find_nse(reactions, construct_rates, construct_BE, eos,
+					final_Y, final_T, rho, drho_dt);
+			}
 		} 
 	}
 }
