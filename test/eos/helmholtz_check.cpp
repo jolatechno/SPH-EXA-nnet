@@ -12,8 +12,8 @@ int main() {
 	nnet::eos::debug = true;
 #endif
 
-	std::vector<double> A = {12, 16}, Z = {6, 8}, Y = {.5/12, .5/16};
-	nnet::eos::helmholtz eos(A, Z);
+	std::vector<double> Z = {6, 8}, Y = {.5/12, .5/16};
+	nnet::eos::helmholtz eos(Z);
 
 	auto res = eos(Y, 1e9, 1e9);
 	std::cout << "\neos(...).cv=" << res.cv << "\n";

@@ -39,7 +39,7 @@ int main() {
 #endif
 
 
-	const nnet::eos::helmholtz helm_eos(nnet::net14::constants::A, nnet::net14::constants::Z);
+	const nnet::eos::helmholtz helm_eos(nnet::net14::constants::Z);
 	auto const eos = [&](const std::vector<double> &Y_, const double T, const double rho_) {
 		const double cv = 1e9;
 		struct eos_output {

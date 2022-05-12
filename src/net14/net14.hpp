@@ -650,7 +650,7 @@ namespace nnet::net14 {
 
 			/* correction for direct rate for coulumbian correction
 			!!!!!!!!!!!!!!!!!!!!!!!! */
-			for (int i = 1 /*for i=0 EF==1*/; i < 16; ++i) {
+			for (int i = 0; i < 16; ++i) {
 				Float EF = std::exp(deltamukbt[i]);
 		         eff[i] =  eff[i]*EF;
 		        deff[i] = deff[i]*EF - 2.*eff[i]*deltamukbt[i]/T;

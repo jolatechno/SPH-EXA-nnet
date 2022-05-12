@@ -341,10 +341,10 @@ namespace nnet::eos {
 	template<typename Float>
 	class helmholtz {
 	private:
-		std::vector<Float> A, Z;
+		std::vector<Float> Z;
 
 	public:
-		helmholtz(const std::vector<Float> &A_, const std::vector<Float> &Z_) : A(A_), Z(Z_) {}
+		helmholtz(const std::vector<Float> &Z_) : Z(Z_) {}
 		auto operator()(const std::vector<Float> &Y, const Float T, const Float rho) const {
 			const int dimension = Y.size();
 

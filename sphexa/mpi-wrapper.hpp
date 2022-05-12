@@ -7,11 +7,11 @@
 
 namespace sphexa {
 	template<typename T>
-	void sync_data_from_pointers(const std::vector<int> &node_id, const std::vector<size_t> &particule_id, const std::vector<T> &send_vector, const std::vector<T> &recv_vector, const MPI_Datatype datatype) {
+	void sync_data_from_pointers(const std::vector<int> &node_id, const std::vector<std::size_t> &particule_id, const std::vector<T> &send_vector, const std::vector<T> &recv_vector, const MPI_Datatype datatype) {
 		/* TODO */
 	}
 
-	void sync_pointers(const std::vector<int> &node_id, const std::vector<size_t> &particule_id, std::vector<int> &to_update_node_id, std::vector<size_t> &to_update_particule_id) {
+	void sync_pointers(const std::vector<int> &node_id, const std::vector<std::size_t> &particule_id, std::vector<int> &to_update_node_id, std::vector<std::size_t> &to_update_particule_id) {
 		// get this node id
 		int this_node_id;
 		MPI_Comm_rank(MPI_COMM_WORLD, &this_node_id);

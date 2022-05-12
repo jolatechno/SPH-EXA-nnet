@@ -16,7 +16,7 @@ namespace sphexa::sphnnet {
 	 */
 	template<int n_species, typename Float>
 	struct NuclearData {
-		// data to exchange data with hydro particules
+		// pointers to exchange data with hydro particules
 		std::vector<int> node_id;
 		std::vector<std::size_t> particule_id;
 

@@ -51,7 +51,7 @@ int main() {
 #endif
 
 
-	const nnet::eos::helmholtz helm_eos(nnet::net86::constants::A, nnet::net86::constants::Z);
+	const nnet::eos::helmholtz helm_eos(nnet::net86::constants::Z);
 	const auto eos = [&](const std::vector<double> &Y_, const double T, const double rho_) {
 		const double cv = 3.1e7; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net86 fortran
 		struct eos_output {
