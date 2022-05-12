@@ -12,6 +12,9 @@ int main() {
 #if NO_SCREENING
 	nnet::net14::skip_coulombian_correction = true;
 #endif
+#if DEBUG
+	nnet::debug = true;
+#endif
 
 	// nnet::net14::skip_coulombian_correction = true;
 	auto [rate, drates] = nnet::net14::compute_reaction_rates<double>(2e9, 1e9);
@@ -21,7 +24,15 @@ int main() {
 	int num_special_reactions = 5, num_reactions = 157 - 5, num_reverse = 157 - 5;
 
 	// print reactions
-	std::cout << "\nrates (to sort...):\n";
-	for (int i = 0; i < nnet::net14::reaction_list.size(); ++i)
-		std::cout << "(" << i+1 << ")\t" << nnet::net14::reaction_list[i] << "\t\tR=" << rate[i] << ",\tdR/dT=" << drates[i] << "\n";
+	std::cout << "\nspecial rates:\n";
+	for (int i = 0; i < 5; ++i)
+		std::cout << "   \t" << nnet::net14::reaction_list[i] << "\t\tR=" << rate[i] << ",\tdR/dT=" << drates[i] << "\n";
+	
+	std::cout << "\ndirect rates:\n";
+	for (int i = 5; i < 5 + 12; ++i)
+		std::cout << "(" << i-2 << ")\t" << nnet::net14::reaction_list[i] << "\t\tR=" << rate[i] << ",\tdR/dT=" << drates[i] << "\n";
+
+	std::cout << "\ninverse rates:\n";
+	for (int i = 5 + 12; i < 5 + 12 + 12; ++i)
+		std::cout << "(" << i-2-12 << ")\t" << nnet::net14::reaction_list[i] << "\t\tR=" << rate[i] << ",\tdR/dT=" << drates[i] << "\n";
 }

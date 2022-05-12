@@ -42,36 +42,6 @@ namespace nnet::net14 {
 	// constant list of ordered reaction
 	const std::vector<nnet::reaction> reaction_list = {
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		fusions reactions from fits */
-		{{{0}, {3}},  {{4}}},  // Ne + He -> Mg
-		{{{0}, {4}},  {{5}}},  // Mg + He -> Si
-		{{{0}, {5}},  {{6}}},  // Si + He -> S
-		{{{0}, {6}},  {{7}}},  // S  + He -> Ar
-		{{{0}, {7}},  {{8}}},  // Ar + He -> Ca
-		{{{0}, {8}},  {{9}}},  // Ca + He -> Ti
-		{{{0}, {9}},  {{10}}}, // Ti + He -> Cr
-		{{{0}, {10}}, {{11}}}, // Cr + He -> Fe
-		{{{0}, {11}}, {{12}}}, // Fe + He -> Ni
-		{{{0}, {12}}, {{13}}}, // Ni + He -> Zn
-
-
-
-		/* fission reactions from fits
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{{{4}},  {{0}, {3}}},  // Ne + He <- Mg
-		{{{5}},  {{0}, {4}}},  // Mg + He <- Si
-		{{{6}},  {{0}, {5}}},  // Si + He <- S
-		{{{7}},  {{0}, {6}}},  // S  + He <- Ar
-		{{{8}},  {{0}, {7}}},  // Ar + He <- Ca
-		{{{9}},  {{0}, {8}}},  // Ca + He <- Ti
-		{{{10}}, {{0}, {9}}},  // Ti + He <- Cr
-		{{{11}}, {{0}, {10}}}, // Cr + He <- Fe
-		{{{12}}, {{0}, {11}}}, // Fe + He <- Ni
-		{{{13}}, {{0}, {12}}}, // Ni + He <- Zn
-
-
-
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		   3He -> C fusion */
 		{{{0, 3}}, {{1}}},
 
@@ -91,8 +61,6 @@ namespace nnet::net14 {
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 		{{{1}, {2}}, {{4}, {0}}},
 
-
-
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		2O -> Si + He fusion
 		!!!!!!!!!!!!!!!!!!!!!!!! */
@@ -100,23 +68,51 @@ namespace nnet::net14 {
 
 
 
+
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		   C + He -> O fusion */
+		C + He -> O fusion */
 		{{{0}, {1}}, {{2}}},
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		O + He -> Ne fusion */
+		{{{0}, {2}}, {{3}}},
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		fusions reactions from fits */
+		{{{0}, {3}},  {{4}}},  // Ne + He -> Mg
+		{{{0}, {4}},  {{5}}},  // Mg + He -> Si
+		{{{0}, {5}},  {{6}}},  // Si + He -> S
+		{{{0}, {6}},  {{7}}},  // S  + He -> Ar
+		{{{0}, {7}},  {{8}}},  // Ar + He -> Ca
+		{{{0}, {8}},  {{9}}},  // Ca + He -> Ti
+		{{{0}, {9}},  {{10}}}, // Ti + He -> Cr
+		{{{0}, {10}}, {{11}}}, // Cr + He -> Fe
+		{{{0}, {11}}, {{12}}}, // Fe + He -> Ni
+		{{{0}, {12}}, {{13}}}, // Ni + He -> Zn
+
+
+
 
 		/* C + He <- O fission
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 		{{{2}},  {{0}, {1}}},
 
-
-
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		   O + He -> Ne fusion */
-		{{{0}, {2}}, {{3}}},
-
 		/* O + He <- Ne fission
 		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{{{3}},  {{0}, {2}}}
+		{{{3}},  {{0}, {2}}},
+
+		/* fission reactions from fits
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		{{{4}},  {{0}, {3}}},  // Ne + He <- Mg
+		{{{5}},  {{0}, {4}}},  // Mg + He <- Si
+		{{{6}},  {{0}, {5}}},  // Si + He <- S
+		{{{7}},  {{0}, {6}}},  // S  + He <- Ar
+		{{{8}},  {{0}, {7}}},  // Ar + He <- Ca
+		{{{9}},  {{0}, {8}}},  // Ca + He <- Ti
+		{{{10}}, {{0}, {9}}},  // Ti + He <- Cr
+		{{{11}}, {{0}, {10}}}, // Cr + He <- Fe
+		{{{12}}, {{0}, {11}}}, // Fe + He <- Ni
+		{{{13}}, {{0}, {12}}}  // Ni + He <- Zn
 	};
 
 	/// compute a list of reactions for net14
@@ -635,7 +631,7 @@ namespace nnet::net14 {
 			        if(gamp <= 1) {
 			            mukbt[i] = -(1./std::sqrt(3.))*gamp*sqrootgamp + std::pow(gamp, 1.9885)*.29561/1.9885;
 			        } else
-			            mukbt[i]=a1*gamp + 4.*(b1*sqroot2gamp - c1/sqroot2gamp) + d1*std::log(gamp) - e1;
+			            mukbt[i] = a1*gamp + 4.*(b1*sqroot2gamp - c1/sqroot2gamp) + d1*std::log(gamp) - e1;
 				}
 
 				// compute deltamukbt
@@ -654,9 +650,9 @@ namespace nnet::net14 {
 
 			/* correction for direct rate for coulumbian correction
 			!!!!!!!!!!!!!!!!!!!!!!!! */
-			for (int i = 0; i < 16; ++i) {
-				Float EF = std::exp(deltamukbt[i - 1]);
-		        eff [i] = eff [i]*EF;
+			for (int i = 1 /*for i=0 EF==1*/; i < 16; ++i) {
+				Float EF = std::exp(deltamukbt[i]);
+		         eff[i] =  eff[i]*EF;
 		        deff[i] = deff[i]*EF - 2.*eff[i]*deltamukbt[i]/T;
 
 		        // debuging :
@@ -669,42 +665,46 @@ namespace nnet::net14 {
 		push back rates
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 		{
+			rates .push_back( eff[0]);
+			drates.push_back(deff[0]);
+
+			rates .push_back( l[0]);
+			drates.push_back(dl[0]);
+
+	      	rates .push_back( eff[13]);
+	      	drates.push_back(deff[13]);
+
+		    rates .push_back( eff[14]);
+		    drates.push_back(deff[14]);
+
+			rates .push_back( eff[15]);
+			drates.push_back(deff[15]);
+
+
+
+			rates .push_back( eff[1]);
+			drates.push_back(deff[1]);
+
+    		rates .push_back( eff[2]);
+    		drates.push_back(deff[2]);
+
 			for (int i = 4; i < 14; ++i) {
-				 rates.push_back(eff [i - 1]);
+				rates .push_back( eff[i - 1]);
 				drates.push_back(deff[i - 1]);
 			}
 
-			for (int i = 4; i < 14; ++i) {
-				 rates.push_back(l [i - 1]);
-				drates.push_back(dl[i - 1]);
-			}
 
-			 rates.push_back(eff [0]);
-			drates.push_back(deff[0]);
 
-			 rates.push_back(l [0]);
-			drates.push_back(dl[0]);
-
-	      	 rates.push_back(eff [13]);
-	      	drates.push_back(deff[13]);
-
-		     rates.push_back(eff [14]);
-		    drates.push_back(deff[14]);
-
-			 rates.push_back(eff [15]);
-			drates.push_back(deff[15]);
-
-			 rates.push_back(eff [1]);
-			drates.push_back(deff[1]);
-
-			 rates.push_back(l [1]);
+			rates .push_back( l[1]);
 			drates.push_back(dl[1]);
 
-    		 rates.push_back(eff [2]);
-    		drates.push_back(deff[2]);
-
-			 rates.push_back(l [2]);
+			rates .push_back( l[2]);
 			drates.push_back(dl[2]);
+
+			for (int i = 4; i < 14; ++i) {
+				rates .push_back( l[i - 1]);
+				drates.push_back(dl[i - 1]);
+			}
 		}
 
 		return {rates, drates};
