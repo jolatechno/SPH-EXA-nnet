@@ -5,7 +5,7 @@
 
 namespace sphexa {
 	template<int n_particules, class Vector, class func_rate, class func_BE, class func_eos, typename Float>
-	void compute_nuclear_reactions(sphnnet::NuclearData<n_particules, Float> &n, Float hydro_dt,
+	void compute_nuclear_reactions(sphnnet::NuclearData<n_particules, Float> &n, const Float hydro_dt,
 		const std::vector<nnet::reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos) {
 
 		#pragma omp parallel for schedule(dynamic)

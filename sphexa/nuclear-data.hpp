@@ -66,7 +66,7 @@ namespace sphexa::sphnnet {
 
 		/// send back hydro data
 		template<class ParticuleData>
-		void update_hydro_data(ParticuleData &d) {
+		void update_hydro_data(ParticuleData &d) const {
 			sync_data_from_pointers(node_id, particule_id, rho,     d.rho);
 			sync_data_from_pointers(node_id, particule_id, drho_dt, d.drho_dt);
 			sync_data_from_pointers(node_id, particule_id, T,       d.T);
