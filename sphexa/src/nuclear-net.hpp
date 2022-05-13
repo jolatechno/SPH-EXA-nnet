@@ -1,9 +1,33 @@
 #pragma once
 
+#include "mpi-wrapper.hpp"
 #include "nuclear-data.hpp"
+
 #include "../src/nuclear-net.hpp"
 
 namespace sphexa::sphnnet {
+	/// function sending requiered hydro data from ParticlesDataType to NuclearDataType
+	/**
+	 * TODO
+	 */
+	template<class ParticlesDataType, int n_species,typename Float>
+	void sendHydroData(const ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const mpi_partition &partition, MPI_Datatype datatype) {
+		direct_sync_data_from_partition(partition, d.rho,     n.rho,     datatype);
+		direct_sync_data_from_partition(partition, d.drho_dt, n.drho_dt, datatype);
+		direct_sync_data_from_partition(partition, d.T,       n.T,       datatype);
+	}
+
+	/// sending back hydro data from NuclearDataType to ParticlesDataType
+	/**
+	 * TODO
+	 */
+	template<class ParticlesDataType>
+	void recvHydroData(ParticlesDataType &d, const NuclearDataType<n_species, Float> &n, const mpi_partition &partition, MPI_Datatype datatype) {
+		inverse_sync_data_from_partition(partition, n.rho,     d.rho,     datatype);
+		inverse_sync_data_from_partition(partition, n.drho_dt, d.drho_dt, datatype);
+		inverse_sync_data_from_partition(partition, n.T,       d.T,       datatype);
+	}
+
 	/// function to compute nuclear reaction, either from NuclearData or ParticuleData if it includes Y.
 	/**
 	 * TODO

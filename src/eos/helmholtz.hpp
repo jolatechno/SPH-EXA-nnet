@@ -15,6 +15,8 @@
 	#define TABLE_PATH "./helm_table.dat"
 #endif
 
+#include <iostream>
+
 #include <sstream>
 #include <string>
 #include <array>
@@ -338,14 +340,16 @@ namespace nnet::eos {
 	/**
 	*...TODO
 	 */
-	template<typename Float>
+	template<typename Float=double, class Vector=std::vector<Float>>
 	class helmholtz {
 	private:
 		std::vector<Float> Z;
 
 	public:
-		helmholtz(const std::vector<Float> &Z_) : Z(Z_) {}
-		auto operator()(const std::vector<Float> &Y, const Float T, const Float rho) const {
+		helmholtz(const Vector &Z_) : Z(Z_) {}
+
+		template<class Vector2=std::vector<Float>>
+		auto operator()(const Vector2 &Y, const Float T, const Float rho) const {
 			const int dimension = Y.size();
 
 			// compute abar and zbar

@@ -2,6 +2,8 @@
 
 #include "eigen.hpp"
 
+#include <iostream>
+
 #include <cmath> // factorial
 //#include <ranges> // drop
 
@@ -146,7 +148,9 @@ namespace nnet {
 	Vector derivatives_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Vector const &Y, const Float rho) {
 		const int dimension = Y.size();
 
-		Vector dY(dimension);
+		Vector dY = Y;
+		for (int i = 0; i < dimension; ++i)
+			dY[i] = 0.;
 
 		const int num_reactions = reactions.size();
 		if (num_reactions != rates.size()) {
@@ -195,7 +199,7 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<typename Float, class Vector>
-	eigen::matrix<Float> order_1_dY_from_reactions(const std::vector<reaction> &reactions, const Vector &rates,
+	eigen::matrix<Float> order_1_dY_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates,
 		Vector const &Y,
 		const Float rho) {
 		const int dimension = Y.size();
@@ -275,10 +279,11 @@ namespace nnet {
 		const int dimension = Y.size();
 
 		eigen::matrix<Float> Mp(dimension + 1, dimension + 1);
-		Vector next_Y(dimension);
+		Vector next_Y = Y;
 
 		// right hand side
-		Vector RHS(dimension + 1), dY_dt = derivatives_from_reactions(reactions, rates, Y_guess, rho);
+		std::vector<double> RHS(dimension + 1);
+		auto dY_dt = derivatives_from_reactions(reactions, rates, Y_guess, rho);
 		for (int i = 1; i <= dimension; ++i)
 			RHS[i] = dY_dt[i - 1]*dt;
 
@@ -342,7 +347,7 @@ namespace nnet {
 
 
 		// now solve M*D{T, Y} = RHS
-		Vector DY_T = eigen::solve(Mp, RHS);
+		auto DY_T = eigen::solve(Mp, RHS);
 
 		// increment values
 		for (int i = 0; i < dimension; ++i)
@@ -423,7 +428,7 @@ namespace nnet {
 		const int dimension = Y.size();
 
 		while (true) {
-			Vector Y_theta(dimension), final_Y = Y;
+			Vector Y_theta = Y, final_Y = Y;
 			Float T_theta, final_T = T;
 
 			// actual solving
@@ -436,7 +441,7 @@ namespace nnet {
 				// compute n+theta values
 				T_theta =        (1 - constants::theta)*T    + constants::theta*final_T;
 				for (int j = 0; j < dimension; ++j)
-					Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
+					Y_theta[j] = (1 - constants::theta)*/*Y*/Y_theta[j] + constants::theta*final_Y[j];
 
 				// compute rate
 				auto [rates, drates_dT] = construct_rates(         T_theta, rho);

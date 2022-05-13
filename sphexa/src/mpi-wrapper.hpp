@@ -7,7 +7,7 @@
 #include <vector>
 #include <numeric>
 
-namespace sphexa {
+namespace sphexa::mpi {
 	struct mpi_partition {
 		// references to pointers
 		const std::vector<int> *node_id;

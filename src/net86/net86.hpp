@@ -102,9 +102,9 @@ namespace nnet::net86 {
 	};
 
 	/// function to compute the corrected BE
-	template<typename Float>
-	std::vector<Float> compute_BE(std::vector<Float> const &Y, Float const T, Float const rho) {
-		std::vector<Float> corrected_BE(87);
+	template<typename Float=double, class Vector=std::vector<Float>>
+	Vector compute_BE(const Vector &Y, Float const T, Float const rho) {
+		Vector corrected_BE = Y;
 
 		Float correction = -1.5*constants::Na*constants::Kb*T;
 		for (int i = 0; i < 87; ++i)

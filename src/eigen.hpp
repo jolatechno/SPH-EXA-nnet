@@ -50,8 +50,8 @@ namespace eigen {
 
 
 	/// dot product function
-	template<class Vector>
-	double dot(Vector const &X, Vector const &Y) {
+	template<class Vector1, class Vector2>
+	double dot(Vector1 const &X, Vector2 const &Y) {
 		double res = 0;
 		const int dimension = std::min(X.size(), Y.size());
 

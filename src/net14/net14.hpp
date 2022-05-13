@@ -28,9 +28,9 @@ namespace nnet::net14 {
 	};
 
 	/// function to compute the corrected BE
-	template<typename Float>
-	std::vector<Float> compute_BE(std::vector<Float> const &Y, Float const T, Float const rho) {
-		std::vector<Float> corrected_BE(14);
+	template<typename Float=double, class Vector=std::vector<Float>>
+	Vector compute_BE(const Vector &Y, Float const T, Float const rho) {
+		Vector corrected_BE = Y;
 
 		Float correction = -1.5*constants::Na*constants::Kb*T;
 		for (int i = 0; i < 14; ++i)
@@ -116,7 +116,7 @@ namespace nnet::net14 {
 	};
 
 	/// compute a list of reactions for net14
-	template<typename Float>
+	template<typename Float=double>
 	std::pair<std::vector<Float>, std::vector<Float>> compute_reaction_rates(const Float T, const Float rho) {
 		std::vector<Float> rates, drates;
 		rates.reserve(reaction_list.size());
