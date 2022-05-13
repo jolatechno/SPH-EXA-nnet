@@ -15,8 +15,6 @@ namespace sphexa::sphnnet {
 				data[i] = x;
 		}
 
-		~NuclearAbundances() {}
-
 		size_t size() const {
 			return n_species;
 		}
