@@ -852,7 +852,7 @@ namespace nnet::eos {
 			// lami is the average ion seperation
 			// plasg is the plasma coupling parameter
 
-			z              = std::numbers::pi*4/3;
+			z              = std::numbers::pi*4./3.;
 			s              = z*xni;
 			Float dsdd     = z*dxnidd;
 			Float dsda     = z*dxnida;

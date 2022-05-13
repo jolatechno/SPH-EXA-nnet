@@ -166,7 +166,8 @@ namespace nnet {
 			int order = 0;
 			for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants) {
 				// divide by factorial
-				rate /= std::tgamma(n_reactant_consumed + 1);
+				if (n_reactant_consumed != 1)
+					rate /= std::tgamma(n_reactant_consumed + 1);
 
 				// multiply by abundance
 				rate *= std::pow(Y[reactant_id], n_reactant_consumed);
