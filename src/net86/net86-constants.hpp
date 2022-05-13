@@ -66,25 +66,25 @@ namespace nnet::net86::constants {
 		return species_order_;
 	}();
 
-	/// unsorted nuclear species names
-	const std::vector<std::string> unsorted_species_names = {
-		   "p",    "n",  "4He",  "12C",  "16O", "20Ne", "21Na",
-		"24Mg", "23Mg", "21Ne", "23Na", "22Mg", "22Na", "22Ne",
-		"25Al", "28Si", "27Si", "25Mg", "27Al", "26Si", "26Al",
-		"26Mg",  "29P",  "32S",  "31S", "29Si",  "31P",  "30S",
-		 "30P", "30Si", "33Cl", "36Ar", "35Ar",  "33S", "35Cl",
-		"34Ar", "34Cl",  "34S",  "37K", "40Ca", "39Ca", "37Ar",
-		 "39K", "38Ca",  "38K", "38Ar", "41Sc", "44Ti", "43Ti",
-		"41Ca", "43Sc", "42Ti", "42Sc", "42Ca",  "45V", "48Cr",
-		"47Cr", "45Ti",  "47V", "46Cr",  "46V", "46Ti", "49Mn",
-		"52Fe", "51Fe", "49Cr", "51Mn", "50Fe", "50Mn", "50Cr",
-		"53Co", "56Ni", "55Ni", "53Fe", "55Co", "54Ni", "54Co",
-		"54Fe", "57Cu", "60Zn", "59Zn", "57Ni", "59Cu", "58Zn",
-		"58Cu", "58Ni", /*electrons*/"e-"
-	};
-
 	/// nuclear species names
 	const std::vector<std::string> species_names = []() {
+		// unsorted nuclear species names
+		const std::vector<std::string> unsorted_species_names = {
+			   "p",    "n",  "4He",  "12C",  "16O", "20Ne", "21Na",
+			"24Mg", "23Mg", "21Ne", "23Na", "22Mg", "22Na", "22Ne",
+			"25Al", "28Si", "27Si", "25Mg", "27Al", "26Si", "26Al",
+			"26Mg",  "29P",  "32S",  "31S", "29Si",  "31P",  "30S",
+			 "30P", "30Si", "33Cl", "36Ar", "35Ar",  "33S", "35Cl",
+			"34Ar", "34Cl",  "34S",  "37K", "40Ca", "39Ca", "37Ar",
+			 "39K", "38Ca",  "38K", "38Ar", "41Sc", "44Ti", "43Ti",
+			"41Ca", "43Sc", "42Ti", "42Sc", "42Ca",  "45V", "48Cr",
+			"47Cr", "45Ti",  "47V", "46Cr",  "46V", "46Ti", "49Mn",
+			"52Fe", "51Fe", "49Cr", "51Mn", "50Fe", "50Mn", "50Cr",
+			"53Co", "56Ni", "55Ni", "53Fe", "55Co", "54Ni", "54Co",
+			"54Fe", "57Cu", "60Zn", "59Zn", "57Ni", "59Cu", "58Zn",
+			"58Cu", "58Ni", /*electrons*/"e-"
+		};
+
 		std::vector<std::string> species_names_(unsorted_species_names.size());
 
 		for (int i = 0; i < unsorted_species_names.size(); ++i)
@@ -102,7 +102,9 @@ namespace nnet::net86::constants {
 
 		for (int i = 0; i < net14_n_species; ++i)
 			for (int j = 0; j < net86_n_species; ++j)
-				if (nnet::net14::constants::species_names[i] == unsorted_species_names[j]) {
+				if (nnet::net14::constants::A[i] == A[j] &&
+					nnet::net14::constants::Z[i] == Z[j]) {
+					
 					net14_species_order_[i] = j;
 
 					break;

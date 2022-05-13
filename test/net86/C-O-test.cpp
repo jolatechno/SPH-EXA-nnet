@@ -12,7 +12,7 @@ int main() {
 	nnet::constants::NR::dT_T_target = 4e-3;
 	
 	double rho = 1e9; // rho, g/cm^3
-	double last_T = 1e9;
+	double last_T = 2e9;
 
 	// extension /* TODO */
 	const int start_expansion = 600;
