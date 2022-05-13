@@ -64,54 +64,76 @@ void step(ParticlesDataType &p, sphexa::sphnnet::NuclearDataType<14, double>  &n
 using vector = sphexa::sphnnet::NuclearAbundances<14>;
 
 int main(int argc, char* argv[]) {
+#if NO_SCREENING
+	nnet::net14::skip_coulombian_correction = true;
+#endif
+
 	int size, rank;
     MPI_Init(&argc, &argv);
 
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+	/* initial Y value */
+	vector Y0, X;
+	for (int i = 0; i < 14; ++i) X[i] = 0;
+	X[1] = 0.5;
+	X[2] = 0.5;
+	for (int i = 0; i < 14; ++i) Y0[i] = X[i]/nnet::net14::constants::A[i];
+	double m_in = eigen::dot(Y0, nnet::net14::constants::A);
+	const nnet::eos::helmholtz helm_eos(nnet::net14::constants::Z);
+
+
+	/* initial hydro data */
+	double rho_left = 1e9, rho_right = 0.7e9; // rho, g/cm^3
+	double T_left = 0.8e9, T_right = 1.5e9; // rho, g/cm^3
+
+
 	ParticlesDataType p;
 	sphexa::sphnnet::NuclearDataType<14> n;
 
-	const size_t n_particles = 200;
+	const size_t n_particles = 300;
 	p.resize(n_particles);
-	n.resize(n_particles);
 
 
 	/* !!!!!!!!!!!!
-	initialize the state
+	initialize the hydro state
 	!!!!!!!!!!!! */
-#if NO_SCREENING
-	nnet::net14::skip_coulombian_correction = true;
-#endif
-	double rho_left = 1e9, rho_right = 0.5e9; // rho, g/cm^3
-	double T_left = 0.8e9, T_right = 2e9; // rho, g/cm^3
-
 	for (int i = 0; i < n_particles; ++i) {
-		// nuclear datas
-		n.Y[i][1] = 0.5/nnet::net14::constants::A[1];
-		n.Y[i][2] = 0.5/nnet::net14::constants::A[2];
+		p.T[i]   = T_left   + (T_right   - T_left  )*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
+		p.rho[i] = rho_left + (rho_right - rho_left)*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
+	}
 
-		n.dt[i] = 1e-12;
 
-		// hydro data
-		p.T[i]   = T_left   + (T_right   - T_left  )*(float)(size*n_particles + i)/(float)(size*n_particles - 1);
-		p.rho[i] = rho_left + (rho_right - rho_left)*(float)(size*n_particles + i)/(float)(size*n_particles - 1);
-
-		// pointers
-		p.node_id[i] = (rank + 1)%size;
+	/* !!!!!!!!!!!!
+	initialize pointers with some simple "mixing"
+	!!!!!!!!!!!! */
+	for (int i = 0; i < n_particles; ++i) {
+		p.node_id[i] = (rank + i)%size;
 		p.particle_id[i] = i;
 	}
 
 
+	/* !!!!!!!!!!!!
+	initialize the nuclear data with homogenous abundances
+	!!!!!!!!!!!! */
+	std::cout << n_particles << "\n";
+	auto partition = sphexa::mpi::partition_from_pointers(p.node_id, p.particle_id);
+	const size_t nuclear_n_particles = partition.recv_disp[size];
+	std::cout << nuclear_n_particles << "\n";
+	n.resize(nuclear_n_particles);
+	for (size_t i = 0; i < nuclear_n_particles; ++i) {
+		n.Y[i] = Y0;
+	}
 
+
+
+	MPI_Barrier(MPI_COMM_WORLD);
 	/* !!!!!!!!!!!!
 	do simulation
 	!!!!!!!!!!!! */
-	double t = 0, dt = 1e-3;
-	int n_max = 200;
- 	double m_in = eigen::dot(n.Y[0], nnet::net14::constants::A);
-	const nnet::eos::helmholtz helm_eos(nnet::net14::constants::Z);
+	double t = 0, dt = 1e-4;
+	int n_max = 50;
 	for (int i = 0; i < n_max; ++i) {
 		if (rank == 0)
 			std::cout << i << "th iteration...\n";
@@ -124,15 +146,27 @@ int main(int argc, char* argv[]) {
 			std::cout << "\t...Ok\n";
 	}
  
-	double m_tot = eigen::dot(n.Y[0], nnet::net14::constants::A);
-	double dm_m = (m_tot - m_in)/m_in;
+	
 
-	if (rank == 0) {
-		std::vector<double> X(14);
+	MPI_Barrier(MPI_COMM_WORLD);
+	if ((0 + 0)%size == rank) {
+		double m_tot = eigen::dot(n.Y[0], nnet::net14::constants::A);
+		double dm_m = (m_tot - m_in)/m_in;
+
 		for (int i = 0; i < 14; ++i) X[i] = n.Y[0][i]*nnet::net14::constants::A[i]/eigen::dot(n.Y[0], nnet::net14::constants::A);
 		std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
 		for (int i = 0; i < 14; ++i) std::cout << X[i] << ", ";
-		std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << "),\tT_left=" << p.T[0] << "\tT_right=" << p.T[n_particles - 1] << "\n";
+		std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << "),\tT_left=" << n.T[0] << "\n";
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	if ((size - 1 + n_particles - 1)%size == rank) {
+		double m_tot = eigen::dot(n.Y[nuclear_n_particles - 1], nnet::net14::constants::A);
+		double dm_m = (m_tot - m_in)/m_in;
+
+		for (int i = 0; i < 14; ++i) X[i] = n.Y[nuclear_n_particles - 1][i]*nnet::net14::constants::A[i]/eigen::dot(n.Y[0], nnet::net14::constants::A);
+		std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
+		for (int i = 0; i < 14; ++i) std::cout << X[i] << ", ";
+		std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << "),\tT_right=" << n.T[nuclear_n_particles - 1] << "\n";
 	}
 
 
