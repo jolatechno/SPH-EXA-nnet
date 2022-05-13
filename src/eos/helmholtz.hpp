@@ -852,14 +852,18 @@ namespace nnet::eos {
 			// lami is the average ion seperation
 			// plasg is the plasma coupling parameter
 
-			z        = std::numbers::pi/4.;
-			s        = z*xni;
+			z              = std::numbers::pi*4/3;
+			s              = z*xni;
 			Float dsdd     = z*dxnidd;
 			Float dsda     = z*dxnida;
 
+			/* debug: */
+			if (debug) std::cout << "s=" << s << " = z=" << z << " * xni=" << xni << "\n";
+
+
 			Float lami     = std::pow(1./s, 1./3.);
 			Float inv_lami = 1./lami;
-			z        = -lami/3;
+			z              = -lami/3;
 			Float lamidd   = z*dsdd/s;
 			Float lamida   = z*dsda/s;
 
@@ -869,6 +873,10 @@ namespace nnet::eos {
 			Float plasgda  = z*lamida;
 			Float plasgdt  = -plasg*ktinv*helmholtz_constants::kerg;
 			Float plasgdz  = 2.0*plasg/zbar;
+
+			/* debug: */
+			if (debug) std::cout << "plasg=" << plasg << " = zbar=" << zbar << "^2 * esqu=" << helmholtz_constants::esqu << " * ktinv=" << ktinv << " * inv_lami=" << inv_lami << "\n";
+
 
 			Float ecoul, pcoul, scoul,
 				decouldd, decouldt, decoulda, decouldz,
@@ -892,7 +900,6 @@ namespace nnet::eos {
 
 				/* debug: */
 				if (debug) std::cout << "decouldt=" << decouldt << " = y=" << y << " * plasgdt=" << decouldt << " + ecoul=" << ecoul << " / T" << "\n";
-
 
 				y        = rho/3.;
 				dpcouldd = ecoul + y*decouldd/3.;
