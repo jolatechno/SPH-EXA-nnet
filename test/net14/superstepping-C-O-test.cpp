@@ -9,7 +9,6 @@ int main() {
 	nnet::net14::skip_coulombian_correction = true;
 #endif
 	
-	const double value_1 = 0; // typical v1 from net14 fortran
 	double rho = 1e9; // rho, g/cm^3
 	double last_T = 1e9;
 

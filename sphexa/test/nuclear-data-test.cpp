@@ -12,7 +12,6 @@ int main() {
 	nnet::net14::skip_coulombian_correction = true;
 #endif
 	
-	const double value_1 = 0; // typical v1 from net14 fortran
 	double rho = 1e9; // rho, g/cm^3
 	double last_T = 1e9;
 
@@ -43,23 +42,11 @@ int main() {
 
 
 	const nnet::eos::helmholtz helm_eos(nnet::net14::constants::Z);
-	const auto eos = [&](const vector &Y_, const double T, const double rho_) {
-		const double cv = 3.1e7; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
-		struct eos_output {
-			double cv, dP_dT;
-		} res{cv, 0};
-		return res;
-	};
 
 
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
-		auto [Y, T, current_dt] = solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double, vector>, 
-#ifndef DONT_USE_HELM_EOS
-			helm_eos,
-#else
-			eos,
-#endif
+		auto [Y, T, current_dt] = solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double, vector>, helm_eos,
 			last_Y, last_T, rho, 0., dt);
 		t += current_dt;
 

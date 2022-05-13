@@ -13,7 +13,6 @@ int main() {
 	nnet::net14::skip_coulombian_correction = true;
 #endif
 	
-	const double value_1 = 0; // typical v1 from net14 fortran
 	double rho_left = 1e9, rho_right = 7e8; // rho, g/cm^3
 	double T_left = 1e9, T_right = 2e9; // rho, g/cm^3
 
@@ -30,8 +29,8 @@ int main() {
 		nuclear_data.Y[i][1] = 0.5/nnet::net14::constants::A[1];
 		nuclear_data.Y[i][2] = 0.5/nnet::net14::constants::A[2];
 
-		nuclear_data.T[i]   = T_left   + (T_right   - T_left  )*((float)i/(float)(n_particles - 1));
-		nuclear_data.rho[i] = rho_left + (rho_right - rho_left)*((float)i/(float)(n_particles - 1));
+		nuclear_data.T[i]   = T_left   + (T_right   - T_left  )*(float)i/(float)(n_particles - 1);
+		nuclear_data.rho[i] = rho_left + (rho_right - rho_left)*(float)i/(float)(n_particles - 1);
 
 		//nuclear_data.drho_dt[i] = 0.;
 		nuclear_data.previous_rho[i] = nuclear_data.rho[i];
@@ -53,13 +52,6 @@ int main() {
 
 
 	const nnet::eos::helmholtz helm_eos(nnet::net14::constants::Z);
-	const auto eos = [&](const vector &Y_, const double T, const double rho_) {
-		const double cv = 3.1e7; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
-		struct eos_output {
-			double cv, dP_dT;
-		} res{cv, 0};
-		return res;
-	};
 
 
 	// debug print
@@ -73,12 +65,7 @@ int main() {
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
 		sphexa::sphnnet::compute_nuclear_reactions(nuclear_data, dt,
-			nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double, vector>, 
-#ifndef DONT_USE_HELM_EOS
-			helm_eos);
-#else
-			eos);
-#endif
+			nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double, vector>, helm_eos);
 		t += dt;
 
 		nnet::debug = false;

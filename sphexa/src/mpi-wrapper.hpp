@@ -16,7 +16,7 @@ namespace sphexa::mpi {
 	struct mpi_partition {
 		// references to pointers
 		const std::vector<int> *node_id;
-		const std::vector<std::size_t> *particule_id;
+		const std::vector<std::size_t> *particle_id;
 
 		// send partition limits
 		std::vector<int> send_disp;
@@ -51,7 +51,7 @@ namespace sphexa::mpi {
 	/**
 	 * TODO
 	 */
-	mpi_partition partition_from_pointers(const std::vector<int> &node_id, const std::vector<std::size_t> &particule_id) {
+	mpi_partition partition_from_pointers(const std::vector<int> &node_id, const std::vector<std::size_t> &particle_id) {
 		int rank, size;
 		MPI_Comm_size(MPI_COMM_WORLD, &size);
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -65,7 +65,7 @@ namespace sphexa::mpi {
 
 		// intialize references
 		partition.node_id = &node_id;
-		partition.particule_id = &particule_id;
+		partition.particle_id = &particle_id;
 
 		// localy partition
 		utils::parallel_generalized_partition_from_iota(partition.send_partition.begin(), partition.send_partition.end(), 0, 
@@ -83,7 +83,7 @@ namespace sphexa::mpi {
 		// prepare send buffer
 		#pragma omp parallel for schedule(static)
 		for (size_t i = 0; i < n_particles; ++i)
-			partition.recv_partition[i] = particule_id[partition.send_partition[i]];
+			partition.recv_partition[i] = particle_id[partition.send_partition[i]];
 		// send particle id
 		MPI_Alltoallv(MPI_IN_PLACE,                &partition.send_count[0], &partition.send_disp[0], MPI_UNSIGNED_LONG_LONG,
 					 &partition.recv_partition[0], &partition.recv_count[0], &partition.recv_disp[0], MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);

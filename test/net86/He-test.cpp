@@ -11,7 +11,6 @@ int main() {
 
 	nnet::constants::NR::dT_T_target = 4e-3;
 	
-	const double value_1 = 0; // typical v1 from net86 fortran
 	double rho = 1e9; // rho, g/cm^3
 	double last_T = 2e9;
 
