@@ -1,4 +1,4 @@
-U_CFLAGS=$(CFLAGS) --std=c++2a
+U_CFLAGS=$(CFLAGS) --std=c++2a -fopenmp
 
 targets=$(basename $(wildcard **.cpp))
 

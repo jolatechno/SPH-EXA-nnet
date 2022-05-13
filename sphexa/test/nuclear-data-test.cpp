@@ -5,7 +5,7 @@
 
 #include "../../src/eos/helmholtz.hpp"
 
-using vector = std::array<double, 14>; //sphexa::sphnnet::NuclearAbundances<14>;
+using vector = sphexa::sphnnet::NuclearAbundances<14>;
 
 int main() {
 #if NO_SCREENING
