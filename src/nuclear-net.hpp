@@ -25,6 +25,8 @@ namespace nnet {
 		double max_dt = 1e-2;
 		/// maximum timestep evolution
 		double max_dt_step = 1.5;
+		/// maximum negative timestep evolution
+		double min_dt_step = 1e-2;
 		/// timestep jump when a nan is in the solution
 		double nan_dt_step = 1e-1;
 
@@ -41,8 +43,6 @@ namespace nnet {
 		namespace NR {
 			/// maximum timestep
 			double max_dt = 1e-2;
-			/// maximum timestep evolution
-			double max_dt_step = 1.5;
 
 			/// relative temperature variation target of the implicit solver
 			double dT_T_target = 2e-2;
@@ -62,7 +62,7 @@ namespace nnet {
 			double dt_tol = 1e-5;
 
 			/// ratio of the nuclear timestep and "super timestep" to jump to NSE
-			double dt_nse_tol = 1e-8;
+			double dt_nse_tol = 0; //1e-8;
 		}
 	}
 
@@ -406,6 +406,7 @@ namespace nnet {
 			Float previous_dt = dt;
 			dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T)*previous_dt;
 			dt = std::min(dt, previous_dt*constants::max_dt_step);
+			dt = std::max(dt, previous_dt*constants::min_dt_step);
 			dt = std::min(dt, (Float)constants::max_dt);
 
 			// exit on condition
@@ -483,8 +484,9 @@ namespace nnet {
 
 			// timestep tweeking
 			Float previous_dt = dt;
-			dt = (dT_T == 0 ? (Float)constants::NR::max_dt_step : constants::NR::dT_T_target/dT_T)*previous_dt;
-			dt = std::min(dt, previous_dt*constants::NR::max_dt_step);
+			dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::NR::dT_T_target/dT_T)*previous_dt;
+			dt = std::min(dt, previous_dt*constants::max_dt_step);
+			dt = std::max(dt, previous_dt*constants::min_dt_step);
 			dt = std::min(dt,      (Float)constants::NR::max_dt);
 
 			// exit on condition

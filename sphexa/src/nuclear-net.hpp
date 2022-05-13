@@ -6,6 +6,15 @@
 #include "../../src/nuclear-net.hpp"
 
 namespace sphexa::sphnnet {
+	/// function sending requiered previous-step hydro data from ParticlesDataType to NuclearDataType
+	/**
+	 * TODO
+	 */
+	template<class ParticlesDataType, int n_species,typename Float=double>
+	void sendHydroPreviousData(const ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
+		sphexa::mpi::direct_sync_data_from_partition(partition, d.rho,     n.previous_rho,     datatype);
+	}
+
 	/// function sending requiered hydro data from ParticlesDataType to NuclearDataType
 	/**
 	 * TODO
@@ -13,7 +22,6 @@ namespace sphexa::sphnnet {
 	template<class ParticlesDataType, int n_species,typename Float=double>
 	void sendHydroData(const ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
 		sphexa::mpi::direct_sync_data_from_partition(partition, d.rho,     n.rho,     datatype);
-		sphexa::mpi::direct_sync_data_from_partition(partition, d.drho_dt, n.drho_dt, datatype);
 		sphexa::mpi::direct_sync_data_from_partition(partition, d.T,       n.T,       datatype);
 	}
 
@@ -23,8 +31,6 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType, int n_species,typename Float=double>
 	void recvHydroData(ParticlesDataType &d, const NuclearDataType<n_species, Float> &n, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
-		sphexa::mpi::reversed_sync_data_from_partition(partition, n.rho,     d.rho,     datatype);
-		sphexa::mpi::reversed_sync_data_from_partition(partition, n.drho_dt, d.drho_dt, datatype);
 		sphexa::mpi::reversed_sync_data_from_partition(partition, n.T,       d.T,       datatype);
 	}
 
@@ -35,11 +41,16 @@ namespace sphexa::sphnnet {
 	template<class Data, class func_rate, class func_BE, class func_eos, typename Float>
 	void compute_nuclear_reactions(Data &n, const Float hydro_dt,
 		const std::vector<nnet::reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos) {
+		const size_t n_particles = n.T.size();
 
 		#pragma omp parallel for schedule(dynamic)
-		for (size_t i = 0; i < n.Y.size(); ++i)
+		for (size_t i = 0; i < n_particles; ++i) {
+			Float drho_dt = 0.; (n.rho[i] - n.previous_rho[i])/hydro_dt;
+
 			std::tie(n.Y[i], n.T[i]) = nnet::solve_system_superstep(reactions, construct_rates, construct_BE, eos,
-				n.Y[i], n.T[i], n.rho[i], n.drho_dt[i], hydro_dt, n.dt[i]);
+				n.Y[i], n.T[i], n.rho[i], /*n.drho_dt[i]*/drho_dt, hydro_dt, n.dt[i]);
+		} 
+
 	}
 }
 

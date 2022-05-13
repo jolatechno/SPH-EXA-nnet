@@ -43,7 +43,7 @@ namespace sphexa::sphnnet {
 	template<int n_species, typename Float=double>
 	struct NuclearDataType {
 		/// hydro data
-		std::vector<Float> rho, drho_dt, T;
+		std::vector<Float> rho, T, previous_rho; // drho_dt
 
 		/// nuclear abundances (vector of vector)
 		std::vector<NuclearAbundances<n_species, Float>> Y;
@@ -54,7 +54,7 @@ namespace sphexa::sphnnet {
 		/// resize the number of particules
 		void resize(const size_t N) {
 			rho.resize(N);
-			drho_dt.resize(N);
+			previous_rho.resize(N); //drho_dt.resize(N);
 			T.resize(N);
 
 			Y.resize(N);
