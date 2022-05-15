@@ -15,8 +15,8 @@ namespace sphexa::mpi {
 	 */
 	struct mpi_partition {
 		// references to pointers
-		const std::vector<int> *node_id;
-		const std::vector<std::size_t> *particle_id;
+		const std::vector<int> &node_id;
+		const std::vector<std::size_t> &particle_id;
 
 		// send partition limits
 		std::vector<int> send_disp;
@@ -32,6 +32,8 @@ namespace sphexa::mpi {
 		// send partition
 		std::vector<std::size_t> recv_partition;
 
+		mpi_partition(const std::vector<int> &node_id_, const std::vector<std::size_t> &particle_id_) : node_id(node_id_), particle_id(particle_id_) {}
+
 		void resize_comm_size(const int size) {
 			send_disp .resize(size + 1, 0);
 			send_count.resize(size    , 0);
@@ -40,7 +42,7 @@ namespace sphexa::mpi {
 			recv_count.resize(size    , 0);
 		}
 
-		void resize_num_particles(const int N) {
+		void resize_num_send(const int N) {
 			send_partition.resize(N);
 			recv_partition.resize(N);
 		}
@@ -56,16 +58,12 @@ namespace sphexa::mpi {
 		MPI_Comm_size(MPI_COMM_WORLD, &size);
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-		mpi_partition partition;
+		mpi_partition partition(node_id, particle_id);
 
 		// prepare vector sizes
 		const int n_particles = node_id.size();
 		partition.resize_comm_size(size);
-		partition.resize_num_particles(n_particles);
-
-		// intialize references
-		partition.node_id = &node_id;
-		partition.particle_id = &particle_id;
+		partition.send_partition.resize(n_particles);
 
 		// localy partition
 		utils::parallel_generalized_partition_from_iota(partition.send_partition.begin(), partition.send_partition.end(), 0, 
@@ -80,13 +78,16 @@ namespace sphexa::mpi {
 		MPI_Alltoall(&partition.send_count[0], 1, MPI_INT, &partition.recv_count[0], 1, MPI_INT, MPI_COMM_WORLD);
 		std::partial_sum(partition.recv_count.begin(), partition.recv_count.end(), partition.recv_disp.begin() + 1);
 
-
 		// send particle id
 		// prepare send buffer
 		std::vector<size_t> send_buffer(n_particles);
 		#pragma omp parallel for schedule(static)
 		for (size_t i = 0; i < n_particles; ++i)
 			send_buffer[i] = particle_id[partition.send_partition[i]];
+
+		// prepare recv buffer
+		size_t n_particles_recv = partition.recv_disp[size];
+		partition.recv_partition.resize(n_particles_recv);
 
 		// send particle id
 		MPI_Alltoallv(&send_buffer[0],              &partition.send_count[0], &partition.send_disp[0], MPI_UNSIGNED_LONG_LONG,
@@ -127,22 +128,24 @@ namespace sphexa::mpi {
 	template<typename T>
 	void directSyncDataFromPartition(const mpi_partition &partition, const std::vector<T> &send_vector, std::vector<T> &recv_vector, const MPI_Datatype datatype) {
 		// prepare send buffer
-		const int n_particles = partition.node_id->size();
+		const int n_particles = partition.node_id.size();
 
 		// prepare (partition) buffer
-		std::vector<T> send_recv_buffer(n_particles);
+		size_t n_particles_recv = partition.recv_partition.size();
+		std::vector<T> send_buffer(n_particles), recv_buffer(n_particles_recv);
+
 		#pragma omp parallel for schedule(static)
 		for (size_t i = 0; i < n_particles; ++i)
-			recv_vector[i] = send_vector[partition.send_partition[i]];
+			send_buffer[i] = send_vector[partition.send_partition[i]];
 
 		// send buffer
-		MPI_Alltoallv(&recv_vector[0],      &partition.send_count[0], &partition.send_disp[0], datatype,
-					  &send_recv_buffer[0], &partition.recv_count[0], &partition.recv_disp[0], datatype, MPI_COMM_WORLD);
+		MPI_Alltoallv(&send_buffer[0], &partition.send_count[0], &partition.send_disp[0], datatype,
+					  &recv_buffer[0], &partition.recv_count[0], &partition.recv_disp[0], datatype, MPI_COMM_WORLD);
 
 		// reconstruct (un-partition) vector from buffer
 		#pragma omp parallel for schedule(static)
-		for (size_t i = 0; i < n_particles; ++i)
-			recv_vector[partition.recv_partition[i]] = send_recv_buffer[i];
+		for (size_t i = 0; i < n_particles_recv; ++i)
+			recv_vector[partition.recv_partition[i]] = recv_buffer[i];
 	}
 
 	/// function that sync data from detached data
@@ -154,21 +157,23 @@ namespace sphexa::mpi {
 		// exact same thing as "direct_sync_data_from_partition" but with "send_ <-> recv_"
 
 		// prepare send buffer
-		const int n_particles = partition.node_id->size();
+		const int n_particles = partition.node_id.size();
 
 		// prepare (partition) buffer
-		std::vector<T> send_recv_buffer(n_particles);
+		size_t n_particles_recv = partition.recv_partition.size();
+		std::vector<T> send_buffer(n_particles_recv), recv_buffer(n_particles);
+
 		#pragma omp parallel for schedule(static)
-		for (size_t i = 0; i < n_particles; ++i)
-			recv_vector[i] = send_vector[partition.recv_partition[i]];
+		for (size_t i = 0; i < n_particles_recv; ++i)
+			send_buffer[i] = send_vector[partition.recv_partition[i]];
 
 		// send buffer
-		MPI_Alltoallv(&recv_vector[0],      &partition.recv_count[0], &partition.recv_disp[0], datatype,
-					  &send_recv_buffer[0], &partition.send_count[0], &partition.send_disp[0], datatype, MPI_COMM_WORLD);
+		MPI_Alltoallv(&send_buffer[0], &partition.recv_count[0], &partition.recv_disp[0], datatype,
+					  &recv_buffer[0], &partition.send_count[0], &partition.send_disp[0], datatype, MPI_COMM_WORLD);
 
 		// reconstruct (un-partition) vector from buffer
 		#pragma omp parallel for schedule(static)
 		for (size_t i = 0; i < n_particles; ++i)
-			recv_vector[partition.send_partition[i]] = send_recv_buffer[i];
+			recv_vector[partition.send_partition[i]] = recv_buffer[i];
 	}
 }

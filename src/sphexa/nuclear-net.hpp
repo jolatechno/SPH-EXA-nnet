@@ -56,7 +56,7 @@ namespace sphexa::sphnnet {
 	NuclearDataType<n_species, Float> initNuclearData(ParticlesDataType &d, const initFunc initializer, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
 		NuclearDataType<n_species, Float> n;
 
-		size_t local_nuclear_n_particles = partition.recv_disp[partition.recv_count.size()];
+		size_t local_nuclear_n_particles = partition.recv_partition.size();
 
 		// receiv position for initializer
 		std::vector<Float> x(local_nuclear_n_particles), y(local_nuclear_n_particles), z(local_nuclear_n_particles);

@@ -160,7 +160,6 @@ int main(int argc, char* argv[]) {
 #endif
 
 
-	MPI_Barrier(MPI_COMM_WORLD);
 	/* !!!!!!!!!!!!
 	do simulation
 	!!!!!!!!!!!! */
@@ -191,7 +190,7 @@ int main(int argc, char* argv[]) {
 		std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << "),\tT_left=" << n.T[0] << "\n";
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
-	if ((size - 1 + n_particles - 1)%size == rank) {
+	if ((total_n_particles - 1)%size == rank) {
 		double m_tot = eigen::dot(n.Y[n.Y.size() - 1], nnet::net14::constants::A);
 		double dm_m = (m_tot - m_in)/m_in;
 
