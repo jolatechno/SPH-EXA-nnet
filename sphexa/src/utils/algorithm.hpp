@@ -36,7 +36,7 @@ namespace utils {
 		int const n_segment = std::distance(offset, offset_end) - 1;
 		long long int const id_end = std::distance(idx_in, idx_in_end);
 
-		/* limit values */
+		// limit values
 		offset[0] = 0;
 		offset[n_segment] = id_end;
 
@@ -47,7 +47,7 @@ namespace utils {
 			return;
 		}
 
-		/* number of threads */
+		// number of threads
 		int num_threads;
 		#pragma omp parallel
 		#pragma omp single
@@ -59,8 +59,9 @@ namespace utils {
 		{
 			int thread_id = omp_get_thread_num();
 
-			#pragma omp for 
-			for (long long int i = id_end + iotaOffset - 1; i >= iotaOffset; --i) {
+			long long int begin = id_end*thread_id/num_threads;
+			long long int end = id_end*(thread_id + 1)/num_threads;
+			for (long long int i = end + iotaOffset - 1; i >= begin + iotaOffset; --i) {
 				auto key = partitioner(i);
 				++count[key*num_threads + thread_id];
 			}
@@ -72,8 +73,9 @@ namespace utils {
 		{
 			int thread_id = omp_get_thread_num();
 			
-			#pragma omp for 
-			for (long long int i = id_end + iotaOffset - 1; i >= iotaOffset; --i) {
+			long long int begin = id_end*thread_id/num_threads;
+			long long int end = id_end*(thread_id + 1)/num_threads;
+			for (long long int i = begin + iotaOffset; i < end + iotaOffset; ++i) {
 				auto key = partitioner(i);
 				idx_in[--count[key*num_threads + thread_id]] = i;
 			}
