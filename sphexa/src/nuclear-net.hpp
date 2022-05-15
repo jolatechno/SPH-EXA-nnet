@@ -3,6 +3,8 @@
 #include "mpi-wrapper.hpp"
 #include "nuclear-data.hpp"
 
+#include <numeric>
+
 #include "../../src/nuclear-net.hpp"
 
 namespace sphexa::sphnnet {
@@ -25,21 +27,14 @@ namespace sphexa::sphnnet {
 
 	}
 
-	/// function sending requiered previous-step hydro data from ParticlesDataType to NuclearDataType
-	/**
-	 * TODO
-	 */
-	template<class ParticlesDataType, int n_species,typename Float=double>
-	void sendHydroPreviousData(const ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
-		sphexa::mpi::direct_sync_data_from_partition(partition, d.rho, n.previous_rho, datatype);
-	}
-
 	/// function sending requiered hydro data from ParticlesDataType to NuclearDataType
 	/**
 	 * TODO
 	 */
 	template<class ParticlesDataType, int n_species,typename Float=double>
 	void sendHydroData(const ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
+		std::swap(n.rho, n.previous_rho);
+
 		sphexa::mpi::direct_sync_data_from_partition(partition, d.rho, n.rho, datatype);
 		sphexa::mpi::direct_sync_data_from_partition(partition, d.T,   n.T,   datatype);
 	}
@@ -69,10 +64,15 @@ namespace sphexa::sphnnet {
 		size_t local_n_particles = d.T.size();
 		std::vector<size_t> n_particles(size);
 		MPI_Allgather(&local_n_particles, 1, MPI_UNSIGNED_LONG_LONG,
-					  &n_particles, 	  1, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+					  &n_particles[0],    1, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
 
 		// initialize "node_id" and "particle_id"
-		/* TODO */
+		size_t global_idx_begin = std::accumulate(n_particles.begin(), n_particles.begin() + rank, (size_t)0);
+		for (size_t i = 0; i < local_n_particles; ++i) {
+			size_t global_idx = global_idx_begin + i;
+			d.node_id[i] = global_idx % size;
+			d.particle_id[i] = global_idx / size;
+		}
 
 		// initialize partition
 		sphexa::mpi::mpi_partition partition = sphexa::mpi::partition_from_pointers(d.node_id, d.particle_id);
@@ -90,59 +90,9 @@ namespace sphexa::sphnnet {
 		for (int i = 0; i < local_nuclear_n_particles; ++i)
 			n.Y[i] = initializer(x[i], y[i], z[i]);
 
+		// share the initial rho
+		sphexa::mpi::direct_sync_data_from_partition(partition, d.rho, n.rho, datatype);
+
 		return n;
 	}
 }
-
-/* modifications to the "ParticlesData" class:
-
-#ifdef ATTACH_NUCLEAR_DATA
-	template<int n_species, typename Float>
-#endif
-class ParticlesData {
-	// ...
-
-#ifdef ATTACH_NUCLEAR_DATA
-	// for the "attached" implementation, i.e. nuclear data are stored on each particles:
-
-	/// nuclear abundances (vector of vector)
-	std::vector<sphexa::sphnnet::NuclearAbundances<n_species, Float>> Y;
-
-	/// timesteps
-	std::vector<Float> dt;
-
-#else
-	// for the "detached" implementation; i.e. nuclear abundances are on different nodes as the hydro data:
-
-	// pointers to exchange data with hydro particules
-	std::vector<int> node_id;
-	std::vector<std::size_t> particule_id;
-#endif
-
-	// ...
-}
-
-
-additions to the "step" function of SPH-EXA:
-
-void step(DomainType& domain, ParticleDataType& d
-#ifndef ATTACH_NUCLEAR_DATA	
-	, NuclearDataType& n
-#endif
-	) override {
-
-	// ...
-	// compute eos
-
-#ifdef ATTACH_NUCLEAR_DATA
-	sphexa::compute_nuclear_reactions(d, hydro_dt, ...);
-#else
-	n.update_particule_pointers(d);
-	n.update_nuclear_data(d);
-	sphexa::compute_nuclear_reactions(n, hydro_dt, ...);
-	n.update_hydro_data(d);
-#endif
-
-	// ...
-}
-*/

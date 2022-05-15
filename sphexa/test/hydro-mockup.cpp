@@ -20,6 +20,7 @@ public:
 	// pointers
 	std::vector<int> node_id;
 	std::vector<std::size_t> particle_id;
+	std::vector<double> x, y, z;
 
 	// hydro data
 	std::vector<double> rho, T; //...
@@ -27,6 +28,10 @@ public:
 	void resize(const size_t N) {
 		node_id.resize(N);
 		particle_id.resize(N);
+
+		x.resize(N);
+		y.resize(N);
+		z.resize(N);
 
 		rho.resize(N);
 		T.resize(N);
@@ -42,9 +47,9 @@ template<class func_rate, class func_BE, class func_eos>
 void step(ParticlesDataType &p, sphexa::sphnnet::NuclearDataType<14, double>  &n, const double dt,
 	const std::vector<nnet::reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos) {
 
-	auto partition = sphexa::mpi::partition_from_pointers(p.node_id, p.particle_id);
+	// domain redecomposition
 
-	sphexa::sphnnet::sendHydroPreviousData(p, n, partition, MPI_DOUBLE);
+	auto partition = sphexa::mpi::partition_from_pointers(p.node_id, p.particle_id);
 
 	// do hydro stuff
 
@@ -88,9 +93,7 @@ int main(int argc, char* argv[]) {
 	double rho_left = 1e9, rho_right = 0.7e9; // rho, g/cm^3
 	double T_left = 0.8e9, T_right = 1.5e9; // rho, g/cm^3
 
-
 	ParticlesDataType p;
-	sphexa::sphnnet::NuclearDataType<14> n;
 
 	const size_t total_n_particles = 1000;
 	const size_t n_particles = total_n_particles/size + size - (total_n_particles/size)%size;
@@ -106,6 +109,7 @@ int main(int argc, char* argv[]) {
 	}
 
 
+#if defined(NO_COMM) || defined(NO_MIX)
 #ifdef NO_COMM
 	/* !!!!!!!!!!!!
 	initialize pointers with some simple "mixing"
@@ -114,8 +118,7 @@ int main(int argc, char* argv[]) {
 		p.node_id[i] = rank;
 		p.particle_id[i] = i;
 	}
-#else
-#ifdef NO_MIX
+#else //ifdef NO_MIX
 	/* !!!!!!!!!!!!
 	initialize pointers with a lot of communication but no "mixing"
 	!!!!!!!!!!!! */
@@ -123,28 +126,32 @@ int main(int argc, char* argv[]) {
 		p.node_id[i] = (rank + 1)%size;
 		p.particle_id[i] = i;
 	}
-#else
-	/* !!!!!!!!!!!!
-	initialize pointers with some simple "mixing"
-	!!!!!!!!!!!! */
-	for (int i = 0; i < n_particles; ++i) {
-		p.node_id[i] = (rank + i)%size;
-		p.particle_id[i] = i;
-	}
-#endif
 #endif
 
 	/* !!!!!!!!!!!!
 	initialize the nuclear data with homogenous abundances
 	!!!!!!!!!!!! */
-	auto partition = sphexa::mpi::partition_from_pointers(p.node_id, p.particle_id);
-	const size_t nuclear_n_particles = partition.recv_disp[size];
-	std::cout << nuclear_n_particles << "\n";
-	n.resize(nuclear_n_particles);
-	for (size_t i = 0; i < nuclear_n_particles; ++i) {
-		n.Y[i] = Y0;
+	{
+		auto partition = sphexa::mpi::partition_from_pointers(p.node_id, p.particle_id);
+		sphexa::mpi::direct_sync_data_from_partition(partition, d.rho, n.previous_rho, datatype);
+		const size_t nuclear_n_particles = partition.recv_disp[size];
+		std::cout << nuclear_n_particles << "\n";
+		n.resize(nuclear_n_particles);
+		for (size_t i = 0; i < nuclear_n_particles; ++i) {
+			n.Y[i] = Y0;
+		}
 	}
-
+	
+#else
+	/* !!!!!!!!!!!!
+	initialize pointers and nuclear data
+	!!!! THE WAY IT SHOULD BE DONE !!!!
+	!!!!!!!!!!!! */
+	sphexa::sphnnet::NuclearDataType<14> n = sphexa::sphnnet::initNuclearData<14>(p,
+		[&](const double x, const double y, const double z) {
+			return Y0;
+		}, MPI_DOUBLE);
+#endif
 
 
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -179,13 +186,13 @@ int main(int argc, char* argv[]) {
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 	if ((size - 1 + n_particles - 1)%size == rank) {
-		double m_tot = eigen::dot(n.Y[nuclear_n_particles - 1], nnet::net14::constants::A);
+		double m_tot = eigen::dot(n.Y[n.Y.size() - 1], nnet::net14::constants::A);
 		double dm_m = (m_tot - m_in)/m_in;
 
-		for (int i = 0; i < 14; ++i) X[i] = n.Y[nuclear_n_particles - 1][i]*nnet::net14::constants::A[i]/eigen::dot(n.Y[0], nnet::net14::constants::A);
+		for (int i = 0; i < 14; ++i) X[i] = n.Y[n.Y.size() - 1][i]*nnet::net14::constants::A[i]/eigen::dot(n.Y[0], nnet::net14::constants::A);
 		std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
 		for (int i = 0; i < 14; ++i) std::cout << X[i] << ", ";
-		std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << "),\tT_right=" << n.T[nuclear_n_particles - 1] << "\n";
+		std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << "),\tT_right=" << n.T[n.Y.size() - 1] << "\n";
 	}
 
 
