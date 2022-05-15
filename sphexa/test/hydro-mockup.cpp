@@ -90,8 +90,8 @@ int main(int argc, char* argv[]) {
 
 
 	/* initial hydro data */
-	double rho_left = 1e9, rho_right = 0.7e9; // rho, g/cm^3
-	double T_left = 0.8e9, T_right = 1.5e9; // rho, g/cm^3
+	double rho_left = 1e9, rho_right = 0.8e9; // rho, g/cm^3
+	double T_left = 0.8e9, T_right = 1.3e9; // rho, g/cm^3
 
 	ParticlesDataType p;
 
