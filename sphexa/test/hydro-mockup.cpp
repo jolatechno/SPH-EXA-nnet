@@ -92,7 +92,8 @@ int main(int argc, char* argv[]) {
 	ParticlesDataType p;
 	sphexa::sphnnet::NuclearDataType<14> n;
 
-	const size_t n_particles = 300;
+	const size_t total_n_particles = 1000;
+	const size_t n_particles = total_n_particles/size + size - (total_n_particles/size)%size;
 	p.resize(n_particles);
 
 
@@ -105,6 +106,24 @@ int main(int argc, char* argv[]) {
 	}
 
 
+#ifdef NO_COMM
+	/* !!!!!!!!!!!!
+	initialize pointers with some simple "mixing"
+	!!!!!!!!!!!! */
+	for (int i = 0; i < n_particles; ++i) {
+		p.node_id[i] = rank;
+		p.particle_id[i] = i;
+	}
+#else
+#ifdef NO_MIX
+	/* !!!!!!!!!!!!
+	initialize pointers with a lot of communication but no "mixing"
+	!!!!!!!!!!!! */
+	for (int i = 0; i < n_particles; ++i) {
+		p.node_id[i] = (rank + 1)%size;
+		p.particle_id[i] = i;
+	}
+#else
 	/* !!!!!!!!!!!!
 	initialize pointers with some simple "mixing"
 	!!!!!!!!!!!! */
@@ -112,12 +131,12 @@ int main(int argc, char* argv[]) {
 		p.node_id[i] = (rank + i)%size;
 		p.particle_id[i] = i;
 	}
-
+#endif
+#endif
 
 	/* !!!!!!!!!!!!
 	initialize the nuclear data with homogenous abundances
 	!!!!!!!!!!!! */
-	std::cout << n_particles << "\n";
 	auto partition = sphexa::mpi::partition_from_pointers(p.node_id, p.particle_id);
 	const size_t nuclear_n_particles = partition.recv_disp[size];
 	std::cout << nuclear_n_particles << "\n";

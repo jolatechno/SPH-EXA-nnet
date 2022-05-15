@@ -6,34 +6,6 @@
 #include "../../src/nuclear-net.hpp"
 
 namespace sphexa::sphnnet {
-	/// function sending requiered previous-step hydro data from ParticlesDataType to NuclearDataType
-	/**
-	 * TODO
-	 */
-	template<class ParticlesDataType, int n_species,typename Float=double>
-	void sendHydroPreviousData(const ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
-		sphexa::mpi::direct_sync_data_from_partition(partition, d.rho,     n.previous_rho,     datatype);
-	}
-
-	/// function sending requiered hydro data from ParticlesDataType to NuclearDataType
-	/**
-	 * TODO
-	 */
-	template<class ParticlesDataType, int n_species,typename Float=double>
-	void sendHydroData(const ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
-		sphexa::mpi::direct_sync_data_from_partition(partition, d.rho,     n.rho,     datatype);
-		sphexa::mpi::direct_sync_data_from_partition(partition, d.T,       n.T,       datatype);
-	}
-
-	/// sending back hydro data from NuclearDataType to ParticlesDataType
-	/**
-	 * TODO
-	 */
-	template<class ParticlesDataType, int n_species,typename Float=double>
-	void recvHydroData(ParticlesDataType &d, const NuclearDataType<n_species, Float> &n, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
-		sphexa::mpi::reversed_sync_data_from_partition(partition, n.T,       d.T,       datatype);
-	}
-
 	/// function to compute nuclear reaction, either from NuclearData or ParticuleData if it includes Y.
 	/**
 	 * TODO
@@ -51,6 +23,74 @@ namespace sphexa::sphnnet {
 				n.Y[i], n.T[i], n.rho[i], /*n.drho_dt[i]*/drho_dt, hydro_dt, n.dt[i]);
 		} 
 
+	}
+
+	/// function sending requiered previous-step hydro data from ParticlesDataType to NuclearDataType
+	/**
+	 * TODO
+	 */
+	template<class ParticlesDataType, int n_species,typename Float=double>
+	void sendHydroPreviousData(const ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
+		sphexa::mpi::direct_sync_data_from_partition(partition, d.rho, n.previous_rho, datatype);
+	}
+
+	/// function sending requiered hydro data from ParticlesDataType to NuclearDataType
+	/**
+	 * TODO
+	 */
+	template<class ParticlesDataType, int n_species,typename Float=double>
+	void sendHydroData(const ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
+		sphexa::mpi::direct_sync_data_from_partition(partition, d.rho, n.rho, datatype);
+		sphexa::mpi::direct_sync_data_from_partition(partition, d.T,   n.T,   datatype);
+	}
+
+	/// sending back hydro data from NuclearDataType to ParticlesDataType
+	/**
+	 * TODO
+	 */
+	template<class ParticlesDataType, int n_species,typename Float=double>
+	void recvHydroData(ParticlesDataType &d, const NuclearDataType<n_species, Float> &n, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
+		sphexa::mpi::reversed_sync_data_from_partition(partition, n.T, d.T, datatype);
+	}
+
+	/// intialize nuclear data, from a function of positions:
+	/**
+	 * TODO
+	 */
+	template<int n_species, typename Float=double, class initFunc, class ParticlesDataType>
+	NuclearDataType<n_species, Float> initNuclearData(ParticlesDataType &d, const initFunc initializer, MPI_Datatype datatype) {
+		int rank, size;
+		MPI_Comm_size(MPI_COMM_WORLD, &size);
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+		NuclearDataType<n_species, Float> n;
+
+		// share the number of particle per node
+		size_t local_n_particles = d.T.size();
+		std::vector<size_t> n_particles(size);
+		MPI_Allgather(&local_n_particles, 1, MPI_UNSIGNED_LONG_LONG,
+					  &n_particles, 	  1, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+
+		// initialize "node_id" and "particle_id"
+		/* TODO */
+
+		// initialize partition
+		sphexa::mpi::mpi_partition partition = sphexa::mpi::partition_from_pointers(d.node_id, d.particle_id);
+		size_t local_nuclear_n_particles = partition.recv_disp[size];
+
+		// receiv position for initializer
+		std::vector<Float> x(local_nuclear_n_particles), y(local_nuclear_n_particles), z(local_nuclear_n_particles);
+		sphexa::mpi::direct_sync_data_from_partition(partition, d.x, x, datatype);
+		sphexa::mpi::direct_sync_data_from_partition(partition, d.y, y, datatype);
+		sphexa::mpi::direct_sync_data_from_partition(partition, d.z, z, datatype);
+
+		// intialize nuclear data
+		n.resize(local_nuclear_n_particles);
+		#pragma omp parallel for schedule(dynamic)
+		for (int i = 0; i < local_nuclear_n_particles; ++i)
+			n.Y[i] = initializer(x[i], y[i], z[i]);
+
+		return n;
 	}
 }
 
