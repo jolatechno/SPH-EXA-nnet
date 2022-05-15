@@ -25,9 +25,9 @@ int main(int argc, char* argv[]) {
 		x = {1.0, 1.1, 1.2, 1.3};
 	}
 
-	auto partition = sphexa::mpi::partition_from_pointers(node_id, particle_id);
+	auto partition = sphexa::mpi::partitionFromPointers(node_id, particle_id);
 
-	sphexa::mpi::direct_sync_data_from_partition(partition, x, x_out, MPI_FLOAT);
+	sphexa::mpi::directSyncDataFromPartition(partition, x, x_out, MPI_FLOAT);
 
 	if (rank < 2) {
 		std::cout << rank << "\tdirect  \t";

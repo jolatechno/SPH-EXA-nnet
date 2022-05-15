@@ -35,8 +35,8 @@ namespace sphexa::sphnnet {
 	void sendHydroData(const ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
 		std::swap(n.rho, n.previous_rho);
 
-		sphexa::mpi::direct_sync_data_from_partition(partition, d.rho, n.rho, datatype);
-		sphexa::mpi::direct_sync_data_from_partition(partition, d.T,   n.T,   datatype);
+		sphexa::mpi::directSyncDataFromPartition(partition, d.rho, n.rho, datatype);
+		sphexa::mpi::directSyncDataFromPartition(partition, d.T,   n.T,   datatype);
 	}
 
 	/// sending back hydro data from NuclearDataType to ParticlesDataType
@@ -45,7 +45,7 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType, int n_species,typename Float=double>
 	void recvHydroData(ParticlesDataType &d, const NuclearDataType<n_species, Float> &n, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
-		sphexa::mpi::reversed_sync_data_from_partition(partition, n.T, d.T, datatype);
+		sphexa::mpi::reversedSyncDataFromPartition(partition, n.T, d.T, datatype);
 	}
 
 	/// intialize nuclear data, from a function of positions:
@@ -53,36 +53,16 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<int n_species, typename Float=double, class initFunc, class ParticlesDataType>
-	NuclearDataType<n_species, Float> initNuclearData(ParticlesDataType &d, const initFunc initializer, MPI_Datatype datatype) {
-		int rank, size;
-		MPI_Comm_size(MPI_COMM_WORLD, &size);
-		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
+	NuclearDataType<n_species, Float> initNuclearData(ParticlesDataType &d, const initFunc initializer, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
 		NuclearDataType<n_species, Float> n;
 
-		// share the number of particle per node
-		size_t local_n_particles = d.T.size();
-		std::vector<size_t> n_particles(size);
-		MPI_Allgather(&local_n_particles, 1, MPI_UNSIGNED_LONG_LONG,
-					  &n_particles[0],    1, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
-
-		// initialize "node_id" and "particle_id"
-		size_t global_idx_begin = std::accumulate(n_particles.begin(), n_particles.begin() + rank, (size_t)0);
-		for (size_t i = 0; i < local_n_particles; ++i) {
-			size_t global_idx = global_idx_begin + i;
-			d.node_id[i] = global_idx % size;
-			d.particle_id[i] = global_idx / size;
-		}
-
-		// initialize partition
-		sphexa::mpi::mpi_partition partition = sphexa::mpi::partition_from_pointers(d.node_id, d.particle_id);
-		size_t local_nuclear_n_particles = partition.recv_disp[size];
+		size_t local_nuclear_n_particles = partition.recv_disp[partition.recv_count.size()];
 
 		// receiv position for initializer
 		std::vector<Float> x(local_nuclear_n_particles), y(local_nuclear_n_particles), z(local_nuclear_n_particles);
-		sphexa::mpi::direct_sync_data_from_partition(partition, d.x, x, datatype);
-		sphexa::mpi::direct_sync_data_from_partition(partition, d.y, y, datatype);
-		sphexa::mpi::direct_sync_data_from_partition(partition, d.z, z, datatype);
+		sphexa::mpi::directSyncDataFromPartition(partition, d.x, x, datatype);
+		sphexa::mpi::directSyncDataFromPartition(partition, d.y, y, datatype);
+		sphexa::mpi::directSyncDataFromPartition(partition, d.z, z, datatype);
 
 		// intialize nuclear data
 		n.resize(local_nuclear_n_particles);
@@ -91,7 +71,7 @@ namespace sphexa::sphnnet {
 			n.Y[i] = initializer(x[i], y[i], z[i]);
 
 		// share the initial rho
-		sphexa::mpi::direct_sync_data_from_partition(partition, d.rho, n.rho, datatype);
+		sphexa::mpi::directSyncDataFromPartition(partition, d.rho, n.rho, datatype);
 
 		return n;
 	}

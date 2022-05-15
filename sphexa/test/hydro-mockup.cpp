@@ -49,7 +49,7 @@ void step(ParticlesDataType &p, sphexa::sphnnet::NuclearDataType<14, double>  &n
 
 	// domain redecomposition
 
-	auto partition = sphexa::mpi::partition_from_pointers(p.node_id, p.particle_id);
+	auto partition = sphexa::mpi::partitionFromPointers(p.node_id, p.particle_id);
 
 	// do hydro stuff
 
@@ -132,8 +132,8 @@ int main(int argc, char* argv[]) {
 	initialize the nuclear data with homogenous abundances
 	!!!!!!!!!!!! */
 	{
-		auto partition = sphexa::mpi::partition_from_pointers(p.node_id, p.particle_id);
-		sphexa::mpi::direct_sync_data_from_partition(partition, d.rho, n.previous_rho, datatype);
+		auto partition = sphexa::mpi::partitionFromPointers(p.node_id, p.particle_id);
+		sphexa::mpi::directSyncDataFromPartition(partition, d.rho, n.previous_rho, datatype);
 		const size_t nuclear_n_particles = partition.recv_disp[size];
 		std::cout << nuclear_n_particles << "\n";
 		n.resize(nuclear_n_particles);
@@ -144,13 +144,20 @@ int main(int argc, char* argv[]) {
 	
 #else
 	/* !!!!!!!!!!!!
-	initialize pointers and nuclear data
+	initialize pointers
 	!!!! THE WAY IT SHOULD BE DONE !!!!
 	!!!!!!!!!!!! */
+	sphexa::mpi::initializePointers(p.node_id, p.particle_id, n_particles);
+
+	/* !!!!!!!!!!!!
+	initialize nuclear data
+	!!!! THE WAY IT SHOULD BE DONE !!!!
+	!!!!!!!!!!!! */
+	auto partition = sphexa::mpi::partitionFromPointers(p.node_id, p.particle_id);
 	sphexa::sphnnet::NuclearDataType<14> n = sphexa::sphnnet::initNuclearData<14>(p,
 		[&](const double x, const double y, const double z) {
 			return Y0;
-		}, MPI_DOUBLE);
+		}, partition, MPI_DOUBLE);
 #endif
 
 
