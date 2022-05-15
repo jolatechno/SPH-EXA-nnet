@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "../src/mpi-wrapper.hpp"
+#include "../../src/sphexa/mpi-wrapper.hpp"
 
 int main(int argc, char* argv[]) {
 	int size, rank;
@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
 		std::cout << "\n";
 	}
 
-	sphexa::mpi::reversed_sync_data_from_partition(partition, x_out, x, MPI_FLOAT);
+	sphexa::mpi::reversedSyncDataFromPartition(partition, x_out, x, MPI_FLOAT);
 
 	if (rank < 2) {
 		std::cout << rank << "\treversed\t";

@@ -1,8 +1,8 @@
 #include <vector>
 
-#include "../src/mpi-wrapper.hpp"
-#include "../src/nuclear-data.hpp"
-#include "../src/nuclear-net.hpp"
+#include "../../src/sphexa/mpi-wrapper.hpp"
+#include "../../src/sphexa/nuclear-data.hpp"
+#include "../../src/sphexa/nuclear-net.hpp"
 
 #include "../../src/nuclear-net.hpp"
 #include "../../src/net14/net14.hpp"
@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
 	ParticlesDataType p;
 
 	const size_t total_n_particles = 1000;
-	const size_t n_particles = total_n_particles/size + size - (total_n_particles/size)%size;
+	const size_t n_particles = total_n_particles*(rank + 1)/size - total_n_particles*rank/size;
 	p.resize(n_particles);
 
 
@@ -135,7 +135,6 @@ int main(int argc, char* argv[]) {
 		auto partition = sphexa::mpi::partitionFromPointers(p.node_id, p.particle_id);
 		sphexa::mpi::directSyncDataFromPartition(partition, d.rho, n.previous_rho, datatype);
 		const size_t nuclear_n_particles = partition.recv_disp[size];
-		std::cout << nuclear_n_particles << "\n";
 		n.resize(nuclear_n_particles);
 		for (size_t i = 0; i < nuclear_n_particles; ++i) {
 			n.Y[i] = Y0;

@@ -5,7 +5,7 @@
 
 #include <numeric>
 
-#include "../../src/nuclear-net.hpp"
+#include "../nuclear-net.hpp"
 
 namespace sphexa::sphnnet {
 	/// function to compute nuclear reaction, either from NuclearData or ParticuleData if it includes Y.

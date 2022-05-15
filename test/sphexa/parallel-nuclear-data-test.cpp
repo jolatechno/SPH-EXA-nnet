@@ -1,5 +1,5 @@
-#include "../src/nuclear-data.hpp"
-#include "../src/nuclear-net.hpp"
+#include "../../src/sphexa/nuclear-data.hpp"
+#include "../../src/sphexa/nuclear-net.hpp"
 
 #include "../../src/nuclear-net.hpp"
 #include "../../src/net14/net14.hpp"
