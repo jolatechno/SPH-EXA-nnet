@@ -17,7 +17,7 @@ int main() {
 #endif
 
 	auto [rate, drates] = nnet::net14::compute_reaction_rates<double>(2e9, 1e9);
-	auto [BE, dBE_dT]   = nnet::net14::compute_BE<double>(            2e9, 1e9);
+	auto BE             = nnet::net14::compute_BE<double>(            2e9, 1e9);
 
 	std::cout << "reaction_list.size=" << nnet::net14::reaction_list.size() << ", rates.size=" << rate.size() << "\n\n";
 	

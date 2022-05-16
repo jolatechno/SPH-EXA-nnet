@@ -58,7 +58,7 @@ int main() {
 			eos,
 #endif
 			last_Y, last_T,
-			nnet::net14::constants::A, nnet::net14::constants::Z, rho, 0., dt, small_dt);
+			rho, 0., dt, small_dt);
 		t += dt;
 
 		// debug print

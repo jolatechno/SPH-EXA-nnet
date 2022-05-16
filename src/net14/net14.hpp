@@ -29,18 +29,16 @@ namespace nnet::net14 {
 
 	/// function to compute the corrected BE
 	template<typename Float=double>
-	std::tuple<std::vector<Float>, std::vector<Float>> compute_BE(Float const T, Float const rho) {
+	std::vector<Float> compute_BE(Float const T, Float const rho) {
 		// ideal gaz correction
 		const Float kbt = constants::Kb*T;
 		const Float nakbt = constants::Na*kbt;
 		const Float dcorrection_dT = -1.5*constants::Kb*constants::Na;
 		const Float correction = dcorrection_dT*T;
 
-		std::vector<Float> corrected_BE(14), dBE_dT(14);
-		for (int i = 0; i < 14; ++i) {
+		std::vector<Float> corrected_BE(14);
+		for (int i = 0; i < 14; ++i)
 			corrected_BE[i] = BE[i] + correction;
-			dBE_dT[i] = dcorrection_dT;
-		}
 
 		// function for coulombian correction
 		static auto ggt1 = [&](const Float x) {
@@ -60,7 +58,7 @@ namespace nnet::net14 {
 			return a1*x*std::sqrt(x) + b1*std::pow(x, c1);
 		};
 
-		// coulombian correction (not considering impact on the derivative)
+		// coulombian correction
 		if (!skip_coulombian_correction) {
 			const Float ne = rho*constants::Na/2.;
 		    const Float ae = std::pow((3./4.)/(std::numbers::pi*ne), 1./3.);
@@ -75,7 +73,7 @@ namespace nnet::net14 {
 			}
 		}
 
-		return {corrected_BE, dBE_dT};
+		return corrected_BE;
 	}
 
 	// constant list of ordered reaction

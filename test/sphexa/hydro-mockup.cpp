@@ -55,8 +55,7 @@ void step(ParticlesDataType &p, sphexa::sphnnet::NuclearDataType<14, double>  &n
 
 	sphexa::sphnnet::sendHydroData(p, n, partition, MPI_DOUBLE);
 	sphexa::sphnnet::compute_nuclear_reactions(n, dt,
-		reactions, construct_rates, construct_BE, eos,
-		nnet::net14::constants::A, nnet::net14::constants::Z);
+		reactions, construct_rates, construct_BE, eos);
 	sphexa::sphnnet::recvHydroData(p, n, partition, MPI_DOUBLE);
 
 	// do hydro stuff
@@ -91,8 +90,8 @@ int main(int argc, char* argv[]) {
 
 
 	/* initial hydro data */
-	double rho_left = 1e9, rho_right = 0.7e9; // rho, g/cm^3
-	double T_left = 0.8e9, T_right = 1.3e9; // rho, g/cm^3
+	double rho_left = 1.2e9, rho_right = 1e9; // rho, g/cm^3
+	double T_left = 0.8e9, T_right = 1.1e9; // rho, g/cm^3
 
 	ParticlesDataType p;
 
@@ -156,17 +155,15 @@ int main(int argc, char* argv[]) {
 	!!!! THE WAY IT SHOULD BE DONE !!!!
 	!!!!!!!!!!!! */
 	auto partition = sphexa::mpi::partitionFromPointers(p.node_id, p.particle_id);
-	sphexa::sphnnet::NuclearDataType<14> n = sphexa::sphnnet::initNuclearData<14>(p,
-		[&](const double x, const double y, const double z) {
-			return Y0;
-		}, partition, MPI_DOUBLE);
+	sphexa::sphnnet::NuclearDataType<14> n = sphexa::sphnnet::initNuclearDataFromConst<14>(p,
+		Y0, partition, MPI_DOUBLE);
 #endif
 
 
 	/* !!!!!!!!!!!!
 	do simulation
 	!!!!!!!!!!!! */
-	double t = 0, dt = 1e-4;
+	double t = 0, dt = 1e-2;
 	int n_max = 50;
 	for (int i = 0; i < n_max; ++i) {
 		if (rank == 0)
