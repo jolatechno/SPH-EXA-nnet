@@ -63,24 +63,6 @@ namespace nnet {
 
 			/// ratio of the nuclear timestep and "super timestep" to jump to NSE
 			double dt_nse_tol = 0; //1e-8; // !!!! useless for now
-
-			/// index of the nuclear species over which the bisection is done when jumping to nse
-			int ref_idx = 0;
-
-			/// reference species starting lower bound for the bisection when jumping to nse
-			double Y_ref_min = 0;
-
-			/// reference species starting upper bound for the bisection when jumping to nse
-			double Y_ref_max = 1;
-
-			/// bisection mass tolerance when jumping to nse
-			double m_tol = 1e-9;
-
-			/// bisection energy tolerance when jumping to nse
-			double E_tol = 1e-9;
-
-			/// approching term for the temperature bissection when jumping to nse
-			double T_factor = 0.8;
 		}
 	}
 
