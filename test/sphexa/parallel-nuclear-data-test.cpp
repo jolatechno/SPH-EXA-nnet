@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "../../src/sphexa/nuclear-data.hpp"
 #include "../../src/sphexa/nuclear-net.hpp"
 
@@ -65,7 +67,8 @@ int main() {
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
 		sphexa::sphnnet::compute_nuclear_reactions(nuclear_data, dt,
-			nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double, vector>, helm_eos);
+			nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, helm_eos,
+			nnet::net14::constants::A, nnet::net14::constants::Z);
 		t += dt;
 
 		nnet::debug = false;

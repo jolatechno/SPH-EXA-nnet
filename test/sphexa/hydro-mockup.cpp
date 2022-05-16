@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) {
 			std::cout << i << "th iteration...\n";
 
 		step(p, n, dt,
-			nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double, vector>, helm_eos);
+			nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, helm_eos);
 		t += dt;
 
 		if (rank == 0)

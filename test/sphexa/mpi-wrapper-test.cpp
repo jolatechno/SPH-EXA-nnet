@@ -1,4 +1,5 @@
 #include <vector>
+#include <iostream>
 
 #include "../../src/sphexa/mpi-wrapper.hpp"
 

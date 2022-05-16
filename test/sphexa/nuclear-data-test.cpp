@@ -1,3 +1,6 @@
+#include <iostream>
+#include <chrono>
+
 #include "../../src/sphexa/nuclear-data.hpp"
 
 #include "../../src/nuclear-net.hpp"
@@ -43,10 +46,11 @@ int main() {
 
 	const nnet::eos::helmholtz helm_eos(nnet::net14::constants::Z);
 
+	auto start = std::chrono::high_resolution_clock::now();
 
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
-		auto [Y, T, current_dt] = solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double, vector>, helm_eos,
+		auto [Y, T, current_dt] = solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, helm_eos,
 			last_Y, last_T, rho, 0., dt);
 		t += current_dt;
 
@@ -70,6 +74,10 @@ int main() {
 		last_Y = Y;
 		last_T = T;
 	}
+
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+	std::cout << "\nexec time:" << ((float)duration.count())/1e3 << "s\n";
 
 	return 0;
 }

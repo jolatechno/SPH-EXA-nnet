@@ -279,9 +279,9 @@ namespace nnet {
 	 *  solves non-iteratively and partialy implicitly the system represented by M (computed at a specific "guess").
 	 * ...TODO
 	 */
-	template<class Vector, typename Float>
-	std::pair<Vector, Float> solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE, 
-		const Vector &Y, const Float T, const Vector &Y_guess, const Float T_guess,
+	template<class Vector1, class Vector2, typename Float>
+	std::pair<Vector1, Float> solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector2 &BE, 
+		const Vector1 &Y, const Float T, const Vector1 &Y_guess, const Float T_guess,
 		const Float cv, const Float rho, const Float value_1, const Float dt) {
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
@@ -298,7 +298,7 @@ namespace nnet {
 		const int dimension = Y.size();
 
 		eigen::matrix<Float> Mp(dimension + 1, dimension + 1);
-		Vector next_Y = Y;
+		Vector1 next_Y = Y;
 
 		// right hand side
 		std::vector<double> RHS(dimension + 1);
@@ -332,7 +332,7 @@ namespace nnet {
 			Mp(0, i + 1) = -BE[i]/cv;
 
 		// include rate derivative
-		Vector dY_dT = derivatives_from_reactions(reactions, drates_dT, Y_guess, rho);
+		Vector1 dY_dT = derivatives_from_reactions(reactions, drates_dT, Y_guess, rho);
 		for (int i = 0; i < dimension; ++i) {
 			Mp(i + 1, 0) = -constants::theta*dt*dY_dT[i];
 
@@ -497,10 +497,10 @@ namespace nnet {
 	 * STUPID IMPLEMENTATION, TODO
 	 * ...TODO
 	 */
-	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
-	std::tuple<Vector, Float> find_nse(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &Y, const Float T,
-		const Vector &A, const Vector &Z, const Float rho, const Float drho_dt) {
+	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float>
+	std::tuple<Vector1, Float> find_nse(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const Vector1 &Y, const Float T,
+		const Vector2 &A, const Vector2 &Z, const Float rho, const Float drho_dt) {
 		const int dimension = Y.size();
 
 
@@ -509,7 +509,7 @@ namespace nnet {
 
 
 		// function to compute nse given a reference
-		Vector Y_nse = Y;
+		Vector1 Y_nse = Y;
 		Float T_nse = T;
 		auto compute_nse = [&](const Float Y_ref) {
 			std::cout << "Y_ref=" << Y_ref << "\n";
@@ -598,15 +598,15 @@ namespace nnet {
 	 * Superstepping using solve_system_var_timestep, might move it to SPH-EXA
 	 * ...TODO
 	 */
-	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
-	std::tuple<Vector, Float> solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &Y, const Float T,
-		const Vector &A, const Vector &Z, const Float rho, const Float drho_dt, Float const dt_tot, Float &dt) {
+	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float>
+	std::tuple<Vector1, Float> solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const Vector1 &Y, const Float T,
+		const Vector2 &A, const Vector2 &Z, const Float rho, const Float drho_dt, Float const dt_tot, Float &dt) {
 
 		Float elapsed_t = 0;
 		Float used_dt = dt;
 
-		Vector final_Y = Y;
+		Vector1 final_Y = Y;
 		Float final_T = T;
 
 		while (true) {
