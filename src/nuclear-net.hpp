@@ -57,8 +57,8 @@ namespace nnet {
 			double it_tol = 1e-7;
 		}
 
-		namespace superstep {
-			/// timestep tolerance for superstepping
+		namespace substep {
+			/// timestep tolerance for substepping
 			double dt_tol = 1e-6;
 
 			/// ratio of the nuclear timestep and "super timestep" to jump to NSE
@@ -504,14 +504,14 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
-	std::tuple<Vector, Float> solve_system_superstep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+	std::tuple<Vector, Float> solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
 		const Vector &Y, const Float T, const Float rho, const Float drho_dt, Float const dt_tot, Float &dt);
 
 
 
 	/// jump to Nuclear Statistical Equilibrium
 	/**
-	 * Used inside of solve_system_superstep
+	 * Used inside of solve_system_substep
 	 * STUPID IMPLEMENTATION, TODO
 	 * ...TODO
 	 */
@@ -521,15 +521,15 @@ namespace nnet {
 
 		/* TODO: real implementation
 		CURRENT: arbitrary time jump (unefficient) */
-		Float dt_tot = 1e-5, used_dt = 1e-12;
-		return solve_system_superstep(reactions, construct_rates, construct_BE, eos,
+		Float dt_tot = 1e-7, used_dt = 1e-12;
+		return solve_system_substep(reactions, construct_rates, construct_BE, eos,
 			Y, T, rho, drho_dt, dt_tot, used_dt);
 	}
 
 
 
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
-	std::tuple<Vector, Float> solve_system_superstep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+	std::tuple<Vector, Float> solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
 		const Vector &Y, const Float T, const Float rho, const Float drho_dt, Float const dt_tot, Float &dt) {
 
 		Float elapsed_t = 0;
@@ -556,11 +556,11 @@ namespace nnet {
 				dt = used_dt;
 
 			// exit condition
-			if ((dt_tot - elapsed_t)/dt_tot < constants::superstep::dt_tol)
+			if ((dt_tot - elapsed_t)/dt_tot < constants::substep::dt_tol)
 				return {final_Y, final_T};
 
 			// timejump if needed
-			if (dt < dt_tot*constants::superstep::dt_nse_tol) {
+			if (dt < dt_tot*constants::substep::dt_nse_tol) {
 				dt = constants::max_dt;
 				return find_nse(reactions, construct_rates, construct_BE, eos,
 					final_Y, final_T, rho, drho_dt);

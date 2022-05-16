@@ -110,6 +110,8 @@ int main(int argc, char* argv[]) {
 
 
 #if defined(NO_COMM) || defined(NO_MIX)
+	sphexa::sphnnet::NuclearDataType<14> n;
+
 #ifdef NO_COMM
 	/* !!!!!!!!!!!!
 	initialize pointers with some simple "mixing"
@@ -133,7 +135,7 @@ int main(int argc, char* argv[]) {
 	!!!!!!!!!!!! */
 	{
 		auto partition = sphexa::mpi::partitionFromPointers(p.node_id, p.particle_id);
-		sphexa::mpi::directSyncDataFromPartition(partition, d.rho, n.previous_rho, datatype);
+		sphexa::mpi::directSyncDataFromPartition(partition, p.rho, n.previous_rho, MPI_DOUBLE);
 		const size_t nuclear_n_particles = partition.recv_disp[size];
 		n.resize(nuclear_n_particles);
 		for (size_t i = 0; i < nuclear_n_particles; ++i) {
@@ -178,9 +180,11 @@ int main(int argc, char* argv[]) {
 	}
  
 	
-
-	MPI_Barrier(MPI_COMM_WORLD);
-	if ((0 + 0)%size == rank) {
+#ifdef NO_MIX
+	if (rank == size - 1) {
+#else
+	if (rank == 0) {
+#endif
 		double m_tot = eigen::dot(n.Y[0], nnet::net14::constants::A);
 		double dm_m = (m_tot - m_in)/m_in;
 
@@ -190,7 +194,15 @@ int main(int argc, char* argv[]) {
 		std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << "),\tT_left=" << n.T[0] << "\n";
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
+#ifdef NO_MIX
+	if (rank == 0) {
+#else
+#ifdef NO_COMM
+	if (rank == size-1) {
+#else
 	if ((total_n_particles - 1)%size == rank) {
+#endif
+#endif
 		double m_tot = eigen::dot(n.Y[n.Y.size() - 1], nnet::net14::constants::A);
 		double dm_m = (m_tot - m_in)/m_in;
 

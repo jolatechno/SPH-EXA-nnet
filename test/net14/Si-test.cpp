@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 
 #include "../../src/nuclear-net.hpp"
 #include "../../src/net14/net14.hpp"
@@ -47,6 +48,7 @@ int main() {
 		return res;
 	};
 
+	auto start = std::chrono::high_resolution_clock::now();
 
 	for (int i = 1; i <= n_max; ++i) {
 		// solve the system
@@ -83,6 +85,9 @@ int main() {
 		last_T = T;
 	}
 
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+	std::cout << "\nexec time:" << ((float)duration.count())/1e3 << "s\n";
 
 	return 0;
 }

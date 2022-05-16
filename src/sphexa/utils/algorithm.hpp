@@ -40,8 +40,10 @@ namespace utils {
 		offset[0] = 0;
 		offset[n_segment] = id_end;
 
-		if (n_segment == 1)
+		if (n_segment == 1) {
+			parallel_iota(idx_in, idx_in_end, iotaOffset);
 			return;
+		}
 		if (id_end == 0) {
 			std::fill(offset, offset_end, 0);
 			return;

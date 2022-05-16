@@ -21,7 +21,7 @@ namespace sphexa::sphnnet {
 		for (size_t i = 0; i < n_particles; ++i) {
 			Float drho_dt = 0.; (n.rho[i] - n.previous_rho[i])/hydro_dt;
 
-			std::tie(n.Y[i], n.T[i]) = nnet::solve_system_superstep(reactions, construct_rates, construct_BE, eos,
+			std::tie(n.Y[i], n.T[i]) = nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
 				n.Y[i], n.T[i], n.rho[i], /*n.drho_dt[i]*/drho_dt, hydro_dt, n.dt[i]);
 		} 
 
