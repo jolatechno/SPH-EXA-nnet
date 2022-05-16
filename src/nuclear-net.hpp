@@ -33,7 +33,7 @@ namespace nnet {
 		/// relative temperature variation target of the implicit solver
 		double dT_T_target = 4e-3;
 		/// relative temperature variation tolerance of the implicit solver
-		double dT_T_tol = 10;
+		double dT_T_tol = 5;
 
 		/// the value that is considered null inside a system
 		double epsilon_system = 1e-200;
@@ -45,21 +45,21 @@ namespace nnet {
 			double max_dt = 1e-2;
 
 			/// relative temperature variation target of the implicit solver
-			double dT_T_target = 2e-2;
+			double dT_T_target = 1e-2;
 			/// relative temperature variation tolerance of the implicit solver
-			double dT_T_tol = 10;
+			double dT_T_tol = 5;
 
 			/// minimum number of newton raphson iterations
 			uint min_it = 2;
 			/// maximum number of newton raphson iterations
-			uint max_it = 12;
+			uint max_it = 15;
 			/// tolerance for the correction to break out of the newton raphson loop
-			double it_tol = 1e-6;
+			double it_tol = 1e-7;
 		}
 
 		namespace superstep {
 			/// timestep tolerance for superstepping
-			double dt_tol = 1e-5;
+			double dt_tol = 1e-6;
 
 			/// ratio of the nuclear timestep and "super timestep" to jump to NSE
 			double dt_nse_tol = 1e-8; // !!!! useless for now
