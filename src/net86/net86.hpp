@@ -104,11 +104,47 @@ namespace nnet::net86 {
 	/// function to compute the corrected BE
 	template<typename Float=double, class Vector=std::vector<Float>>
 	Vector compute_BE(const Vector &Y, Float const T, Float const rho) {
-		Vector corrected_BE = Y;
+		// ideal gaz correction
+		const Float kbt = constants::Kb*T;
+		const Float nakbt = constants::Na*kbt;
+		const Float correction = -1.5*nakbt;
 
-		Float correction = -1.5*constants::Na*constants::Kb*T;
+		Vector corrected_BE = Y;
 		for (int i = 0; i < 87; ++i)
 			corrected_BE[i] = BE[i] + correction;
+
+		// function for coulombian correction
+		static auto ggt1 = [&](const Float x) {
+			const Float a1 = -.898004;
+			const Float b1 = .96786;
+			const Float c1 = .220703;
+			const Float d1 = -.86097;
+
+			const Float sqroot2x = std::sqrt(std::sqrt(x));
+			return a1*x + b1*sqroot2x + c1/sqroot2x + d1;
+		};
+		static auto glt1 = [&](const Float x) {
+			const Float a1 = -.5*std::sqrt(3.);
+			const Float b1 = .29561;
+			const Float c1 = 1.9885;
+
+			return a1*x*std::sqrt(x) + b1*std::pow(x, c1);
+		};
+
+		// coulombian correction
+		if (!skip_coulombian_correction) {
+			const Float ne = rho*constants::Na/2.;
+		    const Float ae = std::pow((3./4.)/(std::numbers::pi*ne), 1./3.);
+		    const Float gam = constants::e2/(kbt*ae);
+		    for (int i = 0; i < 87; ++i) {
+		    	const Float gamma = gam*std::pow(constants::Z[i], 5./3.);
+		    	const Float funcion = gamma > 1 ? ggt1(gamma) : glt1(gamma);
+
+		    	if (debug) std::cout << "funcion[" << i << "]=" << funcion << (i == 13 ? "\n\n" : "\n");
+
+			    corrected_BE[i] -= nakbt*funcion;
+			}
+		}
 
 		return corrected_BE;
 	}

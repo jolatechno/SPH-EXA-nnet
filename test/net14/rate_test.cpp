@@ -16,8 +16,11 @@ int main() {
 	nnet::debug = true;
 #endif
 
+	std::vector<double> Y = {0., .5/nnet::net14::constants::A[1], .5/nnet::net14::constants::A[2], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.};
+
 	// nnet::net14::skip_coulombian_correction = true;
 	auto [rate, drates] = nnet::net14::compute_reaction_rates<double>(2e9, 1e9);
+	auto BE = nnet::net14::compute_BE<double>(Y, 2e9, 1e9);
 
 	std::cout << "reaction_list.size=" << nnet::net14::reaction_list.size() << ", rates.size=" << rate.size() << "\n\n";
 	
@@ -35,4 +38,9 @@ int main() {
 	std::cout << "\ninverse rates:\n";
 	for (int i = 5 + 12; i < 5 + 12 + 12; ++i)
 		std::cout << "(" << i-2-12 << ")\t" << nnet::net14::reaction_list[i] << "\t\tR=" << rate[i] << ",\tdR/dT=" << drates[i] << "\n";
+
+	std::cout << "\nBE: ";
+	for (int i = 0; i < 14; ++i)
+		std::cout << BE[i] << ", ";
+	std::cout << "\n";
 }

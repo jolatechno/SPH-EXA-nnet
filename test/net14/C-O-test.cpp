@@ -29,7 +29,7 @@ int main() {
 	double m_in = eigen::dot(last_Y, nnet::net14::constants::A);
 
 	double t = 0, dt=1e-12;
-	int n_max = 200;
+	int n_max = 1000;
 	float t_max = 1.41714; // comming from fortran
 	const int n_print = 30, n_save=1000;
 
@@ -58,6 +58,9 @@ int main() {
 	auto start = std::chrono::high_resolution_clock::now();
 
 	for (int i = 1; i <= n_max; ++i) {
+		if (t >= t_max)
+			break;
+
 		// solve the system
 		auto [Y, T, current_dt] = solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, 
 #ifndef DONT_USE_HELM_EOS
@@ -67,9 +70,6 @@ int main() {
 #endif
 			last_Y, last_T, rho, 0., dt);
 		t += current_dt;
-
-		if (t >= t_max)
-			break;
 
 		nnet::debug = false;
 
@@ -81,7 +81,7 @@ int main() {
 		double dm_m = (m_tot - m_in)/m_in;
 
 		// formated print (stderr)
-		if (n_save >= n_max || (n_max - i) % (int)((float)n_max/(float)n_save) == 0) {
+		if (n_save >= n_max || (n_max - i) % (int)((float)n_max/(float)n_save) == 0 || t >= t_max) {
 			for (int i = 0; i < 14; ++i) X[i] = Y[i]*nnet::net14::constants::A[i]/eigen::dot(Y, nnet::net14::constants::A);
 			std::cerr << t << "," << dt << ",," << T << ",,";
 			for (int i = 0; i < 14; ++i) std::cerr << X[i] << ",";
@@ -89,7 +89,7 @@ int main() {
 		}
 
 		// debug print
-		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0) {
+		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0 || t >= t_max) {
 			for (int i = 0; i < 14; ++i) X[i] = Y[i]*nnet::net14::constants::A[i]/eigen::dot(Y, nnet::net14::constants::A);
 			std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
 			for (int i = 0; i < 14; ++i) std::cout << X[i] << ", ";
