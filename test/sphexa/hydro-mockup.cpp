@@ -55,7 +55,8 @@ void step(ParticlesDataType &p, sphexa::sphnnet::NuclearDataType<14, double>  &n
 
 	sphexa::sphnnet::sendHydroData(p, n, partition, MPI_DOUBLE);
 	sphexa::sphnnet::compute_nuclear_reactions(n, dt,
-		reactions, construct_rates, construct_BE, eos);
+		reactions, construct_rates, construct_BE, eos,
+		nnet::net14::constants::A, nnet::net14::constants::Z);
 	sphexa::sphnnet::recvHydroData(p, n, partition, MPI_DOUBLE);
 
 	// do hydro stuff

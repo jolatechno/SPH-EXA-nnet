@@ -12,17 +12,19 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<class Data, class func_rate, class func_BE, class func_eos, typename Float>
+	template<class Data, class Vector, class func_rate, class func_BE, class func_eos, typename Float>
 	void compute_nuclear_reactions(Data &n, const Float hydro_dt,
-		const std::vector<nnet::reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos) {
+		const std::vector<nnet::reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const Vector &A, const Vector &Z) {
 		const size_t n_particles = n.T.size();
 
 		#pragma omp parallel for schedule(dynamic)
 		for (size_t i = 0; i < n_particles; ++i) {
-			Float drho_dt = 0.; (n.rho[i] - n.previous_rho[i])/hydro_dt;
+			Float drho_dt = (n.rho[i] - n.previous_rho[i])/hydro_dt;
 
 			std::tie(n.Y[i], n.T[i]) = nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
-				n.Y[i], n.T[i], n.rho[i], /*n.drho_dt[i]*/drho_dt, hydro_dt, n.dt[i]);
+				n.Y[i], n.T[i],
+				A, Z, n.rho[i], drho_dt, hydro_dt, n.dt[i]);
 		} 
 
 	}

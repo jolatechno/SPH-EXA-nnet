@@ -62,7 +62,25 @@ namespace nnet {
 			double dt_tol = 1e-6;
 
 			/// ratio of the nuclear timestep and "super timestep" to jump to NSE
-			double dt_nse_tol = 1e-8; // !!!! useless for now
+			double dt_nse_tol = 0; //1e-8; // !!!! useless for now
+
+			/// index of the nuclear species over which the bisection is done when jumping to nse
+			int ref_idx = 0;
+
+			/// reference species starting lower bound for the bisection when jumping to nse
+			double Y_ref_min = 0;
+
+			/// reference species starting upper bound for the bisection when jumping to nse
+			double Y_ref_max = 1;
+
+			/// bisection mass tolerance when jumping to nse
+			double m_tol = 1e-9;
+
+			/// bisection energy tolerance when jumping to nse
+			double E_tol = 1e-9;
+
+			/// approching term for the temperature bissection when jumping to nse
+			double T_factor = 0.8;
 		}
 	}
 
@@ -323,30 +341,6 @@ namespace nnet {
 		}
 
 
-
-		// !!!!!!!!!!
-		// debuging:
-		if (debug) {
-			std::cout << "BE=";
-			for (int i = 0; i < dimension; ++i)
-				std::cout << "\t" << BE[i];
-
-			std::cout << "\nRHS=";
-			for (int i = 0; i <= dimension; ++i)
-				std::cout << "\t" << RHS[i];
-
-			std::cout << "\nM=";
-			for (int i = 0; i <= dimension; ++i) {
-				if (i > 0)
-					std::cout << "  ";
-				for (int j = 0; j <= dimension; ++j)
-					std::cout << "\t" << Mp(i, j);
-				std::cout << "\n";
-			}
-		}
-
-
-
 		// now solve M*D{T, Y} = RHS
 		auto DY_T = eigen::solve(Mp, RHS);
 
@@ -447,7 +441,7 @@ namespace nnet {
 
 				// compute rate
 				auto [rates, drates_dT] = construct_rates(         T_theta, rho);
-				auto BE                 = construct_BE   (Y_theta, T_theta, rho);
+				auto [BE, dBE_dT]       = construct_BE   (         T_theta, rho);
 				auto eos_struct         = eos            (Y_theta, T_theta, rho);
 
 				// compute value_1
@@ -497,18 +491,6 @@ namespace nnet {
 	}
 
 
-
-	/// function to supperstep
-	/**
-	 * Superstepping using solve_system_var_timestep, might move it to SPH-EXA
-	 * ...TODO
-	 */
-	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
-	std::tuple<Vector, Float> solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &Y, const Float T, const Float rho, const Float drho_dt, Float const dt_tot, Float &dt);
-
-
-
 	/// jump to Nuclear Statistical Equilibrium
 	/**
 	 * Used inside of solve_system_substep
@@ -517,20 +499,109 @@ namespace nnet {
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
 	std::tuple<Vector, Float> find_nse(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &Y, const Float T, const Float rho, const Float drho_dt) {
+		const Vector &Y, const Float T,
+		const Vector &A, const Vector &Z, const Float rho, const Float drho_dt) {
+		const int dimension = Y.size();
 
-		/* TODO: real implementation
-		CURRENT: arbitrary time jump (unefficient) */
-		Float dt_tot = 1e-7, used_dt = 1e-12;
-		return solve_system_substep(reactions, construct_rates, construct_BE, eos,
-			Y, T, rho, drho_dt, dt_tot, used_dt);
+
+		auto eos_struct   = eos         (Y, T, rho);
+		auto [BE, dBE_dT] = construct_BE(   T, rho);
+
+
+		// function to compute nse given a reference
+		Vector Y_nse = Y;
+		Float T_nse = T;
+		auto compute_nse = [&](const Float Y_ref) {
+			std::cout << "Y_ref=" << Y_ref << "\n";
+
+			static Float AN = 6.022802e23, BK = 1.3805e-16, EVM = 1.602e-06,ZITA = 1.87917e+20, plog4 = std::log(4.);
+			const  Float Z         = ZITA*std::pow(T, 3./2.);
+			const  Float plogroanz = std::log(rho*AN/Z);
+    		const  Float plogyak   = std::log(Y_ref);
+
+    		Y_nse[constants::substep::ref_idx] = Y_ref;
+			for (int i = 0; i < dimension; ++i)
+				if (i != constants::substep::ref_idx) {
+					Float DLG = (A[i] - 4.)/4.*plogroanz /* + (3./2.)*ploga[i] */ - 3.*A[i]/8.*plog4 + (BE[i] - BE[constants::substep::ref_idx])/9.648529392e17*EVM/BK/T;
+					Float DLY = A[i]/4.*plogyak + DLG; /* + std::log(w[i]) */;
+					Y_nse[i]  = std::exp(DLY);
+				}
+		};
+
+
+		// initial mass and energy
+		const Float m_in = eigen::dot(Y, A);
+		const Float u_in = eos_struct.cv*T + eigen::dot(Y, BE);
+
+		
+		// bisection over the energy
+		while (true) {
+			std::tie(BE, dBE_dT) = construct_BE(T_nse, rho);
+
+			// bisection over the mass
+			while (true) {
+				Float Y_inf = constants::substep::Y_ref_min, Y_sup = constants::substep::Y_ref_max;
+				Float m_inf, m_mid, m_sup;
+
+				// compute initial mass limits
+				compute_nse(Y_inf);
+				m_inf = eigen::dot(Y_nse, A)/m_in;
+
+				compute_nse(Y_sup);
+				m_sup = eigen::dot(Y_nse, A)/m_in;
+
+				// bisection over the mass
+				for (int i = 0;; ++i) {
+					Float Y_mid = (Y_inf + Y_sup)/2;
+
+					// compute Y_nse based on Y_ref
+					compute_nse(Y_mid);
+					m_mid = eigen::dot(Y_nse, A)/m_in;
+
+					std::cout << "m_mid=" << m_mid << "\n";
+					if (m_mid == 0)
+						throw;
+					
+
+					// check exit condition
+					if (std::abs(1 - m_mid) <= constants::substep::m_tol)
+						break;
+					if (m_inf < 1 && m_mid > 1 || m_inf > 1 && m_mid < 1) {
+						Y_sup = Y_mid;
+						m_sup = m_mid;
+					} else {
+						Y_inf = Y_mid;
+						m_inf = m_mid;
+					}
+				}
+			}
+
+			eos_struct           = eos         (Y_nse, T_nse, rho);
+			std::tie(BE, dBE_dT) = construct_BE(       T_nse, rho);
+
+			// compute the energy and derivative of energy
+			Float u     = eos_struct.cv*T_nse + eigen::dot(Y_nse, BE);
+			Float du_dt = eigen::dot(Y_nse, dBE_dT) + eos_struct.cv;
+
+			// compute the new temperature
+			T_nse += (u_in - u)/du_dt*constants::substep::T_factor;
+
+			// correct the temperature
+			if (std::abs((u_in - u)/u_in) <= constants::substep::E_tol)
+				return {Y_nse, T_nse};
+		}
 	}
 
 
-
+	/// function to supperstep
+	/**
+	 * Superstepping using solve_system_var_timestep, might move it to SPH-EXA
+	 * ...TODO
+	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
 	std::tuple<Vector, Float> solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &Y, const Float T, const Float rho, const Float drho_dt, Float const dt_tot, Float &dt) {
+		const Vector &Y, const Float T,
+		const Vector &A, const Vector &Z, const Float rho, const Float drho_dt, Float const dt_tot, Float &dt) {
 
 		Float elapsed_t = 0;
 		Float used_dt = dt;
@@ -563,7 +634,8 @@ namespace nnet {
 			if (dt < dt_tot*constants::substep::dt_nse_tol) {
 				dt = constants::max_dt;
 				return find_nse(reactions, construct_rates, construct_BE, eos,
-					final_Y, final_T, rho, drho_dt);
+					final_Y, final_T,
+					A, Z, rho, drho_dt);
 			}
 		} 
 	}
