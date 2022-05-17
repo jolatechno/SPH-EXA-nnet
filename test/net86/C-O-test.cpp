@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 
 #include "../../src/nuclear-net.hpp"
 #include "../../src/net86/net86.hpp"
@@ -31,6 +32,7 @@ int main() {
 
 	double t = 0, dt=1e-15;
 	int n_max = 1000;
+	float t_max = 1.41714; // comming from fortran
 	const int n_print = 30, n_save=1000;
 
 
@@ -60,7 +62,12 @@ int main() {
 	};
 
 
+	auto start = std::chrono::high_resolution_clock::now();
+
 	for (int i = 1; i <= n_max; ++i) {
+		if (t >= t_max)
+			break;
+		
 		// solve the system
 		auto [Y, T, current_dt] = solve_system_NR(nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double>, nnet::net86::compute_BE<double>, 
 #ifndef DONT_USE_HELM_EOS
@@ -81,7 +88,7 @@ int main() {
 		double dm_m = (m_tot - m_in)/m_in;
 
 		// formated print (stderr)
-		if (n_save >= n_max || (n_max - i) % (int)((float)n_max/(float)n_save) == 0) {
+		if (n_save >= n_max || (n_max - i) % (int)((float)n_max/(float)n_save) == 0 || t >= t_max) {
 			for (int i = 0; i < 86; ++i) X[i] = Y[i]*nnet::net86::constants::A[i]/eigen::dot(Y, nnet::net86::constants::A);
 
 			std::cerr << t << "," << dt << ",," << T << ",,";
@@ -96,7 +103,7 @@ int main() {
 		}
 
 		// debug print
-		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0) {
+		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0 || t >= t_max) {
 			for (int i = 0; i < 86; ++i) X[i] = Y[i]*nnet::net86::constants::A[i]/eigen::dot(Y, nnet::net86::constants::A);
 
 			std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
@@ -114,6 +121,9 @@ int main() {
 		last_T = T;
 	}
 
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+	std::cout << "\nexec time:" << ((float)duration.count())/1e3 << "s\n";
 
 	return 0;
 }

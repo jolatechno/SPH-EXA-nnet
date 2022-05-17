@@ -16,11 +16,11 @@ namespace eigen {
 			weights.resize(n*m, 0);
 		}
 
-		Type &operator()(int i, int j) {
+		Type inline &operator()(int i, int j) {
 			return weights[i + j*n];
 		}
 
-		Type operator()(int i, int j) const {
+		Type inline operator()(int i, int j) const {
 			return weights[i + j*n];
 		}
 	};
@@ -38,11 +38,11 @@ namespace eigen {
 			weights.resize(n*m, 0);
 		}
 
-		Type &operator()(int i, int j) {
+		Type inline &operator()(int i, int j) {
 			return weights[i + j*n];
 		}
 
-		Type operator()(int i, int j) const {
+		Type inline operator()(int i, int j) const {
 			return weights[i + j*n];
 		}
 	};
@@ -65,7 +65,7 @@ namespace eigen {
 
 	/// custom analytical solver
 	template<typename Float, class Vector>
-	Vector solve(matrix<Float> M, Vector RHS) {
+	Vector solve(matrix<Float> M, Vector RHS, Float epsilon=0) {
 		const int n = RHS.size();
 		Vector X(n);
 
@@ -76,9 +76,12 @@ namespace eigen {
 				Float weight = M(i, j);
 				M(i, j) = 0;
 
-				RHS[i] -= weight*RHS[j];
-				for (int k = j + 1; k < n; ++k)
-					M(i, k) -= weight*M(j, k);
+				// eliminate
+				if (std::abs(weight) > epsilon) {
+					RHS[i] -= weight*RHS[j];
+					for (int k = j + 1; k < n; ++k)
+						M(i, k) -= weight*M(j, k);
+				}
 			}
 
 			// normalize ith line
@@ -95,8 +98,12 @@ namespace eigen {
 		for (int i = n - 1; i >= 0; --i) {
 			Float res = RHS[i];
 
-			for (int j = i + 1; j < n; ++j)
-				res -= M(i, j)*X[j];
+			for (int j = i + 1; j < n; ++j) {
+				Float weight = M(i, j);
+
+				// if (std::abs(weight) > epsilon) // probably slower
+				res -= weight*X[j];
+			}
 
 			X[i] = res;
 		}

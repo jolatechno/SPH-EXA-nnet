@@ -231,23 +231,24 @@ namespace nnet {
 			// correct for rho
 			rate *= std::pow(rho, order - 1);
 
-			for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
-				// compute rate
-				Float this_rate = rate;
-				this_rate *= std::pow(Y[reactant_id], n_reactant_consumed - 1);
-				for (auto &[other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
-					// multiply by abundance
-					if (other_reactant_id != reactant_id)
-						this_rate *= std::pow(Y[other_reactant_id], other_n_reactant_consumed);
+			if (rate > constants::epsilon_system)
+				for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
+					// compute rate
+					Float this_rate = rate;
+					this_rate *= std::pow(Y[reactant_id], n_reactant_consumed - 1);
+					for (auto &[other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
+						// multiply by abundance
+						if (other_reactant_id != reactant_id)
+							this_rate *= std::pow(Y[other_reactant_id], other_n_reactant_consumed);
 
-				// insert consumption rates
-				for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
-					M(other_reactant_id, reactant_id) -= this_rate*other_n_reactant_consumed;
+					// insert consumption rates
+					for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
+						M(other_reactant_id, reactant_id) -= this_rate*other_n_reactant_consumed;
 
-				// insert production rates
-				for (auto const [product_id, n_product_produced] : Reaction.products)
-					M(product_id, reactant_id) += this_rate*n_product_produced;
-			}
+					// insert production rates
+					for (auto const [product_id, n_product_produced] : Reaction.products)
+						M(product_id, reactant_id) += this_rate*n_product_produced;
+				}
 		}
 
 		return M;
@@ -324,7 +325,7 @@ namespace nnet {
 
 
 		// now solve M*D{T, Y} = RHS
-		auto DY_T = eigen::solve(Mp, RHS);
+		auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
 
 		// increment values
 		for (int i = 0; i < dimension; ++i)

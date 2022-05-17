@@ -14,6 +14,9 @@ int main() {
 #if NO_SCREENING
 	nnet::net14::skip_coulombian_correction = true;
 #endif
+	nnet::constants::NR::dT_T_target = 2e-2;
+	nnet::constants::NR::it_tol = 1e-6;
+	nnet::constants::NR::max_it = 10;
 	
 	double rho_left = 1e9, rho_right = 7e8; // rho, g/cm^3
 	double T_left = 1e9, T_right = 2e9; // rho, g/cm^3

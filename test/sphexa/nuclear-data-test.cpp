@@ -14,6 +14,9 @@ int main() {
 #if NO_SCREENING
 	nnet::net14::skip_coulombian_correction = true;
 #endif
+	nnet::constants::NR::dT_T_target = 2e-2;
+	nnet::constants::NR::it_tol = 1e-6;
+	nnet::constants::NR::max_it = 10;
 	
 	double rho = 1e9; // rho, g/cm^3
 	double last_T = 1e9;
@@ -36,6 +39,7 @@ int main() {
 
 	double t = 0, dt=1e-12;
 	int n_max = 1000;
+	float t_max = 1.41714; // comming from fortran
 	const int n_print = 30;
 
 
@@ -49,6 +53,9 @@ int main() {
 	auto start = std::chrono::high_resolution_clock::now();
 
 	for (int i = 1; i <= n_max; ++i) {
+		if (t >= t_max)
+			break;
+		
 		// solve the system
 		auto [Y, T, current_dt] = solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, helm_eos,
 			last_Y, last_T, rho, 0., dt);
@@ -64,7 +71,7 @@ int main() {
 		double dm_m = (m_tot - m_in)/m_in;
 
 		// debug print
-		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0) {
+		if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0 || t >= t_max) {
 			for (int i = 0; i < 14; ++i) X[i] = Y[i]*nnet::net14::constants::A[i]/eigen::dot(Y, nnet::net14::constants::A);
 			std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
 			for (int i = 0; i < 14; ++i) std::cout << X[i] << ", ";

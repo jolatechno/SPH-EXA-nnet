@@ -41,7 +41,7 @@ namespace nnet::eos {
 		typedef std::array<double, jmax> jvector; // double[jmax]
 		typedef std::array<double, imax - 1> imvector; // double[imax]
 		typedef std::array<double, jmax - 1> jmvector; // double[jmax]
-		typedef eigen::fixed_size_matrix<double, imax, jmax> ijmatrix; // double(imax, jmax)
+		typedef eigen::fixed_size_matrix<double, imax, jmax> ijmatrix; // double[imax][jmax]
 
 		// read table
 		const std::string helmolt_table = { 
