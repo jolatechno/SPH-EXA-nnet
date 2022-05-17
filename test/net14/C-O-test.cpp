@@ -9,9 +9,6 @@ int main() {
 #if NO_SCREENING
 	nnet::net14::skip_coulombian_correction = true;
 #endif
-	nnet::constants::NR::dT_T_target = 2e-2;
-	nnet::constants::NR::it_tol = 1e-6;
-	nnet::constants::NR::max_it = 10;
 	
 	double rho = 1e9; // rho, g/cm^3
 	double last_T = 1e9;

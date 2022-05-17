@@ -14,9 +14,6 @@ int main() {
 #if NO_SCREENING
 	nnet::net14::skip_coulombian_correction = true;
 #endif
-	nnet::constants::NR::dT_T_target = 2e-2;
-	nnet::constants::NR::it_tol = 1e-6;
-	nnet::constants::NR::max_it = 10;
 	
 	double rho = 1e9; // rho, g/cm^3
 	double last_T = 1e9;
@@ -55,7 +52,7 @@ int main() {
 	for (int i = 1; i <= n_max; ++i) {
 		if (t >= t_max)
 			break;
-		
+
 		// solve the system
 		auto [Y, T, current_dt] = nnet::solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, helm_eos,
 			last_Y, last_T, rho, 0., dt);
