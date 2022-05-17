@@ -84,7 +84,6 @@ namespace eigen {
 				}
 			}
 
-			// normalize ith line
 			Float diagonal = M(i, i);
 			M(i, i) = 1;
 

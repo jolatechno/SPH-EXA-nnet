@@ -36,7 +36,7 @@ namespace nnet {
 		double dT_T_tol = 5;
 
 		/// the value that is considered null inside a system
-		double epsilon_system = 1e-200;
+		double epsilon_system = 1e-100;
 		/// the value that is considered null inside a state
 		double epsilon_vector = 1e-16;
 

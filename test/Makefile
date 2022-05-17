@@ -1,4 +1,4 @@
-U_CFLAGS=$(CFLAGS) --std=c++2a
+U_CFLAGS=$(CFLAGS) -O3 --std=c++2a
 
 targets=$(basename $(wildcard **.cpp))
 
