@@ -61,7 +61,7 @@ namespace nnet::net14 {
 		// coulombian correction
 		if (!skip_coulombian_correction) {
 			const Float ne = rho*constants::Na/2.;
-		    const Float ae = std::pow((3./4.)/(std::numbers::pi*ne), 1./3.);
+		    const Float ae = std::pow((3./4.)/(constants::pi*ne), 1./3.);
 		    const Float gam = constants::e2/(kbt*ae);
 		    for (int i = 0; i < 14; ++i) {
 		    	const Float gamma = gam*std::pow(constants::Z[i], 5./3.);
@@ -651,7 +651,7 @@ namespace nnet::net14 {
 			{
 				const double ne  = rho*constants::Na/2.;
 		    	const double kbt = T*constants::Kb;
-		    	const double ae  = std::pow(3./(4.*std::numbers::pi*ne), 1./3.);
+		    	const double ae  = std::pow(3./(4.*constants::pi*ne), 1./3.);
 		    	const double gam = constants::e2/(kbt*ae);
 
 		    	const double a1 = -.898004;
