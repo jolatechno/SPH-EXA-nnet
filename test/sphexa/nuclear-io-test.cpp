@@ -43,25 +43,21 @@ int main(int argc, char* argv[]) {
 	}
 
 	sphexa::sphnnet::NuclearIoDataSet dataset(nuclear_data);
+	auto data = dataset.data();
 
-	std::cout << "T: ";
-	for (int i = 0; i < n_particles; ++i)
-		std::cout << dataset.T[i] << ", ";
-	std::cout << "\nrho: ";
-	for (int i = 0; i < n_particles; ++i)
-		std::cout << dataset.rho[i] << ", ";
+	std::vector<std::string> outFields;
+	dataset.setOutputFields(outFields, nnet::net14::constants::species_names);
 
-	std::cout << "\n\nx(4He): ";
-	for (int i = 0; i < n_particles; ++i)
-		std::cout << dataset.Y[0][i]*nnet::net14::constants::A[0] << ", ";
-	std::cout << "\nx(C): ";
-	for (int i = 0; i < n_particles; ++i)
-		std::cout << dataset.Y[1][i]*nnet::net14::constants::A[1] << ", ";
-	std::cout << "\nx(O): ";
-	for (int i = 0; i < n_particles; ++i)
-		std::cout << dataset.Y[2][i]*nnet::net14::constants::A[2] << ", ";
-	std::cout << "\n";
+	for (int i = 0; i < dataset.outputFieldNames.size(); ++i) {
+		std::cout << dataset.outputFieldNames[i] << ":\t";
 
+		for (int j = 0; j < n_particles; ++j)
+			std::visit([j](auto& arg) {
+				std::cout << (*arg)[j] << ", ";
+			}, data[i]);
+
+		std::cout << "\n";
+	}
 
 	MPI_Finalize();
 

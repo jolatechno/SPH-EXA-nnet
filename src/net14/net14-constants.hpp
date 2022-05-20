@@ -35,7 +35,7 @@ namespace nnet::net14::constants {
 	}();
 
 	/// nuclear species names
-	const std::vector<const char*> species_names = {
+	const std::vector<std::string> species_names = {
 		"4He", "12C", "16O", "20Ne", "24Mg", "28Si", "32S", "36Ar", "40Ca", "44Ti", "48Cr", "52Fe", "56Ni", "60Zn"
 	};
 
