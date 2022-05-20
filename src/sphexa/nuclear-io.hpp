@@ -5,6 +5,33 @@
 #include "mpi-wrapper.hpp"
 #include "nuclear-data.hpp"
 
+#ifndef IMPORTED_FROM_SPHEXA
+namespace sphexa {
+	/*! @brief look up indices of field names
+	 *
+	 * @tparam     Array
+	 * @param[in]  allNames     array of strings with names of all fields
+	 * @param[in]  subsetNames  array of strings of field names to look up in @p allNames
+	 * @return                  the indices of @p subsetNames in @p allNames
+	 */
+	template<class Array>
+	std::vector<int> fieldStringsToInt(const Array& allNames, const std::vector<std::string>& subsetNames)
+	{
+	    std::vector<int> subsetIndices;
+	    subsetIndices.reserve(subsetNames.size());
+	    for (const auto& field : subsetNames)
+	    {
+	        auto it = std::find(allNames.begin(), allNames.end(), field);
+	        if (it == allNames.end()) { throw std::runtime_error("Field " + field + " does not exist\n"); }
+
+	        size_t fieldIndex = it - allNames.begin();
+	        subsetIndices.push_back(fieldIndex);
+	    }
+	    return subsetIndices;
+	}
+}
+#endif
+
 namespace sphexa::sphnnet {
 	/// vector for nuclear IO
 	/**
@@ -78,6 +105,26 @@ namespace sphexa::sphnnet {
 		}
 	};
 
+	/// simple "reference" vector:
+	/**
+	 * "virtual" vector that access another vector. Allows pass-by-value
+	 */
+	template<typename T>
+	class ref_vector {
+	private:
+		const std::vector<T> *ref;
+
+	public:
+		// constructor
+		template<typename Int=size_t>
+		ref_vector(const std::vector<T> &ref_) : ref(&ref_) {}
+
+		template<typename Int=size_t>
+		T operator[](const Int i) const {
+			return (*ref)[i];
+		}
+	};
+
 
 	/// class for IO
 	/**
@@ -89,10 +136,31 @@ namespace sphexa::sphnnet {
 		const_vector<int> node_id;
 		iota_vector<size_t> nuclear_particle_id;
 		std::vector<nuclear_IO_vector<n_species, Float>> Y = {};
-		const std::vector<Float> *T, *rho, *previous_rho;
+		const ref_vector<Float> T, rho, previous_rho;
 
 	public:
-		NuclearIoDataSet(const NuclearDataType<n_species, Float> &n) : T(&n.T), rho(&n.rho), previous_rho(&n.previous_rho) {
+		MPI_Comm comm;
+		const std::vector<std::string> fieldNames = []() {
+			std::vector<std::string> fieldNames_(5 + n_species);
+
+			fieldNames_[0] = "node_id";
+	        fieldNames_[1] = "nuclear_particle_id";
+	        fieldNames_[2] = "T";
+	        fieldNames_[3] = "rho";
+	        fieldNames_[4] = "previous_rho";
+
+	        for (int i = 0; i < n_species; ++i)
+				fieldNames_[i + 5] = "Y(" + std::to_string(i) + ")";
+
+			return fieldNames_;
+		}();
+
+		NuclearIoDataSet(const NuclearDataType<n_species, Float> &n, MPI_Comm comm_=MPI_COMM_WORLD) : 
+			T(           ref_vector(n.T)),
+			rho(         ref_vector(n.rho)),
+			previous_rho(ref_vector(n.previous_rho)),
+			comm(comm_)
+		{
 			int rank;
 			MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -110,14 +178,14 @@ namespace sphexa::sphnnet {
 	     * non-trivial copy/move constructors.
 	     */
 	    auto data() {
-	    	using FieldType = std::variant<iota_vector<size_t>*, const_vector<int>*, const nuclear_IO_vector<n_species, Float>*, const std::vector<Float>*>;
-			std::array<FieldType, 5 + n_species> ret;
+	    	using FieldType = std::variant<iota_vector<size_t>*, const_vector<int>*, const nuclear_IO_vector<n_species, Float>*, const ref_vector<Float>*>;
+			std::array<FieldType, n_species + 5> ret;
 
 			ret[0] = &node_id;
 			ret[1] = &nuclear_particle_id;
-			ret[2] = T;
-			ret[3] = rho;
-			ret[4] = previous_rho;
+			ret[2] = &T;
+			ret[3] = &rho;
+			ret[4] = &previous_rho;
 
 			for (int i = 0; i < n_species; ++i)
 				ret[i + 5] = &Y[i];
@@ -125,20 +193,18 @@ namespace sphexa::sphnnet {
 			return ret;
 	    }
 
+	    bool isAllocated(int i) const {
+	    	/* TODO */
+	    	return true;
+	    }
+
 	    void setOutputFields(const std::vector<std::string>& outFields) {
-	        outputFieldNames[0] = "node_id";
-	        outputFieldNames[1] = "nuclear_particle_id";
-	        outputFieldNames[2] = "T";
-	        outputFieldNames[3] = "rho";
-	        outputFieldNames[4] = "previous_rho";
-
-	        for (int i = 0; i < n_species; ++i)
-				outputFieldNames[i + 5] = "Y(" + std::to_string(i) + ")";
-
-			// outputFieldIndices = fieldStringsToInt(fieldNames, outFields);
+	        outputFieldNames = fieldNames;
+			outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, outFields);
     	}
 
     	void setOutputFields(const std::vector<std::string>& outFields, const std::vector<std::string> &species_names) {
+    		outputFieldNames.resize(n_species + 5);
 	        outputFieldNames[0] = "node_id";
 	        outputFieldNames[1] = "nuclear_particle_id";
 	        outputFieldNames[2] = "T";
@@ -148,11 +214,33 @@ namespace sphexa::sphnnet {
 	        for (int i = 0; i < n_species; ++i)
 				outputFieldNames[i + 5] = "Y(" + species_names[i] + ")";
 
-	        // outputFieldIndices = fieldStringsToInt(fieldNames, outFields);
+	        outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, outFields);
     	}
 
 		//! @brief particle fields selected for file output
-		std::array<int, 5 + n_species>         outputFieldIndices;
-		std::array<std::string, 5 + n_species> outputFieldNames;
+		std::vector<int>         outputFieldIndices;
+		std::vector<std::string> outputFieldNames;
 	};
+}
+
+namespace sphexa {
+	template<int n_species, typename Float=double>
+	auto getOutputArrays(sphexa::sphnnet::NuclearIoDataSet<n_species, Float>& dataset) {
+	    auto fieldPointers = dataset.data();
+	    using FieldType = std::variant<sphexa::sphnnet::iota_vector<size_t>, sphexa::sphnnet::const_vector<int>, sphexa::sphnnet::nuclear_IO_vector<n_species, Float>, sphexa::sphnnet::ref_vector<Float>>;
+
+	    std::vector<FieldType> outputFields;
+	    outputFields.reserve(dataset.outputFieldIndices.size());
+
+	    for (int i : dataset.outputFieldIndices)
+	    {
+	        if (!dataset.isAllocated(i))
+	        {
+	            throw std::runtime_error("Cannot output field " + std::string(dataset.fieldNames[i]) +
+	                                     ", because it is not active.");
+	        }
+	        std::visit([&outputFields](auto& arg) { outputFields.emplace_back(*arg); }, fieldPointers[i]);
+	    }
+	    return outputFields;
+	}
 }
