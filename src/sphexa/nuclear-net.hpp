@@ -1,9 +1,9 @@
 #pragma once
 
+#include <numeric>
+
 #include "mpi-wrapper.hpp"
 #include "nuclear-data.hpp"
-
-#include <numeric>
 
 #include "../nuclear-net.hpp"
 

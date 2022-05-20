@@ -1,12 +1,16 @@
 #include <iostream>
 #include <chrono>
 
-#include "../../src/sphexa/nuclear-data.hpp"
-
 #include "../../src/nuclear-net.hpp"
 #include "../../src/net86/net86.hpp"
 
 #include "../../src/eos/helmholtz.hpp"
+
+#include "utils/sphexa_utils.hpp"
+
+#include "../../src/sphexa/nuclear-data.hpp"
+
+
 
 int main() {
 #if NO_SCREENING

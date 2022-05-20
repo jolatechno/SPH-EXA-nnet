@@ -1,17 +1,15 @@
 #include <vector>
 
-#include "../../src/sphexa/mpi-wrapper.hpp"
-#include "../../src/sphexa/nuclear-data.hpp"
-#include "../../src/sphexa/nuclear-net.hpp"
-
 #include "../../src/nuclear-net.hpp"
 #include "../../src/net14/net14.hpp"
 
 #include "../../src/eos/helmholtz.hpp"
 
+#include "utils/sphexa_utils.hpp"
 
-
-
+#include "../../src/sphexa/nuclear-data.hpp"
+#include "../../src/sphexa/mpi-wrapper.hpp"
+#include "../../src/sphexa/nuclear-net.hpp"
 
 
 // mockup of the ParticlesDataType

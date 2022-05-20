@@ -1,37 +1,13 @@
 #include <iostream>
 #include <fstream>
 
-#include "../../src/sphexa/nuclear-data.hpp"
-#include "../../src/sphexa/nuclear-net.hpp"
-
 #include "../../src/net14/net14-constants.hpp"
 
-namespace sphexa {
-	/*! @brief look up indices of field names
-	 *
-	 * @tparam     Array
-	 * @param[in]  allNames     array of strings with names of all fields
-	 * @param[in]  subsetNames  array of strings of field names to look up in @p allNames
-	 * @return                  the indices of @p subsetNames in @p allNames
-	 */
-	template<class Array>
-	std::vector<int> fieldStringsToInt(const Array& allNames, const std::vector<std::string>& subsetNames)
-	{
-	    std::vector<int> subsetIndices;
-	    subsetIndices.reserve(subsetNames.size());
-	    for (const auto& field : subsetNames)
-	    {
-	        auto it = std::find(allNames.begin(), allNames.end(), field);
-	        if (it == allNames.end()) { throw std::runtime_error("Field " + field + " does not exist\n"); }
+#include "utils/sphexa_utils.hpp"
 
-	        size_t fieldIndex = it - allNames.begin();
-	        subsetIndices.push_back(fieldIndex);
-	    }
-	    return subsetIndices;
-	}
-}
-
-#include "../../src/sphexa/nuclear-io.hpp"
+#include "../../src/sphexa/file_utils.hpp"
+#include "../../src/sphexa/nuclear-data.hpp"
+#include "../../src/sphexa/nuclear-net.hpp"
 
 
 /*
@@ -114,24 +90,10 @@ int main(int argc, char* argv[]) {
 		nuclear_data.dt[i] = 1e-12;
 	}
 
-	sphexa::sphnnet::NuclearIoDataSet dataset(nuclear_data);
-	auto data = dataset.data();
-
 	std::vector<std::string> outFields = {"node_id", "nuclear_particle_id", "T", "rho", "Y(4He)", "Y(12C)", "Y(16O)"};
-	dataset.setOutputFields(outFields, nnet::net14::constants::species_names);
+	nuclear_data.setOutputFields(outFields, nnet::net14::constants::species_names);
 
-	dump(dataset, 0, n_particles, "/dev/stdout");
-
-	/*for (int i : dataset.outputFieldIndices) {
-		std::cout << dataset.outputFieldNames[i] << ":\t";
-
-		for (int j = 0; j < n_particles; ++j)
-			std::visit([j](auto& arg) {
-				std::cout << (*arg)[j] << ", ";
-			}, data[i]);
-
-		std::cout << "\n";
-	}*/
+	dump(nuclear_data, 0, n_particles, "/dev/stdout");
 
 	MPI_Finalize();
 
