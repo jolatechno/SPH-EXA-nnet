@@ -8,15 +8,13 @@
 
 #include "../../src/eos/helmholtz.hpp"
 
-using vector = sphexa::sphnnet::NuclearAbundances<14>;
-
 int main() {
 #if NO_SCREENING
 	nnet::net14::skip_coulombian_correction = true;
 #endif
 	
-	double rho_left = 1e9, rho_right = 7e8; // rho, g/cm^3
-	double T_left = 1e9, T_right = 2e9; // rho, g/cm^3
+	double rho_left = 1e9, rho_right = 7e8;
+	double T_left = 1e9, T_right = 2e9;
 
 	// extension /* TODO */
 	const int start_expansion = 600;

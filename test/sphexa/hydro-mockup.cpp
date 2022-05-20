@@ -66,7 +66,6 @@ void step(ParticlesDataType &p, sphexa::sphnnet::NuclearDataType<14, double>  &n
 
 
 
-using vector = sphexa::sphnnet::NuclearAbundances<14>;
 
 int main(int argc, char* argv[]) {
 #if NO_SCREENING
@@ -80,7 +79,7 @@ int main(int argc, char* argv[]) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	/* initial Y value */
-	vector Y0, X;
+	sphexa::sphnnet::NuclearAbundances<14> Y0, X;
 	for (int i = 0; i < 14; ++i) X[i] = 0;
 	X[1] = 0.5;
 	X[2] = 0.5;
@@ -90,8 +89,8 @@ int main(int argc, char* argv[]) {
 
 
 	/* initial hydro data */
-	double rho_left = 1.2e9, rho_right = 1e9; // rho, g/cm^3
-	double T_left = 0.8e9, T_right = 1.1e9; // rho, g/cm^3
+	double rho_left = 1.2e9, rho_right = 1e9;
+	double T_left = 0.8e9, T_right = 1.1e9;
 
 	ParticlesDataType p;
 

@@ -8,14 +8,12 @@
 
 #include "../../src/eos/helmholtz.hpp"
 
-using vector = sphexa::sphnnet::NuclearAbundances<86>;
-
 int main() {
 #if NO_SCREENING
 	nnet::net86::skip_coulombian_correction = true;
 #endif
 	
-	double rho = 1e9; // rho, g/cm^3
+	double rho = 1e9;
 	double last_T = 1e9;
 
 	// extension /* TODO */
@@ -24,7 +22,7 @@ int main() {
 	const double rho_lim = 1e5;
 
 	// initial state
-	vector last_Y, X;
+	sphexa::sphnnet::NuclearAbundances<86> last_Y, X;
 	for (int i = 0; i < 86; ++i) X[i] = 0;
 	X[3] = 0.5;
 	X[4] = 0.5;
