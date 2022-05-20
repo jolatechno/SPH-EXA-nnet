@@ -3,52 +3,36 @@
 
 #include "../../src/sphexa/nuclear-data.hpp"
 #include "../../src/sphexa/nuclear-net.hpp"
-#include "../../src/sphexa/nuclear-io.hpp"
 
 #include "../../src/net14/net14-constants.hpp"
 
+namespace sphexa {
+	/*! @brief look up indices of field names
+	 *
+	 * @tparam     Array
+	 * @param[in]  allNames     array of strings with names of all fields
+	 * @param[in]  subsetNames  array of strings of field names to look up in @p allNames
+	 * @return                  the indices of @p subsetNames in @p allNames
+	 */
+	template<class Array>
+	std::vector<int> fieldStringsToInt(const Array& allNames, const std::vector<std::string>& subsetNames)
+	{
+	    std::vector<int> subsetIndices;
+	    subsetIndices.reserve(subsetNames.size());
+	    for (const auto& field : subsetNames)
+	    {
+	        auto it = std::find(allNames.begin(), allNames.end(), field);
+	        if (it == allNames.end()) { throw std::runtime_error("Field " + field + " does not exist\n"); }
 
-
-
-
-/*
-function stolen from SPH-EXA, modified to work without nuclear data,
-should be added to SPH-EXA/main/src/io/file_utils.hpp
-*/
-/*! @brief read input data from an ASCII file
- *
- * @tparam T         an elementary type or a std::variant thereof
- * @param  path      the input file to read from
- * @param  numLines  number of lines/elements per field to read
- * @param  fields    the data containers to read into
- *
- *  Each data container will get one column of the input file.
- *  The number of rows to read is determined by the data container size.
- */
-template<class... itType, class... Separators>
-void writeAscii(size_t firstIndex, size_t lastIndex, const std::string& path, bool append, const std::vector<std::variant<itType...>>& fields, Separators&&... separators) {
-    std::ios_base::openmode mode;
-    if (append) { mode = std::ofstream::app; }
-    else { mode = std::ofstream::out; }
-
-    std::ofstream dumpFile(path, mode);
-
-    if (dumpFile.is_open())
-    {
-        for (size_t i = firstIndex; i < lastIndex; ++i)
-        {
-            for (auto field : fields)
-            {
-                [[maybe_unused]] std::initializer_list<int> list{(dumpFile << separators, 0)...};
-                std::visit([&dumpFile, i](auto& arg) { dumpFile << arg[i]; }, field);
-            }
-            dumpFile << std::endl;
-        }
-    }
-    else { throw std::runtime_error("Can't open file at path: " + path); }
-
-    dumpFile.close();
+	        size_t fieldIndex = it - allNames.begin();
+	        subsetIndices.push_back(fieldIndex);
+	    }
+	    return subsetIndices;
+	}
 }
+
+#include "../../src/sphexa/nuclear-io.hpp"
+
 
 /*
 function stolen from SPH-EXA and retrofited for testing
@@ -71,7 +55,7 @@ void dump(Dataset& d, size_t firstIndex, size_t lastIndex, /*const cstone::Box<t
                 auto fieldPointers = sphexa::getOutputArrays(d);
 
                 bool append = rank != 0;
-                writeAscii(firstIndex, lastIndex, path, append, fieldPointers, separator);
+                sphexa::fileutils::writeAscii(firstIndex, lastIndex, path, append, fieldPointers, separator);
             }
             catch (std::runtime_error& ex)
             {
