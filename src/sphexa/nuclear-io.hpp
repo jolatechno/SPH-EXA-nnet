@@ -1,6 +1,7 @@
 #pragma once
 
 #include <variant>
+#include <memory>
 
 #include "mpi-wrapper.hpp"
 #include "nuclear-data.hpp"
@@ -105,26 +106,6 @@ namespace sphexa::sphnnet {
 		}
 	};
 
-	/// simple "reference" vector:
-	/**
-	 * "virtual" vector that access another vector. Allows pass-by-value
-	 */
-	template<typename T>
-	class ref_vector {
-	private:
-		const std::vector<T> *ref;
-
-	public:
-		// constructor
-		template<typename Int=size_t>
-		ref_vector(const std::vector<T> &ref_) : ref(&ref_) {}
-
-		template<typename Int=size_t>
-		T operator[](const Int i) const {
-			return (*ref)[i];
-		}
-	};
-
 
 	/// class for IO
 	/**
@@ -136,7 +117,7 @@ namespace sphexa::sphnnet {
 		const_vector<int> node_id;
 		iota_vector<size_t> nuclear_particle_id;
 		std::vector<nuclear_IO_vector<n_species, Float>> Y = {};
-		const ref_vector<Float> T, rho, previous_rho;
+		std::shared_ptr<const Float[]> T, rho, previous_rho;
 
 	public:
 		MPI_Comm comm;
@@ -156,9 +137,9 @@ namespace sphexa::sphnnet {
 		}();
 
 		NuclearIoDataSet(const NuclearDataType<n_species, Float> &n, MPI_Comm comm_=MPI_COMM_WORLD) : 
-			T(           ref_vector(n.T)),
-			rho(         ref_vector(n.rho)),
-			previous_rho(ref_vector(n.previous_rho)),
+			T(           n.T.data(),            /*void deleter:*/[](const Float*) {}),
+			rho(         n.rho.data(),          /*void deleter:*/[](const Float*) {}),
+			previous_rho(n.previous_rho.data(), /*void deleter:*/[](const Float*) {}),
 			comm(comm_)
 		{
 			int rank;
@@ -178,7 +159,7 @@ namespace sphexa::sphnnet {
 	     * non-trivial copy/move constructors.
 	     */
 	    auto data() {
-	    	using FieldType = std::variant<iota_vector<size_t>*, const_vector<int>*, const nuclear_IO_vector<n_species, Float>*, const ref_vector<Float>*>;
+	    	using FieldType = std::variant<iota_vector<size_t>*, const_vector<int>*, const nuclear_IO_vector<n_species, Float>*, std::shared_ptr<const Float[]>*>;
 			std::array<FieldType, n_species + 5> ret;
 
 			ret[0] = &node_id;
@@ -227,7 +208,7 @@ namespace sphexa {
 	template<int n_species, typename Float=double>
 	auto getOutputArrays(sphexa::sphnnet::NuclearIoDataSet<n_species, Float>& dataset) {
 	    auto fieldPointers = dataset.data();
-	    using FieldType = std::variant<sphexa::sphnnet::iota_vector<size_t>, sphexa::sphnnet::const_vector<int>, sphexa::sphnnet::nuclear_IO_vector<n_species, Float>, sphexa::sphnnet::ref_vector<Float>>;
+	    using FieldType = std::variant<sphexa::sphnnet::iota_vector<size_t>, sphexa::sphnnet::const_vector<int>, sphexa::sphnnet::nuclear_IO_vector<n_species, Float>, std::shared_ptr<const Float[]>>;
 
 	    std::vector<FieldType> outputFields;
 	    outputFields.reserve(dataset.outputFieldIndices.size());
