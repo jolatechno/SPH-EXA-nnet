@@ -17,6 +17,9 @@
 // mockup of the ParticlesDataType
 class ParticlesDataType {
 public:
+	// communicator
+	MPI_Comm comm=MPI_COMM_WORLD;
+
 	// pointers
 	std::vector<int> node_id;
 	std::vector<std::size_t> particle_id;
@@ -44,19 +47,19 @@ public:
 
 // mockup of the step function 
 template<class func_rate, class func_BE, class func_eos>
-void step(ParticlesDataType &p, sphexa::sphnnet::NuclearDataType<14, double>  &n, const double dt,
+void step(ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<14, double>  &n, const double dt,
 	const std::vector<nnet::reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos) {
 
 	// domain redecomposition
 
-	auto partition = sphexa::mpi::partitionFromPointers(p.node_id, p.particle_id);
+	auto partition = sphexa::mpi::partitionFromPointers(d.node_id, d.particle_id, d.comm);
 
 	// do hydro stuff
 
-	sphexa::sphnnet::sendHydroData(p, n, partition, MPI_DOUBLE);
+	sphexa::sphnnet::sendHydroData(d, n, partition, MPI_DOUBLE);
 	sphexa::sphnnet::compute_nuclear_reactions(n, dt,
 		reactions, construct_rates, construct_BE, eos);
-	sphexa::sphnnet::recvHydroData(p, n, partition, MPI_DOUBLE);
+	sphexa::sphnnet::recvHydroData(d, n, partition, MPI_DOUBLE);
 
 	// do hydro stuff
 }
@@ -92,19 +95,19 @@ int main(int argc, char* argv[]) {
 	double rho_left = 1.2e9, rho_right = 1e9;
 	double T_left = 0.8e9, T_right = 1.1e9;
 
-	ParticlesDataType p;
+	ParticlesDataType d;
 
 	const size_t total_n_particles = 1000;
 	const size_t n_particles = total_n_particles*(rank + 1)/size - total_n_particles*rank/size;
-	p.resize(n_particles);
+	d.resize(n_particles);
 
 
 	/* !!!!!!!!!!!!
 	initialize the hydro state
 	!!!!!!!!!!!! */
 	for (int i = 0; i < n_particles; ++i) {
-		p.T[i]   = T_left   + (T_right   - T_left  )*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
-		p.rho[i] = rho_left + (rho_right - rho_left)*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
+		d.T[i]   = T_left   + (T_right   - T_left  )*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
+		d.rho[i] = rho_left + (rho_right - rho_left)*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
 	}
 
 
@@ -116,16 +119,16 @@ int main(int argc, char* argv[]) {
 	initialize pointers with some simple "mixing"
 	!!!!!!!!!!!! */
 	for (int i = 0; i < n_particles; ++i) {
-		p.node_id[i] = rank;
-		p.particle_id[i] = i;
+		d.node_id[i] = rank;
+		d.particle_id[i] = i;
 	}
 #else //ifdef NO_MIX
 	/* !!!!!!!!!!!!
 	initialize pointers with a lot of communication but no "mixing"
 	!!!!!!!!!!!! */
 	for (int i = 0; i < n_particles; ++i) {
-		p.node_id[i] = (rank + 1)%size;
-		p.particle_id[i] = i;
+		d.node_id[i] = (rank + 1)%size;
+		d.particle_id[i] = i;
 	}
 #endif
 
@@ -133,8 +136,8 @@ int main(int argc, char* argv[]) {
 	initialize the nuclear data with homogenous abundances
 	!!!!!!!!!!!! */
 	{
-		auto partition = sphexa::mpi::partitionFromPointers(p.node_id, p.particle_id);
-		sphexa::mpi::directSyncDataFromPartition(partition, p.rho, n.previous_rho, MPI_DOUBLE);
+		auto partition = sphexa::mpi::partitionFromPointers(d.node_id, d.particle_id);
+		sphexa::mpi::directSyncDataFromPartition(partition, d.rho, n.previous_rho, MPI_DOUBLE);
 		const size_t nuclear_n_particles = partition.recv_disp[size];
 		n.resize(nuclear_n_particles);
 		for (size_t i = 0; i < nuclear_n_particles; ++i) {
@@ -147,14 +150,14 @@ int main(int argc, char* argv[]) {
 	initialize pointers
 	!!!! THE WAY IT SHOULD BE DONE !!!!
 	!!!!!!!!!!!! */
-	sphexa::mpi::initializePointers(p.node_id, p.particle_id, n_particles);
+	sphexa::mpi::initializePointers(d.node_id, d.particle_id, n_particles);
 
 	/* !!!!!!!!!!!!
 	initialize nuclear data
 	!!!! THE WAY IT SHOULD BE DONE !!!!
 	!!!!!!!!!!!! */
-	auto partition = sphexa::mpi::partitionFromPointers(p.node_id, p.particle_id);
-	sphexa::sphnnet::NuclearDataType<14> n = sphexa::sphnnet::initNuclearDataFromConst<14>(p,
+	auto partition = sphexa::mpi::partitionFromPointers(d.node_id, d.particle_id, d.comm);
+	sphexa::sphnnet::NuclearDataType<14> n = sphexa::sphnnet::initNuclearDataFromConst<14>(d,
 		Y0, partition, MPI_DOUBLE);
 #endif
 
@@ -168,7 +171,7 @@ int main(int argc, char* argv[]) {
 		if (rank == 0)
 			std::cout << i << "th iteration...\n";
 
-		step(p, n, dt,
+		step(d, n, dt,
 			nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, helm_eos);
 		t += dt;
 
@@ -190,7 +193,7 @@ int main(int argc, char* argv[]) {
 		for (int i = 0; i < 14; ++i) std::cout << X[i] << ", ";
 		std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << "),\tT_left=" << n.T[0] << "\n";
 	}
-	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(d.comm);
 #ifdef NO_MIX
 	if (rank == 0) {
 #else

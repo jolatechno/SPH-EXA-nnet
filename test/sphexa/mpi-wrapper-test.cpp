@@ -26,9 +26,9 @@ int main(int argc, char* argv[]) {
 		x = {1.0, 1.1, 1.2, 1.3};
 	}
 
-	auto partition = sphexa::mpi::partitionFromPointers(node_id, particle_id);
+	auto partition = sphexa::mpi::partitionFromPointers(node_id, particle_id, MPI_COMM_WORLD);
 
-	sphexa::mpi::directSyncDataFromPartition(partition, x, x_out, MPI_FLOAT);
+	sphexa::mpi::directSyncDataFromPartition(partition, x, x_out, MPI_FLOAT, MPI_COMM_WORLD);
 
 	if (rank < 2) {
 		std::cout << rank << "\tdirect  \t";
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 		std::cout << "\n";
 	}
 
-	sphexa::mpi::reversedSyncDataFromPartition(partition, x_out, x, MPI_FLOAT);
+	sphexa::mpi::reversedSyncDataFromPartition(partition, x_out, x, MPI_FLOAT, MPI_COMM_WORLD);
 
 	if (rank < 2) {
 		std::cout << rank << "\treversed\t";

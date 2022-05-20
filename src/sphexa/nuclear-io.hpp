@@ -117,7 +117,7 @@ namespace sphexa {
 				comm(comm_)
 			{
 				int rank;
-				MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+				MPI_Comm_rank(comm, &rank);
 
 				// initialize
 				node_id = const_vector<int>(rank);
@@ -200,18 +200,19 @@ namespace sphexa {
 	}
 
 	namespace fileutils {
-		/*! @brief read input data from an ASCII file
+		/*! @brief write fields as columns to an ASCII file
 		 *
-		 * @tparam T         an elementary type or a std::variant thereof
-		 * @param  path      the input file to read from
-		 * @param  numLines  number of lines/elements per field to read
-		 * @param  fields    the data containers to read into
-		 *
-		 *  Each data container will get one column of the input file.
-		 *  The number of rows to read is determined by the data container size.
+		 * @tparam  T              "vector" type that can be indexed via the "[]" operator.
+		 * @tparam  Separators
+		 * @param   firstIndex     first field index to write
+		 * @param   lastIndex      last field index to write
+		 * @param   path           the file name to write to
+		 * @param   append         append or overwrite if file already exists
+		 * @param   fields         pointers to field array, each field is a column
+		 * @param   separators     arbitrary number of separators to insert between columns, eg '\t', std::setw(n), ...
 		 */
-		template<class... itType, class... Separators>
-		void writeAscii(size_t firstIndex, size_t lastIndex, const std::string& path, bool append, const std::vector<std::variant<itType...>>& fields, Separators&&... separators) {
+		template<class... T, class... Separators>
+		void writeAscii(size_t firstIndex, size_t lastIndex, const std::string& path, bool append, const std::vector<std::variant<T...>>& fields, Separators&&... separators) {
 		    std::ios_base::openmode mode;
 		    if (append) { mode = std::ofstream::app; }
 		    else { mode = std::ofstream::out; }
