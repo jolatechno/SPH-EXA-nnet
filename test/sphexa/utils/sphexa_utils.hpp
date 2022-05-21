@@ -3,12 +3,15 @@
 #include <fstream>
 #include <algorithm>
 #include <variant>
+#include <type_traits>
+
+#include <iostream>
 
 namespace sphexa {
 	namespace fileutils {
 		/*! @brief write fields as columns to an ASCII file
 		 *
-		 * @tparam  T              "vector" type that can be indexed via the "[]" operator.
+		 * @tparam  T              pointer to "vector" type that can be indexed via the "[]" operator.
 		 * @tparam  Separators
 		 * @param   firstIndex     first field index to write
 		 * @param   lastIndex      last field index to write
@@ -18,7 +21,7 @@ namespace sphexa {
 		 * @param   separators     arbitrary number of separators to insert between columns, eg '\t', std::setw(n), ...
 		 */
 		template<class... T, class... Separators>
-		void writeAscii(size_t firstIndex, size_t lastIndex, const std::string& path, bool append, const std::vector<std::variant<T...>>& fields, Separators&&... separators) {
+		void writeAscii(size_t firstIndex, size_t lastIndex, const std::string& path, bool append, const std::vector<std::variant<T*...>>& fields, Separators&&... separators) {
 		    std::ios_base::openmode mode;
 		    if (append) { mode = std::ofstream::app; }
 		    else { mode = std::ofstream::out; }
@@ -46,9 +49,10 @@ namespace sphexa {
 	//! @brief extract a vector of reference to nuclear particle fields for file output
 	template<class Dataset>
 	auto getOutputArrays(Dataset &dataset) {
-	    auto fieldPointers = dataset.data();
-	    
-	    decltype(fieldPointers) outputFields;
+		auto fieldPointers = dataset.data();
+
+		// hacky way to initialize an empty vector containing the same type as "fieldPointers"
+	    std::vector outputFields(fieldPointers.begin(), fieldPointers.begin());
 	    outputFields.reserve(dataset.outputFieldIndices.size());
 
 	    for (int i : dataset.outputFieldIndices)
