@@ -1,13 +1,17 @@
 #include <iostream>
 #include <fstream>
 
-#include "../../src/net14/net14-constants.hpp"
-
 #include "utils/sphexa_utils.hpp"
 
-#include "../../src/sphexa/file_utils.hpp"
+
+// physical parameters
+#include "../../src/net14/net14-constants.hpp"
+
+// base datatype
 #include "../../src/sphexa/nuclear-data.hpp"
-#include "../../src/sphexa/nuclear-net.hpp"
+
+// io
+#include "../../src/sphexa/io/file_writer.hpp"
 
 
 /*

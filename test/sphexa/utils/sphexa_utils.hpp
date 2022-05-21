@@ -1,3 +1,8 @@
+#include <vector>
+#include <string>
+#include <fstream>
+#include <algorithm>
+
 namespace sphexa {
 	/*! @brief look up indices of field names
 	 *

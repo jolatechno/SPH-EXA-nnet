@@ -1,7 +1,7 @@
 #include <vector>
 #include <iostream>
 
-#include "../../src/sphexa/mpi-wrapper.hpp"
+#include "../../src/sphexa/mpi/mpi-wrapper.hpp"
 
 int main(int argc, char* argv[]) {
 	int size, rank;

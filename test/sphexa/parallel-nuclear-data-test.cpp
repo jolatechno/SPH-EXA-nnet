@@ -1,15 +1,24 @@
 #include <iostream>
 
+// physical parameters
 #include "../../src/nuclear-net.hpp"
 #include "../../src/net14/net14.hpp"
-
 #include "../../src/eos/helmholtz.hpp"
+
 
 
 #include "utils/sphexa_utils.hpp"
 
+
+
+
+// base datatype
 #include "../../src/sphexa/nuclear-data.hpp"
+
+// nuclear reaction wrappers
 #include "../../src/sphexa/nuclear-net.hpp"
+
+
 
 int main() {
 #if NO_SCREENING

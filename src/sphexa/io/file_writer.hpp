@@ -4,8 +4,7 @@
 #include <vector>
 #include <fstream>
 
-#include "mpi-wrapper.hpp"
-#include "nuclear-data.hpp"
+#include "../nuclear-data.hpp"
 
 namespace sphexa {
 	namespace fileutils {

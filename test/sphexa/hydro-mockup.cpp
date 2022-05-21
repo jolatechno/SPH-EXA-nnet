@@ -1,15 +1,25 @@
 #include <vector>
 
-#include "../../src/nuclear-net.hpp"
-#include "../../src/net14/net14.hpp"
-
-#include "../../src/eos/helmholtz.hpp"
 
 #include "utils/sphexa_utils.hpp"
 
+
+// physical parameters
+#include "../../src/net14/net14.hpp"
+#include "../../src/eos/helmholtz.hpp"
+
+// base datatype
 #include "../../src/sphexa/nuclear-data.hpp"
-#include "../../src/sphexa/mpi-wrapper.hpp"
+
+// nuclear reaction wrappers
 #include "../../src/sphexa/nuclear-net.hpp"
+#include "../../src/sphexa/initializers.hpp"
+
+// io, unused
+#include "../../src/sphexa/io/file_writer.hpp"
+
+
+
 
 
 // mockup of the ParticlesDataType
