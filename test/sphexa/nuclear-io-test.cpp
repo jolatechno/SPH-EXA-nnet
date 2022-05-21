@@ -10,9 +10,6 @@
 // base datatype
 #include "../../src/sphexa/nuclear-data.hpp"
 
-// io
-#include "../../src/sphexa/io/file_writer.hpp"
-
 
 /*
 function stolen from SPH-EXA and retrofited for testing

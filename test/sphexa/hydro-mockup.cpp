@@ -15,9 +15,6 @@
 #include "../../src/sphexa/nuclear-net.hpp"
 #include "../../src/sphexa/initializers.hpp"
 
-// io, unused
-#include "../../src/sphexa/io/file_writer.hpp"
-
 
 
 
