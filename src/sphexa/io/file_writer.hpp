@@ -48,14 +48,9 @@ namespace sphexa {
 	//! @brief extract a vector of reference to nuclear particle fields for file output
 	template<int n_species, typename Float=double>
 	auto getOutputArrays(sphnnet::NuclearDataType<n_species, Float> &dataset) {
-		using FieldType = std::variant<
-			iota_vector<size_t>*,
-			const_vector<int>*,
-			sphnnet::nuclear_IO_vector<n_species, Float>*,
-			std::vector<Float>*>;
-
 	    auto fieldPointers = dataset.data();
-	    std::vector<FieldType> outputFields;
+	    
+	    decltype(fieldPointers) outputFields;
 	    outputFields.reserve(dataset.outputFieldIndices.size());
 
 	    for (int i : dataset.outputFieldIndices)

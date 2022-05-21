@@ -86,7 +86,7 @@ namespace sphexa::sphnnet {
 	    		const_vector<int>*,
 	    		nuclear_IO_vector<n_species, Float>*,
 	    		std::vector<Float>*>;
-			std::array<FieldType, n_species + 6> ret;
+			std::vector<FieldType> ret(n_species + 6);
 
 			ret[0] = &node_id;
 			ret[1] = &nuclear_particle_id;
