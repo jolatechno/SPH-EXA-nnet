@@ -46,16 +46,17 @@ namespace sphexa::sphnnet {
 
 		/// base fieldNames (without knowledge of nuclear species names)
 		const std::vector<std::string> fieldNames = []() {
-			std::vector<std::string> fieldNames_(5 + n_species);
+			std::vector<std::string> fieldNames_(6 + n_species);
 
 			fieldNames_[0] = "node_id";
 	        fieldNames_[1] = "nuclear_particle_id";
-	        fieldNames_[2] = "T";
-	        fieldNames_[3] = "rho";
-	        fieldNames_[4] = "previous_rho";
+	        fieldNames_[2] = "dt";
+	        fieldNames_[3] = "T";
+	        fieldNames_[4] = "rho";
+	        fieldNames_[5] = "previous_rho";
 
 	        for (int i = 0; i < n_species; ++i)
-				fieldNames_[i + 5] = "Y(" + std::to_string(i) + ")";
+				fieldNames_[i + 6] = "Y(" + std::to_string(i) + ")";
 
 			return fieldNames_;
 		}();
@@ -85,16 +86,17 @@ namespace sphexa::sphnnet {
 	    		const_vector<int>*,
 	    		nuclear_IO_vector<n_species, Float>*,
 	    		std::vector<Float>*>;
-			std::array<FieldType, n_species + 5> ret;
+			std::array<FieldType, n_species + 6> ret;
 
 			ret[0] = &node_id;
 			ret[1] = &nuclear_particle_id;
-			ret[2] = &T;
-			ret[3] = &rho;
-			ret[4] = &previous_rho;
+			ret[2] = &dt;
+			ret[3] = &T;
+			ret[4] = &rho;
+			ret[5] = &previous_rho;
 
 			for (int i = 0; i < n_species; ++i)
-				ret[i + 5] = &Y_io[i];
+				ret[i + 6] = &Y_io[i];
 
 			return ret;
 	    }
@@ -129,15 +131,16 @@ namespace sphexa::sphnnet {
 			nuclear_particle_id = iota_vector<size_t>(0);
 
 			// initialize outputFieldNames with the right names
-    		outputFieldNames.resize(n_species + 5);
+    		outputFieldNames.resize(n_species + 6);
 	        outputFieldNames[0] = "node_id";
 	        outputFieldNames[1] = "nuclear_particle_id";
-	        outputFieldNames[2] = "T";
-	        outputFieldNames[3] = "rho";
-	        outputFieldNames[4] = "previous_rho";
+	        outputFieldNames[2] = "dt";
+	        outputFieldNames[3] = "T";
+	        outputFieldNames[4] = "rho";
+	        outputFieldNames[5] = "previous_rho";
 
 	        for (int i = 0; i < n_species; ++i)
-				outputFieldNames[i + 5] = "Y(" + species_names[i] + ")";
+				outputFieldNames[i + 6] = "Y(" + species_names[i] + ")";
 
 	        outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, outFields);
     	}
