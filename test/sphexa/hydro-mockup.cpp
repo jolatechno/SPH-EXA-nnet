@@ -1,7 +1,7 @@
 #include <vector>
 
 
-#include "utils/sphexa_utils.hpp"
+#include "../utils/sphexa_utils.hpp"
 
 
 // physical parameters

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "utils/sphexa_utils.hpp"
+#include "../utils/sphexa_utils.hpp"
 
 
 // physical parameters
