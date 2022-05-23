@@ -189,12 +189,8 @@ namespace nnet::net86 {
 				reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}, {{constants::main_product[i]}, {constants::proton}}});
 			} else if (delta_A == 4 && delta_Z == 2) {
 				reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}, {{constants::main_product[i]}, {constants::alpha}}});
-			} else {
-				std::cerr << "mass conservation not possible (delta_A=" << delta_A << ", delta_Z=" << delta_Z << ") !\n";
-				throw;
-			}
-
-			
+			} else
+				throw std::runtime_error("Mass conservation not possible when adding reaction to net86\n");
 		}
 		
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -213,11 +209,8 @@ namespace nnet::net86 {
 				reactions.push_back(nnet::reaction{{{constants::main_product[i]}, {constants::proton }}, {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
 			} else if (delta_A == -4 && delta_Z == -2) {
 				reactions.push_back(nnet::reaction{{{constants::main_product[i]}, {constants::alpha  }}, {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
-			} else {
-				std::cerr << "mass conservation not possible (delta_A=" << delta_A << ", delta_Z=" << delta_Z << ") !\n";
-				throw;
-			}
-			
+			} else
+				throw std::runtime_error("Mass conservation not possible when adding reaction to net86\n");	
 		}
 
 		return reactions;

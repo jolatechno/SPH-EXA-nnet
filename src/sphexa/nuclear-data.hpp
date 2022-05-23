@@ -6,7 +6,8 @@
 #include <variant>
 
 #ifdef USE_MPI
-#include <mpi.h>
+	#include <mpi.h>
+	#include "mpi/mpi-wrapper.hpp"
 #endif
 
 #include "utils/data_utils.hpp"
@@ -31,6 +32,7 @@ namespace sphexa::sphnnet {
 		/// mpi communicator
 #ifdef USE_MPI
     	MPI_Comm comm=MPI_COMM_WORLD;
+    	sphexa::mpi::mpi_partition partition;
 #endif
 
 		/// resize the number of particules

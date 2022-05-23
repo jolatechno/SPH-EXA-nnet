@@ -57,14 +57,14 @@ void step(ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<14, double>  &n
 
 	// domain redecomposition
 
-	auto partition = sphexa::mpi::partitionFromPointers(d.node_id, d.particle_id, d.comm);
+	sphexa::sphnnet::initializePartition(d, n);
 
 	// do hydro stuff
 
-	sphexa::sphnnet::sendHydroData(d, n, partition, MPI_DOUBLE);
+	sphexa::sphnnet::sendHydroData(d, n);
 	sphexa::sphnnet::compute_nuclear_reactions(n, dt,
 		reactions, construct_rates, construct_BE, eos);
-	sphexa::sphnnet::recvHydroData(d, n, partition, MPI_DOUBLE);
+	sphexa::sphnnet::recvHydroData(d, n);
 
 	// do hydro stuff
 }

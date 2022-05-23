@@ -111,10 +111,8 @@ namespace nnet::net86::constants {
 
 					break;
 
-					if (j == net86_n_species - 1) {
-						std::cerr << "can't find corresponding nuclear species !\n";
-						throw;
-					}
+					if (j == net86_n_species - 1)
+						throw std::runtime_error("Couldn't find the species in net86 corresponding to a specific species in net14\n");
 				}
 
 		return net14_species_order_;

@@ -153,10 +153,8 @@ namespace nnet {
 			dY[i] = 0.;
 
 		const int num_reactions = reactions.size();
-		if (num_reactions != rates.size()) {
-			std::cerr << "number of reaction and rates don't match !\n";
-			throw;
-		}
+		if (num_reactions != rates.size())
+			throw std::runtime_error("Number of reaction and rates don't match !\n");
 
 		for (int i = 0; i < num_reactions; ++i) {
 			const reaction &Reaction = reactions[i];
@@ -208,10 +206,8 @@ namespace nnet {
 		eigen::matrix<Float> M(dimension, dimension);
 
 		const int num_reactions = reactions.size();
-		if (num_reactions != rates.size()) {
-			std::cerr << "number of reaction and rates don't match !\n";
-			throw;
-		}
+		if (num_reactions != rates.size())
+			throw std::runtime_error("Number of reaction and rates don't match !\n");
 
 		for (int i = 0; i < num_reactions; ++i) {
 			const reaction &Reaction = reactions[i];
@@ -418,10 +414,8 @@ namespace nnet {
 
 			// actual solving
 			for (int i = 0; i < constants::NR::max_it; ++i) {
-				if (dt == 0) {
-					std::cerr << "zero timestep !\n";
-					throw;
-				}
+				if (dt == 0)
+					throw std::runtime_error("Zero timestep in nuclear network !\n");
 
 				// compute n+theta values
 				T_theta =        (1 - constants::theta)*T    + constants::theta*final_T;
