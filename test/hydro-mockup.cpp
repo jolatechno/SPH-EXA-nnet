@@ -72,7 +72,7 @@ public:
 	std::vector<double> x, y, z;
 
 	// hydro data
-	std::vector<double> rho, T; //...
+	std::vector<double> rho, temp; //...
 
 	void resize(const size_t N) {
 		node_id.resize(N);
@@ -83,7 +83,7 @@ public:
 		z.resize(N);
 
 		rho.resize(N);
-		T.resize(N);
+		temp.resize(N);
 	}
 };
 
@@ -230,7 +230,7 @@ int main(int argc, char* argv[]) {
 	const size_t n_particles = total_n_particles*(rank + 1)/size - total_n_particles*rank/size;
 	particle_data.resize(n_particles);
 	for (int i = 0; i < n_particles; ++i) {
-		particle_data.T[i]   = T_left   + (T_right   - T_left  )*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
+		particle_data.temp[i]   = T_left   + (T_right   - T_left  )*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
 		particle_data.rho[i] = rho_left + (rho_right - rho_left)*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
 	}
 
@@ -314,7 +314,7 @@ int main(int argc, char* argv[]) {
 	}
 
 
-	std::vector<std::string> outFields = {"node_id", "nuclear_particle_id", "T", "rho", "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"};
+	std::vector<std::string> outFields = {"node_id", "nuclear_particle_id", "temp", "rho", "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"};
 	if (use_net86) {
 		nuclear_data_86.setOutputFields(outFields, nnet::net86::constants::species_names);
 	} else

@@ -21,7 +21,7 @@ namespace sphexa::sphnnet {
 	struct NuclearDataType {
 	public:
 		/// hydro data
-		std::vector<Float> rho, T, previous_rho; // drho_dt
+		std::vector<Float> rho, temp, previous_rho; // drho_dt
 
 		/// nuclear abundances (vector of vector)
 		std::vector<utils::array<Float, n_species>> Y;
@@ -39,7 +39,7 @@ namespace sphexa::sphnnet {
 		void resize(const size_t N) {
 			rho.resize(N);
 			previous_rho.resize(N); //drho_dt.resize(N);
-			T.resize(N);
+			temp.resize(N);
 
 			Y.resize(N);
 
@@ -53,7 +53,7 @@ namespace sphexa::sphnnet {
 			fieldNames_[0] = "node_id";
 	        fieldNames_[1] = "nuclear_particle_id";
 	        fieldNames_[2] = "dt";
-	        fieldNames_[3] = "T";
+	        fieldNames_[3] = "temp";
 	        fieldNames_[4] = "rho";
 	        fieldNames_[5] = "previous_rho";
 
@@ -94,7 +94,7 @@ namespace sphexa::sphnnet {
 			ret[0] = &node_id;
 			ret[1] = &nuclear_particle_id;
 			ret[2] = &dt;
-			ret[3] = &T;
+			ret[3] = &temp;
 			ret[4] = &rho;
 			ret[5] = &previous_rho;
 
@@ -138,7 +138,7 @@ namespace sphexa::sphnnet {
 	        outputFieldNames[0] = "node_id";
 	        outputFieldNames[1] = "nuclear_particle_id";
 	        outputFieldNames[2] = "dt";
-	        outputFieldNames[3] = "T";
+	        outputFieldNames[3] = "temp";
 	        outputFieldNames[4] = "rho";
 	        outputFieldNames[5] = "previous_rho";
 

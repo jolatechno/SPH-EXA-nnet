@@ -3,6 +3,8 @@ namespace utils {
 	template<class T, int N>
 	using array = std::array<T, N>;
 }
+#else
+	#include "cstone/util/array.hpp"
 #endif
 
 namespace sphexa {
