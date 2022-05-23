@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "../../src/nuclear-net.hpp"
-#include "../../src/net14/net14.hpp"
-#include "../../src/eos/helmholtz.hpp"
+#include "../src/nuclear-net.hpp"
+#include "../src/net14/net14.hpp"
+#include "../src/eos/helmholtz.hpp"
 
 int main() {
 	std::cout << "A.size = " << nnet::net14::constants::A.size() << "\n";
