@@ -49,8 +49,8 @@ namespace sphexa::sphnnet {
 	void sendHydroData(const ParticlesDataType &d, NuclearDataType<n_species, Float> &n) {
 		std::swap(n.rho, n.previous_rho);
 
-		sphexa::mpi::directSyncDataFromPartition(n.partition, d.rho, n.rho, d.comm);
-		sphexa::mpi::directSyncDataFromPartition(n.partition, d.temp,   n.temp,   d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.rho,  n.rho,  d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.temp, n.temp, d.comm);
 	}
 
 	/// sending back hydro data from NuclearDataType to ParticlesDataType

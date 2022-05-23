@@ -414,8 +414,18 @@ namespace nnet {
 
 			// actual solving
 			for (int i = 0; i < constants::NR::max_it; ++i) {
-				if (dt == 0)
-					throw std::runtime_error("Zero timestep in nuclear network !\n");
+				if (dt == 0) {
+					std::string error = "Zero timestep in nuclear network\n";
+					error += "\tT=" + std::to_string(T) + "\n";
+					error += "\trho=" + std::to_string(rho) + "\n";
+					error += "\tdrho_dt=" + std::to_string(drho_dt) + "\n";
+					error += "\tY=";
+					for (auto y : Y)
+						error += std::to_string(y) + " ";
+					error += "\n";
+					
+					throw std::runtime_error(error);
+				}
 
 				// compute n+theta values
 				T_theta =        (1 - constants::theta)*T    + constants::theta*final_T;

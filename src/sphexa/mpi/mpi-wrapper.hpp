@@ -132,10 +132,14 @@ namespace sphexa::mpi {
 	void directSyncDataFromPartition(const mpi_partition &partition, const std::vector<T> &send_vector, std::vector<T> &recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
 		// prepare send buffer
 		const int n_particles = partition.node_id->size();
+		if (send_vector.size() < n_particles)
+			throw std::runtime_error("too small of a send vector in directSyncDataFromPartition! \n");
 
 		// prepare (partition) buffer
 		size_t n_particles_recv = partition.recv_partition.size();
 		std::vector<T> send_buffer(n_particles), recv_buffer(n_particles_recv);
+		if (recv_vector.size() < n_particles_recv)
+			throw std::runtime_error("too small of a receive vector in directSyncDataFromPartition! \n");
 
 		#pragma omp parallel for schedule(static)
 		for (size_t i = 0; i < n_particles; ++i)
@@ -180,10 +184,14 @@ namespace sphexa::mpi {
 
 		// prepare send buffer
 		const int n_particles = partition.node_id->size();
+		if (recv_vector.size() < n_particles)
+			throw std::runtime_error("too small of a receive vector in reversedSyncDataFromPartition! \n");
 
 		// prepare (partition) buffer
 		size_t n_particles_recv = partition.recv_partition.size();
 		std::vector<T> send_buffer(n_particles_recv), recv_buffer(n_particles);
+		if (send_vector.size() < n_particles_recv)
+			throw std::runtime_error("too small of a send vector in reversedSyncDataFromPartition! \n");
 
 		#pragma omp parallel for schedule(static)
 		for (size_t i = 0; i < n_particles_recv; ++i)

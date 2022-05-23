@@ -313,7 +313,6 @@ int main(int argc, char* argv[]) {
 		std::cout << "\nexec time: " << duration << "s (avg=" << avg_duration << "s/it, max=" << max_time << "s/it, min=" << min_time  << "s/it)\n\n";
 	}
 
-
 	std::vector<std::string> outFields = {"node_id", "nuclear_particle_id", "temp", "rho", "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"};
 	if (use_net86) {
 		nuclear_data_86.setOutputFields(outFields, nnet::net86::constants::species_names);
@@ -326,7 +325,8 @@ int main(int argc, char* argv[]) {
 			std::cout << name << " ";
 		std::cout << "\n";
 	}
-
+	
+	MPI_Barrier(MPI_COMM_WORLD);
 	if (use_net86) {
 		dump(nuclear_data_86, 0,                     n_print,     "/dev/stdout");
 		dump(nuclear_data_86, n_particles - n_print, n_particles, "/dev/stdout");
