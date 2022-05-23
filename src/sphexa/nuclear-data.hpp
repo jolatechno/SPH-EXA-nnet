@@ -10,9 +10,9 @@
 	#include "mpi/mpi-wrapper.hpp"
 #endif
 
-#include "utils/data_utils.hpp"
+#include "util/data_util.hpp"
 #ifndef NOT_FROM_SPHEXA
-	#include "sph/data_utils.hpp"
+	#include "sph/data_util.hpp"
 #endif
 
 namespace sphexa::sphnnet {

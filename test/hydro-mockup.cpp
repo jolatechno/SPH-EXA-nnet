@@ -2,8 +2,8 @@
 #include <chrono>
 
 
-#include "utils/arg_parser.hpp"
-#include "utils/sphexa_utils.hpp"
+#include "util/arg_parser.hpp"
+#include "util/sphexa_utils.hpp"
 
 
 // physical parameters

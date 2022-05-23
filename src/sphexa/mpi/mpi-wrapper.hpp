@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../utils/algorithm.hpp"
+#include "../util/algorithm.hpp"
 
 #include <mpi.h>
 

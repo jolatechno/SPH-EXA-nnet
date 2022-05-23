@@ -5,7 +5,7 @@
 #include "../src/net14/net14.hpp"
 #include "../src/eos/helmholtz.hpp"
 
-#include "utils/arg_parser.hpp"
+#include "util/arg_parser.hpp"
 
 void printHelp(char* name) {
 	std::cout << "\nUsage:\n\n";
