@@ -19,7 +19,7 @@ int main() {
 	const double rho_lim = 1e5;
 
 	// initial state
-	std::array<double, 14> last_Y, X;
+	utils::array<double, 14> last_Y, X;
 	for (int i = 0; i < 14; ++i) X[i] = 0;
 	X[1] = 0.5;
 	X[2] = 0.5;
@@ -47,7 +47,7 @@ int main() {
 
 
 	const nnet::eos::helmholtz helm_eos(nnet::net14::constants::Z);
-	const auto eos = [&](const std::array<double, 14> &Y_, const double T, const double rho_) {
+	const auto eos = [&](const utils::array<double, 14> &Y_, const double T, const double rho_) {
 		const double cv = 3.1e7; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
 		struct eos_output {
 			double cv, dP_dT;

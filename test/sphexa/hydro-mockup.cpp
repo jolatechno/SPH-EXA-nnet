@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	/* initial Y value */
-	std::array<double, 14> Y0, X;
+	utils::array<double, 14> Y0, X;
 	for (int i = 0; i < 14; ++i) X[i] = 0;
 	X[1] = 0.5;
 	X[2] = 0.5;

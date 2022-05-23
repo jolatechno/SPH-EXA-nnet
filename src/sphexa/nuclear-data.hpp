@@ -24,7 +24,7 @@ namespace sphexa::sphnnet {
 		std::vector<Float> rho, T, previous_rho; // drho_dt
 
 		/// nuclear abundances (vector of vector)
-		std::vector<std::array<Float, n_species>> Y;
+		std::vector<utils::array<Float, n_species>> Y;
 
 		/// timesteps
 		std::vector<Float> dt;
@@ -70,8 +70,8 @@ namespace sphexa::sphnnet {
 
 
 		/// nuclear abundances "transpose" vector for IO
-		std::array<nuclear_IO_vector<n_species, Float>, n_species> Y_io = [&]{
-			std::array<nuclear_IO_vector<n_species, Float>, n_species> Y_io_;
+		utils::array<nuclear_IO_vector<n_species, Float>, n_species> Y_io = [&]{
+			utils::array<nuclear_IO_vector<n_species, Float>, n_species> Y_io_;
 			for (int i = 0; i < n_species; ++i)
 				Y_io_[i] = nuclear_IO_vector<n_species, Float>(Y, i);
 			return Y_io_;
@@ -89,7 +89,7 @@ namespace sphexa::sphnnet {
 	    		nuclear_IO_vector<n_species, Float>*,
 	    		std::vector<Float>*>;
 	    	
-			std::array<FieldType, n_species + 6> ret;
+			utils::array<FieldType, n_species + 6> ret;
 
 			ret[0] = &node_id;
 			ret[1] = &nuclear_particle_id;

@@ -1,3 +1,10 @@
+#ifdef USE_STD_ARRAY
+namespace utils {
+	template<class T, int N>
+	using array = std::array<T, N>;
+}
+#endif
+
 namespace sphexa {
 	/// simple "iota" vector:
 	/**
@@ -48,13 +55,13 @@ namespace sphexa {
 	template<int n_species, typename Float=double>
 	class nuclear_IO_vector {
 	private:
-		std::vector<std::array<Float, n_species>> *Y;
+		std::vector<utils::array<Float, n_species>> *Y;
 		int species;
 
 	public:
 		// constructors
 		nuclear_IO_vector() {};
-		nuclear_IO_vector(std::vector<std::array<Float, n_species>> &Y_, const int species_) : Y(&Y_), species(species_) {}
+		nuclear_IO_vector(std::vector<utils::array<Float, n_species>> &Y_, const int species_) : Y(&Y_), species(species_) {}
 
 		template<typename Int=size_t>
 		auto operator[](const Int i) const {
