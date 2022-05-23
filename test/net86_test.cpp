@@ -7,14 +7,17 @@
 
 #include "utils/arg_parser.hpp"
 
-void printHelp() {
-	/* TODO */
+void printHelp(char* name) {
+	std::cout << "\nUsage:\n\n";
+	std::cout << name << " [OPTION]\n";
+
+	std::cout << "\nWhere possible options are:\n\n";
 }
 
 int main(int argc, char* argv[]) {
 	const ArgParser parser(argc, argv);
     if (parser.exists("-h") || parser.exists("--h") || parser.exists("-help") || parser.exists("--help")) {
-        printHelp();
+        printHelp(argv[0]);
         return 0;
     }
 
@@ -55,8 +58,10 @@ int main(int argc, char* argv[]) {
     	X[nnet::net86::constants::net14_species_order[0]] = 1;
     } else if (test_case == "Si-burning") {
     	X[nnet::net86::constants::net14_species_order[5]] = 1;
-    } else
+    } else {
+    	printHelp(argv[0]);
     	throw std::runtime_error("unknown nuclear test case!\n");
+    }
     for (int i = 0; i < 86; ++i) last_Y[i] = X[i]/nnet::net86::constants::A[i];
 
 

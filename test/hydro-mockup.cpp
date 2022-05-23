@@ -112,8 +112,13 @@ void step(ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<14, double>  &n
 	// do hydro stuff
 }
 
-void printHelp() {
-	/* TODO */
+void printHelp(char* name, int rank) {
+	if (rank == 0) {
+		std::cout << "\nUsage:\n\n";
+		std::cout << name << " [OPTION]\n";
+
+		std::cout << "\nWhere possible options are:\n\n";
+	}
 }
 
 int main(int argc, char* argv[]) {
@@ -130,7 +135,8 @@ int main(int argc, char* argv[]) {
 
 	const ArgParser parser(argc, argv);
     if (parser.exists("-h") || parser.exists("--h") || parser.exists("-help") || parser.exists("--help")) {
-        printHelp();
+        printHelp(argv[0], rank);
+        MPI_Finalize();
         return 0;
     }
 
@@ -159,8 +165,10 @@ int main(int argc, char* argv[]) {
     	X[0] = 1;
     } else if (test_case == "Si-burning") {
     	X[5] = 1;
-    } else
+    } else {
+    	printHelp(argv[0], rank);
     	throw std::runtime_error("unknown nuclear test case!\n");
+    }
     for (int i = 0; i < 14; ++i) Y0[i] = X[i]/nnet::net14::constants::A[i];
 
 
