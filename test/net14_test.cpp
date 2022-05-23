@@ -12,6 +12,22 @@ void printHelp(char* name) {
 	std::cout << name << " [OPTION]\n";
 
 	std::cout << "\nWhere possible options are:\n\n";
+
+	std::cout << "\t'-n': number of iterations (default = 1000)\n\n";
+	std::cout << "\t'--t-lim': limit time (default = 1.5s)\n\n";
+	std::cout << "\t'--n-debug': number of debuging prints (default = 30)\n\n";
+	std::cout << "\t'--n-save': number of saving prints (to stderr) (default = 0)\n\n";
+
+	std::cout << "\t'--rho': density (default = 1e9)\n\n";
+	std::cout << "\t'-T': Temperature (default = 1e9)\n\n";
+
+	std::cout << "\t'--test-case': represent nuclear initial state, can be:\n\n";
+	std::cout << "\t\t'C-O-burning: x(12C) = x(16O) = 0.5\n\n";
+	std::cout << "\t\t'He-burning: x(4He) = 1\n\n";
+	std::cout << "\t\t'Si-burning: x(28Si) = 1\n\n";
+
+	std::cout << "\t'--isotherm', if exists cv=1e20, else use Helmholtz EOS\n\n";
+	std::cout << "\t'--skip-coulomb-corr', if exists skip coulombian corrections\n\n";
 }
 
 int main(int argc, char* argv[]) {

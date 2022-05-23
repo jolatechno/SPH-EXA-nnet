@@ -118,6 +118,23 @@ void printHelp(char* name, int rank) {
 		std::cout << name << " [OPTION]\n";
 
 		std::cout << "\nWhere possible options are:\n\n";
+
+		std::cout << "\t'-n': number of iterations (default = 50)\n\n";
+		std::cout << "\t'--dt': timestep (default = 1e-2s)\n\n";
+
+		std::cout << "\t'--n-particle': total number of particles shared across nodes (default = 1000)\n\n";
+		std::cout << "\t'--n-particle-print': number of particle to serialize at the end and begining of each node (default = 5)\n\n";
+
+		std::cout << "\t'--test-case': represent nuclear initial state, can be:\n\n";
+		std::cout << "\t\t'C-O-burning: x(12C) = x(16O) = 0.5\n\n";
+		std::cout << "\t\t'He-burning: x(4He) = 1\n\n";
+		std::cout << "\t\t'Si-burning: x(28Si) = 1\n\n";
+
+		std::cout << "\t'--isotherm': if exists cv=1e20, else use Helmholtz EOS\n\n";
+		std::cout << "\t'--skip-coulomb-corr': if exists skip coulombian corrections\n\n";
+
+		std::cout << "\t'--output-net14': if exists output results only for net14 species\n\n";
+		std::cout << "\t'--debug-net86': if exists output debuging prints for net86 species\n\n";
 	}
 }
 
@@ -235,9 +252,15 @@ int main(int argc, char* argv[]) {
 			std::cout << "\t...Ok\n";
 	}
 
-	std::vector<std::string> outFields = {"node_id", "nuclear_particle_id", "T", "rho", "Y(4He)", "Y(12C)", "Y(16O)"};
+	std::vector<std::string> outFields = {"node_id", "nuclear_particle_id", "T", "rho", "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"};
 	nuclear_data.setOutputFields(outFields, nnet::net14::constants::species_names);
 
+	if (rank == 0) {
+		for (auto name : outFields)
+			std::cout << name << " ";
+		std::cout << "\n";
+	}
+	
 	dump(nuclear_data, 0,                     n_print,     "/dev/stdout");
 	dump(nuclear_data, n_particles - n_print, n_particles, "/dev/stdout");
 
