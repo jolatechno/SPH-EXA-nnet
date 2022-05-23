@@ -7,6 +7,7 @@
 
 
 // physical parameters
+#include "../src/net86/net86.hpp"
 #include "../src/net14/net14.hpp"
 #include "../src/eos/helmholtz.hpp"
 
@@ -95,8 +96,8 @@ public:
 
 
 // mockup of the step function 
-template<class func_rate, class func_BE, class func_eos>
-void step(ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<14, double>  &n, const double dt,
+template<class func_rate, class func_BE, class func_eos, int n_species>
+void step(ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<n_species, double>  &n, const double dt,
 	const std::vector<nnet::reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos) {
 
 	// domain redecomposition
@@ -158,6 +159,8 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    const bool use_net86                    = parser.exists("--use-net86");
+
     const double hydro_dt                   = parser.get("--dt", 1e-1);
     const int n_max                         = parser.get("-n", 100);
     const int n_print                       = parser.get("--n-particle-print", 5);
@@ -174,20 +177,42 @@ int main(int argc, char* argv[]) {
     nnet::constants::NR::min_it             = parser.get("--min_NR_it",   nnet::constants::NR::min_it);
     nnet::constants::NR::max_it             = parser.get("--max_NR_it",   nnet::constants::NR::max_it);
 
-	std::array<double, 14> Y0, X;
-    for (int i = 0; i < 14; ++i) X[i] = 0;
-    if  (      test_case == "C-O-burning") {
-    	X[1] = 0.5;
-		X[2] = 0.5;
-    } else if (test_case == "He-burning") {
-    	X[0] = 1;
-    } else if (test_case == "Si-burning") {
-    	X[5] = 1;
+	std::array<double, 86> Y0_86, X_86;
+	std::array<double, 14> Y0_14, X_14;
+    if (use_net86) {
+   		for (int i = 0; i < 86; ++i) X_86[i] = 0;
+
+	    if  (      test_case == "C-O-burning") {
+	    	X_86[nnet::net86::constants::net14_species_order[1]] = 0.5;
+			X_86[nnet::net86::constants::net14_species_order[2]] = 0.5;
+	    } else if (test_case == "He-burning") {
+	    	X_86[nnet::net86::constants::net14_species_order[0]] = 1;
+	    } else if (test_case == "Si-burning") {
+	    	X_86[nnet::net86::constants::net14_species_order[5]] = 1;
+	    } else {
+	    	printHelp(argv[0], rank);
+	    	throw std::runtime_error("unknown nuclear test case!\n");
+	    }
+
+	    for (int i = 0; i < 86; ++i) Y0_86[i] = X_86[i]/nnet::net86::constants::A[i];
     } else {
-    	printHelp(argv[0], rank);
-    	throw std::runtime_error("unknown nuclear test case!\n");
+   		for (int i = 0; i < 14; ++i) X_14[i] = 0;
+
+    	if  (      test_case == "C-O-burning") {
+	    	X_14[1] = 0.5;
+			X_14[2] = 0.5;
+	    } else if (test_case == "He-burning") {
+	    	X_14[0] = 1;
+	    } else if (test_case == "Si-burning") {
+	    	X_14[5] = 1;
+	    } else {
+	    	printHelp(argv[0], rank);
+	    	throw std::runtime_error("unknown nuclear test case!\n");
+	    }
+
+	    for (int i = 0; i < 14; ++i) Y0_14[i] = X_14[i]/nnet::net14::constants::A[i];
     }
-    for (int i = 0; i < 14; ++i) Y0[i] = X[i]/nnet::net14::constants::A[i];
+    
 
 
 
@@ -215,13 +240,16 @@ int main(int argc, char* argv[]) {
 
 
 
-	const nnet::eos::helmholtz helm_eos(nnet::net14::constants::Z);
-	const auto isotherm_eos = [&](const std::array<double, 14> &Y_, const double T, const double rho_) {
-		const double cv = 1e20; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
-		struct eos_output {
-			double cv, dP_dT;
-		} res{cv, 0};
-		return res;
+	const nnet::eos::helmholtz helm_eos_86 = nnet::eos::helmholtz(nnet::net86::constants::Z);
+	const nnet::eos::helmholtz helm_eos_14 = nnet::eos::helmholtz(nnet::net14::constants::Z);
+	const struct eos_output {
+		double cv, dP_dT;
+	} isotherm_res{1e20, 0};
+	const auto isotherm_eos_86 = [&](const std::array<double, 86> &Y_, const double T, const double rho_) {
+		return isotherm_res;
+	};
+	const auto isotherm_eos_14 = [&](const std::array<double, 14> &Y_, const double T, const double rho_) {
+		return isotherm_res;
 	};
 
 
@@ -230,11 +258,13 @@ int main(int argc, char* argv[]) {
 	initialize nuclear data
 	!!!!!!!!!!!! */
 	sphexa::mpi::initializePointers(particle_data.node_id, particle_data.particle_id, n_particles);
-	auto nuclear_data = sphexa::sphnnet::initNuclearDataFromConst<14>(particle_data, Y0);
+	auto nuclear_data_86 = sphexa::sphnnet::initNuclearDataFromConst<86>(particle_data, Y0_86);
+	auto nuclear_data_14 = sphexa::sphnnet::initNuclearDataFromConst<14>(particle_data, Y0_14);
 
 
 
 	auto start = std::chrono::high_resolution_clock::now();
+	double min_time = 3600, max_time = 0;
 
 	/* !!!!!!!!!!!!
 	do simulation
@@ -244,13 +274,31 @@ int main(int argc, char* argv[]) {
 		if (rank == 0)
 			std::cout << i << "th iteration...\n";
 
-		if (isotherm) {
-			step(particle_data, nuclear_data, hydro_dt,
-				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, isotherm_eos);
+		MPI_Barrier(MPI_COMM_WORLD);
+		auto start_it = std::chrono::high_resolution_clock::now();
+
+		if (use_net86) {
+			if (isotherm) {
+				step(particle_data, nuclear_data_86, hydro_dt,
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double>, nnet::net86::compute_BE<double>, isotherm_eos_86);
+			} else
+				step(particle_data, nuclear_data_86, hydro_dt,
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double>, nnet::net86::compute_BE<double>, helm_eos_86);
 		} else
-			step(particle_data, nuclear_data, hydro_dt,
-				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, helm_eos);
+			if (isotherm) {
+				step(particle_data, nuclear_data_14, hydro_dt,
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, isotherm_eos_14);
+			} else
+				step(particle_data, nuclear_data_14, hydro_dt,
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, helm_eos_14);
+		
 		t += hydro_dt;
+
+		MPI_Barrier(MPI_COMM_WORLD);
+		auto end_it = std::chrono::high_resolution_clock::now();
+		auto duration_it = ((float)std::chrono::duration_cast<std::chrono::milliseconds>(end_it - start_it).count())/1e3;
+		min_time = std::min(min_time, duration_it);
+		max_time = std::max(max_time, duration_it);
 
 		if (rank == 0)
 			std::cout << "\t...Ok\n";
@@ -260,14 +308,18 @@ int main(int argc, char* argv[]) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (rank == 0) {
 		auto stop = std::chrono::high_resolution_clock::now();
-		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-		std::cout << "\nexec time:" << ((float)duration.count())/1e3 << "s\n\n";
+		auto duration = ((float)std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count())/1e3;
+		auto avg_duration = duration/n_max;
+		std::cout << "\nexec time: " << duration << "s (avg=" << avg_duration << "s/it, max=" << max_time << "s/it, min=" << min_time  << "s/it)\n\n";
 	}
 
 
-
 	std::vector<std::string> outFields = {"node_id", "nuclear_particle_id", "T", "rho", "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"};
-	nuclear_data.setOutputFields(outFields, nnet::net14::constants::species_names);
+	if (use_net86) {
+		nuclear_data_86.setOutputFields(outFields, nnet::net86::constants::species_names);
+	} else
+		nuclear_data_14.setOutputFields(outFields, nnet::net14::constants::species_names);
+	
 
 	if (rank == 0) {
 		for (auto name : outFields)
@@ -275,8 +327,13 @@ int main(int argc, char* argv[]) {
 		std::cout << "\n";
 	}
 
-	dump(nuclear_data, 0,                     n_print,     "/dev/stdout");
-	dump(nuclear_data, n_particles - n_print, n_particles, "/dev/stdout");
+	if (use_net86) {
+		dump(nuclear_data_86, 0,                     n_print,     "/dev/stdout");
+		dump(nuclear_data_86, n_particles - n_print, n_particles, "/dev/stdout");
+	} else {
+		dump(nuclear_data_14, 0,                     n_print,     "/dev/stdout");
+		dump(nuclear_data_14, n_particles - n_print, n_particles, "/dev/stdout");
+	}
 
 	MPI_Finalize();
 
