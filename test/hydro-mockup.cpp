@@ -177,8 +177,8 @@ int main(int argc, char* argv[]) {
     nnet::constants::NR::min_it             = parser.get("--min_NR_it",   nnet::constants::NR::min_it);
     nnet::constants::NR::max_it             = parser.get("--max_NR_it",   nnet::constants::NR::max_it);
 
-	std::array<double, 86> Y0_86, X_86;
-	std::array<double, 14> Y0_14, X_14;
+	util::array<double, 86> Y0_86, X_86;
+	util::array<double, 14> Y0_14, X_14;
     if (use_net86) {
    		for (int i = 0; i < 86; ++i) X_86[i] = 0;
 
@@ -245,10 +245,10 @@ int main(int argc, char* argv[]) {
 	const struct eos_output {
 		double cv, dP_dT;
 	} isotherm_res{1e20, 0};
-	const auto isotherm_eos_86 = [&](const std::array<double, 86> &Y_, const double T, const double rho_) {
+	const auto isotherm_eos_86 = [&](const util::array<double, 86> &Y_, const double T, const double rho_) {
 		return isotherm_res;
 	};
-	const auto isotherm_eos_14 = [&](const std::array<double, 14> &Y_, const double T, const double rho_) {
+	const auto isotherm_eos_14 = [&](const util::array<double, 14> &Y_, const double T, const double rho_) {
 		return isotherm_res;
 	};
 
