@@ -1,4 +1,5 @@
 #include <vector>
+#include <chrono>
 
 
 #include "utils/arg_parser.hpp"
@@ -157,8 +158,8 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    const double hydro_dt                   = parser.get("--dt", 1e-2);
-    const int n_max                         = parser.get("-n", 50);
+    const double hydro_dt                   = parser.get("--dt", 1e-1);
+    const int n_max                         = parser.get("-n", 100);
     const int n_print                       = parser.get("--n-particle-print", 5);
     const size_t total_n_particles          = parser.get("--n-particle", 1000);
 
@@ -194,8 +195,8 @@ int main(int argc, char* argv[]) {
 
 
     /* initial hydro data */
-	double rho_left = 1.2e9, rho_right = 1e9;
-	double T_left = 0.8e9, T_right = 1.1e9;
+	double rho_left = 1e9, rho_right = 0.8e9;
+	double T_left = 0.95e9, T_right = 1.1e9;
 
 	/* !!!!!!!!!!!!
 	initialize the hydro state
@@ -232,6 +233,9 @@ int main(int argc, char* argv[]) {
 	auto nuclear_data = sphexa::sphnnet::initNuclearDataFromConst<14>(particle_data, Y0);
 
 
+
+	auto start = std::chrono::high_resolution_clock::now();
+
 	/* !!!!!!!!!!!!
 	do simulation
 	!!!!!!!!!!!! */
@@ -252,6 +256,16 @@ int main(int argc, char* argv[]) {
 			std::cout << "\t...Ok\n";
 	}
 
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	if (rank == 0) {
+		auto stop = std::chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+		std::cout << "\nexec time:" << ((float)duration.count())/1e3 << "s\n\n";
+	}
+
+
+
 	std::vector<std::string> outFields = {"node_id", "nuclear_particle_id", "T", "rho", "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"};
 	nuclear_data.setOutputFields(outFields, nnet::net14::constants::species_names);
 
@@ -260,7 +274,7 @@ int main(int argc, char* argv[]) {
 			std::cout << name << " ";
 		std::cout << "\n";
 	}
-	
+
 	dump(nuclear_data, 0,                     n_print,     "/dev/stdout");
 	dump(nuclear_data, n_particles - n_print, n_particles, "/dev/stdout");
 
