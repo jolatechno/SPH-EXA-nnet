@@ -39,65 +39,31 @@ namespace sphexa {
 		}
 	};
 
-	namespace sphnnet {
-		/// nuclear abundances type, that is integrated into NuclearData, or should be integrated into ParticlesData
-		template <int n_species, typename Float=double>
-		class NuclearAbundances {
-		private:
-			Float data[n_species];
-		public:
-			NuclearAbundances(Float x=0) {
-				for (int i = 0; i < n_species; ++i)
-					data[i] = x;
-			}
+	/// vector for nuclear IO
+	/**
+	 * vector for nuclear IO,
+	 * allows access by reference of nuclear data
+	 * therby allowing "splitting" the vector of vector of nuclear species (Y) multiple vector, without memory overhead.
+	 */
+	template<int n_species, typename Float=double>
+	class nuclear_IO_vector {
+	private:
+		std::vector<std::array<Float, n_species>> *Y;
+		int species;
 
-			size_t size() const {
-				return n_species;
-			}
+	public:
+		// constructors
+		nuclear_IO_vector() {};
+		nuclear_IO_vector(std::vector<std::array<Float, n_species>> &Y_, const int species_) : Y(&Y_), species(species_) {}
 
-			Float &operator[](const int i) {
-				return data[i];
-			}
+		template<typename Int=size_t>
+		auto operator[](const Int i) const {
+			return (*Y)[i][species];
+		}
 
-			const Float &operator[](const int i) const {
-				return data[i];
-			}
-
-			template<class Vector>
-			NuclearAbundances &operator=(const Vector &other) {
-				for (int i = 0; i < n_species; ++i)
-					data[i] = other[i];
-
-				return *this;
-			}
-		};
-
-		/// vector for nuclear IO
-		/**
-		 * vector for nuclear IO,
-		 * allows access by reference of nuclear data
-		 * therby allowing "splitting" the vector of vector of nuclear species (Y) multiple vector, without memory overhead.
-		 */
-		template<int n_species, typename Float=double>
-		class nuclear_IO_vector {
-		private:
-			std::vector<NuclearAbundances<n_species, Float>> *Y;
-			int species;
-
-		public:
-			// constructors
-			nuclear_IO_vector() {};
-			nuclear_IO_vector(std::vector<NuclearAbundances<n_species, Float>> &Y_, const int species_) : Y(&Y_), species(species_) {}
-
-			template<typename Int=size_t>
-			auto operator[](const Int i) const {
-				return (*Y)[i][species];
-			}
-
-			template<typename Int=size_t>
-			auto at(const Int i) const {
-				return Y->at(i)[species];
-			}
-		};
-	}
+		template<typename Int=size_t>
+		auto at(const Int i) const {
+			return Y->at(i)[species];
+		}
+	};
 }

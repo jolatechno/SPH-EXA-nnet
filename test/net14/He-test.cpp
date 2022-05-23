@@ -14,9 +14,9 @@ int main() {
 	double last_T = 1e9;
 
 	// initial state
-	std::vector<double> last_Y(14, 0), X(14, 0);
+	std::array<double, 14> last_Y, X;
+	for (int i = 0; i < 14; ++i) X[i] = 0;
 	X[0] = 1;
-
 
 	for (int i = 0; i < 14; ++i) last_Y[i] = X[i]/nnet::net14::constants::A[i];
 
@@ -40,7 +40,7 @@ int main() {
 
 
 	const nnet::eos::helmholtz helm_eos(nnet::net14::constants::Z);
-	auto const eos = [&](const std::vector<double> &Y_, const double T, const double rho_) {
+	auto const eos = [&](const std::array<double, 14> &Y_, const double T, const double rho_) {
 		const double cv = 1e9;
 		struct eos_output {
 			double cv, dP_dT;

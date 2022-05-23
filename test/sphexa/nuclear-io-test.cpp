@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
 
 	// initial state
 	const int n_particles = 20;
-	sphexa::sphnnet::NuclearDataType<14, double>  nuclear_data;
+	sphexa::sphnnet::NuclearDataType<14, double> nuclear_data;
 	nuclear_data.resize(n_particles);
 	for (int i = 0; i < n_particles; ++i) {
 		double X_C = C_left + (C_right - C_left)*(float)i/(float)(n_particles - 1);

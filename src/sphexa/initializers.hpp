@@ -11,20 +11,21 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<int n_species, typename Float=double, class initFunc, class ParticlesDataType>
-	NuclearDataType<n_species, Float> initNuclearDataFromPos(ParticlesDataType &d, const initFunc initializer, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
+	NuclearDataType<n_species, Float> initNuclearDataFromPos(ParticlesDataType &d, const initFunc initializer) {
 		NuclearDataType<n_species, Float> n;
 
-		const size_t local_nuclear_n_particles = partition.recv_partition.size();
+		sphexa::sphnnet::initializePartition(d, n);
+		const size_t local_nuclear_n_particles = n.partition.recv_partition.size();
 
 		// share the initial rho
 		n.resize(local_nuclear_n_particles);
-		sphexa::mpi::directSyncDataFromPartition(partition, d.rho, n.rho, datatype, d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.rho, n.rho, d.comm);
 
 		// receiv position for initializer
 		std::vector<Float> x(local_nuclear_n_particles), y(local_nuclear_n_particles), z(local_nuclear_n_particles);
-		sphexa::mpi::directSyncDataFromPartition(partition, d.x, x, datatype, d.comm);
-		sphexa::mpi::directSyncDataFromPartition(partition, d.y, y, datatype, d.comm);
-		sphexa::mpi::directSyncDataFromPartition(partition, d.z, z, datatype, d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.x, x, d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.y, y, d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.z, z, d.comm);
 
 		// intialize nuclear data
 		#pragma omp parallel for schedule(dynamic)
@@ -39,22 +40,23 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<int n_species, typename Float=double, class initFunc, class ParticlesDataType>
-	NuclearDataType<n_species, Float> initNuclearDataFromRadius(ParticlesDataType &d, const initFunc initializer, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
+	NuclearDataType<n_species, Float> initNuclearDataFromRadius(ParticlesDataType &d, const initFunc initializer) {
 		NuclearDataType<n_species, Float> n;
 
-		const size_t local_nuclear_n_particles = partition.recv_partition.size();
+		sphexa::sphnnet::initializePartition(d, n);
+		const size_t local_nuclear_n_particles = n.partition.recv_partition.size();
 		const size_t local_n_particles = d.x.size();
 
 		// share the initial rho
 		n.resize(local_nuclear_n_particles);
-		sphexa::mpi::directSyncDataFromPartition(partition, d.rho, n.rho, datatype, d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.rho, n.rho, d.comm);
 
 		// receiv position for initializer
 		std::vector<Float> send_r(local_n_particles), r(local_nuclear_n_particles, d.comm);
 		#pragma omp parallel for schedule(dynamic)
 		for (size_t i = 0; i < local_n_particles; ++i)
 			send_r[i] = std::sqrt(d.x[i]*d.x[i] + d.y[i]*d.y[i] + d.z[i]*d.z[i]);
-		sphexa::mpi::directSyncDataFromPartition(partition, send_r, r, datatype, d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, send_r, r, d.comm);
 
 		// intialize nuclear data
 		#pragma omp parallel for schedule(dynamic)
@@ -69,14 +71,15 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<int n_species, typename Float=double, class initFunc, class ParticlesDataType>
-	NuclearDataType<n_species, Float> initNuclearDataFromRho(ParticlesDataType &d, const initFunc initializer, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
+	NuclearDataType<n_species, Float> initNuclearDataFromRho(ParticlesDataType &d, const initFunc initializer) {
 		NuclearDataType<n_species, Float> n;
 
-		const size_t local_nuclear_n_particles = partition.recv_partition.size();
+		sphexa::sphnnet::initializePartition(d, n);
+		const size_t local_nuclear_n_particles = n.partition.recv_partition.size();
 
 		// share the initial rho
 		n.resize(local_nuclear_n_particles);
-		sphexa::mpi::directSyncDataFromPartition(partition, d.rho, n.rho, datatype, d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.rho, n.rho, d.comm);
 
 		// intialize nuclear data
 		#pragma omp parallel for schedule(dynamic)
@@ -92,14 +95,15 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<int n_species, typename Float=double, class Vector, class ParticlesDataType>
-	NuclearDataType<n_species, Float> initNuclearDataFromConst(ParticlesDataType &d, const Vector &Y0, const sphexa::mpi::mpi_partition &partition, MPI_Datatype datatype) {
+	NuclearDataType<n_species, Float> initNuclearDataFromConst(ParticlesDataType &d, const Vector &Y0) {
 		NuclearDataType<n_species, Float> n;
 
-		const size_t local_nuclear_n_particles = partition.recv_partition.size();
+		sphexa::sphnnet::initializePartition(d, n);
+		const size_t local_nuclear_n_particles = n.partition.recv_partition.size();
 
 		// share the initial rho
 		n.resize(local_nuclear_n_particles);
-		sphexa::mpi::directSyncDataFromPartition(partition, d.rho, n.rho, datatype, d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.rho, n.rho, d.comm);
 
 		// intialize nuclear data
 		#pragma omp parallel for schedule(dynamic)

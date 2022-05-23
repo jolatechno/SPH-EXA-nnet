@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	/* initial Y value */
-	sphexa::sphnnet::NuclearAbundances<14> Y0, X;
+	std::array<double, 14> Y0, X;
 	for (int i = 0; i < 14; ++i) X[i] = 0;
 	X[1] = 0.5;
 	X[2] = 0.5;
@@ -115,56 +115,8 @@ int main(int argc, char* argv[]) {
 		d.rho[i] = rho_left + (rho_right - rho_left)*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
 	}
 
-
-#if defined(NO_COMM) || defined(NO_MIX)
-	sphexa::sphnnet::NuclearDataType<14> n;
-
-#ifdef NO_COMM
-	/* !!!!!!!!!!!!
-	initialize pointers with some simple "mixing"
-	!!!!!!!!!!!! */
-	for (int i = 0; i < n_particles; ++i) {
-		d.node_id[i] = rank;
-		d.particle_id[i] = i;
-	}
-#else //ifdef NO_MIX
-	/* !!!!!!!!!!!!
-	initialize pointers with a lot of communication but no "mixing"
-	!!!!!!!!!!!! */
-	for (int i = 0; i < n_particles; ++i) {
-		d.node_id[i] = (rank + 1)%size;
-		d.particle_id[i] = i;
-	}
-#endif
-
-	/* !!!!!!!!!!!!
-	initialize the nuclear data with homogenous abundances
-	!!!!!!!!!!!! */
-	{
-		auto partition = sphexa::mpi::partitionFromPointers(d.node_id, d.particle_id);
-		sphexa::mpi::directSyncDataFromPartition(partition, d.rho, n.previous_rho, MPI_DOUBLE);
-		const size_t nuclear_n_particles = partition.recv_disp[size];
-		n.resize(nuclear_n_particles);
-		for (size_t i = 0; i < nuclear_n_particles; ++i) {
-			n.Y[i] = Y0;
-		}
-	}
-	
-#else
-	/* !!!!!!!!!!!!
-	initialize pointers
-	!!!! THE WAY IT SHOULD BE DONE !!!!
-	!!!!!!!!!!!! */
 	sphexa::mpi::initializePointers(d.node_id, d.particle_id, n_particles);
-
-	/* !!!!!!!!!!!!
-	initialize nuclear data
-	!!!! THE WAY IT SHOULD BE DONE !!!!
-	!!!!!!!!!!!! */
-	auto partition = sphexa::mpi::partitionFromPointers(d.node_id, d.particle_id, d.comm);
-	sphexa::sphnnet::NuclearDataType<14> n = sphexa::sphnnet::initNuclearDataFromConst<14>(d,
-		Y0, partition, MPI_DOUBLE);
-#endif
+	sphexa::sphnnet::NuclearDataType<14> n = sphexa::sphnnet::initNuclearDataFromConst<14>(d, Y0);
 
 
 	/* !!!!!!!!!!!!

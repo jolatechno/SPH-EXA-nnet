@@ -21,7 +21,8 @@ int main() {
 	const double rho_lim = 1e5;
 
 	// initial state
-	std::vector<double> last_Y(86, 0), X(86, 0);
+	std::array<double, 86> last_Y, X;
+	for (int i = 0; i < 86; ++i) X[i] = 0;
 	X[nnet::net86::constants::alpha] = 1;
 
 
@@ -52,7 +53,7 @@ int main() {
 
 
 	const nnet::eos::helmholtz helm_eos(nnet::net86::constants::Z);
-	const auto eos = [&](const std::vector<double> &Y_, const double T, const double rho_) {
+	const auto eos = [&](const std::array<double, 86> &Y_, const double T, const double rho_) {
 		const double cv = 3.1e7; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net86 fortran
 		struct eos_output {
 			double cv, dP_dT;

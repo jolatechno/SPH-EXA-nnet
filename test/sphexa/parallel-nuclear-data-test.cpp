@@ -35,7 +35,7 @@ int main() {
 
 	// initial state
 	const int n_particles = 1000;
-	sphexa::sphnnet::NuclearDataType<14, double>  nuclear_data;
+	sphexa::sphnnet::NuclearDataType<14, double> nuclear_data;
 	nuclear_data.resize(n_particles);
 	for (int i = 0; i < n_particles; ++i) {
 		nuclear_data.Y[i][1] = 0.5/nnet::net14::constants::A[1];

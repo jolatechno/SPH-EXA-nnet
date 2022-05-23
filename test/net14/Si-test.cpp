@@ -14,7 +14,8 @@ int main() {
 	double last_T = 6e9;
 
 	// initial state
-	std::vector<double> last_Y(14, 0), X(14, 0);
+	std::array<double, 14> last_Y, X;
+	for (int i = 0; i < 14; ++i) X[i] = 0;
 	X[5] = 1;
 
 
@@ -40,7 +41,7 @@ int main() {
 
 
 
-	auto const eos = [&](const std::vector<double> &Y_, const double T, const double rho_) {
+	auto const eos = [&](const std::array<double, 14> &Y_, const double T, const double rho_) {
 		const double cv = 1e20; // isothermal
 		struct eos_output {
 			double cv, dP_dT;
