@@ -107,8 +107,7 @@ namespace nnet::net86 {
 		// ideal gaz correction
 		const Float kbt = constants::Kb*T;
 		const Float nakbt = constants::Na*kbt;
-		const Float dcorrection_dT = -1.5*constants::Kb*constants::Na;
-		const Float correction = dcorrection_dT*T;
+		const Float correction = -1.5*nakbt;
 
 		std::vector<Float> corrected_BE(87);
 		for (int i = 0; i < 87; ++i)
