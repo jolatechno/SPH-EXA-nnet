@@ -23,6 +23,9 @@ namespace sphexa::sphnnet {
 	template<int n_species, typename Float=double>
 	struct NuclearDataType {
 	public:
+		/// check if previous rho is already initialized
+		bool first_step = true;
+		
 		/// hydro data
 		std::vector<Float> rho, temp, previous_rho; // drho_dt
 

@@ -107,7 +107,7 @@ void step(ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<n_species, doub
 	// do hydro stuff
 
 	sphexa::sphnnet::sendHydroData(d, n);
-	sphexa::sphnnet::compute_nuclear_reactions(n, dt,
+	sphexa::sphnnet::compute_nuclear_reactions(n, dt, dt,
 		reactions, construct_rates, construct_BE, eos);
 	sphexa::sphnnet::recvHydroData(d, n);
 
