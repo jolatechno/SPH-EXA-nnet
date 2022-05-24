@@ -137,7 +137,9 @@ int main(int argc, char* argv[]) {
 				for (int i = 0; i < 14; ++i) X[i] = Y[i]*nnet::net14::constants::A[i]/eigen::dot(Y, nnet::net14::constants::A);
 				std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
 				for (int i = 0; i < 14; ++i) std::cout << X[i] << ", ";
-				std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << "),\tcv=" << helm_eos(last_Y, last_T, rho).cv << ",\t" << T << "\n";
+
+				auto state = helm_eos(last_Y, last_T, rho);
+				std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << "),\tcv=" << state.cv << ",\tdP/dT=" << state.dP_dT << ",\t" << T << "\n";
 			}
 
 		last_Y = Y;

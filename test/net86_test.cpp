@@ -161,7 +161,7 @@ int main(int argc, char* argv[]) {
 				} else
 					for (auto idx : nnet::net86::constants::net14_species_order)
 						std::cout << X[idx] << ", ";
-				std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << "),\tcv=" << helm_eos(last_Y, last_T, rho).cv << ",\t" << T << "\n";
+				std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << ")\t" << T << "\n";
 			}
 
 		last_Y = Y;

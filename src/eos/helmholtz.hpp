@@ -1043,6 +1043,8 @@ namespace nnet::eos {
 
 				Float dse, dpe, dsp;
 				Float cv_gaz, cp_gaz, sound_gaz; 
+
+				Float dU_dYe;
 			} res;
 
 
@@ -1086,7 +1088,8 @@ namespace nnet::eos {
 			res.dsp = -rhotrdd*x/dpresdt - 1.;
 
 			// Needed output
-			res.dP_dT /*dUdYe*/=degasdz*abar;
+			res.dP_dT  = dpresdt;
+			res.dU_dYe = degasdz*abar;
 
 			return res;
 		}
