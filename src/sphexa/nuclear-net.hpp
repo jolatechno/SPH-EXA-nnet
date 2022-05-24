@@ -36,8 +36,8 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
-	void initializePartition(const ParticlesDataType &d, NuclearDataType<n_species, Float> &n) {
-		n.partition = sphexa::mpi::partitionFromPointers(d.node_id, d.particle_id, d.comm);
+	void initializePartition(size_t firstIndex, size_t lastIndex, const ParticlesDataType &d, NuclearDataType<n_species, Float> &n) {
+		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
 	}
 
 

@@ -54,7 +54,7 @@ namespace sphexa::mpi {
 	/**
 	 * TODO
 	 */
-	mpi_partition partitionFromPointers(const std::vector<int> &node_id, const std::vector<std::size_t> &particle_id, MPI_Comm comm) {
+	mpi_partition partitionFromPointers(size_t firstIndex, size_t lastIndex, const std::vector<int> &node_id, const std::vector<std::size_t> &particle_id, MPI_Comm comm) {
 		int rank, size;
 		MPI_Comm_size(comm, &size);
 		MPI_Comm_rank(comm, &rank);
@@ -62,12 +62,12 @@ namespace sphexa::mpi {
 		mpi_partition partition(node_id, particle_id);
 
 		// prepare vector sizes
-		const int n_particles = node_id.size();
+		const int n_particles = lastIndex - firstIndex;
 		partition.resize_comm_size(size);
 		partition.send_partition.resize(n_particles);
 
 		// localy partition
-		utils::parallel_generalized_partition_from_iota(partition.send_partition.begin(), partition.send_partition.end(), 0, 
+		utils::parallel_generalized_partition_from_iota(partition.send_partition.begin(), partition.send_partition.end(), firstIndex, 
 			partition.send_disp.begin(), partition.send_disp.end(),
 			[&](const int idx) {
 				return node_id[idx];
@@ -103,13 +103,14 @@ namespace sphexa::mpi {
 	/**
 	 * TODO
 	 */
-	void initializePointers(std::vector<int> &node_id, std::vector<std::size_t> &particle_id, const size_t local_n_particles) {
+	void initializePointers(size_t firstIndex, size_t lastIndex, std::vector<int> &node_id, std::vector<std::size_t> &particle_id) {
 		int rank, size;
 		MPI_Comm_size(MPI_COMM_WORLD, &size);
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 		// share the number of particle per node
 		std::vector<size_t> n_particles(size);
+		size_t local_n_particles = lastIndex - firstIndex;
 		MPI_Allgather(&local_n_particles, 1, MPI_UNSIGNED_LONG_LONG,
 					  &n_particles[0],    1, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
 
@@ -119,8 +120,8 @@ namespace sphexa::mpi {
 		#pragma omp parallel for schedule(dynamic)
 		for (size_t i = 0; i < local_n_particles; ++i) {
 			size_t global_idx = global_idx_begin + i;
-			node_id[i] = global_idx % size;
-			particle_id[i] = global_idx / size;
+			node_id[    firstIndex + i] = global_idx % size;
+			particle_id[firstIndex + i] = global_idx / size;
 		}
 	}
 
@@ -131,7 +132,7 @@ namespace sphexa::mpi {
 	template<typename T>
 	void directSyncDataFromPartition(const mpi_partition &partition, const std::vector<T> &send_vector, std::vector<T> &recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
 		// prepare send buffer
-		const int n_particles = partition.node_id->size();
+		const int n_particles = partition.send_partition.size();
 		if (send_vector.size() < n_particles)
 			throw std::runtime_error("too small of a send vector in directSyncDataFromPartition! \n");
 
@@ -183,7 +184,7 @@ namespace sphexa::mpi {
 		// exact same thing as "direct_sync_data_from_partition" but with "send_ <-> recv_"
 
 		// prepare send buffer
-		const int n_particles = partition.node_id->size();
+		const int n_particles = partition.send_partition.size();
 		if (recv_vector.size() < n_particles)
 			throw std::runtime_error("too small of a receive vector in reversedSyncDataFromPartition! \n");
 

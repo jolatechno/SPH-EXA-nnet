@@ -97,12 +97,13 @@ public:
 
 // mockup of the step function 
 template<class func_rate, class func_BE, class func_eos, int n_species>
-void step(ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<n_species, double>  &n, const double dt,
+void step(size_t firstIndex, size_t lastIndex,
+	ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<n_species, double>  &n, const double dt,
 	const std::vector<nnet::reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos) {
 
 	// domain redecomposition
 
-	sphexa::sphnnet::initializePartition(d, n);
+	sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n);
 
 	// do hydro stuff
 
@@ -228,8 +229,11 @@ int main(int argc, char* argv[]) {
 	!!!!!!!!!!!! */
 	ParticlesDataType particle_data;
 	const size_t n_particles = total_n_particles*(rank + 1)/size - total_n_particles*rank/size;
-	particle_data.resize(n_particles);
-	for (int i = 0; i < n_particles; ++i) {
+	const size_t offset = 10*rank;
+	const size_t first = offset, last = n_particles + offset;
+
+	particle_data.resize(last);
+	for (int i = first; i < last; ++i) {
 		particle_data.temp[i]   = T_left   + (T_right   - T_left  )*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
 		particle_data.rho[i] = rho_left + (rho_right - rho_left)*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
 	}
@@ -257,9 +261,9 @@ int main(int argc, char* argv[]) {
 	/* !!!!!!!!!!!!
 	initialize nuclear data
 	!!!!!!!!!!!! */
-	sphexa::mpi::initializePointers(particle_data.node_id, particle_data.particle_id, n_particles);
-	auto nuclear_data_86 = sphexa::sphnnet::initNuclearDataFromConst<86>(particle_data, Y0_86);
-	auto nuclear_data_14 = sphexa::sphnnet::initNuclearDataFromConst<14>(particle_data, Y0_14);
+	sphexa::mpi::initializePointers(first, last, particle_data.node_id, particle_data.particle_id);
+	auto nuclear_data_86 = sphexa::sphnnet::initNuclearDataFromConst<86>(first, last, particle_data, Y0_86);
+	auto nuclear_data_14 = sphexa::sphnnet::initNuclearDataFromConst<14>(first, last, particle_data, Y0_14);
 
 
 
@@ -279,17 +283,21 @@ int main(int argc, char* argv[]) {
 
 		if (use_net86) {
 			if (isotherm) {
-				step(particle_data, nuclear_data_86, hydro_dt,
+				step(first, last,
+					particle_data, nuclear_data_86, hydro_dt,
 					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double>, nnet::net86::compute_BE<double>, isotherm_eos_86);
 			} else
-				step(particle_data, nuclear_data_86, hydro_dt,
+				step(first, last,
+					particle_data, nuclear_data_86, hydro_dt,
 					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double>, nnet::net86::compute_BE<double>, helm_eos_86);
 		} else
 			if (isotherm) {
-				step(particle_data, nuclear_data_14, hydro_dt,
+				step(first, last,
+					particle_data, nuclear_data_14, hydro_dt,
 					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, isotherm_eos_14);
 			} else
-				step(particle_data, nuclear_data_14, hydro_dt,
+				step(first, last,
+					particle_data, nuclear_data_14, hydro_dt,
 					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, helm_eos_14);
 		
 		t += hydro_dt;
