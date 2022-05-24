@@ -23,9 +23,9 @@ namespace sphexa::sphnnet {
 
 		// receiv position for initializer
 		std::vector<Float> x(local_nuclear_n_particles), y(local_nuclear_n_particles), z(local_nuclear_n_particles);
-		sphexa::mpi::directSyncDataFromPartition(n.partition, d.x, x, d.comm);
-		sphexa::mpi::directSyncDataFromPartition(n.partition, d.y, y, d.comm);
-		sphexa::mpi::directSyncDataFromPartition(n.partition, d.z, z, d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.x.data(), x.data(), d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.y.data(), y.data(), d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.z.data(), z.data(), d.comm);
 
 		// intialize nuclear data
 		#pragma omp parallel for schedule(dynamic)
@@ -55,7 +55,7 @@ namespace sphexa::sphnnet {
 		#pragma omp parallel for schedule(dynamic)
 		for (size_t i = 0; i < local_n_particles; ++i)
 			send_r[i] = std::sqrt(d.x[i]*d.x[i] + d.y[i]*d.y[i] + d.z[i]*d.z[i]);
-		sphexa::mpi::directSyncDataFromPartition(n.partition, send_r, r, d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, send_r.data(), r.data(), d.comm);
 
 		// intialize nuclear data
 		#pragma omp parallel for schedule(dynamic)
@@ -78,6 +78,7 @@ namespace sphexa::sphnnet {
 
 		// share the initial rho
 		n.resize(local_nuclear_n_particles);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.rho.data(), n.rho.data(), d.comm);
 
 		// intialize nuclear data
 		#pragma omp parallel for schedule(dynamic)

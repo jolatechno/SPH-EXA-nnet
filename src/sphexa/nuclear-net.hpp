@@ -50,8 +50,8 @@ namespace sphexa::sphnnet {
 		if (!n.first_step)
 			std::swap(n.rho, n.previous_rho);
 
-		sphexa::mpi::directSyncDataFromPartition(n.partition, d.rho,  n.rho,  d.comm);
-		sphexa::mpi::directSyncDataFromPartition(n.partition, d.temp, n.temp, d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.rho.data(),  n.rho.data(),  d.comm);
+		sphexa::mpi::directSyncDataFromPartition(n.partition, d.temp.data(), n.temp.data(), d.comm);
 
 		if (n.first_step) {
 			std::copy(n.rho.begin(), n.rho.end(), n.previous_rho.begin());
@@ -65,7 +65,7 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
 	void recvHydroData(ParticlesDataType &d, const NuclearDataType<n_species, Float> &n) {
-		sphexa::mpi::reversedSyncDataFromPartition(n.partition, n.temp, d.temp, d.comm);
+		sphexa::mpi::reversedSyncDataFromPartition(n.partition, n.temp.data(), d.temp.data(), d.comm);
 	}
 #endif
 }

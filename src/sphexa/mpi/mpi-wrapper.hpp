@@ -130,17 +130,13 @@ namespace sphexa::mpi {
 	 * TODO
 	 */
 	template<typename T>
-	void directSyncDataFromPartition(const mpi_partition &partition, const std::vector<T> &send_vector, std::vector<T> &recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
+	void directSyncDataFromPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
 		// prepare send buffer
 		const int n_particles = partition.send_partition.size();
-		if (send_vector.size() < n_particles)
-			throw std::runtime_error("too small of a send vector in directSyncDataFromPartition! \n");
 
 		// prepare (partition) buffer
 		size_t n_particles_recv = partition.recv_partition.size();
 		std::vector<T> send_buffer(n_particles), recv_buffer(n_particles_recv);
-		if (recv_vector.size() < n_particles_recv)
-			throw std::runtime_error("too small of a receive vector in directSyncDataFromPartition! \n");
 
 		#pragma omp parallel for schedule(static)
 		for (size_t i = 0; i < n_particles; ++i)
@@ -155,23 +151,23 @@ namespace sphexa::mpi {
 		for (size_t i = 0; i < n_particles_recv; ++i)
 			recv_vector[partition.recv_partition[i]] = recv_buffer[i];
 	}
-	void directSyncDataFromPartition(const mpi_partition &partition, const std::vector<double> &send_vector, std::vector<double> &recv_vector, MPI_Comm comm) {
+	void directSyncDataFromPartition(const mpi_partition &partition, const double *send_vector, double *recv_vector, MPI_Comm comm) {
 		directSyncDataFromPartition(partition, send_vector, recv_vector, MPI_DOUBLE, comm);
 	}
-	void directSyncDataFromPartition(const mpi_partition &partition, const std::vector<float> &send_vector, std::vector<float> &recv_vector, MPI_Comm comm) {
+	void directSyncDataFromPartition(const mpi_partition &partition, const float *send_vector, float *recv_vector, MPI_Comm comm) {
 		directSyncDataFromPartition(partition, send_vector, recv_vector, MPI_FLOAT, comm);
 	}
-	void directSyncDataFromPartition(const mpi_partition &partition, const std::vector<int> &send_vector, std::vector<int> &recv_vector, MPI_Comm comm) {
+	void directSyncDataFromPartition(const mpi_partition &partition, const int *send_vector, int *recv_vector, MPI_Comm comm) {
 		directSyncDataFromPartition(partition, send_vector, recv_vector, MPI_INT, comm);
 	}
-	void directSyncDataFromPartition(const mpi_partition &partition, const std::vector<uint> &send_vector, std::vector<uint> &recv_vector, MPI_Comm comm) {
+	void directSyncDataFromPartition(const mpi_partition &partition, const uint *send_vector, uint *recv_vector, MPI_Comm comm) {
 		directSyncDataFromPartition(partition, send_vector, recv_vector, MPI_UNSIGNED, comm);
 	}
-	void directSyncDataFromPartition(const mpi_partition &partition, const std::vector<size_t> &send_vector, std::vector<size_t> &recv_vector, MPI_Comm comm) {
+	void directSyncDataFromPartition(const mpi_partition &partition, const size_t *send_vector, size_t *recv_vector, MPI_Comm comm) {
 		directSyncDataFromPartition(partition, send_vector, recv_vector, MPI_UNSIGNED_LONG_LONG, comm);
 	}
 	template<typename T>
-	void directSyncDataFromPartition(const mpi_partition &partition, const std::vector<T> &send_vector, std::vector<T> &recv_vector, MPI_Comm comm) {
+	void directSyncDataFromPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, MPI_Comm comm) {
 		throw std::runtime_error("Type not implictly supported by directSyncDataFromPartition\n");
 	}
 
@@ -180,19 +176,15 @@ namespace sphexa::mpi {
 	 * TODO
 	 */
 	template<typename T>
-	void reversedSyncDataFromPartition(const mpi_partition &partition, const std::vector<T> &send_vector, std::vector<T> &recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
+	void reversedSyncDataFromPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
 		// exact same thing as "direct_sync_data_from_partition" but with "send_ <-> recv_"
 
 		// prepare send buffer
 		const int n_particles = partition.send_partition.size();
-		if (recv_vector.size() < n_particles)
-			throw std::runtime_error("too small of a receive vector in reversedSyncDataFromPartition! \n");
 
 		// prepare (partition) buffer
 		size_t n_particles_recv = partition.recv_partition.size();
 		std::vector<T> send_buffer(n_particles_recv), recv_buffer(n_particles);
-		if (send_vector.size() < n_particles_recv)
-			throw std::runtime_error("too small of a send vector in reversedSyncDataFromPartition! \n");
 
 		#pragma omp parallel for schedule(static)
 		for (size_t i = 0; i < n_particles_recv; ++i)
@@ -207,23 +199,23 @@ namespace sphexa::mpi {
 		for (size_t i = 0; i < n_particles; ++i)
 			recv_vector[partition.send_partition[i]] = recv_buffer[i];
 	}
-	void reversedSyncDataFromPartition(const mpi_partition &partition, const std::vector<double> &send_vector, std::vector<double> &recv_vector, MPI_Comm comm)  {
+	void reversedSyncDataFromPartition(const mpi_partition &partition, const double *send_vector, double *recv_vector, MPI_Comm comm)  {
 		reversedSyncDataFromPartition(partition, send_vector, recv_vector, MPI_DOUBLE, comm);
 	}
-	void reversedSyncDataFromPartition(const mpi_partition &partition, const std::vector<float> &send_vector, std::vector<float> &recv_vector, MPI_Comm comm)  {
+	void reversedSyncDataFromPartition(const mpi_partition &partition, const float *send_vector, float *recv_vector, MPI_Comm comm)  {
 		reversedSyncDataFromPartition(partition, send_vector, recv_vector, MPI_FLOAT, comm);
 	}
-	void reversedSyncDataFromPartition(const mpi_partition &partition, const std::vector<int> &send_vector, std::vector<int> &recv_vector, MPI_Comm comm)  {
+	void reversedSyncDataFromPartition(const mpi_partition &partition, const int *send_vector, int *recv_vector, MPI_Comm comm)  {
 		reversedSyncDataFromPartition(partition, send_vector, recv_vector, MPI_INT, comm);
 	}
-	void reversedSyncDataFromPartition(const mpi_partition &partition, const std::vector<uint> &send_vector, std::vector<uint> &recv_vector, MPI_Comm comm)  {
+	void reversedSyncDataFromPartition(const mpi_partition &partition, const uint *send_vector, uint *recv_vector, MPI_Comm comm)  {
 		reversedSyncDataFromPartition(partition, send_vector, recv_vector, MPI_UNSIGNED, comm);
 	}
-	void reversedSyncDataFromPartition(const mpi_partition &partition, const std::vector<size_t> &send_vector, std::vector<size_t> &recv_vector, MPI_Comm comm)  {
+	void reversedSyncDataFromPartition(const mpi_partition &partition, const size_t *send_vector, size_t *recv_vector, MPI_Comm comm)  {
 		reversedSyncDataFromPartition(partition, send_vector, recv_vector, MPI_UNSIGNED_LONG_LONG, comm);
 	}
 	template<typename T>
-	void reversedSyncDataFromPartition(const mpi_partition &partition, const std::vector<T> &send_vector, std::vector<T> &recv_vector, MPI_Comm comm) {
+	void reversedSyncDataFromPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, MPI_Comm comm) {
 		throw std::runtime_error("Type not implictly supported by directSyncDataFromPartition\n");
 	}
 }
