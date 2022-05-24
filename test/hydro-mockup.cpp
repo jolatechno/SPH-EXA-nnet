@@ -136,10 +136,10 @@ void step(size_t firstIndex, size_t lastIndex,
 
 	// do hydro stuff
 
-	sphexa::sphnnet::sendHydroData(d, n, {"rho", "temp"});
-	sphexa::sphnnet::compute_nuclear_reactions(n, dt, dt,
+	sphexa::sphnnet::hydroToNuclearUpdate(d, n, {"rho", "temp"});
+	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
 		reactions, construct_rates, construct_BE, eos);
-	sphexa::sphnnet::recvHydroData(d, n, {"temp"});
+	sphexa::sphnnet::nuclearToHydroUpdate(d, n, {"temp"});
 
 	// do hydro stuff
 }

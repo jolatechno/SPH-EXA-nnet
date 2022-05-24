@@ -23,7 +23,7 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<class Data, class func_rate, class func_BE, class func_eos, typename Float>
-	void compute_nuclear_reactions(Data &n, const Float hydro_dt, const Float previous_dt,
+	void computeNuclearReactions(Data &n, const Float hydro_dt, const Float previous_dt,
 		const std::vector<nnet::reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos) {
 		const size_t n_particles = n.temp.size();
 
@@ -53,7 +53,7 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
-	void sendHydroData(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
+	void hydroToNuclearUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
 		if (!n.first_step)
 			std::swap(n.rho, n.previous_rho);
 
@@ -86,7 +86,7 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
-	void recvHydroData(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
+	void nuclearToHydroUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
 		d.setOutputFields(sync_fields);
 		n.setOutputFields(sync_fields);
 

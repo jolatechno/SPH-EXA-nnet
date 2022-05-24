@@ -1039,10 +1039,10 @@ namespace nnet::eos {
 
 			struct eos_output {
 				Float cv, dP_dT, P;
-				Float cp, sound;
+				Float cp, c;
 
 				Float dse, dpe, dsp;
-				Float cv_gaz, cp_gaz, sound_gaz; 
+				Float cv_gaz, cp_gaz, c_gaz; 
 
 				Float dU_dYe;
 			} res;
@@ -1060,7 +1060,7 @@ namespace nnet::eos {
 			Float gam2_gas      = 1./(1. - nabad_gas);
 			res.cp_gaz    = res.cv_gaz*gam1_gas/chid_gas;
 			z             = 1. + (egas + helmholtz_constants::clight*helmholtz_constants::clight)*zzi;
-			res.sound_gaz = helmholtz_constants::clight*std::sqrt(gam1_gas/z);
+			res.c_gaz = helmholtz_constants::clight*std::sqrt(gam1_gas/z);
 
 
 
@@ -1077,7 +1077,7 @@ namespace nnet::eos {
 			Float gam2  = 1./(1. - nabad);
 			res.cp    = res.cv*gam1/chid;
 			z     = 1. + (ener + helmholtz_constants::clight*helmholtz_constants::clight)*zzi;
-			res.sound = helmholtz_constants::clight*std::sqrt(gam1/z);
+			res.c = helmholtz_constants::clight*std::sqrt(gam1/z);
 
 
 
