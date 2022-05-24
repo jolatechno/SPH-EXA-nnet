@@ -170,6 +170,10 @@ namespace sphexa::mpi {
 	void directSyncDataFromPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, MPI_Comm comm) {
 		throw std::runtime_error("Type not implictly supported by directSyncDataFromPartition\n");
 	}
+	template<typename T1, typename T2>
+	void directSyncDataFromPartition(const mpi_partition &partition, const T1 *send_vector, T2 *recv_vector, MPI_Comm comm) {
+		throw std::runtime_error("Type mismatch in directSyncDataFromPartition\n");
+	}
 
 	/// function that sync data from detached data
 	/**
@@ -216,6 +220,10 @@ namespace sphexa::mpi {
 	}
 	template<typename T>
 	void reversedSyncDataFromPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, MPI_Comm comm) {
-		throw std::runtime_error("Type not implictly supported by directSyncDataFromPartition\n");
+		throw std::runtime_error("Type not implictly supported by reversedSyncDataFromPartition\n");
+	}
+	template<typename T1, typename T2>
+	void reversedSyncDataFromPartition(const mpi_partition &partition, const T1 *send_vector, T2 *recv_vector, MPI_Comm comm) {
+		throw std::runtime_error("Type mismatch in reversedSyncDataFromPartition\n");
 	}
 }

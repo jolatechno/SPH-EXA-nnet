@@ -85,6 +85,35 @@ public:
 		rho.resize(N);
 		temp.resize(N);
 	}
+
+	const std::vector<std::string> fieldNames = {
+		"nid", "pid", "rho", "temp", "x", "y", "z"
+	};
+
+	auto data() {
+	    using FieldType = std::variant<
+	    	std::vector<size_t>*,
+	    	std::vector<int>*,
+	    	std::vector<double>*>;
+
+	    std::array<FieldType, 7> ret = {
+	    	&node_id, &particle_id, &rho, &temp, &x, &y, &z};
+
+	    return ret;
+	}
+
+	std::vector<int>         outputFieldIndices;
+	std::vector<std::string> outputFieldNames;
+
+	void setOutputFields(const std::vector<std::string>& outFields) {
+	    outputFieldNames = fieldNames;
+		outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, outFields);
+    }
+
+    bool isAllocated(int i) const {
+    	/* TODO */
+    	return true;
+    }
 };
 
 
@@ -107,10 +136,10 @@ void step(size_t firstIndex, size_t lastIndex,
 
 	// do hydro stuff
 
-	sphexa::sphnnet::sendHydroData(d, n);
+	sphexa::sphnnet::sendHydroData(d, n, {"rho", "temp"});
 	sphexa::sphnnet::compute_nuclear_reactions(n, dt, dt,
 		reactions, construct_rates, construct_BE, eos);
-	sphexa::sphnnet::recvHydroData(d, n);
+	sphexa::sphnnet::recvHydroData(d, n, {"temp"});
 
 	// do hydro stuff
 }
@@ -321,7 +350,7 @@ int main(int argc, char* argv[]) {
 		std::cout << "\nexec time: " << duration << "s (avg=" << avg_duration << "s/it, max=" << max_time << "s/it, min=" << min_time  << "s/it)\n\n";
 	}
 
-	std::vector<std::string> outFields = {"node_id", "nuclear_particle_id", "temp", "rho", "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"};
+	std::vector<std::string> outFields = {/*"nid", "pid",*/ "temp", "rho" /*, "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"*/};
 	if (use_net86) {
 		nuclear_data_86.setOutputFields(outFields, nnet::net86::constants::species_names);
 	} else

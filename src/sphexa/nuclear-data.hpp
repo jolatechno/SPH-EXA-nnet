@@ -56,8 +56,8 @@ namespace sphexa::sphnnet {
 		const std::vector<std::string> fieldNames = []() {
 			std::vector<std::string> fieldNames_(6 + n_species);
 
-			fieldNames_[0] = "node_id";
-	        fieldNames_[1] = "nuclear_particle_id";
+			fieldNames_[0] = "nid";
+	        fieldNames_[1] = "pid";
 	        fieldNames_[2] = "dt";
 	        fieldNames_[3] = "temp";
 	        fieldNames_[4] = "rho";
@@ -90,22 +90,22 @@ namespace sphexa::sphnnet {
 	     */
 	    auto data() {
 	    	using FieldType = std::variant<
-	    		iota_vector<size_t>*,
+	    		/*iota_vector<size_t>*,
 	    		const_vector<int>*,
-	    		nuclear_IO_vector<n_species, Float>*,
+	    		nuclear_IO_vector<n_species, Float>*,*/
 	    		std::vector<Float>*>;
 	    	
 			util::array<FieldType, n_species + 6> ret;
 
-			ret[0] = &node_id;
-			ret[1] = &nuclear_particle_id;
+			ret[0] = nullptr; //&node_id;
+			ret[1] = nullptr; //&nuclear_particle_id;
 			ret[2] = &dt;
 			ret[3] = &temp;
 			ret[4] = &rho;
 			ret[5] = &previous_rho;
 
 			for (int i = 0; i < n_species; ++i)
-				ret[i + 6] = &Y_io[i];
+				ret[i + 6] = nullptr; //&Y_io[i];
 
 			return ret;
 	    }
@@ -141,8 +141,8 @@ namespace sphexa::sphnnet {
 
 			// initialize outputFieldNames with the right names
     		outputFieldNames.resize(n_species + 6);
-	        outputFieldNames[0] = "node_id";
-	        outputFieldNames[1] = "nuclear_particle_id";
+	        outputFieldNames[0] = "nid";
+	        outputFieldNames[1] = "pid";
 	        outputFieldNames[2] = "dt";
 	        outputFieldNames[3] = "temp";
 	        outputFieldNames[4] = "rho";

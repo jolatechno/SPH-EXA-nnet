@@ -11,7 +11,7 @@ namespace sphexa {
 	namespace fileutils {
 		/*! @brief write fields as columns to an ASCII file
 		 *
-		 * @tparam  T              pointer to "vector" type that can be indexed via the "[]" operator.
+		 * @tparam  T              field type
 		 * @tparam  Separators
 		 * @param   firstIndex     first field index to write
 		 * @param   lastIndex      last field index to write
@@ -35,7 +35,7 @@ namespace sphexa {
 		            for (auto field : fields)
 		            {
 		                [[maybe_unused]] std::initializer_list<int> list{(dumpFile << separators, 0)...};
-		                std::visit([&dumpFile, i](auto& arg) { dumpFile << (*arg)[i]; }, field);
+		                std::visit([&dumpFile, i](auto& arg) { dumpFile << arg[i]; }, field);
 		            }
 		            dumpFile << std::endl;
 		        }
@@ -46,13 +46,14 @@ namespace sphexa {
 		}
 	}
 
-	//! @brief extract a vector of reference to nuclear particle fields for file output
+	//! @brief extract a vector of pointers to particle fields for file output
 	template<class Dataset>
-	auto getOutputArrays(Dataset &dataset) {
-		auto fieldPointers = dataset.data();
+	auto getOutputArrays(Dataset& dataset)
+	{
+	    auto fieldPointers = dataset.data();
+	    using FieldType    = std::variant<float*, double*, int*, unsigned*, uint64_t*>;
 
-		// hacky way to initialize an empty vector containing the same type as "fieldPointers"
-	    std::vector outputFields(fieldPointers.begin(), fieldPointers.begin());
+	    std::vector<FieldType> outputFields;
 	    outputFields.reserve(dataset.outputFieldIndices.size());
 
 	    for (int i : dataset.outputFieldIndices)
@@ -62,7 +63,7 @@ namespace sphexa {
 	            throw std::runtime_error("Cannot output field " + std::string(dataset.fieldNames[i]) +
 	                                     ", because it is not active.");
 	        }
-	        std::visit([&outputFields](auto& arg) { outputFields.emplace_back(arg); }, fieldPointers[i]);
+	        std::visit([&outputFields](auto& arg) { outputFields.push_back(arg->data()); }, fieldPointers[i]);
 	    }
 	    return outputFields;
 	}

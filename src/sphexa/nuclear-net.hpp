@@ -8,6 +8,13 @@
 	#include "mpi/mpi-wrapper.hpp"
 #endif
 
+#ifndef NOT_FROM_SPHEXA
+	#include "sph/data_util.hpp"
+#else
+	template<class Dataset>
+	auto sphexa::getOutputArrays(Dataset &dataset);
+#endif
+
 #include "../nuclear-net.hpp"
 
 namespace sphexa::sphnnet {
@@ -36,7 +43,7 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
-	void initializePartition(size_t firstIndex, size_t lastIndex, const ParticlesDataType &d, NuclearDataType<n_species, Float> &n) {
+	void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n) {
 		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
 	}
 
@@ -46,12 +53,27 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
-	void sendHydroData(const ParticlesDataType &d, NuclearDataType<n_species, Float> &n) {
+	void sendHydroData(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
 		if (!n.first_step)
 			std::swap(n.rho, n.previous_rho);
 
-		sphexa::mpi::directSyncDataFromPartition(n.partition, d.rho.data(),  n.rho.data(),  d.comm);
-		sphexa::mpi::directSyncDataFromPartition(n.partition, d.temp.data(), n.temp.data(), d.comm);
+		d.setOutputFields(sync_fields);
+		n.setOutputFields(sync_fields);
+
+		using FieldType = std::variant<float*, double*, int*, unsigned*, size_t*>;
+
+		std::vector<FieldType> particleData = sphexa::getOutputArrays(d);
+		std::vector<FieldType> nuclearData  = sphexa::getOutputArrays(n);
+
+		const int n_fields = sync_fields.size();
+		if (particleData.size() != n_fields || nuclearData.size() != n_fields)
+			throw std::runtime_error("Not the right number of fields to synchronize in sendHydroData !\n");
+
+		for (int field = 0; field < n_fields; ++field)
+			std::visit(
+				[&d, &n](auto&& send, auto &&recv){
+					sphexa::mpi::directSyncDataFromPartition(n.partition, send, recv, d.comm);
+				}, particleData[field], nuclearData[field]);
 
 		if (n.first_step) {
 			std::copy(n.rho.begin(), n.rho.end(), n.previous_rho.begin());
@@ -64,8 +86,24 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
-	void recvHydroData(ParticlesDataType &d, const NuclearDataType<n_species, Float> &n) {
-		sphexa::mpi::reversedSyncDataFromPartition(n.partition, n.temp.data(), d.temp.data(), d.comm);
+	void recvHydroData(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
+		d.setOutputFields(sync_fields);
+		n.setOutputFields(sync_fields);
+
+		using FieldType = std::variant<float*, double*, int*, unsigned*, size_t*>;
+
+		std::vector<FieldType> particleData = sphexa::getOutputArrays(d);
+		std::vector<FieldType> nuclearData  = sphexa::getOutputArrays(n);
+
+		const int n_fields = sync_fields.size();
+		if (particleData.size() != n_fields || nuclearData.size() != n_fields)
+			throw std::runtime_error("Not the right number of fields to synchronize in recvHydroData !\n");
+
+		for (int field = 0; field < n_fields; ++field)
+			std::visit(
+				[&d, &n](auto&& send, auto &&recv){
+					sphexa::mpi::reversedSyncDataFromPartition(n.partition, send, recv, d.comm);
+				}, nuclearData[field], particleData[field]);
 	}
 #endif
 }
