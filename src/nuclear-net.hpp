@@ -438,7 +438,8 @@ namespace nnet {
 				auto eos_struct         = eos            (Y_theta, T_theta, rho);
 
 				// compute value_1
-				double value_1 = drho_dt/(rho*rho)*eos_struct.dP_dT;
+				const double drho = drho_dt*dt;
+				double value_1 = eos_struct.dP_dT*drho/(rho*rho);
 
 				// solve the system
 				Float last_T = final_T;
