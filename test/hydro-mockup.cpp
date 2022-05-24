@@ -137,6 +137,9 @@ void step(size_t firstIndex, size_t lastIndex,
 	// do hydro stuff
 
 	sphexa::sphnnet::hydroToNuclearUpdate(d, n, {"rho", "temp"});
+
+	sphexa::sphnnet::computeHelmEOS(n, nnet::net14::constants::Z);
+
 	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
 		reactions, construct_rates, construct_BE, eos);
 	sphexa::sphnnet::nuclearToHydroUpdate(d, n, {"temp"});

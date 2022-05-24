@@ -1038,8 +1038,8 @@ namespace nnet::eos {
 			// and relativistic formula for the sound speed (c&g 14.29)
 
 			struct eos_output {
-				Float cv, dP_dT, P;
-				Float cp, c;
+				Float cv, dP_dT, p;
+				Float cp, c, u;
 
 				Float dse, dpe, dsp;
 				Float cv_gaz, cp_gaz, c_gaz; 
@@ -1090,6 +1090,8 @@ namespace nnet::eos {
 			// Needed output
 			res.dP_dT  = dpresdt;
 			res.dU_dYe = degasdz*abar;
+			res.p = pres;
+			res.u = ener;
 
 			return res;
 		}

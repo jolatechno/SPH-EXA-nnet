@@ -2,6 +2,7 @@
 
 #include <numeric>
 
+#include "../eos/helmholtz.hpp"
 #include "nuclear-data.hpp"
 
 #ifdef USE_MPI
@@ -34,6 +35,26 @@ namespace sphexa::sphnnet {
 			std::tie(n.Y[i], n.temp[i]) = nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
 				n.Y[i], n.temp[i],
 				n.rho[i], drho_dt, hydro_dt, n.dt[i]);
+		}
+	}
+
+	/// function to copute the helmholtz eos
+	/**
+	 * TODO
+	 */
+	template<class Data, class Vector>
+	void computeHelmEOS(Data &n, const Vector &Z) {
+		size_t n_particles = n.Y.size();
+
+		const nnet::eos::helmholtz helm(Z);
+
+		#pragma omp parallel for schedule(dynamic)
+		for (size_t i = 0; i < n_particles; ++i) {
+			auto eos_struct = helm(n.Y[i], n.temp[i], n.rho[i]);
+
+			n.u[i] = eos_struct.u;
+			n.c[i] = eos_struct.c;
+			n.p[i] = eos_struct.p;
 		}
 	}
 
