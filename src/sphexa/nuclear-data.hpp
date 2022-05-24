@@ -119,7 +119,7 @@ namespace sphexa::sphnnet {
 	    }
 
 	    bool isAllocated(int i) const {
-	    	if (i <= 1 || i > 7)
+	    	if (i <= 1 || i >= 9)
 	    		return false;
 	    	return true;
 	    }
