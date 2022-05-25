@@ -14,7 +14,7 @@ namespace sphexa::sphnnet {
 	NuclearDataType<n_species, Float> initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
 		NuclearDataType<n_species, Float> n;
 
-		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n);
+		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n, 0., 0.);
 		const size_t local_nuclear_n_particles = n.partition.recv_partition.size();
 
 		// share the initial rho
@@ -43,7 +43,7 @@ namespace sphexa::sphnnet {
 	NuclearDataType<n_species, Float> initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
 		NuclearDataType<n_species, Float> n;
 
-		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n);
+		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n, 0., 0.);
 		const size_t local_nuclear_n_particles = n.partition.recv_partition.size();
 		const size_t local_n_particles = d.x.size();
 
@@ -73,7 +73,7 @@ namespace sphexa::sphnnet {
 	NuclearDataType<n_species, Float> initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
 		NuclearDataType<n_species, Float> n;
 
-		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n);
+		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n, 0., 0.);
 		const size_t local_nuclear_n_particles = n.partition.recv_partition.size();
 
 		// share the initial rho
@@ -97,7 +97,7 @@ namespace sphexa::sphnnet {
 	NuclearDataType<n_species, Float> initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const Vector &Y0) {
 		NuclearDataType<n_species, Float> n;
 
-		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n);
+		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n, 0., 0.);
 		const size_t local_nuclear_n_particles = n.partition.recv_partition.size();
 
 		// share the initial rho

@@ -21,6 +21,11 @@ namespace nnet {
 		/// theta for the implicit method
 		double theta = 1;
 
+		/// minimum temperature at which we compute the nuclear network
+		double min_temp = 1e8;
+		/// minimum density at which we compute the nuclear network
+		double min_rho = 1e5;
+
 		/// maximum timestep
 		double max_dt = 1e-2;
 		/// maximum timestep evolution
@@ -261,7 +266,11 @@ namespace nnet {
 	template<class Vector1, class Vector2, typename Float>
 	std::pair<Vector1, Float> solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector2 &BE, 
 		const Vector1 &Y, const Float T, const Vector1 &Y_guess, const Float T_guess,
-		const Float cv, const Float rho, const Float value_1, const Float dt) {
+		const Float cv, const Float rho, const Float value_1, const Float dt)
+	{
+		if (rho < constants::min_rho || T < constants::min_temp)
+			return {Y, T};
+
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
 
@@ -276,8 +285,8 @@ namespace nnet {
 		------------------- */
 		const int dimension = Y.size();
 
-		eigen::matrix<Float> Mp(dimension + 1, dimension + 1);
 		Vector1 next_Y = Y;
+		eigen::matrix<Float> Mp(dimension + 1, dimension + 1);
 
 		// right hand side
 		std::vector<double> RHS(dimension + 1);
@@ -345,7 +354,8 @@ namespace nnet {
 	template<class Vector, typename Float>
 	std::pair<Vector, Float> solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE,
 		const Vector &Y, const Float T,
-		const Float cv, const Float rho, const Float value_1, const Float dt) {
+		const Float cv, const Float rho, const Float value_1, const Float dt)
+	{
 		return solve_system_from_guess(reactions, rates, drates_dT, 
 			BE,
 			Y, T, Y, T,
@@ -363,7 +373,10 @@ namespace nnet {
 	template<class Vector, typename Float>
 	std::tuple<Vector, Float, Float> solve_system_var_timestep(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE,
 		const Vector &Y, const Float T,
-		const Float cv, const Float rho, const Float value_1, Float &dt) {
+		const Float cv, const Float rho, const Float value_1, Float &dt)
+	{
+		if (rho < constants::min_rho || T < constants::min_temp)
+			return {Y, T, dt};
 
 		// actual solving
 		while (true) {
@@ -405,7 +418,11 @@ namespace nnet {
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
 	std::tuple<Vector, Float, Float> solve_system_NR(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &Y, Float T, const Float rho, const Float drho_dt, Float &dt) {
+		const Vector &Y, Float T, const Float rho, const Float drho_dt, Float &dt)
+	{
+		if (rho < constants::min_rho || T < constants::min_temp)
+			return {Y, T, dt};
+
 		const int dimension = Y.size();
 
 		while (true) {
@@ -430,7 +447,7 @@ namespace nnet {
 				// compute n+theta values
 				T_theta =        (1 - constants::theta)*T    + constants::theta*final_T;
 				for (int j = 0; j < dimension; ++j)
-					Y_theta[j] = (1 - constants::theta)*/*Y*/Y_theta[j] + constants::theta*final_Y[j];
+					Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
 
 				// compute rate
 				auto [rates, drates_dT] = construct_rates(         T_theta, rho);
@@ -493,7 +510,10 @@ namespace nnet {
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
 	std::tuple<Vector, Float> solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
 		const Vector &Y, const Float T,
-		const Float rho, const Float drho_dt, Float const dt_tot, Float &dt) {
+		const Float rho, const Float drho_dt, Float const dt_tot, Float &dt)
+	{
+		if (rho < constants::min_rho || T < constants::min_temp)
+			return {Y, T};
 
 		Float elapsed_t = 0;
 		Float used_dt = dt;
@@ -533,7 +553,10 @@ namespace nnet {
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float, class nseFunction>
 	std::tuple<Vector, Float> solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos, const nseFunction jumpToNse,
 		const Vector &Y, const Float T,
-		const Float rho, const Float drho_dt, Float const dt_tot, Float &dt) {
+		const Float rho, const Float drho_dt, Float const dt_tot, Float &dt)
+	{
+		if (rho < constants::min_rho || T < constants::min_temp)
+			return {Y, T};
 
 		Float elapsed_t = 0;
 		Float used_dt = dt;

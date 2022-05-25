@@ -60,6 +60,7 @@ void dump(Dataset& d, size_t firstIndex, size_t lastIndex, /*const cstone::Box<t
 
 
 
+
 // mockup of the ParticlesDataType
 class ParticlesDataType {
 public:
@@ -70,6 +71,9 @@ public:
 	std::vector<int> node_id;
 	std::vector<std::size_t> particle_id;
 	std::vector<double> x, y, z;
+
+	// burning
+	std::vector<uint8_t/*bool*/> burning;
 
 	// hydro data
 	std::vector<double> rho, temp; //...
@@ -82,22 +86,25 @@ public:
 		y.resize(N);
 		z.resize(N);
 
+		burning.resize(N);
+
 		rho.resize(N);
 		temp.resize(N);
 	}
 
 	const std::vector<std::string> fieldNames = {
-		"nid", "pid", "rho", "temp", "x", "y", "z"
+		"nid", "pid", "rho", "temp", "x", "y", "z", "burning"
 	};
 
 	auto data() {
 	    using FieldType = std::variant<
 	    	std::vector<size_t>*,
 	    	std::vector<int>*,
+	    	std::vector<uint8_t/*bool*/>*,
 	    	std::vector<double>*>;
 
-	    std::array<FieldType, 7> ret = {
-	    	&node_id, &particle_id, &rho, &temp, &x, &y, &z};
+	    std::array<FieldType, 8> ret = {
+	    	&node_id, &particle_id, &rho, &temp, &x, &y, &z, &burning};
 
 	    return ret;
 	}
@@ -122,7 +129,7 @@ public:
 
 
 
-
+void printHelp(char* name, int rank);
 
 // mockup of the step function 
 template<class func_rate, class func_BE, class func_eos, int n_species>
@@ -137,43 +144,24 @@ void step(size_t firstIndex, size_t lastIndex,
 	// do hydro stuff
 
 	sphexa::sphnnet::hydroToNuclearUpdate(d, n, {"rho", "temp"});
-
 	sphexa::sphnnet::computeHelmEOS(n, nnet::net14::constants::Z);
 
 	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
 		reactions, construct_rates, construct_BE, eos);
+
 	sphexa::sphnnet::nuclearToHydroUpdate(d, n, {"temp"});
 
 	// do hydro stuff
 }
 
-void printHelp(char* name, int rank) {
-	if (rank == 0) {
-		std::cout << "\nUsage:\n\n";
-		std::cout << name << " [OPTION]\n";
-
-		std::cout << "\nWhere possible options are:\n\n";
-
-		std::cout << "\t'-n': number of iterations (default = 50)\n\n";
-		std::cout << "\t'--dt': timestep (default = 1e-2s)\n\n";
-
-		std::cout << "\t'--n-particle': total number of particles shared across nodes (default = 1000)\n\n";
-		std::cout << "\t'--n-particle-print': number of particle to serialize at the end and begining of each node (default = 5)\n\n";
-
-		std::cout << "\t'--test-case': represent nuclear initial state, can be:\n\n";
-		std::cout << "\t\t'C-O-burning: x(12C) = x(16O) = 0.5\n\n";
-		std::cout << "\t\t'He-burning: x(4He) = 1\n\n";
-		std::cout << "\t\t'Si-burning: x(28Si) = 1\n\n";
-
-		std::cout << "\t'--isotherm': if exists cv=1e20, else use Helmholtz EOS\n\n";
-		std::cout << "\t'--skip-coulomb-corr': if exists skip coulombian corrections\n\n";
-
-		std::cout << "\t'--output-net14': if exists output results only for net14 species\n\n";
-		std::cout << "\t'--debug-net86': if exists output debuging prints for net86 species\n\n";
-	}
-}
-
 int main(int argc, char* argv[]) {
+	/* initial hydro data */
+	double rho_left = 1e9, rho_right = 0.8e9;
+	double T_left = 0.95e9, T_right = 1.1e9;
+
+
+
+
 	int size, rank;
     MPI_Init(&argc, &argv);
 
@@ -209,6 +197,8 @@ int main(int argc, char* argv[]) {
     nnet::constants::NR::it_tol             = parser.get("--NR_tol",      nnet::constants::NR::it_tol);
     nnet::constants::NR::min_it             = parser.get("--min_NR_it",   nnet::constants::NR::min_it);
     nnet::constants::NR::max_it             = parser.get("--max_NR_it",   nnet::constants::NR::max_it);
+
+    nnet::constants::min_temp               = parser.get("--min-temp",    std::min(T_left, T_right)*0.9 + 0.1*std::max(T_left, T_right));
 
 	util::array<double, 86> Y0_86, X_86;
 	util::array<double, 14> Y0_14, X_14;
@@ -252,10 +242,6 @@ int main(int argc, char* argv[]) {
 
 
 
-    /* initial hydro data */
-	double rho_left = 1e9, rho_right = 0.8e9;
-	double T_left = 0.95e9, T_right = 1.1e9;
-
 	/* !!!!!!!!!!!!
 	initialize the hydro state
 	!!!!!!!!!!!! */
@@ -266,8 +252,8 @@ int main(int argc, char* argv[]) {
 
 	particle_data.resize(last);
 	for (int i = first; i < last; ++i) {
-		particle_data.temp[i]   = T_left   + (T_right   - T_left  )*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
-		particle_data.rho[i] = rho_left + (rho_right - rho_left)*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
+		particle_data.temp[i] = T_left   + (T_right   - T_left  )*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
+		particle_data.rho[i]  = rho_left + (rho_right - rho_left)*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
 	}
 
 
@@ -353,11 +339,8 @@ int main(int argc, char* argv[]) {
 		std::cout << "\nexec time: " << duration << "s (avg=" << avg_duration << "s/it, max=" << max_time << "s/it, min=" << min_time  << "s/it)\n\n";
 	}
 
-	std::vector<std::string> outFields = {/*"nid", "pid",*/ "temp", "rho" /*, "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"*/};
-	if (use_net86) {
-		nuclear_data_86.setOutputFields(outFields, nnet::net86::constants::species_names);
-	} else
-		nuclear_data_14.setOutputFields(outFields, nnet::net14::constants::species_names);
+	std::vector<std::string> outFields = {/*"nid", "pid",*/ "temp", "rho" , "burning"/*, "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"*/};
+	particle_data.setOutputFields(outFields);
 	
 
 	if (rank == 0) {
@@ -367,15 +350,36 @@ int main(int argc, char* argv[]) {
 	}
 	
 	MPI_Barrier(MPI_COMM_WORLD);
-	if (use_net86) {
-		dump(nuclear_data_86, 0,                     n_print,     "/dev/stdout");
-		dump(nuclear_data_86, n_particles - n_print, n_particles, "/dev/stdout");
-	} else {
-		dump(nuclear_data_14, 0,                     n_print,     "/dev/stdout");
-		dump(nuclear_data_14, n_particles - n_print, n_particles, "/dev/stdout");
-	}
+	dump(particle_data, first, first + n_print, "/dev/stdout");
+	dump(particle_data, last - n_print,   last, "/dev/stdout");
 
 	MPI_Finalize();
 
 	return 0;
+}
+
+void printHelp(char* name, int rank) {
+	if (rank == 0) {
+		std::cout << "\nUsage:\n\n";
+		std::cout << name << " [OPTION]\n";
+
+		std::cout << "\nWhere possible options are:\n\n";
+
+		std::cout << "\t'-n': number of iterations (default = 50)\n\n";
+		std::cout << "\t'--dt': timestep (default = 1e-2s)\n\n";
+
+		std::cout << "\t'--n-particle': total number of particles shared across nodes (default = 1000)\n\n";
+		std::cout << "\t'--n-particle-print': number of particle to serialize at the end and begining of each node (default = 5)\n\n";
+
+		std::cout << "\t'--test-case': represent nuclear initial state, can be:\n\n";
+		std::cout << "\t\t'C-O-burning: x(12C) = x(16O) = 0.5\n\n";
+		std::cout << "\t\t'He-burning: x(4He) = 1\n\n";
+		std::cout << "\t\t'Si-burning: x(28Si) = 1\n\n";
+
+		std::cout << "\t'--isotherm': if exists cv=1e20, else use Helmholtz EOS\n\n";
+		std::cout << "\t'--skip-coulomb-corr': if exists skip coulombian corrections\n\n";
+
+		std::cout << "\t'--output-net14': if exists output results only for net14 species\n\n";
+		std::cout << "\t'--debug-net86': if exists output debuging prints for net86 species\n\n";
+	}
 }

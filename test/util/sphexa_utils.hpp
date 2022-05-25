@@ -35,7 +35,12 @@ namespace sphexa {
 		            for (auto field : fields)
 		            {
 		                [[maybe_unused]] std::initializer_list<int> list{(dumpFile << separators, 0)...};
-		                std::visit([&dumpFile, i](auto& arg) { dumpFile << arg[i]; }, field);
+		                std::visit([&dumpFile, i](auto& arg) { 
+			                	if (sizeof(arg[i]) == 1) {
+			                		dumpFile << (bool)arg[i];
+			                	} else
+			                		dumpFile << arg[i];
+			                }, field);
 		            }
 		            dumpFile << std::endl;
 		        }
@@ -51,7 +56,7 @@ namespace sphexa {
 	auto getOutputArrays(Dataset& dataset)
 	{
 	    auto fieldPointers = dataset.data();
-	    using FieldType    = std::variant<float*, double*, int*, unsigned*, uint64_t*>;
+	    using FieldType    = std::variant<float*, double*, int*, unsigned*, uint64_t*, uint8_t*>;
 
 	    std::vector<FieldType> outputFields;
 	    outputFields.reserve(dataset.outputFieldIndices.size());

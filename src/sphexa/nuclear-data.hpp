@@ -29,6 +29,9 @@ namespace sphexa::sphnnet {
 		/// hydro data
 		std::vector<Float> c, p, u, rho, temp, previous_rho; // drho_dt
 
+		/// nuclear burning
+		std::vector<uint8_t/*bool*/> burning;
+
 		/// nuclear abundances (vector of vector)
 		std::vector<util::array<Float, n_species>> Y;
 
@@ -50,6 +53,8 @@ namespace sphexa::sphnnet {
 			p.resize(N);
 			u.resize(N);
 
+			burning.resize(N);
+
 			Y.resize(N);
 
 			dt.resize(N, 1e-12);
@@ -57,19 +62,20 @@ namespace sphexa::sphnnet {
 
 		/// base fieldNames (without knowledge of nuclear species names)
 		const std::vector<std::string> fieldNames = []() {
-			std::vector<std::string> fieldNames_(9 + n_species);
+			std::vector<std::string> fieldNames_(n_species + 10);
 			fieldNames_[0] = "nid";
 	        fieldNames_[1] = "pid";
-	        fieldNames_[2] = "dt";
-	        fieldNames_[3] = "c";
-	        fieldNames_[4] = "p";
-	        fieldNames_[5] = "u";
-	        fieldNames_[6] = "temp";
-	        fieldNames_[7] = "rho";
-	        fieldNames_[8] = "previous_rho";
+	        fieldNames_[2] = "burning";
+	        fieldNames_[3] = "dt";
+	        fieldNames_[4] = "c";
+	        fieldNames_[5] = "p";
+	        fieldNames_[6] = "u";
+	        fieldNames_[7] = "temp";
+	        fieldNames_[8] = "rho";
+	        fieldNames_[9] = "previous_rho";
 
 	        for (int i = 0; i < n_species; ++i)
-				fieldNames_[i + 9] = "Y(" + std::to_string(i) + ")";
+				fieldNames_[i + 10] = "Y(" + std::to_string(i) + ")";
 
 			return fieldNames_;
 		}();
@@ -98,28 +104,30 @@ namespace sphexa::sphnnet {
 	    		/*iota_vector<size_t>*,
 	    		const_vector<int>*,
 	    		nuclear_IO_vector<n_species, Float>*,*/
-	    		std::vector<Float>*>;
+	    		std::vector<Float>*,
+	    		std::vector<uint8_t/*bool*/>*>;
 	    	
-			util::array<FieldType, n_species + 9> ret;
+			util::array<FieldType, n_species + 10> ret;
 
-			ret[0] = nullptr; //&node_id;
-			ret[1] = nullptr; //&nuclear_particle_id;
-			ret[2] = &dt;
-			ret[3] = &c;
-			ret[4] = &p;
-			ret[5] = &u;
-			ret[6] = &temp;
-			ret[7] = &rho;
-			ret[8] = &previous_rho;
+			ret[0] = (std::vector<Float>*)nullptr; //&node_id;
+			ret[1] = (std::vector<Float>*)nullptr; //&nuclear_particle_id;
+			ret[2] = &burning;
+			ret[3] = &dt;
+			ret[4] = &c;
+			ret[5] = &p;
+			ret[6] = &u;
+			ret[7] = &temp;
+			ret[8] = &rho;
+			ret[9] = &previous_rho;
 
 			for (int i = 0; i < n_species; ++i)
-				ret[i + 9] = nullptr; //&Y_io[i];
+				ret[i + 10] = (std::vector<Float>*)nullptr; //&Y_io[i];
 
 			return ret;
 	    }
 
 	    bool isAllocated(int i) const {
-	    	if (i <= 1 || i >= 9)
+	    	if (i <= 1 || i >= 10)
 	    		return false;
 	    	return true;
 	    }
@@ -149,19 +157,20 @@ namespace sphexa::sphnnet {
 			nuclear_particle_id = iota_vector<size_t>(0);
 
 			// initialize outputFieldNames with the right names
-    		outputFieldNames.resize(n_species + 9);
+    		outputFieldNames.resize(n_species + 10);
 	        outputFieldNames[0] = "nid";
 	        outputFieldNames[1] = "pid";
-	        outputFieldNames[2] = "dt";
-	        outputFieldNames[3] = "c";
+	        outputFieldNames[2] = "burning";
+	        outputFieldNames[3] = "dt";
 	        outputFieldNames[4] = "c";
-	        outputFieldNames[5] = "p";
-	        outputFieldNames[6] = "temp";
-	        outputFieldNames[7] = "rho";
-	        outputFieldNames[8] = "previous_rho";
+	        outputFieldNames[5] = "c";
+	        outputFieldNames[6] = "p";
+	        outputFieldNames[7] = "temp";
+	        outputFieldNames[8] = "rho";
+	        outputFieldNames[9] = "previous_rho";
 
 	        for (int i = 0; i < n_species; ++i)
-				outputFieldNames[i + 9] = "Y(" + species_names[i] + ")";
+				outputFieldNames[i + 10] = "Y(" + species_names[i] + ")";
 
 	        outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, outFields);
     	}

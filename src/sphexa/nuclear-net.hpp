@@ -29,13 +29,14 @@ namespace sphexa::sphnnet {
 		const size_t n_particles = n.temp.size();
 
 		#pragma omp parallel for schedule(dynamic)
-		for (size_t i = 0; i < n_particles; ++i) {
-			Float drho_dt = (n.rho[i] - n.previous_rho[i])/previous_dt;
+		for (size_t i = 0; i < n_particles; ++i)
+			if (n.burning[i]) {
+				Float drho_dt = (n.rho[i] - n.previous_rho[i])/previous_dt;
 
-			std::tie(n.Y[i], n.temp[i]) = nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
-				n.Y[i], n.temp[i],
-				n.rho[i], drho_dt, hydro_dt, n.dt[i]);
-		}
+				std::tie(n.Y[i], n.temp[i]) = nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
+					n.Y[i], n.temp[i],
+					n.rho[i], drho_dt, hydro_dt, n.dt[i]);
+			}
 	}
 
 	/// function to copute the helmholtz eos
@@ -64,8 +65,12 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
-	void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n) {
-		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
+	void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n, Float min_temp=nnet::constants::min_temp, Float min_rho=nnet::constants::min_rho) {
+		#pragma omp parallel for schedule(dynamic)
+		for (size_t i = firstIndex; i < lastIndex; ++i)
+			d.burning[i] = d.rho[i] > min_rho && d.temp[i] > min_temp;
+
+		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.burning, n.burning, d.comm);
 	}
 
 
@@ -81,7 +86,7 @@ namespace sphexa::sphnnet {
 		d.setOutputFields(sync_fields);
 		n.setOutputFields(sync_fields);
 
-		using FieldType = std::variant<float*, double*, int*, unsigned*, size_t*>;
+		using FieldType = std::variant<float*, double*, int*, unsigned*, size_t*, uint8_t*/*bool* */>;
 
 		std::vector<FieldType> particleData = sphexa::getOutputArrays(d);
 		std::vector<FieldType> nuclearData  = sphexa::getOutputArrays(n);
@@ -111,7 +116,7 @@ namespace sphexa::sphnnet {
 		d.setOutputFields(sync_fields);
 		n.setOutputFields(sync_fields);
 
-		using FieldType = std::variant<float*, double*, int*, unsigned*, size_t*>;
+		using FieldType = std::variant<float*, double*, int*, unsigned*, size_t*, uint8_t*/*bool* */>;
 
 		std::vector<FieldType> particleData = sphexa::getOutputArrays(d);
 		std::vector<FieldType> nuclearData  = sphexa::getOutputArrays(n);
