@@ -123,16 +123,16 @@ namespace sphexa::mpi {
 	/**
 	 * TODO
 	 */
-	void initializePointers(size_t firstIndex, size_t lastIndex, std::vector<int> &node_id, std::vector<std::size_t> &particle_id) {
+	void initializePointers(size_t firstIndex, size_t lastIndex, std::vector<int> &node_id, std::vector<std::size_t> &particle_id, MPI_Comm comm) {
 		int rank, size;
-		MPI_Comm_size(MPI_COMM_WORLD, &size);
-		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+		MPI_Comm_size(comm, &size);
+		MPI_Comm_rank(comm, &rank);
 
 		// share the number of particle per node
 		std::vector<size_t> n_particles(size);
 		size_t local_n_particles = lastIndex - firstIndex;
 		MPI_Allgather(&local_n_particles, 1, MPI_UNSIGNED_LONG_LONG,
-					  &n_particles[0],    1, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+					  &n_particles[0],    1, MPI_UNSIGNED_LONG_LONG, comm);
 
 		// initialize "node_id" and "particle_id"
 		size_t global_idx_begin = std::accumulate(n_particles.begin(), n_particles.begin() + rank, (size_t)0);
@@ -152,7 +152,7 @@ namespace sphexa::mpi {
 	template<typename T>
 	void directSyncDataFromPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
 		int size;
-		MPI_Comm_size(MPI_COMM_WORLD, &size);
+		MPI_Comm_size(comm, &size);
 
 		const size_t n_particles_send = partition.send_disp[size];
 		const size_t n_particles_recv = partition.recv_disp[size];
@@ -206,7 +206,7 @@ namespace sphexa::mpi {
 		// exact same thing as "direct_sync_data_from_partition" but with "send_ <-> recv_"
 
 		int size;
-		MPI_Comm_size(MPI_COMM_WORLD, &size);
+		MPI_Comm_size(comm, &size);
 
 		const size_t n_particles_send = partition.send_disp[size];
 		const size_t n_particles_recv = partition.recv_disp[size];
