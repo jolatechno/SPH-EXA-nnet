@@ -279,7 +279,7 @@ int main(int argc, char* argv[]) {
 	/* !!!!!!!!!!!!
 	initialize nuclear data
 	!!!!!!!!!!!! */
-	sphexa::mpi::initializePointers(first, last, particle_data.node_id, particle_data.particle_id, particle_data.comms);
+	sphexa::mpi::initializePointers(first, last, particle_data.node_id, particle_data.particle_id, particle_data.comm);
 	auto nuclear_data_86 = sphexa::sphnnet::initNuclearDataFromConst<86>(first, last, particle_data, Y0_86);
 	auto nuclear_data_14 = sphexa::sphnnet::initNuclearDataFromConst<14>(first, last, particle_data, Y0_14);
 
