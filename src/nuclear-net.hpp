@@ -46,9 +46,6 @@ namespace nnet {
 		double epsilon_vector = 1e-16;
 
 		namespace NR {
-			/// approch factor, used to compute a running average in the newton rhapson iteration
-			double approch_factor = 0.9;
-
 			/// maximum timestep
 			double max_dt = 1e-2;
 
@@ -60,9 +57,9 @@ namespace nnet {
 			/// minimum number of newton raphson iterations
 			uint min_it = 1;
 			/// maximum number of newton raphson iterations
-			uint max_it = 15;
+			uint max_it = 11;
 			/// tolerance for the correction to break out of the newton raphson loop
-			double it_tol = 1e-6;
+			double it_tol = 1e-7;
 		}
 
 		namespace substep {
@@ -429,8 +426,8 @@ namespace nnet {
 
 		const int dimension = Y.size();
 
-		Vector Y_theta = Y, final_Y = Y, running_avg_Y = Y;
-		Float T_theta = T, final_T = T, running_avg_T = T;
+		Vector Y_theta = Y, final_Y = Y;
+		Float T_theta = T, final_T = T;
 
 		// actual solving
 		for (int i = 0; i < constants::NR::max_it; ++i) {
@@ -448,9 +445,9 @@ namespace nnet {
 			}
 
 			// compute n+theta values
-			T_theta =        (1 - constants::theta)*T    + constants::theta*running_avg_T;
+			T_theta =        (1 - constants::theta)*T    + constants::theta*final_T;
 			for (int j = 0; j < dimension; ++j)
-				Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*running_avg_Y[j];
+				Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
 
 			// compute rate
 			auto [rates, drates_dT] = construct_rates(         T_theta, rho);
@@ -462,6 +459,7 @@ namespace nnet {
 			double value_1 = eos_struct.dP_dT*drho/(rho*rho);
 
 			// solve the system
+			Float last_T = final_T;
 			std::tie(final_Y, final_T) = solve_system_from_guess(
 				reactions, rates, drates_dT, BE,
 				Y, T, Y_theta, T_theta,
@@ -473,8 +471,8 @@ namespace nnet {
 				dt *= constants::nan_dt_step;
 
 				// jump back
-				running_avg_Y = Y;
-				running_avg_T = T;
+				final_Y = Y;
+				final_T = T;
 				i = -1;
 				continue;
 			}
@@ -486,8 +484,8 @@ namespace nnet {
 				dt *= constants::NR::dT_T_target/dT_T;
 
 				// jump back
-				running_avg_Y = Y;
-				running_avg_T = T;
+				final_Y = Y;
+				final_T = T;
 				i = -1;
 				continue;
 			}
@@ -496,14 +494,9 @@ namespace nnet {
 			utils::clip(final_Y, nnet::constants::epsilon_vector);
 			
 			// return condition
-			Float correction = std::abs((final_T - running_avg_T)/final_T);
+			Float correction = std::abs((final_T - last_T)/final_T);
 			if (i >= constants::NR::min_it && correction < constants::NR::it_tol)
 				break;
-
-			// compute running averages
-			running_avg_T =        (1 - constants::NR::approch_factor)*running_avg_T    + constants::NR::approch_factor*final_T;
-			for (int j = 0; j < dimension; ++j)
-				running_avg_Y[j] = (1 - constants::NR::approch_factor)*running_avg_Y[j] + constants::NR::approch_factor*final_Y[j];
 		}
 
 		// mass and temperature variation
