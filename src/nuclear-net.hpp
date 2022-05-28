@@ -19,7 +19,7 @@ namespace nnet {
 
 	namespace constants {
 		/// theta for the implicit method
-		double theta = 1;
+		double theta = 0.8;
 
 		/// minimum temperature at which we compute the nuclear network
 		double min_temp = 1e8;
@@ -33,12 +33,12 @@ namespace nnet {
 		/// maximum negative timestep evolution
 		double min_dt_step = 1e-2;
 		/// timestep jump when a nan is in the solution
-		double nan_dt_step = 1e-1;
+		double nan_dt_step = 2e-1;
 
 		/// relative temperature variation target of the implicit solver
 		double dT_T_target = 4e-3;
 		/// relative temperature variation tolerance of the implicit solver
-		double dT_T_tol = 5;
+		double dT_T_tol = 4;
 
 		/// the value that is considered null inside a system
 		double epsilon_system = 1e-100;
@@ -47,19 +47,19 @@ namespace nnet {
 
 		namespace NR {
 			/// maximum timestep
-			double max_dt = 2e-2;
+			double max_dt = 1e-2;
 
 			/// relative temperature variation target of the implicit solver
 			double dT_T_target = 1e-2;
 			/// relative temperature variation tolerance of the implicit solver
-			double dT_T_tol = 5;
+			double dT_T_tol = 4;
 
 			/// minimum number of newton raphson iterations
-			uint min_it = 2;
+			uint min_it = 3;
 			/// maximum number of newton raphson iterations
 			uint max_it = 15;
 			/// tolerance for the correction to break out of the newton raphson loop
-			double it_tol = 1e-7;
+			double it_tol = 1e-6;
 		}
 
 		namespace substep {
@@ -291,8 +291,8 @@ namespace nnet {
 		// right hand side
 		std::vector<double> RHS(dimension + 1);
 		auto dY_dt = derivatives_from_reactions(reactions, rates, Y_guess, rho);
-		for (int i = 1; i <= dimension; ++i)
-			RHS[i] = dY_dt[i - 1]*dt;
+		for (int i = 0; i < dimension; ++i)
+			RHS[i + 1] = dY_dt[i]*dt;
 
 		// main matrix part
 		eigen::matrix<Float> MpYY = order_1_dY_from_reactions(reactions, rates, Y_guess, rho);
@@ -324,7 +324,8 @@ namespace nnet {
 		for (int i = 0; i < dimension; ++i) {
 			Mp(i + 1, 0) = -constants::theta*dt*dY_dT[i];
 
-			// *Dt = -__*(next_T - T_guess) = -__*(next_T - T + T - T_guess) = -__*(next_T - T) - __*(T - T_guess)
+			//               __*Dt = __*(next_T - T_guess) = __*(next_T - T + T - T_guess) = __*(next_T - T) - __*(T_guess - T)
+			// <=> -__*theta*dt*Dt = ... - __*theta*dt*(T_guess - T)
 			RHS[i + 1]  += -constants::theta*dt*dY_dT[i]*(T_guess - T);
 		}
 
@@ -425,81 +426,92 @@ namespace nnet {
 
 		const int dimension = Y.size();
 
-		while (true) {
-			Vector Y_theta = Y, final_Y = Y;
-			Float T_theta, final_T = T;
+		Vector Y_theta = Y, final_Y = Y;
+		Float T_theta, final_T = T;
 
-			// actual solving
-			for (int i = 0; i < constants::NR::max_it; ++i) {
-				if (dt == 0) {
-					std::string error = "Zero timestep in nuclear network\n";
-					error += "\tT=" + std::to_string(T) + "\n";
-					error += "\trho=" + std::to_string(rho) + "\n";
-					error += "\tdrho_dt=" + std::to_string(drho_dt) + "\n";
-					error += "\tY=";
-					for (auto y : Y)
-						error += std::to_string(y) + " ";
-					error += "\n";
-					
-					throw std::runtime_error(error);
-				}
-
-				// compute n+theta values
-				T_theta =        (1 - constants::theta)*T    + constants::theta*final_T;
-				for (int j = 0; j < dimension; ++j)
-					Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
-
-				// compute rate
-				auto [rates, drates_dT] = construct_rates(         T_theta, rho);
-				auto BE                 = construct_BE   (         T_theta, rho);
-				auto eos_struct         = eos            (Y_theta, T_theta, rho);
-
-				// compute value_1
-				const double drho = drho_dt*dt;
-				double value_1 = eos_struct.dP_dT*drho/(rho*rho);
-
-				// solve the system
-				Float last_T = final_T;
-				std::tie(final_Y, final_T) = solve_system_from_guess(
-					reactions, rates, drates_dT, BE,
-					Y, T, Y_theta, T_theta,
-					eos_struct.cv, rho, value_1, dt);
-
-				// check for garbage 
-				if (utils::contain_nan(final_Y, final_T) || final_T < 0) {
-					// set timestep
-					dt *= constants::nan_dt_step;
-
-					// jump back
-					final_Y = Y;
-					final_T = T;
-					i = 0;
-				} else {
-					// cleanup Vector
-					utils::clip(final_Y, nnet::constants::epsilon_vector);
-
-					// exit loop on condition
-					Float correction = std::abs((final_T - last_T)/final_T);
-					if (i >= constants::NR::min_it && correction < constants::NR::it_tol)
-						break;
-				}
+		// actual solving
+		for (int i = 0; i < constants::NR::max_it; ++i) {
+			if (dt == 0) {
+				std::string error = "Zero timestep in nuclear network\n";
+				error += "\tT=" + std::to_string(T) + "\n";
+				error += "\trho=" + std::to_string(rho) + "\n";
+				error += "\tdrho_dt=" + std::to_string(drho_dt) + "\n";
+				error += "\tY=";
+				for (auto y : Y)
+					error += std::to_string(y) + " ";
+				error += "\n";
+				
+				throw std::runtime_error(error);
 			}
 
-			// mass and temperature variation
+			// compute n+theta values
+			T_theta =        (1 - constants::theta)*T    + constants::theta*final_T;
+			for (int j = 0; j < dimension; ++j)
+				Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
+
+			// compute rate
+			auto [rates, drates_dT] = construct_rates(         T_theta, rho);
+			auto BE                 = construct_BE   (         T_theta, rho);
+			auto eos_struct         = eos            (Y_theta, T_theta, rho);
+
+			// compute value_1
+			const double drho = drho_dt*dt;
+			double value_1 = eos_struct.dP_dT*drho/(rho*rho);
+
+			// solve the system
+			Float last_T = final_T;
+			std::tie(final_Y, final_T) = solve_system_from_guess(
+				reactions, rates, drates_dT, BE,
+				Y, T, Y_theta, T_theta,
+				eos_struct.cv, rho, value_1, dt);
+
+			// check for garbage 
+			if (utils::contain_nan(final_Y, final_T) || final_T < 0) {
+				// set timestep
+				dt *= constants::nan_dt_step;
+
+				// jump back
+				final_Y = Y;
+				final_T = T;
+				i = -1;
+				continue;
+			}
+
+			// break condition
 			Float dT_T = std::abs((final_T - T)/final_T);
+			if (i >= constants::NR::min_it && dT_T > constants::NR::dT_T_target*constants::NR::dT_T_tol) {
+				// set timestep
+				dt *= constants::NR::dT_T_target/dT_T;
 
-			// timestep tweeking
-			Float previous_dt = dt;
-			dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::NR::dT_T_target/dT_T)*previous_dt;
-			dt = std::min(dt, previous_dt*constants::max_dt_step);
-			dt = std::max(dt, previous_dt*constants::min_dt_step);
-			dt = std::min(dt,      (Float)constants::NR::max_dt);
+				// jump back
+				final_Y = Y;
+				final_T = T;
+				i = -1;
+				continue;
+			}
 
-			// exit on condition
-			if (dT_T <= constants::NR::dT_T_target*constants::NR::dT_T_tol)
-				return {final_Y, final_T, previous_dt};
+			// cleanup Vector
+			utils::clip(final_Y, nnet::constants::epsilon_vector);
+			
+			// return condition
+			Float correction = std::abs((final_T - last_T)/final_T);
+			if (i >= constants::NR::min_it && correction < constants::NR::it_tol)
+				break;
 		}
+
+		// mass and temperature variation
+		Float dT_T = std::abs((final_T - T)/final_T);
+
+		// timestep tweeking
+		Float previous_dt = dt;
+		dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::NR::dT_T_target/dT_T)*previous_dt;
+		dt = std::min(dt, previous_dt*constants::max_dt_step);
+		dt = std::max(dt, previous_dt*constants::min_dt_step);
+		dt = std::min(dt,      (Float)constants::NR::max_dt);
+
+		return {final_Y, final_T, previous_dt};
 	}
+
 
 
 	/// function to supperstep

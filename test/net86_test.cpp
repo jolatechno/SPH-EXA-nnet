@@ -40,12 +40,12 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    const int n_max                         = parser.get("-n", 1000);
+    const int n_max                         = parser.get("-n",        1000);
     const int n_print                       = parser.get("--n-debug", 30);
-    const double t_max                      = parser.get("--t-lim", 1.5);
+    const double t_max                      = parser.get("--t-lim",   1.5);
 
     double rho                              = parser.get("--rho", 1e9);
-    double last_T                           = parser.get("-T", 1e9);
+    double last_T                           = parser.get("-T",    1e9);
     std::string test_case                   = parser.get("--test-case");
     const bool isotherm                     = parser.exists("--isotherm");
 
@@ -65,8 +65,8 @@ int main(int argc, char* argv[]) {
 
     const bool expension                    = parser.exists("--expansion");
     const int start_expansion               = parser.get("--start-expansion", 600);
-	const double rho_half_life              = parser.get("--rho-half-life", 0.02);
-	const double rho_lim                    = parser.get("--rho-lim", 1e5);
+	const double rho_half_life              = parser.get("--rho-half-life",   0.02);
+	const double rho_lim                    = parser.get("--rho-lim",         1e5);
 
     std::array<double, 86> last_Y, X;
     for (int i = 0; i < 86; ++i) X[i] = 0;
