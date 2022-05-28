@@ -19,7 +19,7 @@ namespace nnet {
 
 	namespace constants {
 		/// theta for the implicit method
-		double theta = 0.7;
+		double theta = 0.8;
 
 		/// minimum temperature at which we compute the nuclear network
 		double min_temp = 1e8;
@@ -58,11 +58,11 @@ namespace nnet {
 			double dT_T_tol = 4;
 
 			/// minimum number of newton raphson iterations
-			uint min_it = 2;
+			uint min_it = 1;
 			/// maximum number of newton raphson iterations
 			uint max_it = 15;
 			/// tolerance for the correction to break out of the newton raphson loop
-			double it_tol = 1e-7;
+			double it_tol = 1e-6;
 		}
 
 		namespace substep {
