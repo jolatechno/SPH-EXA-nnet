@@ -31,7 +31,7 @@ namespace sphexa::sphnnet {
 		#pragma omp parallel for schedule(dynamic)
 		for (size_t i = 0; i < n_particles; ++i)
 			if (n.burning[i]) {
-				Float drho_dt = (n.rho[i] - n.previous_rho[i])/previous_dt;
+				Float drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
 				std::tie(n.Y[i], n.temp[i]) = nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
 					n.Y[i], n.temp[i],
@@ -80,8 +80,8 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
 	void hydroToNuclearUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
-		if (!n.first_step)
-			std::swap(n.rho, n.previous_rho);
+		if (std::count(sync_fields.begin(), sync_fields.end(), "rho") != 0)
+			sphexa::mpi::swap(n.partition, n.rho.data(), n.previous_rho.data());
 
 		std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices;
 		std::vector<std::string> outputFieldNamesNuclear   = n.outputFieldNames,   outputFieldNamesHydro   = d.outputFieldNames;
@@ -106,11 +106,6 @@ namespace sphexa::sphnnet {
 
 		n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro;
 		n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;
-
-		if (n.first_step) {
-			std::copy(n.rho.begin(), n.rho.end(), n.previous_rho.begin());
-			n.first_step = false;
-		}
 	}
 
 	/// sending back hydro data from NuclearDataType to ParticlesDataType

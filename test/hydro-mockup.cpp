@@ -259,7 +259,7 @@ int main(int argc, char* argv[]) {
 
 
 
-	std::vector<std::string> outFields = {/*"nid", "pid",*/ "temp", "rho" , "burning"/*, "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"*/};
+	std::vector<std::string> outFields = {/*"nid", "pid",*/ "temp", "rho" , "burning" /*, "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"*/};
 	particle_data.setOutputFields(outFields);
 
 

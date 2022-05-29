@@ -250,4 +250,18 @@ namespace sphexa::mpi {
 	void reversedSyncDataFromPartition(const mpi_partition &partition, const T1 *send_vector, T2 *recv_vector, MPI_Comm comm) {
 		throw std::runtime_error("Type mismatch in reversedSyncDataFromPartition\n");
 	}
+
+	/// swap data only for particle that are updated
+	/**
+	 * TODO
+	 */
+	template<typename T>
+	void swap(const mpi_partition &partition, T *vect_1, T *vect_2) {
+		const size_t n_particles = partition.recv->size();
+
+		#pragma omp parallel for schedule(dynamic)
+		for (size_t i = 0; i < n_particles; ++i)
+			if ((*partition.recv)[i])
+				std::swap(vect_1[i], vect_2[i]);
+	}
 }

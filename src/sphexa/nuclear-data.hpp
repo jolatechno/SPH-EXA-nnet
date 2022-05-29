@@ -23,9 +23,6 @@ namespace sphexa::sphnnet {
 	template<int n_species, typename Float=double>
 	struct NuclearDataType {
 	public:
-		/// check if previous rho is already initialized
-		bool first_step = true;
-		
 		/// hydro data
 		std::vector<Float> c, p, u, rho, temp, previous_rho; // drho_dt
 
@@ -47,7 +44,7 @@ namespace sphexa::sphnnet {
 		/// resize the number of particules
 		void resize(const size_t N) {
 			rho.resize(N);
-			previous_rho.resize(N); //drho_dt.resize(N);
+			previous_rho.resize(N, -1.);
 			temp.resize(N);
 			c.resize(N);
 			p.resize(N);
