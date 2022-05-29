@@ -259,6 +259,9 @@ int main(int argc, char* argv[]) {
 
 
 
+	std::vector<std::string> outFields = {/*"nid", "pid",*/ "temp", "rho" , "burning"/*, "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"*/};
+	particle_data.setOutputFields(outFields);
+
 
 
 
@@ -338,9 +341,6 @@ int main(int argc, char* argv[]) {
 		auto avg_duration = duration/n_max;
 		std::cout << "\nexec time: " << duration << "s (avg=" << avg_duration << "s/it, max=" << max_time << "s/it, min=" << min_time  << "s/it)\n\n";
 	}
-
-	std::vector<std::string> outFields = {/*"nid", "pid",*/ "temp", "rho" , "burning"/*, "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"*/};
-	particle_data.setOutputFields(outFields);
 	
 
 	if (rank == 0) {

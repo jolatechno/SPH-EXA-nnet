@@ -83,6 +83,9 @@ namespace sphexa::sphnnet {
 		if (!n.first_step)
 			std::swap(n.rho, n.previous_rho);
 
+		std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices;
+		std::vector<std::string> outputFieldNamesNuclear   = n.outputFieldNames,   outputFieldNamesHydro   = d.outputFieldNames;
+
 		d.setOutputFields(sync_fields);
 		n.setOutputFields(sync_fields);
 
@@ -101,10 +104,13 @@ namespace sphexa::sphnnet {
 					sphexa::mpi::directSyncDataFromPartition(n.partition, send, recv, d.comm);
 				}, particleData[field], nuclearData[field]);
 
+		n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro;
+		n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;
+
 		if (n.first_step) {
 			std::copy(n.rho.begin(), n.rho.end(), n.previous_rho.begin());
 			n.first_step = false;
-		}	
+		}
 	}
 
 	/// sending back hydro data from NuclearDataType to ParticlesDataType
@@ -113,6 +119,9 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
 	void nuclearToHydroUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
+		std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices;
+		std::vector<std::string> outputFieldNamesNuclear   = n.outputFieldNames,   outputFieldNamesHydro   = d.outputFieldNames;
+
 		d.setOutputFields(sync_fields);
 		n.setOutputFields(sync_fields);
 
@@ -130,6 +139,9 @@ namespace sphexa::sphnnet {
 				[&d, &n](auto&& send, auto &&recv){
 					sphexa::mpi::reversedSyncDataFromPartition(n.partition, send, recv, d.comm);
 				}, nuclearData[field], particleData[field]);
+
+		n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro;
+		n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;
 	}
 #endif
 }
