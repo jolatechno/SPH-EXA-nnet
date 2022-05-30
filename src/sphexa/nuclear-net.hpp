@@ -29,14 +29,13 @@ namespace sphexa::sphnnet {
 		const size_t n_particles = n.temp.size();
 
 		#pragma omp parallel for schedule(dynamic)
-		for (size_t i = 0; i < n_particles; ++i)
-			if (n.burning[i]) {
-				Float drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
+		for (size_t i = 0; i < n_particles; ++i) {
+			Float drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
-				std::tie(n.Y[i], n.temp[i]) = nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
-					n.Y[i], n.temp[i],
-					n.rho[i], drho_dt, hydro_dt, n.dt[i]);
-			}
+			std::tie(n.Y[i], n.temp[i]) = nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
+				n.Y[i], n.temp[i],
+				n.rho[i], drho_dt, hydro_dt, n.dt[i]);
+		}
 	}
 
 	/// function to copute the helmholtz eos
@@ -65,12 +64,8 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
-	void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n, Float min_temp=nnet::constants::min_temp, Float min_rho=nnet::constants::min_rho) {
-		#pragma omp parallel for schedule(dynamic)
-		for (size_t i = firstIndex; i < lastIndex; ++i)
-			d.burning[i] = d.rho[i] > min_rho && d.temp[i] > min_temp;
-
-		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.burning, n.burning, d.comm);
+	void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n) {
+		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
 	}
 
 
@@ -81,7 +76,7 @@ namespace sphexa::sphnnet {
 	template<class ParticlesDataType, int n_species, typename Float=double>
 	void hydroToNuclearUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
 		if (std::count(sync_fields.begin(), sync_fields.end(), "rho") != 0)
-			sphexa::mpi::swap(n.partition, n.rho.data(), n.previous_rho.data());
+			std::swap(n.rho, n.previous_rho);
 
 		std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices;
 		std::vector<std::string> outputFieldNamesNuclear   = n.outputFieldNames,   outputFieldNamesHydro   = d.outputFieldNames;

@@ -18,8 +18,8 @@ namespace sphexa::sphnnet {
 		MPI_Comm_size(d.comm, &size);
 
 		n.comm = d.comm;
-		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n, 0., 0.);
-		const size_t local_nuclear_n_particles = n.partition.recv_disp[size*2];
+		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n);
+		const size_t local_nuclear_n_particles = n.partition.recv_disp[size];
 
 		// share the initial rho
 		n.resize(local_nuclear_n_particles);
@@ -51,8 +51,8 @@ namespace sphexa::sphnnet {
 		MPI_Comm_size(d.comm, &size);
 
 		n.comm = d.comm;
-		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n, 0., 0.);
-		const size_t local_nuclear_n_particles = n.partition.recv_disp[size*2];
+		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n);
+		const size_t local_nuclear_n_particles = n.partition.recv_disp[size];
 		const size_t local_n_particles = d.x.size();
 
 		// share the initial rho
@@ -85,8 +85,8 @@ namespace sphexa::sphnnet {
 		MPI_Comm_size(d.comm, &size);
 
 		n.comm = d.comm;
-		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n, 0., 0.);
-		const size_t local_nuclear_n_particles = n.partition.recv_disp[size*2];
+		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n);
+		const size_t local_nuclear_n_particles = n.partition.recv_disp[size];
 
 		// share the initial rho
 		n.resize(local_nuclear_n_particles);
@@ -113,8 +113,8 @@ namespace sphexa::sphnnet {
 		MPI_Comm_size(d.comm, &size);
 
 		n.comm = d.comm;
-		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n, 0., 0.);
-		const size_t local_nuclear_n_particles = n.partition.recv_disp[size*2];
+		sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n);
+		const size_t local_nuclear_n_particles = n.partition.recv_disp[size];
 
 		// share the initial rho
 		n.resize(local_nuclear_n_particles);

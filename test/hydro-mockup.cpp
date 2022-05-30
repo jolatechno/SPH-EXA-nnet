@@ -72,9 +72,6 @@ public:
 	std::vector<std::size_t> particle_id;
 	std::vector<double> x, y, z;
 
-	// burning
-	std::vector<uint8_t/*bool*/> burning;
-
 	// hydro data
 	std::vector<double> rho, temp; //...
 
@@ -86,14 +83,12 @@ public:
 		y.resize(N);
 		z.resize(N);
 
-		burning.resize(N);
-
 		rho.resize(N);
 		temp.resize(N);
 	}
 
 	const std::vector<std::string> fieldNames = {
-		"nid", "pid", "rho", "temp", "x", "y", "z", "burning"
+		"nid", "pid", "rho", "temp", "x", "y", "z"
 	};
 
 	auto data() {
@@ -103,8 +98,8 @@ public:
 	    	std::vector<uint8_t/*bool*/>*,
 	    	std::vector<double>*>;
 
-	    std::array<FieldType, 8> ret = {
-	    	&node_id, &particle_id, &rho, &temp, &x, &y, &z, &burning};
+	    std::array<FieldType, 7> ret = {
+	    	&node_id, &particle_id, &rho, &temp, &x, &y, &z};
 
 	    return ret;
 	}
@@ -148,9 +143,9 @@ void step(size_t firstIndex, size_t lastIndex,
 
 	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
 		reactions, construct_rates, construct_BE, eos);
-
+	
 	sphexa::sphnnet::nuclearToHydroUpdate(d, n, {"temp"});
-
+	
 	// do hydro stuff
 }
 
@@ -259,7 +254,7 @@ int main(int argc, char* argv[]) {
 
 
 
-	std::vector<std::string> outFields = {/*"nid", "pid",*/ "temp", "rho" , "burning" /*, "Y(4He)", "Y(12C)", "Y(16O)", "Y(56Ni)"*/};
+	std::vector<std::string> outFields = {/*"nid", "pid",*/ "temp", "rho"};
 	particle_data.setOutputFields(outFields);
 
 

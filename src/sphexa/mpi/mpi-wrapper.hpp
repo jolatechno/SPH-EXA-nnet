@@ -17,10 +17,6 @@ namespace sphexa::mpi {
 		// references to pointers
 		const std::vector<int>             *node_id;
 		const std::vector<std::size_t>     *particle_id;
-		const std::vector<uint8_t/*bool*/> *send;
-
-		// true if receive
-		std::vector<uint8_t/*bool*/>       *recv;
 
 		// send partition limits
 		std::vector<int> send_disp;
@@ -37,15 +33,14 @@ namespace sphexa::mpi {
 		std::vector<std::size_t> recv_partition;
 
 		mpi_partition() {}
-		mpi_partition(const std::vector<int> &node_id_, const std::vector<std::size_t> &particle_id_,
-			const std::vector<uint8_t/*bool*/> &send_, std::vector<uint8_t/*bool*/> &recv_) : node_id(&node_id_), particle_id(&particle_id_), send(&send_), recv(&recv_) {}
+		mpi_partition(const std::vector<int> &node_id_, const std::vector<std::size_t> &particle_id_) : node_id(&node_id_), particle_id(&particle_id_) {}
 
 		void resize_comm_size(const int size) {
-			send_disp .resize(size*2 + 1, 0);
-			send_count.resize(size*2,     0);
+			send_disp .resize(size + 1, 0);
+			send_count.resize(size,     0);
 
-			recv_disp. resize(size*2 + 1, 0);
-			recv_count.resize(size*2,     0);
+			recv_disp. resize(size + 1, 0);
+			recv_count.resize(size,     0);
 		}
 
 		void resize_num_send(const int N) {
@@ -59,14 +54,13 @@ namespace sphexa::mpi {
 	/**
 	 * TODO
 	 */
-	mpi_partition partitionFromPointers(size_t firstIndex, size_t lastIndex, const std::vector<int> &node_id, const std::vector<std::size_t> &particle_id,
-		const std::vector<uint8_t/*bool*/> &send, std::vector<uint8_t/*bool*/> &recv, MPI_Comm comm)
+	mpi_partition partitionFromPointers(size_t firstIndex, size_t lastIndex, const std::vector<int> &node_id, const std::vector<std::size_t> &particle_id, MPI_Comm comm)
 	{
 		int rank, size;
 		MPI_Comm_size(comm, &size);
 		MPI_Comm_rank(comm, &rank);
 
-		mpi_partition partition(node_id, particle_id, send, recv);
+		mpi_partition partition(node_id, particle_id);
 
 		// prepare vector sizes
 		const int n_particles = lastIndex - firstIndex;
@@ -77,17 +71,13 @@ namespace sphexa::mpi {
 		utils::parallel_generalized_partition_from_iota(partition.send_partition.begin(), partition.send_partition.end(), firstIndex, 
 			partition.send_disp.begin(), partition.send_disp.end(),
 			[&](const int idx) {
-				if (!send[idx])
-					return size + node_id[idx];
-
 				return node_id[idx];
 			});
 
 		// send counts
 		partition.recv_disp[0] = 0; partition.send_disp[0] = 0;
 		std::adjacent_difference(partition.send_disp.begin() + 1, partition.send_disp.end(), partition.send_count.begin());
-		MPI_Alltoall(&partition.send_count[0],    1, MPI_INT, &partition.recv_count[0],    1, MPI_INT, comm);
-		MPI_Alltoall(&partition.send_count[size], 1, MPI_INT, &partition.recv_count[size], 1, MPI_INT, comm); // send the number of particle not send from each node
+		MPI_Alltoall(&partition.send_count[0], 1, MPI_INT, &partition.recv_count[0], 1, MPI_INT, comm);
 		std::partial_sum(partition.recv_count.begin(), partition.recv_count.end(), partition.recv_disp.begin() + 1);
 
 		// send particle id
@@ -100,19 +90,11 @@ namespace sphexa::mpi {
 
 		// prepare recv buffer
 		size_t n_particles_recv  = partition.recv_disp[size];
-		size_t n_particles_total = partition.recv_disp[size*2];
 		partition.recv_partition.resize(n_particles_recv);
 
 		// send particle id
 		MPI_Alltoallv(&send_buffer[0],              &partition.send_count[0], &partition.send_disp[0], MPI_UNSIGNED_LONG_LONG,
 					  &partition.recv_partition[0], &partition.recv_count[0], &partition.recv_disp[0], MPI_UNSIGNED_LONG_LONG, comm);
-
-		// init recv
-		recv.resize(n_particles_total);
-		std::fill(recv.begin(), recv.end(), false);
-		#pragma omp parallel for schedule(dynamic)
-		for (size_t i = 0; i < n_particles_recv; ++i)
-			recv[partition.recv_partition[i]] = true;
 
 		return partition;
 	}
@@ -249,19 +231,5 @@ namespace sphexa::mpi {
 	template<typename T1, typename T2>
 	void reversedSyncDataFromPartition(const mpi_partition &partition, const T1 *send_vector, T2 *recv_vector, MPI_Comm comm) {
 		throw std::runtime_error("Type mismatch in reversedSyncDataFromPartition\n");
-	}
-
-	/// swap data only for particle that are updated
-	/**
-	 * TODO
-	 */
-	template<typename T>
-	void swap(const mpi_partition &partition, T *vect_1, T *vect_2) {
-		const size_t n_particles = partition.recv->size();
-
-		#pragma omp parallel for schedule(dynamic)
-		for (size_t i = 0; i < n_particles; ++i)
-			if ((*partition.recv)[i])
-				std::swap(vect_1[i], vect_2[i]);
 	}
 }
