@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cmath>
+#include <tuple>
 
 namespace eigen {
 	/// custom matrix type
@@ -66,7 +67,10 @@ namespace eigen {
 
 	/// custom analytical solver
 	template<typename Float, class Vector>
-	Vector solve(matrix<Float> M, Vector RHS, Float epsilon=0) {
+	Vector solve_gauss(matrix<Float> M, Vector RHS, Float epsilon=0) {
+		if (M.n != M.m)
+			throw std::runtime_error("can't use gaussian elimination on non-square matrices !");
+
 		const int n = RHS.size();
 		Vector X(n);
 
@@ -109,5 +113,33 @@ namespace eigen {
 		}
 
 		return X;
+	}
+
+	/// decompose a square matrix via LU decomposition
+	template<typename Float>
+	std::tuple<matrix<Float>, matrix<Float>&> LU_decompose(matrix<Float> M, Float epsilon=0) {
+		if (M.n != M.m)
+			throw std::runtime_error("can't LU-deompose non-square matrices !");
+
+		matrix<Float> L(M.n, M.m);
+
+		/* TODO */
+
+		return {L, M};
+	}
+
+	/// custom analytical solver
+	template<typename Float, class Vector>
+	Vector solve_LU(matrix<Float> M, Vector RHS, Float epsilon=0) {
+		// LU decompose
+		auto [L, U] = LU_decompose(M, epsilon);
+
+		// solve L*y = RHS
+		/* TODO */
+
+		// solve U*x = y (y = solution)
+		/* TODO */
+
+		return RHS;
 	}
 }

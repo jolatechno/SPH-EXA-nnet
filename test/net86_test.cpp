@@ -169,8 +169,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	auto stop = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-	std::cout << "\nexec time:" << ((float)duration.count())/1e3 << "s\n";
+	auto duration = std::chrono::duration<double>(stop - start);
+	std::cout << "\nexec time: " << ((float)duration.count()) << "s\n";
 
 	return 0;
 }

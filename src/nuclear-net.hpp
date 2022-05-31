@@ -331,7 +331,14 @@ namespace nnet {
 
 
 		// now solve M*D{T, Y} = RHS
-		auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
+		auto DY_T = 
+#ifdef USE_LU
+			eigen::solve_LU(
+#else
+			eigen::solve_gauss(
+#endif
+				Mp, RHS, constants::epsilon_system
+			);
 
 		// increment values
 		for (int i = 0; i < dimension; ++i)
