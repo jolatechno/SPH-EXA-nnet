@@ -16,6 +16,10 @@
 #endif
 
 namespace sphexa::sphnnet {
+	namespace constants {
+		/// initial nuclear timestep
+		double initial_dt = 1e-6;
+	}
 	/// nuclear data class for n_species nuclear network
 	/**
 	 * TODO

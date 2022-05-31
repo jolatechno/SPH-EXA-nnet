@@ -28,7 +28,7 @@ namespace nnet {
 		/// maximum timestep
 		double max_dt = 1e-2;
 		/// maximum timestep evolution
-		double max_dt_step = 1.5;
+		double max_dt_step = 2;
 		/// maximum negative timestep evolution
 		double min_dt_step = 1e-2;
 		/// timestep jump when a nan is in the solution
@@ -343,30 +343,8 @@ namespace nnet {
 			RHS[i + 1]  += -constants::theta*dt*dY_dT[i]*(T_guess - T);
 		}
 
-#ifdef DEBUG_EIGEN
-		std::cout << "\n\n";
-		for (int i = 0; i <= dimension; ++i)
-			std::cout << RHS[i] << "\t";
-		std::cout << "\n\n";
-		for (int i = 0; i <= dimension; ++i) {
-			for (int j = 0; j <= dimension; ++j)
-				std::cout << Mp(i, j) << "\t";
-			std::cout << "\n";
-		}
-#endif
-
-
 		// now solve M*D{T, Y} = RHS
 		auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
-
-
-
-#ifdef DEBUG_EIGEN
-		std::cout << "\n";
-		for (int i = 0; i <= dimension; ++i)
-			std::cout << DY_T[i] << "\t";
-		std::cout << "\n\n";
-#endif
 
 		// increment values
 		for (int i = 0; i < dimension; ++i)
@@ -401,58 +379,13 @@ namespace nnet {
 
 
 
-	/// fully solves a system, with timestep tweeking
-	/**
-	 *  solves iteratively and fully implicitly a single iteration of the system constructed by construct_system, with added timestep tweeking
-	 * ...TODO
-	 */
-	template<class Vector, typename Float>
-	std::tuple<Vector, Float, Float> solve_system_var_timestep(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE,
-		const Vector &Y, const Float T,
-		const Float cv, const Float rho, const Float value_1, Float &dt)
-	{
-		if (rho < constants::min_rho || T < constants::min_temp)
-			return {Y, T, dt};
-
-		// actual solving
-		while (true) {
-			// solve the system
-			auto [next_Y, next_T] = solve_system(reactions, rates, drates_dT, BE, Y, T, cv, rho, value_1, dt);
-
-			// check for garbage 
-			if (utils::contain_nan(next_Y, next_T) || next_T < 0) {
-				// set timestep
-				dt *= constants::nan_dt_step;
-			} else {
-				// cleanup Vector
-				utils::clip(next_Y, nnet::constants::epsilon_vector);
-
-				// mass and temperature variation
-				Float dT_T = std::abs((next_T - T)/T);
-
-				// timestep tweeking
-				Float previous_dt = dt;
-				dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::dT_T_target/dT_T)*previous_dt;
-				dt = std::min(dt, previous_dt*constants::max_dt_step);
-				dt = std::max(dt, previous_dt*constants::min_dt_step);
-				dt = std::min(dt, (Float)constants::max_dt);
-
-				// exit on condition
-				if (dT_T <= constants::dT_T_target*constants::dT_T_tol)
-					return {next_Y, next_T, previous_dt};
-			}
-		}
-	}
-
-
-
 
 	/// solve with  newton raphson
 	/**
-	 * Superstepping using solve_system_var_timestep, might move it to SPH-EXA
+	 * iterative solver.
 	 * ...TODO
 	 */
-	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
+	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float=double>
 	std::tuple<Vector, Float, Float> solve_system_NR(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
 		const Vector &Y, Float T, const Float rho, const Float drho_dt, Float &dt)
 	{
@@ -551,10 +484,10 @@ namespace nnet {
 
 	/// function to supperstep (can include jumping to NSE)
 	/**
-	 * Superstepping using solve_system_var_timestep, might move it to SPH-EXA
+	 * Superstepping using solve_system_NR, might move it to SPH-EXA
 	 * ...TODO
 	 */
-	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float, class nseFunction>
+	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
 	std::tuple<Vector, Float> solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
 		const Vector &Y, const Float T,
 		const Float rho, const Float drho_dt, Float const dt_tot, Float &dt,
