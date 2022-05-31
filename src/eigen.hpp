@@ -44,6 +44,9 @@ namespace eigen {
 
 // implementation using eigen
 #ifdef USE_EIGEN
+	// to evoid parallelization
+	#define EIGEN_DONT_PARALLELIZE
+
 	#include <Eigen/Core>
 #ifdef USE_SPARSE
 	#include <Eigen/SparseCore>
