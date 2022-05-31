@@ -71,13 +71,13 @@ namespace nnet {
 	}
 
 
+
+
 	/// reaction class
 	/**
 	 * ...TODO
 	 */
 	struct reaction {
-		friend std::ostream& operator<<(std::ostream& os, const reaction& r);
-
 		struct reactant {
 			int reactant_id, n_reactant_consumed = 1;
 		};
@@ -86,21 +86,22 @@ namespace nnet {
 		};
 		std::vector<reactant> reactants;
 		std::vector<product> products;
+
+
+		/// reaction class print operator
+		friend std::ostream& operator<<(std::ostream& os, const reaction& r) {
+			// print reactant
+			for (auto [reactant_id, n_reactant_consumed] : r.reactants)
+				os << n_reactant_consumed << "*[" << reactant_id << "] ";
+
+			os << " ->  ";
+
+			// print products
+			for (auto [product_id, n_product_produced] : r.products)
+				os << n_product_produced << "*[" << product_id << "] ";
+		    return os;
+		}
 	};
-
-	/// reaction class print operator
-	std::ostream& operator<<(std::ostream& os, const reaction& r) {
-		// print reactant
-		for (auto [reactant_id, n_reactant_consumed] : r.reactants)
-			os << n_reactant_consumed << "*[" << reactant_id << "] ";
-
-		os << " ->  ";
-
-		// print products
-		for (auto [product_id, n_product_produced] : r.products)
-			os << n_product_produced << "*[" << product_id << "] ";
-	    return os;
-	}
 
 
 
@@ -379,7 +380,6 @@ namespace nnet {
 
 
 
-
 	/// solve with  newton raphson
 	/**
 	 * iterative solver.
@@ -482,6 +482,7 @@ namespace nnet {
 
 
 
+
 	/// function to supperstep (can include jumping to NSE)
 	/**
 	 * Superstepping using solve_system_NR, might move it to SPH-EXA
@@ -524,10 +525,10 @@ namespace nnet {
 				return {final_Y, final_T};
 
 			// timejump if needed
-			if (jumpToNse != NULL)
+			if constexpr (std::is_invocable<std::remove_pointer<nseFunction>>())
 				if (dt < dt_tot*constants::substep::dt_nse_tol) {
 					dt = constants::max_dt;
-					return jumpToNse(reactions, construct_rates, construct_BE, eos,
+					return (*jumpToNse)(reactions, construct_rates, construct_BE, eos,
 						final_Y, final_T,
 						rho, drho_dt);
 				}
