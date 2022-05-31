@@ -265,10 +265,7 @@ int main(int argc, char* argv[]) {
 	const struct eos_output {
 		double cv, dP_dT;
 	} isotherm_res{1e20, 0};
-	const auto isotherm_eos_86 = [&](const util::array<double, 86> &Y_, const double T, const double rho_) {
-		return isotherm_res;
-	};
-	const auto isotherm_eos_14 = [&](const util::array<double, 14> &Y_, const double T, const double rho_) {
+	const auto isotherm_eos = [&](const eigen::Vector<double> &Y_, const double T, const double rho_) {
 		return isotherm_res;
 	};
 
@@ -301,7 +298,7 @@ int main(int argc, char* argv[]) {
 			if (isotherm) {
 				step(first, last,
 					particle_data, nuclear_data_86, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double>, nnet::net86::compute_BE<double>, isotherm_eos_86);
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double>, nnet::net86::compute_BE<double>, isotherm_eos);
 			} else
 				step(first, last,
 					particle_data, nuclear_data_86, hydro_dt,
@@ -310,7 +307,7 @@ int main(int argc, char* argv[]) {
 			if (isotherm) {
 				step(first, last,
 					particle_data, nuclear_data_14, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, isotherm_eos_14);
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, isotherm_eos);
 			} else
 				step(first, last,
 					particle_data, nuclear_data_14, hydro_dt,

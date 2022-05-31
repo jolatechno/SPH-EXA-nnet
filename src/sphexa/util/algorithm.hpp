@@ -11,7 +11,7 @@ Simple utilities
 stolen from QuIDS (https://github.com/jolatechno/QuIDS)
 */
 
-namespace utils {
+namespace util {
 	/// parallel iota
 	template <class iteratorType, class valueType>
 	void parallel_iota(iteratorType begin, iteratorType end, const valueType value_begin) {

@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	const nnet::eos::helmholtz helm_eos(nnet::net14::constants::Z);
-	const auto isotherm_eos = [&](const std::array<double, 14> &Y_, const double T, const double rho_) {
+	const auto isotherm_eos = [&](const eigen::Vector<double> &Y_, const double T, const double rho_) {
 		const double cv = 1e20; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
 		struct eos_output {
 			double cv, dP_dT;

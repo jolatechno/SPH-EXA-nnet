@@ -56,7 +56,7 @@ namespace nnet {
 			/// minimum number of newton raphson iterations
 			uint min_it = 1;
 			/// maximum number of newton raphson iterations
-			uint max_it = 11;
+			uint max_it = 10;
 			/// tolerance for the correction to break out of the newton raphson loop
 			double it_tol = 1e-7;
 		}
@@ -264,9 +264,10 @@ namespace nnet {
 	/**
 	 * TODO
 	 */
-	template<class Vector1, class Vector2, typename Float>
-	std::tuple<eigen::Matrix<Float>, eigen::Vector<Float>> inline generate_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector2 &BE, 
-		const Vector1 &Y, const Float T, const Vector1 &Y_guess, const Float T_guess,
+	template<class Vector1, class Vector2, class Vector3, typename Float>
+	std::tuple<eigen::Matrix<Float>, eigen::Vector<Float>> inline generate_system_from_guess(
+		const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector1 &BE, 
+		const Vector2 &Y, const Float T, const Vector3 &Y_guess, const Float T_guess,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
 		/* -------------------
@@ -282,6 +283,19 @@ namespace nnet {
 	<=> DT*(cv - theta*value_1) - DY.BE = value_1*T
 		------------------- */
 		const int dimension = Y.size();
+
+		if (dt == 0) {
+			std::string error = "Zero timestep in nuclear network\n";
+			error += "\tT=" + std::to_string(T) + "\n";
+			error += "\trho=" + std::to_string(rho) + "\n";
+			error += "\tvalue_1=" + std::to_string(value_1) + "\n";
+			error += "\tY=";
+			for (auto y : Y)
+				error += std::to_string(y) + " ";
+			error += "\n";
+			
+			throw std::runtime_error(error);
+		}
 
 		eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 
@@ -360,13 +374,11 @@ namespace nnet {
 	 *  solves non-iteratively and partialy implicitly the system represented by M (computed at a specific "guess").
 	 * ...TODO
 	 */
-	template<class Vector1, class Vector2, typename Float>
-	std::tuple<Vector1, Float> inline solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector2 &BE, 
-		const Vector1 &Y, const Float T, const Vector1 &Y_guess, const Float T_guess,
+	template<class Vector1, class Vector2, class Vector3, typename Float>
+	std::tuple<Vector1, Float> inline solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector1 &BE, 
+		const Vector2 &Y, const Float T, const Vector3 &Y_guess, const Float T_guess,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
-		
-
 		if (rho < constants::min_rho || T < constants::min_temp)
 			return {Y, T};
 
@@ -375,7 +387,7 @@ namespace nnet {
 			Y, T, Y_guess, T_guess,
 			cv, rho, value_1, dt);
 
-		// now solve M*D{T, Y} = RHS
+		// solve M*D{T, Y} = RHS
 		auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
 
 		// finalize
@@ -405,13 +417,118 @@ namespace nnet {
 
 
 
+	/// generate the system to be solve for the iterative solver
+	/**
+	 * TODO
+	 */
+	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float=double>
+	std::tuple<eigen::Matrix<Float>, eigen::Vector<Float>> inline prepare_system_NR(
+		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const Vector &Y, Float T, const Vector &final_Y, Float final_T, 
+		const Float rho, const Float drho_dt, Float &dt)
+	{
+		const int dimension = Y.size();
+
+		eigen::Vector<Float> Y_theta(dimension);
+		Float T_theta = T;
+
+		// compute n+theta values
+		T_theta =        (1 - constants::theta)*T    + constants::theta*final_T;
+		for (int j = 0; j < dimension; ++j)
+			Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
+
+		// compute rate
+		auto [rates, drates_dT] = construct_rates(         T_theta, rho);
+		auto BE                 = construct_BE   (         T_theta, rho);
+		auto eos_struct         = eos            (Y_theta, T_theta, rho);
+
+		// compute value_1
+		const double drho = drho_dt*dt;
+		double value_1 = eos_struct.dP_dT*drho/(rho*rho);
+
+		return generate_system_from_guess(reactions, rates, drates_dT, BE,
+			Y, T, Y_theta, T_theta,
+			eos_struct.cv, rho, value_1, dt);
+	}
+
+
+
+
+	/// second part after solving the system (generated in "generate_system_from_guess")
+	/**
+	 * TODO
+	 */
+	template<class Vector1, class Vector2, class Vector3, typename Float>
+	std::tuple<Float, bool> inline finalize_system_NR(const Vector1 &Y, const Float T,
+		Vector2 &final_Y, Float &final_T, 
+		const Vector3 &DY_T, int &i, Float &dt)
+	{
+		const int dimension = Y.size();
+
+		Float last_T = final_T;
+		std::tie(final_Y, final_T) = finalize_system(Y, T, DY_T);
+
+		// check for garbage 
+		if (utils::contain_nan(final_Y, final_T) || final_T < 0) {
+			// set timestep
+			dt *= constants::nan_dt_step;
+
+			// jump back
+			final_Y = Y;
+			final_T = T;
+			i = 0;
+			return {0., false};
+		}
+
+		// break condition
+		Float dT_T = std::abs((final_T - T)/final_T);
+		if (i >= constants::NR::min_it && dT_T > constants::NR::dT_T_target*constants::NR::dT_T_tol) {
+			// set timestep
+			dt *= constants::NR::dT_T_target/dT_T;
+
+			// jump back
+			final_Y = Y;
+			final_T = T;
+			i = 0;
+			return {0., false};
+		}
+
+		// cleanup Vector
+		utils::clip(final_Y, nnet::constants::epsilon_vector);
+		
+		// return condition
+		Float correction = std::abs((final_T - last_T)/final_T);
+		if ((i >= constants::NR::min_it && correction < constants::NR::it_tol) ||
+			i >= constants::NR::max_it)
+		{
+			// mass and temperature variation
+			Float dT_T = std::abs((final_T - T)/final_T);
+
+			// timestep tweeking
+			Float previous_dt = dt;
+			dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::NR::dT_T_target/dT_T)*previous_dt;
+			dt = std::min(dt, previous_dt*constants::max_dt_step);
+			dt = std::max(dt, previous_dt*constants::min_dt_step);
+			dt = std::min(dt,      (Float)constants::NR::max_dt);
+
+			return {previous_dt, true};
+		}
+
+		// continue the loop
+		return {0., false};
+	}
+
+
+
+
 	/// solve with  newton raphson
 	/**
 	 * iterative solver.
 	 * ...TODO
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float=double>
-	std::tuple<Vector, Float, Float> inline solve_system_NR(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+	std::tuple<Vector, Float, Float> inline solve_system_NR(
+		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
 		const Vector &Y, Float T, const Float rho, const Float drho_dt, Float &dt)
 	{
 		if (rho < constants::min_rho || T < constants::min_temp)
@@ -419,90 +536,28 @@ namespace nnet {
 
 		const int dimension = Y.size();
 
-		Vector Y_theta = Y, final_Y = Y;
-		Float T_theta = T, final_T = T;
+		Vector final_Y = Y;
+		Float final_T = T;
+
+		Float timestep = 0;
 
 		// actual solving
-		for (int i = 0; i < constants::NR::max_it; ++i) {
-			if (dt == 0) {
-				std::string error = "Zero timestep in nuclear network\n";
-				error += "\tT=" + std::to_string(T) + "\n";
-				error += "\trho=" + std::to_string(rho) + "\n";
-				error += "\tdrho_dt=" + std::to_string(drho_dt) + "\n";
-				error += "\tY=";
-				for (auto y : Y)
-					error += std::to_string(y) + " ";
-				error += "\n";
-				
-				throw std::runtime_error(error);
-			}
+		for (int i = 0;; ++i) {
+			// generate system
+			auto [Mp, RHS] = prepare_system_NR(reactions, construct_rates, construct_BE, eos,
+				Y, T, final_Y, final_T, 
+				rho, drho_dt, dt);
 
-			// compute n+theta values
-			T_theta =        (1 - constants::theta)*T    + constants::theta*final_T;
-			for (int j = 0; j < dimension; ++j)
-				Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
+			// solve M*D{T, Y} = RHS
+			auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
 
-			// compute rate
-			auto [rates, drates_dT] = construct_rates(         T_theta, rho);
-			auto BE                 = construct_BE   (         T_theta, rho);
-			auto eos_struct         = eos            (Y_theta, T_theta, rho);
-
-			// compute value_1
-			const double drho = drho_dt*dt;
-			double value_1 = eos_struct.dP_dT*drho/(rho*rho);
-
-			// solve the system
-			Float last_T = final_T;
-			std::tie(final_Y, final_T) = solve_system_from_guess(
-				reactions, rates, drates_dT, BE,
-				Y, T, Y_theta, T_theta,
-				eos_struct.cv, rho, value_1, dt);
-
-			// check for garbage 
-			if (utils::contain_nan(final_Y, final_T) || final_T < 0) {
-				// set timestep
-				dt *= constants::nan_dt_step;
-
-				// jump back
-				final_Y = Y;
-				final_T = T;
-				i = -1;
-				continue;
-			}
-
-			// break condition
-			Float dT_T = std::abs((final_T - T)/final_T);
-			if (i >= constants::NR::min_it && dT_T > constants::NR::dT_T_target*constants::NR::dT_T_tol) {
-				// set timestep
-				dt *= constants::NR::dT_T_target/dT_T;
-
-				// jump back
-				final_Y = Y;
-				final_T = T;
-				i = -1;
-				continue;
-			}
-
-			// cleanup Vector
-			utils::clip(final_Y, nnet::constants::epsilon_vector);
-			
-			// return condition
-			Float correction = std::abs((final_T - last_T)/final_T);
-			if (i >= constants::NR::min_it && correction < constants::NR::it_tol)
-				break;
+			// finalize
+			auto [timestep, exit] = finalize_system_NR(Y, T,
+				final_Y, final_T,
+				DY_T, i, dt);
+			if (exit)
+				return {final_Y, final_T, timestep};
 		}
-
-		// mass and temperature variation
-		Float dT_T = std::abs((final_T - T)/final_T);
-
-		// timestep tweeking
-		Float previous_dt = dt;
-		dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::NR::dT_T_target/dT_T)*previous_dt;
-		dt = std::min(dt, previous_dt*constants::max_dt_step);
-		dt = std::max(dt, previous_dt*constants::min_dt_step);
-		dt = std::min(dt,      (Float)constants::NR::max_dt);
-
-		return {final_Y, final_T, previous_dt};
 	}
 
 
