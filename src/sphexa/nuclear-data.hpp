@@ -18,7 +18,7 @@
 namespace sphexa::sphnnet {
 	namespace constants {
 		/// initial nuclear timestep
-		double initial_dt = 1e-6;
+		double initial_dt = 1e-5;
 	}
 	/// nuclear data class for n_species nuclear network
 	/**
@@ -53,7 +53,7 @@ namespace sphexa::sphnnet {
 
 			Y.resize(N);
 
-			dt.resize(N, 1e-12);
+			dt.resize(N, constants::initial_dt);
 		}
 
 		/// base fieldNames (without knowledge of nuclear species names)

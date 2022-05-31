@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
 
 	auto start = std::chrono::high_resolution_clock::now();
 
-	double t = 0, dt=1e-12;
+	double t = 0, dt = nnet::constants::initial_dt;
 	for (int i = 1; i <= n_max; ++i) {
 		if (t >= t_max)
 			break;
