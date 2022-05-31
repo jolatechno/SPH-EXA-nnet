@@ -150,19 +150,10 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<typename Float, class Vector>
-#ifdef USE_EIGEN
-	eigen::Vector<Float>
-#else
-	Vector
-#endif
-	derivatives_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Vector const &Y, const Float rho) {
+	eigen::Vector<Float> inline derivatives_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Vector const &Y, const Float rho) {
 		const int dimension = Y.size();
 
-#ifdef USE_EIGEN
 		eigen::Vector<Float> dY(dimension);
-#else
-		Vector dY = Y;
-#endif
 		
 		for (int i = 0; i < dimension; ++i)
 			dY[i] = 0.;
@@ -213,7 +204,7 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<typename Float, class Vector>
-	eigen::Matrix<Float> order_1_dY_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates,
+	eigen::Matrix<Float> inline order_1_dY_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates,
 		Vector const &Y,
 		const Float rho)
 	{
@@ -269,19 +260,15 @@ namespace nnet {
 
 
 
-	/// solves a system non-iteratively (with rates computed at a specific "guess").
+	/// generate the system to be solve (with rates computed at a specific "guess") 
 	/**
-	 *  solves non-iteratively and partialy implicitly the system represented by M (computed at a specific "guess").
-	 * ...TODO
+	 * TODO
 	 */
 	template<class Vector1, class Vector2, typename Float>
-	std::pair<Vector1, Float> solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector2 &BE, 
+	std::tuple<eigen::Matrix<Float>, eigen::Vector<Float>> inline generate_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector2 &BE, 
 		const Vector1 &Y, const Float T, const Vector1 &Y_guess, const Float T_guess,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
-		if (rho < constants::min_rho || T < constants::min_temp)
-			return {Y, T};
-
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
 
@@ -296,15 +283,11 @@ namespace nnet {
 		------------------- */
 		const int dimension = Y.size();
 
-		Vector1 next_Y = Y;
 		eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 
 		// right hand side
-#ifdef USE_EIGEN
 		eigen::Vector<Float> RHS(dimension + 1);
-#else
-		std::vector<Float> RHS(dimension + 1);
-#endif
+
 		auto dY_dt = derivatives_from_reactions(reactions, rates, Y_guess, rho);
 		for (int i = 0; i < dimension; ++i)
 			RHS[i + 1] = dY_dt[i]*dt;
@@ -344,10 +327,22 @@ namespace nnet {
 			RHS[i + 1]  += -constants::theta*dt*dY_dT[i]*(T_guess - T);
 		}
 
-		// now solve M*D{T, Y} = RHS
-		auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
+		return {Mp, RHS};
+	}
+
+
+
+
+	/// second part after solving the system (generated in "generate_system_from_guess")
+	/**
+	 * TODO
+	 */
+	template<class Vector1, class Vector2, typename Float>
+	std::tuple<Vector1, Float> inline finalize_system(const Vector1 &Y, const Float T, const Vector2 &DY_T) {
+		const int dimension = Y.size();
 
 		// increment values
+		Vector1 next_Y = Y;
 		for (int i = 0; i < dimension; ++i)
 			next_Y[i] = Y[i] + DY_T[i + 1];
 
@@ -360,6 +355,36 @@ namespace nnet {
 
 
 
+	/// solves a system non-iteratively (with rates computed at a specific "guess").
+	/**
+	 *  solves non-iteratively and partialy implicitly the system represented by M (computed at a specific "guess").
+	 * ...TODO
+	 */
+	template<class Vector1, class Vector2, typename Float>
+	std::tuple<Vector1, Float> inline solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector2 &BE, 
+		const Vector1 &Y, const Float T, const Vector1 &Y_guess, const Float T_guess,
+		const Float cv, const Float rho, const Float value_1, const Float dt)
+	{
+		
+
+		if (rho < constants::min_rho || T < constants::min_temp)
+			return {Y, T};
+
+		// generate system
+		auto [Mp, RHS] = generate_system_from_guess(reactions, rates, drates_dT, BE,
+			Y, T, Y_guess, T_guess,
+			cv, rho, value_1, dt);
+
+		// now solve M*D{T, Y} = RHS
+		auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
+
+		// finalize
+		return finalize_system(Y, T, DY_T);
+	}
+
+
+
+
 
 	/// solves a system non-iteratively.
 	/**
@@ -367,7 +392,7 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class Vector, typename Float>
-	std::pair<Vector, Float> solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE,
+	std::tuple<Vector, Float> inline solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE,
 		const Vector &Y, const Float T,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
@@ -386,7 +411,7 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float=double>
-	std::tuple<Vector, Float, Float> solve_system_NR(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+	std::tuple<Vector, Float, Float> inline solve_system_NR(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
 		const Vector &Y, Float T, const Float rho, const Float drho_dt, Float &dt)
 	{
 		if (rho < constants::min_rho || T < constants::min_temp)
@@ -489,7 +514,7 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
-	std::tuple<Vector, Float> solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+	std::tuple<Vector, Float> inline solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
 		const Vector &Y, const Float T,
 		const Float rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)

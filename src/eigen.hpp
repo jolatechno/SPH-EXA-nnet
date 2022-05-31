@@ -61,7 +61,10 @@ namespace eigen {
 		public:
 			Vector(int n) : Eigen::VectorX<Type>(n) {}
 
-			Type &operator[](int i) {
+			Type inline &operator[](int i) {
+				return Eigen::VectorX<Type>::operator()(i);
+			}
+			const Type inline &operator[](int i) const {
 				return Eigen::VectorX<Type>::operator()(i);
 			}
 
@@ -108,6 +111,9 @@ namespace eigen {
 // implementation from scratch
 #else
 	namespace eigen {
+		template<typename Type>
+		using Vector = std::vector<Type>;
+
 		/// custom matrix type
 		template<typename Type>
 		class Matrix {

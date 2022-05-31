@@ -68,7 +68,7 @@ namespace sphexa::mpi {
 		partition.send_partition.resize(n_particles);
 
 		// localy partition
-		utils::parallel_generalized_partition_from_iota(partition.send_partition.begin(), partition.send_partition.end(), firstIndex, 
+		util::parallel_generalized_partition_from_iota(partition.send_partition.begin(), partition.send_partition.end(), firstIndex, 
 			partition.send_disp.begin(), partition.send_disp.end(),
 			[&](const int idx) {
 				return node_id[idx];
