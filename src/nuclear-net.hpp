@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include <cmath> // factorial
-//#include <ranges> // drop
 
 #include <vector>
 #include <tuple>
@@ -150,10 +149,20 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<typename Float, class Vector>
-	Vector derivatives_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Vector const &Y, const Float rho) {
+#ifdef USE_EIGEN
+	eigen::Vector<Float>
+#else
+	Vector
+#endif
+	derivatives_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Vector const &Y, const Float rho) {
 		const int dimension = Y.size();
 
+#ifdef USE_EIGEN
+		eigen::Vector<Float> dY(dimension);
+#else
 		Vector dY = Y;
+#endif
+		
 		for (int i = 0; i < dimension; ++i)
 			dY[i] = 0.;
 
@@ -203,12 +212,12 @@ namespace nnet {
 	 * ...TODO
 	 */
 	template<typename Float, class Vector>
-	eigen::matrix<Float> order_1_dY_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates,
+	eigen::Matrix<Float> order_1_dY_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates,
 		Vector const &Y,
-		const Float rho) {
+		const Float rho)
+	{
 		const int dimension = Y.size();
-
-		eigen::matrix<Float> M(dimension, dimension);
+		eigen::Matrix<Float> M(dimension, dimension);
 
 		const int num_reactions = reactions.size();
 		if (num_reactions != rates.size())
@@ -245,6 +254,7 @@ namespace nnet {
 					// insert consumption rates
 					for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
 						M(other_reactant_id, reactant_id) -= this_rate*other_n_reactant_consumed;
+						
 
 					// insert production rates
 					for (auto const [product_id, n_product_produced] : Reaction.products)
@@ -286,16 +296,20 @@ namespace nnet {
 		const int dimension = Y.size();
 
 		Vector1 next_Y = Y;
-		eigen::matrix<Float> Mp(dimension + 1, dimension + 1);
+		eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 
 		// right hand side
-		std::vector<double> RHS(dimension + 1);
+#ifdef USE_EIGEN
+		eigen::Vector<Float> RHS(dimension + 1);
+#else
+		std::vector<Float> RHS(dimension + 1);
+#endif
 		auto dY_dt = derivatives_from_reactions(reactions, rates, Y_guess, rho);
 		for (int i = 0; i < dimension; ++i)
 			RHS[i + 1] = dY_dt[i]*dt;
 
 		// main matrix part
-		eigen::matrix<Float> MpYY = order_1_dY_from_reactions(reactions, rates, Y_guess, rho);
+		eigen::Matrix<Float> MpYY = order_1_dY_from_reactions(reactions, rates, Y_guess, rho);
 		for (int i = 0; i < dimension; ++i) {
 			// diagonal terms
 			Mp(i + 1, i + 1) = 1.      -constants::theta*dt*MpYY(i, i);
@@ -320,7 +334,7 @@ namespace nnet {
 			Mp(0, i + 1) = -BE[i]/cv;
 
 		// include rate derivative
-		Vector1 dY_dT = derivatives_from_reactions(reactions, drates_dT, Y_guess, rho);
+		auto dY_dT = derivatives_from_reactions(reactions, drates_dT, Y_guess, rho);
 		for (int i = 0; i < dimension; ++i) {
 			Mp(i + 1, 0) = -constants::theta*dt*dY_dT[i];
 
@@ -329,16 +343,30 @@ namespace nnet {
 			RHS[i + 1]  += -constants::theta*dt*dY_dT[i]*(T_guess - T);
 		}
 
+#ifdef DEBUG_EIGEN
+		std::cout << "\n\n";
+		for (int i = 0; i <= dimension; ++i)
+			std::cout << RHS[i] << "\t";
+		std::cout << "\n\n";
+		for (int i = 0; i <= dimension; ++i) {
+			for (int j = 0; j <= dimension; ++j)
+				std::cout << Mp(i, j) << "\t";
+			std::cout << "\n";
+		}
+#endif
+
 
 		// now solve M*D{T, Y} = RHS
-		auto DY_T = 
-#ifdef USE_LU
-			eigen::solve_LU(
-#else
-			eigen::solve_gauss(
+		auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
+
+
+
+#ifdef DEBUG_EIGEN
+		std::cout << "\n";
+		for (int i = 0; i <= dimension; ++i)
+			std::cout << DY_T[i] << "\t";
+		std::cout << "\n\n";
 #endif
-				Mp, RHS, constants::epsilon_system
-			);
 
 		// increment values
 		for (int i = 0; i < dimension; ++i)
