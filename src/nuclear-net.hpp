@@ -549,58 +549,16 @@ namespace nnet {
 
 
 
-	/// function to supperstep
+	/// function to supperstep (can include jumping to NSE)
 	/**
 	 * Superstepping using solve_system_var_timestep, might move it to SPH-EXA
 	 * ...TODO
 	 */
-	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float>
+	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float, class nseFunction>
 	std::tuple<Vector, Float> solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
 		const Vector &Y, const Float T,
-		const Float rho, const Float drho_dt, Float const dt_tot, Float &dt)
-	{
-		if (rho < constants::min_rho || T < constants::min_temp)
-			return {Y, T};
-
-		Float elapsed_t = 0;
-		Float used_dt = dt;
-
-		Vector final_Y = Y;
-		Float final_T = T;
-
-		while (true) {
-			// insure convergence to the right time
-			bool update_dt = (dt_tot - elapsed_t) > used_dt;
-			if (!update_dt)
-				used_dt = dt_tot - elapsed_t;
-
-			// solve system
-			auto [next_Y, next_T, this_dt] = solve_system_NR(reactions, construct_rates, construct_BE, eos,
-				final_Y, final_T, rho, drho_dt, used_dt);
-			elapsed_t += this_dt;
-			final_Y = next_Y;
-			final_T = next_T;
-
-			// update dt
-			if (update_dt)
-				dt = used_dt;
-
-			// exit condition
-			if ((dt_tot - elapsed_t)/dt_tot < constants::substep::dt_tol)
-				return {final_Y, final_T};
-		} 
-	}
-
-
-	/// function to supperstep, including jumping to nse
-	/**
-	 * Superstepping using solve_system_var_timestep, might move it to SPH-EXA, including jumping to nse (user-provided)
-	 * ...TODO
-	 */
-	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float, class nseFunction>
-	std::tuple<Vector, Float> solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos, const nseFunction jumpToNse,
-		const Vector &Y, const Float T,
-		const Float rho, const Float drho_dt, Float const dt_tot, Float &dt)
+		const Float rho, const Float drho_dt, Float const dt_tot, Float &dt,
+		const nseFunction jumpToNse=NULL)
 	{
 		if (rho < constants::min_rho || T < constants::min_temp)
 			return {Y, T};
@@ -633,12 +591,13 @@ namespace nnet {
 				return {final_Y, final_T};
 
 			// timejump if needed
-			if (dt < dt_tot*constants::substep::dt_nse_tol) {
-				dt = constants::max_dt;
-				return jumpToNse(reactions, construct_rates, construct_BE, eos,
-					final_Y, final_T,
-					rho, drho_dt);
-			}
+			if (jumpToNse != NULL)
+				if (dt < dt_tot*constants::substep::dt_nse_tol) {
+					dt = constants::max_dt;
+					return jumpToNse(reactions, construct_rates, construct_BE, eos,
+						final_Y, final_T,
+						rho, drho_dt);
+				}
 		} 
 	}
 }
