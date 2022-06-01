@@ -89,7 +89,7 @@ namespace eigen {
 		};
 
 		/// custom analytical solver
-		template<typename Float>
+		template<typename Float=double>
 		Vector<Float> solve(Matrix<Float> M, Vector<Float> RHS, Float epsilon=0) {
 #ifdef USE_SPARSE
 			// sparsify
@@ -123,7 +123,14 @@ namespace eigen {
 		public:
 			int n, m;
 
-			Matrix(int n_, int m_) : n(n_), m(m_) {
+			Matrix() {}
+			Matrix(int n_, int m_) {
+				resize(n_, m_);
+			}
+
+			void resize(int n_, int m_) {
+				n = n_;
+				m = m_;
 				weights.resize(n*m, 0);
 			}
 
@@ -139,7 +146,7 @@ namespace eigen {
 
 
 		/// custom analytical solver
-		template<typename Float, class Vector, class Matrix>
+		template<class Vector, class Matrix, typename Float=double>
 		Vector solve(Matrix M, Vector RHS, Float epsilon=0) {
 			if (M.n != M.m)
 				throw std::runtime_error("can't use gaussian elimination on non-square matrices !");
