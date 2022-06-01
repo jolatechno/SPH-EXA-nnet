@@ -5,6 +5,7 @@
 /**************************************************************************************************************************************/
 /* mostly gotten from https://github.com/OrangeOwlSolutions/CUDA-Utilities/blob/70343897abbf7a5608a6739759437f44933a5fc6/Utilities.cu */
 /*              and https://stackoverflow.com/questions/28794010/solving-dense-linear-systems-ax-b-with-cuda                          */
+/* command:  nvcc -Xcompiler "-fopenmp -pthread -I/cm/shared/modules/generic/mpi/openmpi/4.0.1/include -pthread -L/cm/shared/modules/generic/mpi/openmpi/4.0.1/lib -lmpi -std=c++17" -DUSE_CUDA -lcublas -lcuda -lcudart -DUSE_MPI -DNOT_FROM_SPHEXA hydro-mockup.cpp -o hydro-mockup.out
 /**************************************************************************************************************************************/
 
 #include <cublas_v2.h>
@@ -13,7 +14,7 @@
 
 namespace eigen::cudasolver {
 	/// batch size for the GPU batched solver
-	size_t batch_size = 1000000;
+	size_t batch_size = 10000;
 
 	namespace util {
 		/// function to check for CUDA errors
@@ -82,13 +83,18 @@ namespace eigen::cudasolver {
 		std::vector<Float*> inout_pointers;
 		std::vector<Float> vec_Buffer;
 		std::vector<Float> mat_Buffer;
-	
+		
+		// handle
+		cublasHandle_t cublas_handle;
 	public:
 		/// allocate buffers for batch solver
 		/**
 		 * TODO
 		 */
 		batch_solver(size_t size_, int dimension_) : dimension(dimension_), size(size_) {
+			// --- CUBLAS initialization
+		    util::cublasSafeCall(cublasCreate(&cublas_handle));
+
 			/* debug: */
 			int deviceCount;
 		    cudaError_t e = cudaGetDeviceCount(&deviceCount);
@@ -134,10 +140,6 @@ namespace eigen::cudasolver {
 		 * TODO
 		 */
 		void solve(size_t n_solve) {
-			// --- CUBLAS initialization
-		    cublasHandle_t cublas_handle;
-		    util::cublasSafeCall(cublasCreate(&cublas_handle));
-
 			// push memory to device
 			util::gpuErrchk(cudaMemcpy(dev_mat_Buffer, mat_Buffer.data(), dimension*dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
 
