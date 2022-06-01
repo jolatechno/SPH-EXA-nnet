@@ -114,7 +114,8 @@ namespace sphexa::sphnnet {
 						++iter[i - particleBegin];
 						auto [Mp, RHS] = nnet::prepare_system_substep(
 							reactions, construct_rates, construct_BE, eos,
-							n.Y[i], n.temp[i], Y_buffer[i - particleBegin], T_buffer[i - particleBegin],
+							n.Y[i], n.temp[i],
+							Y_buffer[i - particleBegin], T_buffer[i - particleBegin],
 							n.rho[i], drho_dt,
 							hydro_dt, elapsed_time[i - particleBegin], n.dt[i],
 							jumpToNse);
@@ -145,7 +146,18 @@ namespace sphexa::sphnnet {
 						!finished[i - particleBegin])
 					{
 
-						/* TODO */
+						// retrieve results
+						batch_solver.get_res(batchID, vect_buffer.data());
+
+						// finalize
+						if(nnet::finalize_system_substep(
+							n.Y[i], n.temp[i],
+							Y_buffer[i - particleBegin], T_buffer[i - particleBegin],
+							vect_buffer, hydro_dt, elapsed_time[i - particleBegin],
+							n.dt[i], iter[i - particleBegin]))
+						{
+							finished[i - particleBegin] = true;
+						}
 
 						// break condition
 						++batchID;
