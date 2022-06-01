@@ -141,6 +141,7 @@ namespace sphexa::sphnnet {
 
 				// finalize
 				batchID = batchBegin;
+				size_t num_particle_still_burning = 0;
 				for (size_t i = particleBegin; i < particleEnd; ++i)
 					if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp &&
 						!finished[i - particleBegin])
@@ -157,13 +158,18 @@ namespace sphexa::sphnnet {
 							n.dt[i], iter[i - particleBegin]))
 						{
 							finished[i - particleBegin] = true;
-						}
+						} else
+							++num_particle_still_burning;
 
 						// break condition
 						++batchID;
 						if (batchID >= batchEnd)
 							break;
 					}
+
+				// exit when no particles are still burning
+				if (num_particle_still_burning == 0)
+					break;
 			}
 #endif
 		}
