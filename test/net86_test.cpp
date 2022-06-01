@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
     const double t_max                      = parser.get("--t-lim",   1.5);
 
     double rho                              = parser.get("--rho", 1e9);
-    double last_T                           = parser.get("-T",    1e9);
+    double T, last_T                        = parser.get("-T", 1e9);
     std::string test_case                   = parser.get("--test-case");
     const bool isotherm                     = parser.exists("--isotherm");
 
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
 	const double rho_half_life              = parser.get("--rho-half-life",   0.02);
 	const double rho_lim                    = parser.get("--rho-lim",         1e5);
 
-    std::array<double, 86> last_Y, X;
+    std::array<double, 86> last_Y, X, Y;
     for (int i = 0; i < 86; ++i) X[i] = 0;
     if  (      test_case == "C-O-burning") {
     	X[nnet::net86::constants::net14_species_order[1]] = 0.5;
@@ -118,11 +118,13 @@ int main(int argc, char* argv[]) {
 			break;
 
 		// solve the system
-		auto [Y, T, current_dt] = isotherm ? 
+		double current_dt = isotherm ? 
 			nnet::solve_system_NR(nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double>, nnet::net86::compute_BE<double>, isotherm_eos,
-				last_Y, last_T, rho, 0., dt) :
+				last_Y, last_T, Y, T,
+				rho, 0., dt) :
 			nnet::solve_system_NR(nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double>, nnet::net86::compute_BE<double>, helm_eos,
-				last_Y, last_T, rho, 0., dt);
+				last_Y, last_T, Y, T,
+				rho, 0., dt);
 		t += current_dt;
 
 		nnet::debug = false;

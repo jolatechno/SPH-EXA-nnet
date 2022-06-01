@@ -28,13 +28,22 @@ namespace sphexa::sphnnet {
 		const std::vector<nnet::reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos) {
 		const size_t n_particles = n.temp.size();
 
-		#pragma omp parallel for schedule(dynamic)
-		for (size_t i = 0; i < n_particles; ++i) {
-			Float drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
+		#pragma omp parallel
+		{
+			Float temp_buffer, drho_dt;
+			auto Y_buffer = n.Y[0];
 
-			std::tie(n.Y[i], n.temp[i]) = nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
-				n.Y[i], n.temp[i],
-				n.rho[i], drho_dt, hydro_dt, n.dt[i]);
+			# pragma omp for schedule(dynamic)
+			for (size_t i = 0; i < n_particles; ++i) {
+				drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
+
+				nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
+					n.Y[i], n.temp[i], Y_buffer, temp_buffer,
+					n.rho[i], drho_dt, hydro_dt, n.dt[i]);
+
+				n.Y[i] = Y_buffer;
+				n.temp[i] = temp_buffer;
+			}
 		}
 	}
 

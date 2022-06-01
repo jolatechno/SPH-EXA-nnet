@@ -349,19 +349,16 @@ namespace nnet {
 	/**
 	 * TODO
 	 */
-	template<class Vector1, class Vector2, typename Float>
-	std::tuple<Vector1, Float> inline finalize_system(const Vector1 &Y, const Float T, const Vector2 &DY_T) {
+	template<class Vector1, class Vector2, class Vector3, typename Float>
+	void inline finalize_system(const Vector1 &Y, const Float T, Vector2 &next_Y, Float &next_T, const Vector3 &DY_T) {
 		const int dimension = Y.size();
 
 		// increment values
-		Vector1 next_Y = Y;
 		for (int i = 0; i < dimension; ++i)
 			next_Y[i] = Y[i] + DY_T[i + 1];
 
 		// update temperature
-		Float next_T = T + DY_T[0];
-
-		return {next_Y, next_T};
+		next_T = T + DY_T[0];
 	}
 
 
@@ -372,24 +369,29 @@ namespace nnet {
 	 *  solves non-iteratively and partialy implicitly the system represented by M (computed at a specific "guess").
 	 * ...TODO
 	 */
-	template<class Vector1, class Vector2, class Vector3, typename Float>
-	std::tuple<Vector1, Float> inline solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector1 &BE, 
-		const Vector2 &Y, const Float T, const Vector3 &Y_guess, const Float T_guess,
+	template<class Vector1, class Vector2, class Vector3, class Vector4, typename Float>
+	void inline solve_system_from_guess(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector1 &BE, 
+		const Vector2 &Y, const Float T, const Vector3 &Y_guess, const Float T_guess, Vector4 &next_Y, Float &next_T,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
-		if (rho < constants::min_rho || T < constants::min_temp)
-			return {Y, T};
+		const int dimension = Y.size();
+		if (rho < constants::min_rho || T < constants::min_temp) {
+			for (int i = 0; i < dimension; ++i)
+				next_Y[i] = Y[i];
+			next_T = T;
+		} else {
 
-		// generate system
-		auto [Mp, RHS] = generate_system_from_guess(reactions, rates, drates_dT, BE,
-			Y, T, Y_guess, T_guess,
-			cv, rho, value_1, dt);
+			// generate system
+			auto [Mp, RHS] = generate_system_from_guess(reactions, rates, drates_dT, BE,
+				Y, T, Y_guess, T_guess,
+				cv, rho, value_1, dt);
 
-		// solve M*D{T, Y} = RHS
-		auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
+			// solve M*D{T, Y} = RHS
+			auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
 
-		// finalize
-		return finalize_system(Y, T, DY_T);
+			// finalize
+			return finalize_system(Y, T, next_Y, next_T, DY_T);
+		}
 	}
 
 
@@ -401,14 +403,14 @@ namespace nnet {
 	 *  solves non-iteratively and partialy implicitly the system represented by M.
 	 * ...TODO
 	 */
-	template<class Vector, typename Float>
-	std::tuple<Vector, Float> inline solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector &BE,
-		const Vector &Y, const Float T,
+	template<class Vector1, class Vector2, class Vector3, typename Float>
+	void inline solve_system(const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector1 &BE,
+		const Vector2 &Y, const Float T, Vector3 &next_Y, Float &next_T,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
-		return solve_system_from_guess(reactions, rates, drates_dT, 
+		solve_system_from_guess(reactions, rates, drates_dT, 
 			BE,
-			Y, T, Y, T,
+			Y, T, Y, T, next_Y, next_T,
 			cv, rho, value_1, dt);
 	}
 
@@ -428,10 +430,9 @@ namespace nnet {
 		const int dimension = Y.size();
 
 		auto &Y_theta = final_Y;
-		Float T_theta = T;
 
 		// compute n+theta values
-		T_theta =        (1 - constants::theta)*T    + constants::theta*final_T;
+		Float T_theta  = (1 - constants::theta)*T    + constants::theta*final_T;
 		for (int j = 0; j < dimension; ++j)
 			Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
 
@@ -464,7 +465,7 @@ namespace nnet {
 		const int dimension = Y.size();
 
 		Float last_T = final_T;
-		std::tie(final_Y, final_T) = finalize_system(Y, T, DY_T);
+		finalize_system(Y, T, final_Y, final_T, DY_T);
 
 		// check for garbage 
 		if (util::contain_nan(final_Y, final_T) || final_T < 0) {
@@ -472,7 +473,8 @@ namespace nnet {
 			dt *= constants::nan_dt_step;
 
 			// jump back
-			final_Y = Y;
+			for (int i = 0; i < dimension; ++i)
+				final_Y[i] = Y[i];
 			final_T = T;
 			i = 0;
 			return {0., false};
@@ -485,7 +487,8 @@ namespace nnet {
 			dt *= constants::NR::dT_T_target/dT_T;
 
 			// jump back
-			final_Y = Y;
+			for (int i = 0; i < dimension; ++i)
+				final_Y[i] = Y[i];
 			final_T = T;
 			i = 0;
 			return {0., false};
@@ -524,22 +527,22 @@ namespace nnet {
 	 * iterative solver.
 	 * ...TODO
 	 */
-	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float=double>
-	std::tuple<Vector, Float, Float> inline solve_system_NR(
+	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float=double>
+	Float inline solve_system_NR(
 		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &Y, Float T, const Float rho, const Float drho_dt, Float &dt)
+		const Vector1 &Y, Float T, Vector2 &final_Y, Float &final_T, 
+		const Float rho, const Float drho_dt, Float &dt)
 	{
-		if (rho < constants::min_rho || T < constants::min_temp)
-			return {Y, T, dt};
-
 		const int dimension = Y.size();
+		for (int i = 0; i < dimension; ++i)
+			final_Y[i] = Y[i];
+		final_T = T;
 
-		Vector final_Y = Y;
-		Float final_T = T;
-
-		Float timestep = 0;
+		if (rho < constants::min_rho || T < constants::min_temp)
+			return dt;		
 
 		// actual solving
+		Float timestep = 0;
 		for (int i = 0;; ++i) {
 			// generate system
 			auto [Mp, RHS] = prepare_system_NR(reactions, construct_rates, construct_BE, eos,
@@ -554,7 +557,7 @@ namespace nnet {
 				final_Y, final_T,
 				DY_T, i, dt);
 			if (exit)
-				return {final_Y, final_T, timestep};
+				return timestep;
 		}
 	}
 
@@ -566,50 +569,55 @@ namespace nnet {
 	 * Superstepping using solve_system_NR, might move it to SPH-EXA
 	 * ...TODO
 	 */
-	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
-	std::tuple<Vector, Float> inline solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &Y, const Float T,
+	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
+	void inline solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const Vector1 &Y, const Float T, Vector2 &final_Y, Float &final_T,
 		const Float rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
 	{
-		if (rho < constants::min_rho || T < constants::min_temp)
-			return {Y, T};
+		const int dimension = Y.size();
+		for (int i = 0; i < dimension; ++i)
+			final_Y[i] = Y[i];
+		final_T = T;
 
-		Float elapsed_t = 0;
-		Float used_dt = dt;
+		if (rho > constants::min_rho && T > constants::min_temp) {
+			Float elapsed_t = 0;
+			Float used_dt = dt;
 
-		Vector final_Y = Y;
-		Float final_T = T;
+			Vector1 next_Y = Y;
+			Float next_T;
+			
+			while ((dt_tot - elapsed_t)/dt_tot > constants::substep::dt_tol) {
+				// insure convergence to the right time
+				bool update_dt = (dt_tot - elapsed_t) > used_dt;
+				if (!update_dt)
+					used_dt = dt_tot - elapsed_t;
 
-		while (true) {
-			// insure convergence to the right time
-			bool update_dt = (dt_tot - elapsed_t) > used_dt;
-			if (!update_dt)
-				used_dt = dt_tot - elapsed_t;
+				// solve system
+				Float this_dt = solve_system_NR(reactions, construct_rates, construct_BE, eos,
+					final_Y, final_T, next_Y, next_T,
+					rho, drho_dt, used_dt);
 
-			// solve system
-			auto [next_Y, next_T, this_dt] = solve_system_NR(reactions, construct_rates, construct_BE, eos,
-				final_Y, final_T, rho, drho_dt, used_dt);
-			elapsed_t += this_dt;
-			final_Y = next_Y;
-			final_T = next_T;
+				elapsed_t += this_dt;
+				for (int i = 0; i < dimension; ++i)
+					final_Y[i] = next_Y[i];
+				final_T = next_T;
 
-			// update dt
-			if (update_dt)
-				dt = used_dt;
+				// update dt
+				if (update_dt)
+					dt = used_dt;
 
-			// exit condition
-			if ((dt_tot - elapsed_t)/dt_tot < constants::substep::dt_tol)
-				return {final_Y, final_T};
+				// timejump if needed
+				if constexpr (std::is_invocable<std::remove_pointer<nseFunction>>())
+					if (dt < dt_tot*constants::substep::dt_nse_tol) {
+						dt = constants::max_dt;
+						(*jumpToNse)(reactions, construct_rates, construct_BE, eos,
+							final_Y, final_T,
+							rho, drho_dt);
 
-			// timejump if needed
-			if constexpr (std::is_invocable<std::remove_pointer<nseFunction>>())
-				if (dt < dt_tot*constants::substep::dt_nse_tol) {
-					dt = constants::max_dt;
-					return (*jumpToNse)(reactions, construct_rates, construct_BE, eos,
-						final_Y, final_T,
-						rho, drho_dt);
-				}
-		} 
+						break;
+					}
+			} 
+		}
 	}
 }
