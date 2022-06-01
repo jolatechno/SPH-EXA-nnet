@@ -572,7 +572,7 @@ namespace nnet {
 	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
 		const Vector1 &Y, const Float T, Vector2 &final_Y, Float &final_T,
-		const Float rho, const Float drho_dt, Float const dt_tot, Float &dt,
+		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
 	{
 		const int dimension = Y.size();
@@ -580,12 +580,12 @@ namespace nnet {
 			final_Y[i] = Y[i];
 		final_T = T;
 
-		if (rho > constants::min_rho && T > constants::min_temp) {
+		if (final_rho > constants::min_rho && T > constants::min_temp) {
 			Float elapsed_t = 0;
 			Float used_dt = dt;
 
 			Vector1 next_Y = Y;
-			Float next_T;
+			Float next_T, rho;
 			
 			while ((dt_tot - elapsed_t)/dt_tot > constants::substep::dt_tol) {
 				// insure convergence to the right time
@@ -594,6 +594,7 @@ namespace nnet {
 					used_dt = dt_tot - elapsed_t;
 
 				// solve system
+				rho = final_rho - drho_dt*(dt_tot - elapsed_t);
 				Float this_dt = solve_system_NR(reactions, construct_rates, construct_BE, eos,
 					final_Y, final_T, next_Y, next_T,
 					rho, drho_dt, used_dt);
