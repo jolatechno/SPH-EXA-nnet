@@ -1,6 +1,6 @@
 #pragma once
 
-#include "eigen.hpp"
+#include "eigen/eigen.hpp"
 
 #include <iostream>
 

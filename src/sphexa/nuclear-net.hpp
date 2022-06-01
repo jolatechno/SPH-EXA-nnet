@@ -1,12 +1,17 @@
 #pragma once
 
 #include <numeric>
+#include <omp.h>
 
 #include "../eos/helmholtz.hpp"
 #include "nuclear-data.hpp"
 
 #ifdef USE_MPI
 	#include "mpi/mpi-wrapper.hpp"
+#endif
+
+#ifdef USE_CUDA
+	#include "../eigen/cudaSolver.hpp"
 #endif
 
 #ifndef NOT_FROM_SPHEXA
@@ -33,14 +38,65 @@ namespace sphexa::sphnnet {
 			Float drho_dt;
 			auto Y_buffer = n.Y[0];
 
-			# pragma omp for schedule(dynamic)
+#ifndef USE_CUDA
+			#pragma omp for schedule(dynamic)
 			for (size_t i = 0; i < n_particles; ++i) {
 				drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
-				nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
-					n.Y[i], n.temp[i], Y_buffer,
-					n.rho[i], drho_dt, hydro_dt, n.dt[i]);
+				if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp)
+					nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
+						n.Y[i], n.temp[i], Y_buffer,
+						n.rho[i], drho_dt, hydro_dt, n.dt[i]);
 			}
+#else
+			// get number of thread and thread number
+			const int num_threads = omp_get_num_threads();
+			const int thread_id   = omp_get_thread_num();
+
+			// initialize limits
+			const size_t particleBegin = n_particles                  *thread_id      /num_threads;
+			const size_t particleEnd   = n_particles                  *(thread_id + 1)/num_threads;
+			const size_t batchBegin    = eigen::cudasolver::batch_size*thread_id      /num_threads;
+			const size_t batchEnd      = eigen::cudasolver::batch_size*(thread_id + 1)/num_threads;
+
+			throw std::runtime_error("CUDA batched solver not yet implemented !");
+
+			// solving loop
+			while (true) {
+				// prepare system
+				size_t batchID = batchBegin;
+				for (size_t i = particleBegin; i < particleEnd; ++i)
+					if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp &&
+						/* TODO */ true)
+					{
+
+						/* TODO */
+
+						// break condition
+						++batchID;
+						if (batchID >= batchEnd)
+							break;
+					}
+
+				// batch solves
+				/* TODO */
+
+				// finalize
+				batchID = batchBegin;
+				for (size_t i = particleBegin; i < particleEnd; ++i)
+					if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp &&
+						/* TODO */ true)
+					{
+
+						/* TODO */
+
+						// break condition
+						++batchID;
+						if (batchID >= batchEnd)
+							break;
+					}
+			}
+#endif
 		}
 	}
 

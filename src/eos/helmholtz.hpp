@@ -3,7 +3,7 @@
 #define STRINGIFY(...) #__VA_ARGS__
 #define STR(...) STRINGIFY(__VA_ARGS__)
 
-#include "../eigen.hpp"
+#include "../eigen/eigen.hpp"
 
 #ifndef IMAX
 	#define IMAX 541
