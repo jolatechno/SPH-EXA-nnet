@@ -135,9 +135,11 @@ void step(size_t firstIndex, size_t lastIndex,
 	// domain redecomposition
 
 	sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n);
+	sphexa::sphnnet::hydroToNuclearUpdate(d, n, {"previous_rho"});
 
 	// do hydro stuff
 
+	std::swap(n.rho, n.previous_rho);
 	sphexa::sphnnet::hydroToNuclearUpdate(d, n, {"rho", "temp"});
 	sphexa::sphnnet::computeHelmEOS(n, nnet::net14::constants::Z);
 

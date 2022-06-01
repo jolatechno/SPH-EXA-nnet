@@ -75,19 +75,18 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
 	void hydroToNuclearUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
-		if (std::count(sync_fields.begin(), sync_fields.end(), "rho") != 0)
-			std::swap(n.rho, n.previous_rho);
-
 		std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices;
 		std::vector<std::string> outputFieldNamesNuclear   = n.outputFieldNames,   outputFieldNamesHydro   = d.outputFieldNames;
 
-		d.setOutputFields(sync_fields);
+		// get particle data
 		n.setOutputFields(sync_fields);
+		auto nuclearData = sphexa::getOutputArrays(n);
 
-		using FieldType = std::variant<float*, double*, int*, unsigned*, size_t*, uint8_t*/*bool* */>;
-
-		std::vector<FieldType> particleData = sphexa::getOutputArrays(d);
-		std::vector<FieldType> nuclearData  = sphexa::getOutputArrays(n);
+		// get nuclear data
+		std::vector<std::string> particleDataFields = sync_fields;
+		std::replace(particleDataFields.begin(), particleDataFields.end(), std::string("previous_rho"), std::string("rho")); // replace "previous_rho" by "rho" for particle data
+		d.setOutputFields(particleDataFields);
+		auto particleData  = sphexa::getOutputArrays(d);
 
 		const int n_fields = sync_fields.size();
 		if (particleData.size() != n_fields || nuclearData.size() != n_fields)
