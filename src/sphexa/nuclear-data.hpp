@@ -5,6 +5,8 @@
 #include <memory>
 #include <variant>
 
+#include "../nuclear-net.hpp"
+
 #ifdef USE_MPI
 	#include <mpi.h>
 	#include "mpi/mpi-wrapper.hpp"
