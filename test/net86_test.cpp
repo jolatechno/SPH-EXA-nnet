@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
 
 
 	const nnet::eos::helmholtz helm_eos(nnet::net86::constants::Z);
-	const auto isotherm_eos = [&](const eigen::Vector<double> &Y_, const double T, const double rho_) {
+	const auto isotherm_eos = [&](const auto &Y_, const double T, const double rho_) {
 		const double cv = 1e30;
 		struct eos_output {
 			double cv, dP_dT;

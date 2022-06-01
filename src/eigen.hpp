@@ -139,8 +139,8 @@ namespace eigen {
 
 
 		/// custom analytical solver
-		template<typename Float, class Vector>
-		Vector solve(Matrix<Float> M, Vector RHS, Float epsilon=0) {
+		template<typename Float, class Vector, class Matrix>
+		Vector solve(Matrix M, Vector RHS, Float epsilon=0) {
 			if (M.n != M.m)
 				throw std::runtime_error("can't use gaussian elimination on non-square matrices !");
 

@@ -109,7 +109,7 @@ namespace nnet {
 
 
 
-	namespace utils {
+	namespace util {
 		/// clip the values in a Vector
 		/**
 		 * clip the values in a Vector, to make 0 any negative value, or values smaller than a tolerance epsilon
@@ -143,123 +143,116 @@ namespace nnet {
 
 			return false;
 		}
-	}
-
-
-
-	/// create a first order system from a list of reaction.
-	/**
-	 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y.
-	 * ...TODO
-	 */
-	template<typename Float, class Vector>
-	eigen::Vector<Float> inline derivatives_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Vector const &Y, const Float rho) {
-		const int dimension = Y.size();
-
-		eigen::Vector<Float> dY(dimension);
-		
-		for (int i = 0; i < dimension; ++i)
-			dY[i] = 0.;
-
-		const int num_reactions = reactions.size();
-		if (num_reactions != rates.size())
-			throw std::runtime_error("Number of reaction and rates don't match !\n");
-
-		for (int i = 0; i < num_reactions; ++i) {
-			const reaction &Reaction = reactions[i];
-			Float rate = rates[i];
-
-			// compute rate and order
-			int order = 0;
-			for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants) {
-				// divide by factorial
-				if (n_reactant_consumed != 1)
-					rate /= std::tgamma(n_reactant_consumed + 1);
-
-				// multiply by abundance
-				rate *= std::pow(Y[reactant_id], n_reactant_consumed);
-
-				// increment order
-				order += n_reactant_consumed;
-			}
-
-			// correct for rho
-			rate *= std::pow(rho, order - 1);
-
-			// insert consumption rates
-			for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants)
-				dY[reactant_id] -= rate*n_reactant_consumed;
-
-			// insert production rates
-			for (auto const [product_id, n_product_produced] : Reaction.products)
-				dY[product_id] += rate*n_product_produced;
-		}
-
-		return dY;
-	}
 
 
 
 
-	/// create a first order system from a list of reaction.
-	/**
-	 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y.
-	 * ...TODO
-	 */
-	template<typename Float, class Vector>
-	eigen::Matrix<Float> inline order_1_dY_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates,
-		Vector const &Y,
-		const Float rho)
-	{
-		const int dimension = Y.size();
-		eigen::Matrix<Float> M(dimension, dimension);
+		/// create a first order system from a list of reaction.
+		/**
+		 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y.
+		 * ...TODO
+		 */
+		template<typename Float, class Vector1, class Vector2>
+		void inline derivatives_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Vector1 const &Y, const Float rho, Vector2 &dY) {
+			const int dimension = Y.size();
+			
+			for (int i = 0; i < dimension; ++i)
+				dY[i] = 0.;
 
-		const int num_reactions = reactions.size();
-		if (num_reactions != rates.size())
-			throw std::runtime_error("Number of reaction and rates don't match !\n");
+			const int num_reactions = reactions.size();
+			if (num_reactions != rates.size())
+				throw std::runtime_error("Number of reaction and rates don't match !\n");
 
-		for (int i = 0; i < num_reactions; ++i) {
-			const reaction &Reaction = reactions[i];
-			Float rate = rates[i];
+			for (int i = 0; i < num_reactions; ++i) {
+				const reaction &Reaction = reactions[i];
+				Float rate = rates[i];
 
-			// compute rate and order
-			int order = 0;
-			for (auto const [_, n_reactant_consumed] : Reaction.reactants) {
-				// divide by factorial
-				if (n_reactant_consumed != 1)
-					rate /= std::tgamma(n_reactant_consumed + 1);
+				// compute rate and order
+				int order = 0;
+				for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants) {
+					// divide by factorial
+					if (n_reactant_consumed != 1)
+						rate /= std::tgamma(n_reactant_consumed + 1);
 
-				// increment order
-				order += n_reactant_consumed;
-			}
+					// multiply by abundance
+					rate *= std::pow(Y[reactant_id], n_reactant_consumed);
 
-			// correct for rho
-			rate *= std::pow(rho, order - 1);
-
-			if (rate > constants::epsilon_system)
-				for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
-					// compute rate
-					Float this_rate = rate;
-					this_rate *= std::pow(Y[reactant_id], n_reactant_consumed - 1);
-					for (auto &[other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
-						// multiply by abundance
-						if (other_reactant_id != reactant_id)
-							this_rate *= std::pow(Y[other_reactant_id], other_n_reactant_consumed);
-
-					// insert consumption rates
-					for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
-						M(other_reactant_id, reactant_id) -= this_rate*other_n_reactant_consumed;
-						
-
-					// insert production rates
-					for (auto const [product_id, n_product_produced] : Reaction.products)
-						M(product_id, reactant_id) += this_rate*n_product_produced;
+					// increment order
+					order += n_reactant_consumed;
 				}
+
+				// correct for rho
+				rate *= std::pow(rho, order - 1);
+
+				// insert consumption rates
+				for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants)
+					dY[reactant_id] -= rate*n_reactant_consumed;
+
+				// insert production rates
+				for (auto const [product_id, n_product_produced] : Reaction.products)
+					dY[product_id] += rate*n_product_produced;
+			}
 		}
 
-		return M;
-	}
 
+
+
+		/// create a first order system from a list of reaction.
+		/**
+		 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y.
+		 * ...TODO
+		 */
+		template<typename Float, class Vector, class Matrix>
+		void inline order_1_dY_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates,
+			Vector const &Y, const Float rho,
+			Matrix &M)
+		{
+			const int dimension = Y.size();
+
+			const int num_reactions = reactions.size();
+			if (num_reactions != rates.size())
+				throw std::runtime_error("Number of reaction and rates don't match !\n");
+
+			for (int i = 0; i < num_reactions; ++i) {
+				const reaction &Reaction = reactions[i];
+				Float rate = rates[i];
+
+				// compute rate and order
+				int order = 0;
+				for (auto const [_, n_reactant_consumed] : Reaction.reactants) {
+					// divide by factorial
+					if (n_reactant_consumed != 1)
+						rate /= std::tgamma(n_reactant_consumed + 1);
+
+					// increment order
+					order += n_reactant_consumed;
+				}
+
+				// correct for rho
+				rate *= std::pow(rho, order - 1);
+
+				if (rate > constants::epsilon_system)
+					for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
+						// compute rate
+						Float this_rate = rate;
+						this_rate *= std::pow(Y[reactant_id], n_reactant_consumed - 1);
+						for (auto &[other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
+							// multiply by abundance
+							if (other_reactant_id != reactant_id)
+								this_rate *= std::pow(Y[other_reactant_id], other_n_reactant_consumed);
+
+						// insert consumption rates
+						for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
+							M(other_reactant_id + 1, reactant_id + 1) -= this_rate*other_n_reactant_consumed;
+							
+
+						// insert production rates
+						for (auto const [product_id, n_product_produced] : Reaction.products)
+							M(product_id + 1, reactant_id + 1) += this_rate*n_product_produced;
+					}
+			}
+		}
+	}
 
 
 
@@ -303,29 +296,30 @@ namespace nnet {
 		eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 
 		// right hand side
-		eigen::Vector<Float> RHS(dimension + 1);
+		eigen::Vector<Float> RHS(dimension + 1), dY_dt(dimension);
 
-		auto dY_dt = derivatives_from_reactions(reactions, rates, Y_guess, rho);
+		util::derivatives_from_reactions(reactions, rates, Y_guess, rho, dY_dt);
 		for (int i = 0; i < dimension; ++i)
 			RHS[i + 1] = dY_dt[i]*dt;
 
 		// main matrix part
-		eigen::Matrix<Float> MpYY = order_1_dY_from_reactions(reactions, rates, Y_guess, rho);
+		util::order_1_dY_from_reactions(reactions, rates, Y_guess, rho, Mp);
 		for (int i = 0; i < dimension; ++i) {
-			// diagonal terms
-			Mp(i + 1, i + 1) = 1.      -constants::theta*dt*MpYY(i, i);
-
-			// other terms
-			for (int j = 0; j < dimension; ++j)
-				if (i != j)
-					Mp(i + 1, j + 1) = -constants::theta*dt*MpYY(i, j);
-
 			//     dY = ... + theta*dt*Mp*(next_Y - Y_guess) = ... + theta*dt*Mp*(next_Y - Y + Y - Y_guess) = ... + theta*dt*Mp*dY - theta*dt*Mp*(Y_guess - Y)
 			// <=> dY*(I - theta*dt*Mp) = ... - theta*Mp*dt*(Y_guess - Y)
 			Float RHS_correction = 0;
 			for (int j = 0; j < dimension; ++j)
-				RHS_correction += MpYY(i, j)*(Y_guess[j] - Y[j]);
+				RHS_correction += Mp(i + 1, j + 1)*(Y_guess[j] - Y[j]);
 			RHS[i + 1] += -constants::theta*dt*RHS_correction;
+		}
+		for (int i = 0; i < dimension; ++i) {
+			// diagonal terms
+			Mp(i + 1, i + 1) = 1.      -constants::theta*dt*Mp(i + 1, i + 1);
+
+			// other terms
+			for (int j = 0; j < dimension; ++j)
+				if (i != j)
+					Mp(i + 1, j + 1) = -constants::theta*dt*Mp(i + 1, j + 1);
 		}
 
 		// energy equation
@@ -335,7 +329,8 @@ namespace nnet {
 			Mp(0, i + 1) = -BE[i]/cv;
 
 		// include rate derivative
-		auto dY_dT = derivatives_from_reactions(reactions, drates_dT, Y_guess, rho);
+		auto &dY_dT = dY_dt;
+		util::derivatives_from_reactions(reactions, drates_dT, Y_guess, rho, dY_dT);
 		for (int i = 0; i < dimension; ++i) {
 			Mp(i + 1, 0) = -constants::theta*dt*dY_dT[i];
 
@@ -427,12 +422,12 @@ namespace nnet {
 	template<class Vector, class func_rate, class func_BE, class func_eos, typename Float=double>
 	std::tuple<eigen::Matrix<Float>, eigen::Vector<Float>> inline prepare_system_NR(
 		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector &Y, Float T, const Vector &final_Y, Float final_T, 
+		const Vector &Y, Float T, Vector &final_Y, Float final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
 		const int dimension = Y.size();
 
-		eigen::Vector<Float> Y_theta(dimension);
+		auto &Y_theta = final_Y;
 		Float T_theta = T;
 
 		// compute n+theta values
@@ -472,7 +467,7 @@ namespace nnet {
 		std::tie(final_Y, final_T) = finalize_system(Y, T, DY_T);
 
 		// check for garbage 
-		if (utils::contain_nan(final_Y, final_T) || final_T < 0) {
+		if (util::contain_nan(final_Y, final_T) || final_T < 0) {
 			// set timestep
 			dt *= constants::nan_dt_step;
 
@@ -497,7 +492,7 @@ namespace nnet {
 		}
 
 		// cleanup Vector
-		utils::clip(final_Y, nnet::constants::epsilon_vector);
+		util::clip(final_Y, nnet::constants::epsilon_vector);
 		
 		// return condition
 		Float correction = std::abs((final_T - last_T)/final_T);

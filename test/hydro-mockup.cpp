@@ -135,11 +135,12 @@ void step(size_t firstIndex, size_t lastIndex,
 	// domain redecomposition
 
 	sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n);
-	sphexa::sphnnet::hydroToNuclearUpdate(d, n, {"previous_rho"});
+
+	sphexa::sphnnet::hydroToNuclearUpdate(d, n, {"previous_rho"}); // useless, just for testing
 
 	// do hydro stuff
 
-	std::swap(n.rho, n.previous_rho);
+	// std::swap(n.rho, n.previous_rho); // the way it should be done instead of the first "hydroToNuclearUpdate"
 	sphexa::sphnnet::hydroToNuclearUpdate(d, n, {"rho", "temp"});
 	sphexa::sphnnet::computeHelmEOS(n, nnet::net14::constants::Z);
 
@@ -267,7 +268,7 @@ int main(int argc, char* argv[]) {
 	const struct eos_output {
 		double cv, dP_dT;
 	} isotherm_res{1e20, 0};
-	const auto isotherm_eos = [&](const eigen::Vector<double> &Y_, const double T, const double rho_) {
+	const auto isotherm_eos = [&](const auto &Y_, const double T, const double rho_) {
 		return isotherm_res;
 	};
 
