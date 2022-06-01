@@ -11,9 +11,11 @@
 
 
 namespace nnet {
-	/* !!!!!!!!!!!!
-	debuging :
-	!!!!!!!!!!!! */
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+constants :
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+	/* debuging: */
 	bool debug = false;
 
 	namespace constants {
@@ -75,6 +77,11 @@ namespace nnet {
 
 
 
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+(nuclear) reaction class:
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+
 
 	/// reaction class
 	/**
@@ -106,6 +113,12 @@ namespace nnet {
 		}
 	};
 
+
+
+
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+utils functions :
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 
 
@@ -256,12 +269,18 @@ namespace nnet {
 
 
 
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+First simple direct solver:
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+
+
 	/// generate the system to be solve (with rates computed at a specific "guess") 
 	/**
 	 * TODO
 	 */
 	template<class Vector1, class Vector2, class Vector3, typename Float>
-	std::tuple<eigen::Matrix<Float>, eigen::Vector<Float>> inline generate_system_from_guess(
+	std::tuple<eigen::Matrix<Float>, eigen::Vector<Float>> inline prepare_system_from_guess(
 		const std::vector<reaction> &reactions, const std::vector<Float> &rates, const std::vector<Float> &drates_dT, const Vector1 &BE, 
 		const Vector2 &Y, const Float T, const Vector3 &Y_guess, const Float T_guess,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
@@ -345,7 +364,7 @@ namespace nnet {
 
 
 
-	/// second part after solving the system (generated in "generate_system_from_guess")
+	/// second part after solving the system (generated in "prepare_system_from_guess")
 	/**
 	 * TODO
 	 */
@@ -363,7 +382,7 @@ namespace nnet {
 
 
 
-
+	/* actual solver: */
 	/// solves a system non-iteratively (with rates computed at a specific "guess").
 	/**
 	 *  solves non-iteratively and partialy implicitly the system represented by M (computed at a specific "guess").
@@ -382,7 +401,8 @@ namespace nnet {
 		} else {
 
 			// generate system
-			auto [Mp, RHS] = generate_system_from_guess(reactions, rates, drates_dT, BE,
+			auto [Mp, RHS] = prepare_system_from_guess(
+				reactions, rates, drates_dT, BE,
 				Y, T, Y_guess, T_guess,
 				cv, rho, value_1, dt);
 
@@ -397,7 +417,7 @@ namespace nnet {
 
 
 
-
+	/* actual solver: */
 	/// solves a system non-iteratively.
 	/**
 	 *  solves non-iteratively and partialy implicitly the system represented by M.
@@ -408,12 +428,18 @@ namespace nnet {
 		const Vector2 &Y, const Float T, Vector3 &next_Y, Float &next_T,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
-		solve_system_from_guess(reactions, rates, drates_dT, 
-			BE,
+		solve_system_from_guess(
+			reactions, rates, drates_dT, BE,
 			Y, T, Y, T, next_Y, next_T,
 			cv, rho, value_1, dt);
 	}
 
+
+
+
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Iterative solver:
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 
 
@@ -445,7 +471,8 @@ namespace nnet {
 		const double drho = drho_dt*dt;
 		double value_1 = eos_struct.dP_dT*drho/(rho*rho);
 
-		return generate_system_from_guess(reactions, rates, drates_dT, BE,
+		return prepare_system_from_guess(
+			reactions, rates, drates_dT, BE,
 			Y, T, Y_theta, T_theta,
 			eos_struct.cv, rho, value_1, dt);
 	}
@@ -453,14 +480,14 @@ namespace nnet {
 
 
 
-	/// second part after solving the system (generated in "generate_system_from_guess")
+	/// second part after solving the system (generated in "prepare_system_NR")
 	/**
 	 * TODO
 	 */
 	template<class Vector1, class Vector2, class Vector3, typename Float>
 	std::tuple<Float, bool> inline finalize_system_NR(const Vector1 &Y, const Float T,
 		Vector2 &final_Y, Float &final_T, 
-		const Vector3 &DY_T, int &i, Float &dt)
+		const Vector3 &DY_T, Float &dt, int &i)
 	{
 		const int dimension = Y.size();
 
@@ -522,6 +549,7 @@ namespace nnet {
 
 
 
+	/* actual solver: */
 	/// solve with  newton raphson
 	/**
 	 * iterative solver.
@@ -545,7 +573,8 @@ namespace nnet {
 		Float timestep = 0;
 		for (int i = 0;; ++i) {
 			// generate system
-			auto [Mp, RHS] = prepare_system_NR(reactions, construct_rates, construct_BE, eos,
+			auto [Mp, RHS] = prepare_system_NR(
+				reactions, construct_rates, construct_BE, eos,
 				Y, T, final_Y, final_T, 
 				rho, drho_dt, dt);
 
@@ -553,9 +582,10 @@ namespace nnet {
 			auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
 
 			// finalize
-			auto [timestep, exit] = finalize_system_NR(Y, T,
+			auto [timestep, exit] = finalize_system_NR(
+				Y, T,
 				final_Y, final_T,
-				DY_T, i, dt);
+				DY_T, dt, i);
 			if (exit)
 				return timestep;
 		}
@@ -564,6 +594,97 @@ namespace nnet {
 
 
 
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Substeping solver
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+
+
+
+	/// generate the system to be solve for the substepping solver
+	/**
+	 * TODO
+	 */
+	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
+	std::tuple<eigen::Matrix<Float>, eigen::Vector<Float>> inline prepare_system_substep(
+		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const Vector1 &final_Y, Float final_T, Vector2 &next_Y, Float &next_T, 
+		const Float final_rho, const Float drho_dt,
+		const Float dt_tot, Float &elapsed_time, Float &dt,
+		const nseFunction jumpToNse=NULL)
+	{
+		// compute rho
+		Float rho = final_rho - drho_dt*(dt_tot - elapsed_time);
+
+		// timejump if needed
+		if constexpr (std::is_invocable<std::remove_pointer<nseFunction>>())
+		if (dt < dt_tot*constants::substep::dt_nse_tol) {
+			dt = constants::max_dt;
+			elapsed_time = dt_tot;
+
+			(*jumpToNse)(reactions, construct_rates, construct_BE, eos,
+				final_Y, final_T, next_Y, next_T,
+				rho, drho_dt);
+		}
+		
+		// insure convergence to the right time
+		Float used_dt = dt;
+		if ((dt_tot - elapsed_time) < used_dt)
+			used_dt = dt_tot - elapsed_time;
+
+		// prepare system
+		return prepare_system_NR(reactions, construct_rates, construct_BE, eos,
+			final_Y, final_T, next_Y, next_T, 
+			rho, drho_dt, used_dt);
+	}
+
+
+
+
+	/// second part after solving the system (generated in "prepare_system_from_guess")
+	/**
+	 * TODO
+	 */
+	template<class Vector1, class Vector2, class Vector3, typename Float=double>
+	bool inline finalize_system_substep(Vector1 &final_Y, Float &final_T,
+		Vector2 &next_Y, Float &next_T, 
+		const Vector3 &DY_T, const Float dt_tot, Float &elapsed_time,
+		Float &dt, int &i)
+	{
+		// finalize system
+		Float used_dt = dt;
+		auto [timestep, converged] = finalize_system_NR(
+			final_Y, final_T,
+			next_Y, next_T,
+			DY_T, used_dt, i);
+
+		// update timestep
+		if (used_dt < dt_tot - elapsed_time)
+			dt = used_dt;
+
+		if (converged) {
+			// jump back, increment time
+			i = 0;
+			elapsed_time += timestep;
+
+			// update state
+			const int dimension = final_Y.size();
+			for (int i = 0; i < dimension; ++i)
+				final_Y[i] = next_Y[i];
+			final_T = next_T;
+
+			// check exit condition
+			if ((dt_tot - elapsed_time)/dt_tot < constants::substep::dt_tol)
+				return true;
+		}
+
+		return false;
+	}
+
+
+
+
+	/* actual substepping solver: */
 	/// function to supperstep (can include jumping to NSE)
 	/**
 	 * Superstepping using solve_system_NR, might move it to SPH-EXA
@@ -571,54 +692,41 @@ namespace nnet {
 	 */
 	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector1 &Y, const Float T, Vector2 &final_Y, Float &final_T,
+		Vector1 &final_Y, Float &final_T, Vector2 &Y_buffer,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
 	{
-		const int dimension = Y.size();
+		if (final_rho < constants::min_rho || final_T < constants::min_temp)
+			return;		
+
+		const int dimension = final_Y.size();
 		for (int i = 0; i < dimension; ++i)
-			final_Y[i] = Y[i];
-		final_T = T;
+			Y_buffer[i] = final_Y[i];
+		Float T_buffer = final_T;
 
-		if (final_rho > constants::min_rho && T > constants::min_temp) {
-			Float elapsed_t = 0;
-			Float used_dt = dt;
+		// actual solving
+		Float elapsed_time = 0;
+		for (int i = 0;; ++i) {
+			// generate system
+			auto [Mp, RHS] = prepare_system_substep(
+				reactions, construct_rates, construct_BE, eos,
+				final_Y, final_T, Y_buffer, T_buffer,
+				final_rho, drho_dt,
+				dt_tot, elapsed_time, dt,
+				jumpToNse);
 
-			Vector1 next_Y = Y;
-			Float next_T, rho;
-			
-			while ((dt_tot - elapsed_t)/dt_tot > constants::substep::dt_tol) {
-				// insure convergence to the right time
-				bool update_dt = (dt_tot - elapsed_t) > used_dt;
-				if (!update_dt)
-					used_dt = dt_tot - elapsed_t;
+			// solve M*D{T, Y} = RHS
+			auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
 
-				// solve system
-				rho = final_rho - drho_dt*(dt_tot - elapsed_t);
-				Float this_dt = solve_system_NR(reactions, construct_rates, construct_BE, eos,
-					final_Y, final_T, next_Y, next_T,
-					rho, drho_dt, used_dt);
-
-				elapsed_t += this_dt;
-				for (int i = 0; i < dimension; ++i)
-					final_Y[i] = next_Y[i];
-				final_T = next_T;
-
-				// update dt
-				if (update_dt)
-					dt = used_dt;
-
-				// timejump if needed
-				if constexpr (std::is_invocable<std::remove_pointer<nseFunction>>())
-					if (dt < dt_tot*constants::substep::dt_nse_tol) {
-						dt = constants::max_dt;
-						(*jumpToNse)(reactions, construct_rates, construct_BE, eos,
-							final_Y, final_T,
-							rho, drho_dt);
-
-						break;
-					}
-			} 
+			// finalize
+			if(finalize_system_substep(
+				final_Y, final_T,
+				Y_buffer, T_buffer,
+				DY_T, dt_tot, elapsed_time,
+				dt, i))
+			{
+				break;
+			}
 		}
 	}
 }

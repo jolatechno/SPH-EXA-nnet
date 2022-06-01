@@ -30,7 +30,7 @@ namespace sphexa::sphnnet {
 
 		#pragma omp parallel
 		{
-			Float temp_buffer, drho_dt;
+			Float drho_dt;
 			auto Y_buffer = n.Y[0];
 
 			# pragma omp for schedule(dynamic)
@@ -38,11 +38,8 @@ namespace sphexa::sphnnet {
 				drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
 				nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
-					n.Y[i], n.temp[i], Y_buffer, temp_buffer,
+					n.Y[i], n.temp[i], Y_buffer,
 					n.rho[i], drho_dt, hydro_dt, n.dt[i]);
-
-				n.Y[i] = Y_buffer;
-				n.temp[i] = temp_buffer;
 			}
 		}
 	}
