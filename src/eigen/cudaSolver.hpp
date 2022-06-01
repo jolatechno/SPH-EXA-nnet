@@ -19,7 +19,7 @@ namespace eigen::cudasolver {
 	public:
 		/// allocate buffers for batch solver
 		batch_solver(int dimension_) : dimension(dimension_) {
-			
+
 			int deviceCount;
 		    cudaError_t e = cudaGetDeviceCount(&deviceCount);
 		    std::cout << "(batch_solver) number of cuda device:" << (e == cudaSuccess ? deviceCount : -1) << "\n";
@@ -35,7 +35,7 @@ namespace eigen::cudasolver {
 		}
 
 		/// solve systems
-		void solve() {
+		void solve(size_t n_solve) {
 			/* TODO */
 
 			throw std::runtime_error("CUDA batched solver \"solve\" not yet implemented !");
@@ -95,21 +95,15 @@ namespace eigen::cudasolver {
 			for (int j = 0; j < dimension; ++j) {
 				RHS_Buffer[i][j] = RHS[j];
 				for (int k = 0; k < dimension; ++k)
-					mat_Buffer[i](j, k) = M[dimension*j + k];
+					mat_Buffer[i](j, k) = M[j + dimension*k];
 			}
 		}
 
 		/// solve systems
-		void solve() {
-			omp_set_nested(true);
-
-			// std::cout << "solving...\n";
-
+		void solve(size_t n_solve) {
 			#pragma omp parallel for schedule(dynamic)
-			for (size_t i = 0; i < batch_size; ++i)
+			for (size_t i = 0; i < n_solve; ++i)
 				res_Buffer[i] = eigen::solve(mat_Buffer[i], RHS_Buffer[i]);
-
-			// std::cout << "solved...\n";
 		}
 
 		/// retrieve results

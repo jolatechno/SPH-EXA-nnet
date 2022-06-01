@@ -49,8 +49,10 @@ namespace sphexa::sphnnet {
 
 			#pragma omp for schedule(dynamic)
 			for (size_t i = 0; i < n_particles; ++i) {
+				// compute drho/dt
 				drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
+				// solve
 				if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp)
 					nnet::solve_system_substep(Mp, RHS,
 						reactions, construct_rates, construct_BE, eos,
@@ -58,6 +60,7 @@ namespace sphexa::sphnnet {
 						n.rho[i], drho_dt, hydro_dt, n.dt[i],
 						jumpToNse);
 			}
+		}
 #else
 		/* !!!!!!!!!!!!!
 		GPU batch solver
@@ -65,124 +68,103 @@ namespace sphexa::sphnnet {
 		// intitialized bash solver data
 		eigen::cudasolver::batch_solver<Float> batch_solver(dimension + 1);
 
-		int num_threads_still_burning = 0;
-		#pragma omp parallel
-		{
-			// buffers
-			Float drho_dt;
-			eigen::Vector<Float> vect_buffer(dimension + 1);
-			eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
+		// data for batch initialization
+		std::vector<int>              iter(n_particles, 0);
+		std::vector<uint8_t/*bool*/>  burning(n_particles, true);
+		std::vector<size_t>           batchIDs(n_particles + 1);
+		std::vector<Float>            elapsed_time(n_particles, 0.);
+		std::vector<Float>            T_buffer(n_particles);
+		decltype(n.Y)                 Y_buffer(n_particles);
 
-			// get number of thread and thread number
-			const int num_threads = omp_get_num_threads();
-			const int thread_id   = omp_get_thread_num();
-
-			// initialize limits
-			const size_t particleBegin     = n_particles                  *thread_id      /num_threads;
-			const size_t particleEnd       = n_particles                  *(thread_id + 1)/num_threads;
-			const size_t batchBegin        = eigen::cudasolver::batch_size*thread_id      /num_threads;
-			const size_t batchEnd          = eigen::cudasolver::batch_size*(thread_id + 1)/num_threads;
-			const size_t batchParticleSize = particleEnd - particleBegin;
-
-			// data for batch initialization
-			std::vector<int>   iter(batchParticleSize, 0);
-			std::vector<bool>  finished(batchParticleSize, false);
-			std::vector<Float> elapsed_time(batchParticleSize, 0.);
-			std::vector<Float> T_buffer(batchParticleSize);
-			decltype(n.Y)      Y_buffer(batchParticleSize);
-
-			// intialize buffers
-			for (size_t i = particleBegin; i < particleEnd; ++i) {
-				T_buffer[i - particleBegin] = n.temp[i];
-				Y_buffer[i - particleBegin] = n.Y[i]; 
-			}
-
-
-			// solving loop
-			bool still_burning = true;
-			while (true) {
-				// prepare system
-				size_t batchID = batchBegin;
-				if (still_burning)
-					for (size_t i = particleBegin; i < particleEnd; ++i)
-						if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp &&
-							!finished[i - particleBegin])
-						{
-							drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
-
-							// preparing system
-							++iter[i - particleBegin];
-							nnet::prepare_system_substep(Mp, vect_buffer,
-								reactions, construct_rates, construct_BE, eos,
-								n.Y[i], n.temp[i],
-								Y_buffer[i - particleBegin], T_buffer[i - particleBegin],
-								n.rho[i], drho_dt,
-								hydro_dt, elapsed_time[i - particleBegin], n.dt[i],
-								jumpToNse);
-
-							// insert into batch solver
-							batch_solver.insert_system(batchID, Mp.data(), vect_buffer.data());
-
-							// break condition
-							++batchID;
-							if (batchID >= batchEnd)
-								break;
-						}
-
-				//std::cout << batchID << "/" << batchEnd << " batch size for rank " << thread_id << "\n";
-
-				// batch solves
-				#pragma omp barrier
-				#pragma omp master
-				{
-					batch_solver.solve();
-					num_threads_still_burning = 0;
-				}
-				#pragma omp barrier
-
-				// finalize
-				batchID = batchBegin;
-				size_t num_particle_still_burning = 0;
-				if (still_burning)
-					for (size_t i = particleBegin; i < particleEnd; ++i)
-						if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp &&
-							!finished[i - particleBegin])
-						{
-
-							// retrieve results
-							batch_solver.get_res(batchID, vect_buffer.data());
-
-							// finalize
-							if(nnet::finalize_system_substep(
-								n.Y[i], n.temp[i],
-								Y_buffer[i - particleBegin], T_buffer[i - particleBegin],
-								vect_buffer, hydro_dt, elapsed_time[i - particleBegin],
-								n.dt[i], iter[i - particleBegin]))
-							{
-								finished[i - particleBegin] = true;
-							} else
-								++num_particle_still_burning;
-
-							// break condition
-							++batchID;
-							if (batchID >= batchEnd)
-								break;
-						}
-
-				// check if particles are still burning
-				still_burning = (num_particle_still_burning > 0);
-
-				// check the number of threads still burning
-				#pragma omp atomic
-				num_threads_still_burning += still_burning;
-
-				// exit if no threads are still burning
-				#pragma omp barrier
-				if (num_threads_still_burning == 0)
-					break;
-			}
-#endif
+		// intialize buffers
+		for (size_t i = 0; i < n_particles; ++i) {
+			T_buffer[i] = n.temp[i];
+			Y_buffer[i] = n.Y[i]; 
 		}
+
+		// solving loop
+		while (true) {
+			// update burning
+			#pragma omp parallel for schedule(dynamic)
+			for (size_t i = 0; i < n_particles; ++i) 
+				if (n.rho[i] < nnet::constants::min_rho || n.temp[i] < nnet::constants::min_temp)
+					burning[i] = false;
+
+			// compute batchIDs
+			batchIDs[0] = 0;
+			__gnu_parallel::partial_sum(burning.begin(), burning.end(), batchIDs.begin() + 1);
+			size_t num_particle_still_burning = batchIDs.back();
+
+			// exit if no particles are burning
+			if (num_particle_still_burning == 0)
+				break;
+
+
+
+			// prepare system
+			#pragma omp parallel
+			{
+				size_t batchID;
+				Float drho_dt;
+				eigen::Vector<Float> RHS(dimension + 1);
+				eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
+
+				#pragma omp for schedule(dynamic)
+				for (size_t i = 0; i < n_particles; ++i)
+					if (burning[i] && (batchID = batchIDs[i]) < eigen::cudasolver::batch_size) {
+						// compute drho/dt
+						drho_dt = n.previous_rho[i] <= 0. ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
+
+						// preparing system
+						nnet::prepare_system_substep(Mp, RHS,
+							reactions, construct_rates, construct_BE, eos,
+							n.Y[i], n.temp[i],
+							Y_buffer[i], T_buffer[i],
+							n.rho[i], drho_dt,
+							hydro_dt, elapsed_time[i], n.dt[i],
+							jumpToNse);
+
+						// insert into batch solver
+						batch_solver.insert_system(batchID, Mp.data(), RHS.data());
+					}
+			}
+
+
+
+			// solve
+			size_t n_solve = std::min(num_particle_still_burning, eigen::cudasolver::batch_size);
+			batch_solver.solve(n_solve);
+
+
+
+			// finalize
+			#pragma omp parallel
+			{
+				size_t batchID;
+				eigen::Vector<Float> res_buffer(dimension + 1);
+
+				#pragma omp for schedule(dynamic)
+				for (size_t i = 0; i < n_particles; ++i)
+					if (burning[i] && (batchID = batchIDs[i]) < eigen::cudasolver::batch_size) {
+						// retrieve results
+						batch_solver.get_res(batchID, res_buffer.data());
+
+						// finalize
+						if(nnet::finalize_system_substep(
+							n.Y[i], n.temp[i],
+							Y_buffer[i], T_buffer[i],
+							res_buffer, hydro_dt, elapsed_time[i],
+							n.dt[i], iter[i]))
+						{
+							burning[i] = false;
+						}
+
+						// incrementing number of iteration
+						++iter[i];
+					}
+			}
+		}
+#endif
 	}
 
 	/// function to copute the helmholtz eos
