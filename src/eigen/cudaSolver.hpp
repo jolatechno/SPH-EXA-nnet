@@ -1,6 +1,8 @@
 #include "eigen.hpp"
 
 #ifdef CUDA_IMPLEMENTED
+#include <cuda_runtime.h>
+
 namespace eigen::cudasolver {
 	/// batch size for the GPU batched solver
 	size_t batch_size = 1000000;
@@ -17,6 +19,11 @@ namespace eigen::cudasolver {
 	public:
 		/// allocate buffers for batch solver
 		batch_solver(int dimension_) : dimension(dimension_) {
+			
+			int deviceCount;
+		    cudaError_t e = cudaGetDeviceCount(&deviceCount);
+		    std::cout << "(batch_solver) number of cuda device:" << (e == cudaSuccess ? deviceCount : -1) << "\n";
+
 			/* TODO */
 		}
 

@@ -34,11 +34,7 @@ namespace sphexa::sphnnet {
 		const nseFunction jumpToNse=NULL)
 	{
 		const size_t n_particles = n.temp.size();
-
-#ifdef USE_CUDA
-		
-#endif
-
+		const int dimension = n.Y[0].size();
 		
 #ifndef USE_CUDA
 		/* !!!!!!!!!!!!!
@@ -46,16 +42,18 @@ namespace sphexa::sphnnet {
 		!!!!!!!!!!!!! */
 		#pragma omp parallel
 		{
-			
+			// buffers
 			Float drho_dt;
-			auto Y_buffer = n.Y[0];
+			eigen::Vector<Float> RHS(dimension + 1), Y_buffer(dimension);
+			eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 
 			#pragma omp for schedule(dynamic)
 			for (size_t i = 0; i < n_particles; ++i) {
 				drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
 				if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp)
-					nnet::solve_system_substep(reactions, construct_rates, construct_BE, eos,
+					nnet::solve_system_substep(Mp, RHS,
+						reactions, construct_rates, construct_BE, eos,
 						n.Y[i], n.temp[i], Y_buffer,
 						n.rho[i], drho_dt, hydro_dt, n.dt[i],
 						jumpToNse);
@@ -65,16 +63,15 @@ namespace sphexa::sphnnet {
 		GPU batch solver
 		!!!!!!!!!!!!! */
 		// intitialized bash solver data
-		const int dimension = n.Y[0].size();
 		eigen::cudasolver::batch_solver<Float> batch_solver(dimension + 1);
 
 		int num_threads_still_burning = 0;
 		#pragma omp parallel
 		{
-			Float drho_dt;
-
 			// buffers
-			std::vector<Float> vect_buffer(dimension + 1), mat_buffer((dimension + 1)*(dimension + 1));
+			Float drho_dt;
+			eigen::Vector<Float> vect_buffer(dimension + 1);
+			eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 
 			// get number of thread and thread number
 			const int num_threads = omp_get_num_threads();
@@ -115,7 +112,7 @@ namespace sphexa::sphnnet {
 
 							// preparing system
 							++iter[i - particleBegin];
-							auto [Mp, RHS] = nnet::prepare_system_substep(
+							nnet::prepare_system_substep(Mp, vect_buffer,
 								reactions, construct_rates, construct_BE, eos,
 								n.Y[i], n.temp[i],
 								Y_buffer[i - particleBegin], T_buffer[i - particleBegin],
@@ -123,13 +120,8 @@ namespace sphexa::sphnnet {
 								hydro_dt, elapsed_time[i - particleBegin], n.dt[i],
 								jumpToNse);
 
-							// copy to buffer then insert into batch solver
-							for (int i = 0; i <= dimension; ++i) {
-								vect_buffer[i] = RHS[i];
-								for (int j = 0; j <= dimension; ++j)
-									mat_buffer[(dimension+1)*i + j] = Mp(i, j);
-							}
-							batch_solver.insert_system(batchID, mat_buffer.data(), vect_buffer.data());
+							// insert into batch solver
+							batch_solver.insert_system(batchID, Mp.data(), vect_buffer.data());
 
 							// break condition
 							++batchID;

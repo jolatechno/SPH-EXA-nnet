@@ -141,6 +141,10 @@ namespace eigen {
 			Type inline operator()(int i, int j) const {
 				return weights[i + j*n];
 			}
+
+			Type inline *data() {
+				return weights.data();
+			}
 		};
 
 
