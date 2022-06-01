@@ -14,11 +14,12 @@ namespace eigen::cudasolver {
 	template<typename Float>
 	class batch_solver {
 	private:
+		size_t size;
 		int dimension;
 	
 	public:
 		/// allocate buffers for batch solver
-		batch_solver(int dimension_) : dimension(dimension_) {
+		batch_solver(size_t size_, int dimension_) : dimension(dimension_), size(size_) {
 
 			int deviceCount;
 		    cudaError_t e = cudaGetDeviceCount(&deviceCount);
@@ -73,17 +74,18 @@ namespace eigen::cudasolver {
 	class batch_solver {
 	private:
 		int dimension;
+		size_t size;
 		std::vector<eigen::Vector<Float>> RHS_Buffer, res_Buffer;
 		std::vector<eigen::Matrix<Float>> mat_Buffer;
 	
 	public:
 		/// allocate buffers for batch solver
-		batch_solver(int dimension_) : dimension(dimension_) {
-			RHS_Buffer.resize(batch_size);
-			res_Buffer.resize(batch_size);
-			mat_Buffer.resize(batch_size);
+		batch_solver(size_t size_, int dimension_) : dimension(dimension_), size(size_) {
+			RHS_Buffer.resize(size);
+			res_Buffer.resize(size);
+			mat_Buffer.resize(size);
 			#pragma omp parallel for schedule(dynamic)
-			for (size_t i = 0; i < batch_size; ++i) {
+			for (size_t i = 0; i < size; ++i) {
 				RHS_Buffer[i].resize(dimension);
 				res_Buffer[i].resize(dimension);
 				mat_Buffer[i].resize(dimension, dimension);

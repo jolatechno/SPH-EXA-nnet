@@ -66,7 +66,8 @@ namespace sphexa::sphnnet {
 		GPU batch solver
 		!!!!!!!!!!!!! */
 		// intitialized bash solver data
-		eigen::cudasolver::batch_solver<Float> batch_solver(dimension + 1);
+		size_t batch_size = std::min(n_particles, eigen::cudasolver::batch_size);
+		eigen::cudasolver::batch_solver<Float> batch_solver(batch_size, dimension + 1);
 
 		// data for batch initialization
 		std::vector<int>              iter(n_particles, 0);
