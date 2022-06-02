@@ -11,8 +11,8 @@
 #ifndef JMAX
 	#define JMAX 201
 #endif
-#ifndef TABLE_PATH
-	#define TABLE_PATH "./helm_table.dat"
+#ifndef HELM_TABLE_PATH
+	#define HELM_TABLE_PATH "./helm_table.dat"
 #endif
 
 #include <iostream>
@@ -45,7 +45,7 @@ namespace nnet::eos {
 
 		// read table
 		const std::string helmolt_table = { 
-			#include TABLE_PATH
+			#include HELM_TABLE_PATH
 		};
 
 		// table limits

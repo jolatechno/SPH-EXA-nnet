@@ -14,7 +14,7 @@ namespace eigen {
 
 	public:
 		fixed_size_matrix() {
-			weights.resize(n*m, 0);
+			weights.resize(n*m);
 		}
 
 		Type inline &operator()(int i, int j) {
