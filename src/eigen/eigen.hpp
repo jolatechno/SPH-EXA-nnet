@@ -59,7 +59,7 @@ namespace eigen {
 		template<typename Type>
 		class Vector : public Eigen::VectorX<Type> {
 		public:
-			Vector(int n) : Eigen::VectorX<Type>(n) {}
+			Vector(int n=0) : Eigen::VectorX<Type>(n) {}
 
 			Type inline &operator[](int i) {
 				return Eigen::VectorX<Type>::operator()(i);
@@ -83,6 +83,7 @@ namespace eigen {
 		template<typename Type>
 		class Matrix : public Eigen::Matrix<Type, -1, -1> {
 		public:
+			Matrix() : Matrix(0, 0) {}
 			Matrix(int n, int m) : Eigen::Matrix<Type, -1, -1>(n, m) {
 				Eigen::Matrix<Type, -1, -1>::setZero();
 			}
