@@ -54,7 +54,7 @@ constants :
 			double max_dt = 1e-2;
 
 			/// relative temperature variation target of the implicit solver
-			double dT_T_target = 2e-2;
+			double dT_T_target = 1e-2;
 			/// relative temperature variation tolerance of the implicit solver
 			double dT_T_tol = 4;
 

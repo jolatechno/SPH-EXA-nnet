@@ -23,7 +23,7 @@
 namespace eigen::batchSolver {
 	namespace constants {
 		/// maximum batch size for the GPU batched solver
-		size_t max_batch_size = 10000;
+		size_t max_batch_size = 750;
 		/// minimum batch size before falling back to non-batcher CPU-solver
 		size_t min_batch_size = 100;
 	}
@@ -118,14 +118,14 @@ namespace eigen::batchSolver {
 		    util::cublasSafeCall(cublasCreate(&cublas_handle));
 
 			// allocate GPU vectors
-			util::gpuErrchk(cudaMalloc((void**)&dev_vec_Buffer,           dimension*size*sizeof(Float)));
-			util::gpuErrchk(cudaMalloc((void**)&dev_mat_Buffer, dimension*dimension*size*sizeof(Float)));
+			util::gpuErrchk(cudaMalloc((void**)&dev_vec_Buffer,           dimension*n_solve*sizeof(Float)));
+			util::gpuErrchk(cudaMalloc((void**)&dev_mat_Buffer, dimension*dimension*n_solve*sizeof(Float)));
 #ifdef PIVOTING_IMPLEMENTED
-			util::gpuErrchk(cudaMalloc((void**)&dev_pivotArray,           dimension*size*sizeof(int)));
+			util::gpuErrchk(cudaMalloc((void**)&dev_pivotArray,           dimension*n_solve*sizeof(int)));
 #endif
-			util::gpuErrchk(cudaMalloc((void**)&dev_InfoArray,                      size*sizeof(int)));
-			util::gpuErrchk(cudaMalloc((void**)&dev_mat_ptr,                        size*sizeof(double*)));
-			util::gpuErrchk(cudaMalloc((void**)&dev_vec_ptr,                        size*sizeof(double*)));
+			util::gpuErrchk(cudaMalloc((void**)&dev_InfoArray,                      n_solve*sizeof(int)));
+			util::gpuErrchk(cudaMalloc((void**)&dev_mat_ptr,                        n_solve*sizeof(Float*)));
+			util::gpuErrchk(cudaMalloc((void**)&dev_vec_ptr,                        n_solve*sizeof(Float*)));
 
 
 
@@ -139,8 +139,8 @@ namespace eigen::batchSolver {
 				mat_ptr[i + begin] = dev_mat_Buffer + dimension*dimension*i;
 				vec_ptr[i + begin] = dev_vec_Buffer + dimension*i;
 			}
-    		util::gpuErrchk(cudaMemcpy(dev_mat_ptr, mat_ptr.data() + begin, n_solve*sizeof(double*), cudaMemcpyHostToDevice));
-    		util::gpuErrchk(cudaMemcpy(dev_vec_ptr, vec_ptr.data() + begin, n_solve*sizeof(double*), cudaMemcpyHostToDevice));
+    		util::gpuErrchk(cudaMemcpy(dev_mat_ptr, mat_ptr.data() + begin, n_solve*sizeof(Float*), cudaMemcpyHostToDevice));
+    		util::gpuErrchk(cudaMemcpy(dev_vec_ptr, vec_ptr.data() + begin, n_solve*sizeof(Float*), cudaMemcpyHostToDevice));
 
 			// push memory to device
 			util::gpuErrchk(cudaMemcpy(dev_mat_Buffer, mat_Buffer.data() + mat_begin, dimension*dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
