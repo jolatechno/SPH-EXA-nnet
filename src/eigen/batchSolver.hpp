@@ -5,7 +5,8 @@
 /**************************************************************************************************************************************/
 /* mostly gotten from https://github.com/OrangeOwlSolutions/CUDA-Utilities/blob/70343897abbf7a5608a6739759437f44933a5fc6/Utilities.cu */
 /*              and https://stackoverflow.com/questions/28794010/solving-dense-linear-systems-ax-b-with-cuda                          */
-/* command:  nvcc -Xcompiler "-fopenmp -pthread -I/cm/shared/modules/generic/mpi/openmpi/4.0.1/include -pthread -L/cm/shared/modules/generic/mpi/openmpi/4.0.1/lib -lmpi -std=c++17" -DUSE_CUDA -lcublas -lcuda -lcudart -DUSE_MPI -DNOT_FROM_SPHEXA hydro-mockup.cpp -o hydro-mockup.out
+/* compile:  nvcc -Xcompiler "-fopenmp -pthread -I/cm/shared/modules/generic/mpi/openmpi/4.0.1/include -pthread -L/cm/shared/modules/generic/mpi/openmpi/4.0.1/lib -lmpi -std=c++17" -DUSE_CUDA -lcublas -lcuda -lcudart -DUSE_MPI -DNOT_FROM_SPHEXA hydro-mockup.cpp -o hydro-mockup.out
+/* launch:   mpirun --bind-to core --oversubscribe --map-by ppr:1:numa -x OMP_NUM_THREADS=6 hydro-mockup.out -n 2 --test-case C-O-burning --n-particle 100
 /**************************************************************************************************************************************/
 
 #include <cublas_v2.h>
@@ -138,10 +139,10 @@ namespace eigen::batchSolver {
 		void insert_system(size_t i, const Float* M, const Float *RHS) {
 			for (int j = 0; j < dimension; ++j)
 				for (int k = 0; k < dimension; ++k)
-					mat_Buffer[dimension*dimension*i + dimension*j + k] = M[j + dimension*k]; 
+					mat_Buffer[dimension*dimension*i + dimension*j + k] = M[j + dimension*k];
 
 			for (int j = 0; j < dimension; ++j)
-				vec_Buffer[dimension*i + j] = RHS[j]; 
+				vec_Buffer[dimension*i + j] = RHS[j];
 		}
 
 
@@ -169,8 +170,22 @@ namespace eigen::batchSolver {
 					dimension, dev_pivotArray,
 					dev_InfoArray, n_solve));
 
-				// get info and pivot from device
-				// util::gpuErrchk(cudaMemcpy(InfoArray.data(),  dev_InfoArray,            n_solve*sizeof(int), cudaMemcpyDeviceToHost));
+				// get Info from device
+				util::gpuErrchk(cudaMemcpy(InfoArray.data(), dev_InfoArray, n_solve*sizeof(int), cudaMemcpyDeviceToHost));
+				// check for error in each matrix
+				for (int i = 0; i < n_solve; ++i)
+			        if (InfoArray[i] != 0) {
+			        	std::string error = "Factorization of matrix ";
+			        	error += std::to_string(i);
+			        	error += " Failed: Matrix may be singular (error code=";
+			        	error += std::to_string(InfoArray[i]);
+			        	error += ")";
+
+			            cudaDeviceReset();
+			            throw std::runtime_error(error);
+			        }
+
+				// get pivot from device
 				util::gpuErrchk(cudaMemcpy(pivotArray.data(), dev_pivotArray, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost));
 				// rearange
 				util::rearrange(vec_Buffer.data(), pivotArray.data(), dimension*n_solve);
