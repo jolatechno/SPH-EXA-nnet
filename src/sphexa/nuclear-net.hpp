@@ -77,7 +77,7 @@ namespace sphexa::sphnnet {
 		// intialize buffers
 		for (size_t i = 0; i < n_particles; ++i) {
 			T_buffer[i] = n.temp[i];
-			Y_buffer[i] = n.Y[i]; 
+			Y_buffer[i] = n.Y[i];
 		}
 
 		// solving loop
