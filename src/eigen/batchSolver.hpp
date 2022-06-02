@@ -152,47 +152,49 @@ namespace eigen::batchSolver {
 		 * TODO
 		 */
 		void solve(size_t n_solve) {
-			// --- Creating the array of pointers needed as input/output to the batched getrf
-			for (int i = 0; i < n_solve; i++) {
-				mat_ptr[i] = dev_mat_Buffer + dimension*dimension*i;
-				vec_ptr[i] = dev_mat_Buffer + dimension*i;
+			if (n_solve > 0) {
+				// --- Creating the array of pointers needed as input/output to the batched getrf
+				for (int i = 0; i < n_solve; i++) {
+					mat_ptr[i] = dev_mat_Buffer + dimension*dimension*i;
+					vec_ptr[i] = dev_mat_Buffer + dimension*i;
+				}
+	    		util::gpuErrchk(cudaMemcpy(dev_mat_ptr, mat_ptr.data(), n_solve*sizeof(double*), cudaMemcpyHostToDevice));
+	    		util::gpuErrchk(cudaMemcpy(dev_vec_ptr, mat_ptr.data(), n_solve*sizeof(double*), cudaMemcpyHostToDevice));
+
+				// push memory to device
+				util::gpuErrchk(cudaMemcpy(dev_mat_Buffer, mat_Buffer.data(), dimension*dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
+
+				// LU decomposition
+				util::cublasSafeCall(cublasDgetrfBatched(cublas_handle,
+					dimension, dev_mat_ptr,
+					dimension, dev_pivotArray,
+					dev_InfoArray, n_solve));
+
+				// get info and pivot from device
+				util::gpuErrchk(cudaMemcpy(InfoArray.data(),  dev_InfoArray,            n_solve*sizeof(int), cudaMemcpyDeviceToHost));
+				util::gpuErrchk(cudaMemcpy(pivotArray.data(), dev_pivotArray, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost));
+				// rearange
+				util::rearrange(vec_Buffer.data(), pivotArray.data(), dimension*n_solve);
+				// push vector data to device
+				util::gpuErrchk(cudaMemcpy(dev_vec_Buffer, vec_Buffer.data(), dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
+
+	    		const double alpha = 1.;
+				// solve lower triangular part
+	    		//util::cublasSafeCall(cublasDtrsm(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,     dimension, 1, &alpha, dev_mat_Buffer, dimension, dev_vec_Buffer, n_solve));
+	    		util::cublasSafeCall(cublasDtrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,
+	    			dimension, dimension, &alpha, dev_mat_ptr,
+	    			dimension, dev_vec_ptr,
+	    			dimension, n_solve));
+	    		// solve upper triangular part
+	    		//util::cublasSafeCall(cublasDtrsm(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, dimension, 1, &alpha, dev_mat_Buffer, dimension, dev_vec_Buffer, n_solve));
+	    		util::cublasSafeCall(cublasDtrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT,
+	    			dimension, dimension, &alpha, dev_mat_ptr,
+	    			dimension, dev_vec_ptr,
+	    			dimension, n_solve));
+
+				// get memory from device
+				util::gpuErrchk(cudaMemcpy(vec_Buffer.data(), dev_vec_Buffer, dimension*n_solve*sizeof(Float), cudaMemcpyDeviceToHost));
 			}
-    		util::gpuErrchk(cudaMemcpy(dev_mat_ptr, mat_ptr.data(), n_solve*sizeof(double*), cudaMemcpyHostToDevice));
-    		util::gpuErrchk(cudaMemcpy(dev_vec_ptr, mat_ptr.data(), n_solve*sizeof(double*), cudaMemcpyHostToDevice));
-
-			// push memory to device
-			util::gpuErrchk(cudaMemcpy(dev_mat_Buffer, mat_Buffer.data(), dimension*dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
-
-			// LU decomposition
-			util::cublasSafeCall(cublasDgetrfBatched(cublas_handle,
-				dimension, dev_mat_ptr,
-				dimension, dev_pivotArray,
-				dev_InfoArray, n_solve));
-
-			// get info and pivot from device
-			util::gpuErrchk(cudaMemcpy(InfoArray.data(),  dev_InfoArray,            n_solve*sizeof(int), cudaMemcpyDeviceToHost));
-			util::gpuErrchk(cudaMemcpy(pivotArray.data(), dev_pivotArray, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost));
-			// rearange
-			util::rearrange(vec_Buffer.data(), pivotArray.data(), dimension*n_solve);
-			// push vector data to device
-			util::gpuErrchk(cudaMemcpy(dev_vec_Buffer, vec_Buffer.data(), dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
-
-    		const double alpha = 1.;
-			// solve lower triangular part
-    		//util::cublasSafeCall(cublasDtrsm(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,     dimension, 1, &alpha, dev_mat_Buffer, dimension, dev_vec_Buffer, n_solve));
-    		util::cublasSafeCall(cublasDtrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,
-    			dimension, dimension, &alpha, dev_mat_ptr,
-    			dimension, dev_vec_ptr,
-    			dimension, n_solve));
-    		// solve upper triangular part
-    		//util::cublasSafeCall(cublasDtrsm(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, dimension, 1, &alpha, dev_mat_Buffer, dimension, dev_vec_Buffer, n_solve));
-    		util::cublasSafeCall(cublasDtrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT,
-    			dimension, dimension, &alpha, dev_mat_ptr,
-    			dimension, dev_vec_ptr,
-    			dimension, n_solve));
-
-			// get memory from device
-			util::gpuErrchk(cudaMemcpy(vec_Buffer.data(), dev_vec_Buffer, dimension*n_solve*sizeof(Float), cudaMemcpyDeviceToHost));
 		}
 
 
@@ -271,9 +273,11 @@ namespace eigen::batchSolver {
 		 * TODO
 		 */
 		void solve(size_t n_solve) {
-			#pragma omp parallel for schedule(dynamic)
-			for (size_t i = 0; i < n_solve; ++i)
-				res_Buffer[i] = eigen::solve(mat_Buffer[i], RHS_Buffer[i]);
+			if (n_solve > 0) {
+				#pragma omp parallel for schedule(dynamic)
+				for (size_t i = 0; i < n_solve; ++i)
+					res_Buffer[i] = eigen::solve(mat_Buffer[i], RHS_Buffer[i]);
+			}
 		}
 
 
