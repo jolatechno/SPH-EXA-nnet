@@ -64,7 +64,11 @@ namespace sphexa::sphnnet {
 		!!!!!!!!!!!!! */
 		// intitialized bash solver data
 		size_t batch_size = std::min(n_particles, eigen::batchSolver::batch_size);
+#ifdef USE_MPI
+		eigen::batchSolver::batch_solver<Float> batch_solver(batch_size, dimension + 1, n.comm);
+#else
 		eigen::batchSolver::batch_solver<Float> batch_solver(batch_size, dimension + 1);
+#endif
 
 		// data for batch initialization
 		std::vector<int>              iter(n_particles, 0);

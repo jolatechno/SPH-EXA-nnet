@@ -101,9 +101,6 @@ namespace eigen::batchSolver {
 		batch_solver(size_t size_, int dimension_, MPI_Comm comm) : dimension(dimension_), size(size_) {
 			static_assert(std::is_same<Float, double>::value, "type in CUDA batch_solver must be DOUBLE for now");
 
-			// --- CUBLAS initialization
-		    util::cublasSafeCall(cublasCreate(&cublas_handle));
-
 		    // get number of device
 			int deviceCount;
 		    util::gpuErrchk(cudaGetDeviceCount(&deviceCount));
@@ -111,14 +108,17 @@ namespace eigen::batchSolver {
 		    // get number of shared memory rank
 		    MPI_Comm localComm;
 			int rank, local_rank;
-			MPI_Comm_rank(communicator, &rank);
-			MPI_Comm_split_type(communicator, MPI_COMM_TYPE_SHARED, rank, MPI_INFO_NULL, &localComm);
-			MPI_Comm_rank(localComm, &local_size);
+			MPI_Comm_rank(comm, &rank);
+			MPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, rank, MPI_INFO_NULL, &localComm);
+			MPI_Comm_rank(localComm, &local_rank);
 
 		    // spread available devices on different shared memory ranks
 		    /* !! lazy multi-GPU implementation !! */
 		    int device = local_rank%deviceCount;
-			cudaSetDeviceFlags(device);
+			cudaSetDevice(device);
+
+			/* debug */
+			std::cout << "assigning deivce " << device << "/" << deviceCount << " to local rank " << rank << " (cudaSolver)\n";
 #else
 		/// allocate buffers for batch solver
 		/**
@@ -127,13 +127,18 @@ namespace eigen::batchSolver {
 		batch_solver(size_t size_, int dimension_) : dimension(dimension_), size(size_) {
 			static_assert(std::is_same<Float, double>::value, "type in CUDA batch_solver must be DOUBLE for now");
 
-			// --- CUBLAS initialization
-		    util::cublasSafeCall(cublasCreate(&cublas_handle));
-
 		    // get number of device
 			int deviceCount;
 		    util::gpuErrchk(cudaGetDeviceCount(&deviceCount));
+
+		    // assign device
+		    /* !! should implement proper multi-GPU implementation !! */
+		    int device = 0;
+		    cudaSetDevice(device);
 #endif
+
+		    // --- CUBLAS initialization
+		    util::cublasSafeCall(cublasCreate(&cublas_handle));
 
 		    // alloc CPU buffers
 		    vec_Buffer.resize(size*dimension);
@@ -294,7 +299,11 @@ namespace eigen::batchSolver {
 		/**
 		 * TODO
 		 */
+#ifdef USE_MPI
+		batch_solver(size_t size_, int dimension_, MPI_Comm comm) : dimension(dimension_), size(size_) {
+#else
 		batch_solver(size_t size_, int dimension_) : dimension(dimension_), size(size_) {
+#endif
 			RHS_Buffer.resize(size);
 			res_Buffer.resize(size);
 			mat_Buffer.resize(size);
