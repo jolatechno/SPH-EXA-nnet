@@ -2,7 +2,8 @@
 #include <chrono>
 
 #include "../src/nuclear-net.hpp"
-#include "../src/net86/net86.hpp"
+//#include "../src/net86/net86.hpp"
+#include "../src/net87/net87.hpp"
 #include "../src/eos/helmholtz.hpp"
 
 #include "util/arg_parser.hpp"

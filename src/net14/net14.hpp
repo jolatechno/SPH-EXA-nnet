@@ -7,6 +7,7 @@
 
 
 namespace nnet::net14 {
+	/// if true ignore coulombian corrections
 	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values

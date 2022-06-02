@@ -26,7 +26,7 @@
 
 #include <cmath>
 
-namespace nnet::net86::electrons {
+namespace nnet::net87::electrons {
 	namespace constants {
 		// table size
 		const int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;

@@ -5,7 +5,6 @@
 #include <numeric>
 
 #include "../net14/net14-constants.hpp"
-#include "electrons.hpp"
 
 namespace nnet::net86::constants {
 	const int proton = 0;
