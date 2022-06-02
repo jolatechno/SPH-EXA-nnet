@@ -150,7 +150,7 @@ namespace nnet::net86 {
 		return corrected_BE;
 	};
 
-	// constant list of ordered reaction
+	/// constant list of ordered reaction
 	const std::vector<nnet::reaction> reaction_list = []() {
 		std::vector<nnet::reaction> reactions;
 
@@ -216,6 +216,15 @@ namespace nnet::net86 {
 		return reactions;
 	}();
 
+	/// constant list of ordered reaction with electrons
+	const std::vector<nnet::reaction> reaction_list_with_electrons = []() {
+		std::vector<nnet::reaction> reactions = reaction_list;
+
+		/* TODO */
+
+		return reactions;
+	}();
+
 	/// compute a list of rates for net86
 	const auto compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct) {
 		using Float = typename std::remove_const<decltype(T)>::type;
@@ -223,34 +232,7 @@ namespace nnet::net86 {
 		std::vector<Float> rates, drates;
 		rates.reserve(reaction_list.size());
 		drates.reserve(reaction_list.size());
-
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		electron value
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		Float effe = 0, deffe = 0, deffedYe = 0, Eneutr = 0, dEneutr = 0, dEneutrdYe = 0, effp = 0, deffp = 0, deffpdYe = 0, Eaneutr = 0, dEaneutr = 0, dEaneutrdYe = 0, dUedYe = 0;
-		if (constants::use_electrons) {
-			std::array<Float, electrons::constants::nC> electron_values;
-			electrons::interpolate(T, rho*Y[86], electron_values);
-
-			effe        = electron_values[0];
-			deffe       = electron_values[1]    *1e-9;
-			deffedYe    = electron_values[2]*rho;
-			Eneutr      = electron_values[3]    *4.93e17;
-
-			dEneutr     = electron_values[4]    *4.93e17*1.e-9;
-			dEneutrdYe  = electron_values[5]*rho*4.93e17;
-
-			effp        = electron_values[6];
-			deffp       = electron_values[7];
-			deffpdYe    = electron_values[8]*rho;
-			Eaneutr     = electron_values[9];
-			dEaneutr    = electron_values[10];
-			dEaneutrdYe = electron_values[11]*rho;
-
-			dUedYe = eos_struct.dU_dYe;
-		}
 		
-          
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		fusions and fissions reactions from fits
@@ -842,6 +824,42 @@ namespace nnet::net86 {
 			}
 		}
 		
+
+		return std::tuple<std::vector<Float>, std::vector<Float>>{rates, drates};
+	};
+
+	/// compute a list of rates for net86
+	const auto compute_reaction_rates_with_electrons = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct) {
+		using Float = typename std::remove_const<decltype(T)>::type;
+
+		auto [rates, drates] = compute_reaction_rates(Y, T, rho, eos_struct);
+		rates.reserve(reaction_list_with_electrons.size());
+		drates.reserve(reaction_list_with_electrons.size());
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		electron value
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		std::array<Float, electrons::constants::nC> electron_values;
+		electrons::interpolate(T, rho*Y[86], electron_values);
+
+		Float effe        = electron_values[0];
+		Float deffe       = electron_values[1]    *1e-9;
+		Float deffedYe    = electron_values[2]*rho;
+		Float Eneutr      = electron_values[3]    *4.93e17;
+
+		Float dEneutr     = electron_values[4]    *4.93e17*1.e-9;
+		Float dEneutrdYe  = electron_values[5]*rho*4.93e17;
+
+		Float effp        = electron_values[6];
+		Float deffp       = electron_values[7];
+		Float deffpdYe    = electron_values[8]*rho;
+		Float Eaneutr     = electron_values[9];
+		Float dEaneutr    = electron_values[10];
+		Float dEaneutrdYe = electron_values[11]*rho;
+
+		Float dUedYe = eos_struct.dU_dYe;
+
+		/* TODO */
 
 		return std::tuple<std::vector<Float>, std::vector<Float>>{rates, drates};
 	};

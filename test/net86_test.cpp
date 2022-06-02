@@ -59,8 +59,6 @@ int main(int argc, char* argv[]) {
     nnet::constants::NR::min_it             = parser.get("--min_NR_it",   nnet::constants::NR::min_it);
     nnet::constants::NR::max_it             = parser.get("--max_NR_it",   nnet::constants::NR::max_it);
 
-    nnet::net86::constants::use_electrons   = parser.exists("--use-electrons");
-
     const int n_save                        = parser.get("--n-save", 0);
     const bool save_res_net14               = parser.exists("--output-net14");
     const bool debug_net86                  = parser.exists("--debug-net86");
