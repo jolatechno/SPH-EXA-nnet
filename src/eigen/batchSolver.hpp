@@ -76,7 +76,7 @@ namespace eigen::batchSolver {
 
 		// GPU Clusters
 		Float *dev_vec_Buffer, *dev_mat_Buffer, **dev_mat_ptr, **dev_vec_ptr;
-		int *dev_pivotArray, *dev_InfoArray;
+		int *dev_pivotArray=NULL, *dev_InfoArray;
 
 		// CPU Clusters
 		std::vector<int> pivotArray, InfoArray;
@@ -106,14 +106,18 @@ namespace eigen::batchSolver {
 		    vec_Buffer.resize(size*dimension);
 			mat_Buffer.resize(size*dimension*dimension);
 			InfoArray.resize(size);
+#ifdef PIVOTING_IMPLEMENTED
 			pivotArray.resize(size*dimension);
+#endif
 			mat_ptr.resize(size);
 			vec_ptr.resize(size);
 
 			// alloc GPU buffers
 			util::gpuErrchk(cudaMalloc((void**)&dev_vec_Buffer,           dimension*size*sizeof(Float)));
 			util::gpuErrchk(cudaMalloc((void**)&dev_mat_Buffer, dimension*dimension*size*sizeof(Float)));
+#ifdef PIVOTING_IMPLEMENTED
 			util::gpuErrchk(cudaMalloc((void**)&dev_pivotArray,           dimension*size*sizeof(int)));
+#endif
 			util::gpuErrchk(cudaMalloc((void**)&dev_InfoArray,                      size*sizeof(int)));
 			util::gpuErrchk(cudaMalloc((void**)&dev_mat_ptr,                        size*sizeof(double*)));
 			util::gpuErrchk(cudaMalloc((void**)&dev_vec_ptr,                        size*sizeof(double*)));
@@ -122,7 +126,9 @@ namespace eigen::batchSolver {
 		~batch_solver() {
 			util::gpuErrchk(cudaFree(dev_vec_Buffer));
 			util::gpuErrchk(cudaFree(dev_mat_Buffer));
+#ifdef PIVOTING_IMPLEMENTED
 			util::gpuErrchk(cudaFree(dev_pivotArray));
+#endif
 			util::gpuErrchk(cudaFree(dev_InfoArray));
 			util::gpuErrchk(cudaFree(dev_mat_ptr));
 			util::gpuErrchk(cudaFree(dev_vec_ptr));
@@ -184,10 +190,12 @@ namespace eigen::batchSolver {
 			            throw std::runtime_error(error);
 			        }
 
+#ifdef PIVOTING_IMPLEMENTED
 				// get pivot from device
 				util::gpuErrchk(cudaMemcpy(pivotArray.data(), dev_pivotArray, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost));
 				// rearange
 				util::rearrange(vec_Buffer.data(), pivotArray.data(), dimension*n_solve);
+#endif
 				// push vector data to device
 				util::gpuErrchk(cudaMemcpy(dev_vec_Buffer, vec_Buffer.data(), dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
 
@@ -207,6 +215,10 @@ namespace eigen::batchSolver {
 
 				// get memory from device
 				util::gpuErrchk(cudaMemcpy(vec_Buffer.data(), dev_vec_Buffer, dimension*n_solve*sizeof(Float), cudaMemcpyDeviceToHost));
+#ifdef PIVOTING_IMPLEMENTED
+				// rearange back
+				util::rearrange(vec_Buffer.data(), pivotArray.data(), dimension*n_solve);
+#endif
 			}
 		}
 
