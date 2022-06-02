@@ -215,10 +215,6 @@ namespace eigen::batchSolver {
 
 				// get memory from device
 				util::gpuErrchk(cudaMemcpy(vec_Buffer.data(), dev_vec_Buffer, dimension*n_solve*sizeof(Float), cudaMemcpyDeviceToHost));
-#ifdef PIVOTING_IMPLEMENTED
-				// rearange back
-				util::rearrange(vec_Buffer.data(), pivotArray.data(), dimension*n_solve);
-#endif
 			}
 		}
 
