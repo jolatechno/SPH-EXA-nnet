@@ -46,7 +46,7 @@ namespace sphexa::sphnnet {
 
 			#pragma omp for schedule(dynamic)
 			for (size_t i = 0; i < n_particles; ++i) 
-				(n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp){
+				if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp) {
 					// compute drho/dt
 					drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
