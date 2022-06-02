@@ -139,7 +139,8 @@ namespace eigen::batchSolver {
 		void insert_system(size_t i, const Float* M, const Float *RHS) {
 			for (int j = 0; j < dimension; ++j)
 				for (int k = 0; k < dimension; ++k)
-					mat_Buffer[dimension*dimension*i + dimension*j + k] = M[j + dimension*k];
+					mat_Buffer[dimension*dimension*i + j + dimension*k] = M[j + dimension*k];
+					//mat_Buffer[dimension*dimension*i + dimension*j + k] = M[j + dimension*k];
 
 			for (int j = 0; j < dimension; ++j)
 				vec_Buffer[dimension*i + j] = RHS[j];
@@ -173,13 +174,11 @@ namespace eigen::batchSolver {
 				// get Info from device
 				util::gpuErrchk(cudaMemcpy(InfoArray.data(), dev_InfoArray, n_solve*sizeof(int), cudaMemcpyDeviceToHost));
 				// check for error in each matrix
+				#pragma omp parallel for schedule(static)
 				for (int i = 0; i < n_solve; ++i)
 			        if (InfoArray[i] != 0) {
-			        	std::string error = "Factorization of matrix ";
-			        	error += std::to_string(i);
-			        	error += " Failed: Matrix may be singular (error code=";
-			        	error += std::to_string(InfoArray[i]);
-			        	error += ")";
+			        	std::string error = "Factorization of matrix " + std::to_string(i);
+			        	error += " Failed: Matrix may be singular (error code=" + std::to_string(InfoArray[i]) += ")";
 
 			            cudaDeviceReset();
 			            throw std::runtime_error(error);
@@ -196,14 +195,14 @@ namespace eigen::batchSolver {
 				// solve lower triangular part
 	    		//util::cublasSafeCall(cublasDtrsm(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,     dimension, 1, &alpha, dev_mat_Buffer, dimension, dev_vec_Buffer, n_solve));
 	    		util::cublasSafeCall(cublasDtrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,
-	    			dimension, dimension, &alpha, dev_vec_ptr,
-	    			dimension, dev_mat_ptr,
+	    			dimension, 1, &alpha, dev_mat_ptr,
+	    			dimension, dev_vec_ptr,
 	    			dimension, n_solve));
 	    		// solve upper triangular part
 	    		//util::cublasSafeCall(cublasDtrsm(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, dimension, 1, &alpha, dev_mat_Buffer, dimension, dev_vec_Buffer, n_solve));
 	    		util::cublasSafeCall(cublasDtrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT,
-	    			dimension, dimension, &alpha, dev_vec_ptr,
-	    			dimension, dev_mat_ptr,
+	    			dimension, 1, &alpha, dev_mat_ptr,
+	    			dimension, dev_vec_ptr,
 	    			dimension, n_solve));
 
 				// get memory from device

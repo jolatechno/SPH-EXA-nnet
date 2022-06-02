@@ -301,13 +301,15 @@ First simple direct solver:
 
 		if (dt == 0) {
 			std::string error = "Zero timestep in nuclear network\n";
-			error += "\tT=" + std::to_string(T) + "\n";
+			error += "\tT=" + std::to_string(T) + ",\tTguess=" + std::to_string(T_guess) + "\n";
 			error += "\trho=" + std::to_string(rho) + "\n";
 			error += "\tvalue_1=" + std::to_string(value_1) + "\n";
 			error += "\tY=";
 			for (auto y : Y)
 				error += std::to_string(y) + " ";
-			error += "\n";
+			error += "\n\tYguess=";
+			for (auto y : Y_guess)
+				error += std::to_string(y) + " ";
 			
 			throw std::runtime_error(error);
 		}
