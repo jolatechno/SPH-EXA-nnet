@@ -45,30 +45,26 @@ namespace sphexa::sphnnet {
 			eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 
 			#pragma omp for schedule(dynamic)
-			for (size_t i = 0; i < n_particles; ++i) {
-				// compute drho/dt
-				drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
+			for (size_t i = 0; i < n_particles; ++i) 
+				(n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp){
+					// compute drho/dt
+					drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
-				// solve
-				if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp)
+					// solve
 					nnet::solve_system_substep(Mp, RHS,
 						reactions, construct_rates, construct_BE, eos,
 						n.Y[i], n.temp[i], Y_buffer,
 						n.rho[i], drho_dt, hydro_dt, n.dt[i],
 						jumpToNse);
-			}
+				}
 		}
 #else
 		/* !!!!!!!!!!!!!
 		GPU batch solver
 		!!!!!!!!!!!!! */
 		// intitialized bash solver data
-		size_t batch_size = std::min(n_particles, eigen::batchSolver::batch_size);
-#ifdef USE_MPI
-		eigen::batchSolver::batch_solver<Float> batch_solver(batch_size, dimension + 1, n.comm);
-#else
+		size_t batch_size = std::min(n_particles, eigen::batchSolver::constants::max_batch_size);
 		eigen::batchSolver::batch_solver<Float> batch_solver(batch_size, dimension + 1);
-#endif
 
 		// data for batch initialization
 		std::vector<int>              iter(n_particles, 0);
@@ -103,6 +99,41 @@ namespace sphexa::sphnnet {
 
 
 
+
+			// fall back to simpler CPU non-batch solver if the number of particle still burning is low enough
+			if (num_particle_still_burning < eigen::batchSolver::constants::min_batch_size) {
+				#pragma omp parallel
+				{
+					// buffers
+					Float drho_dt;
+					eigen::Vector<Float> RHS(dimension + 1), Y_buffer(dimension);
+					eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
+
+					#pragma omp for schedule(dynamic)
+					for (size_t i = 0; i < n_particles; ++i)
+						if (burning[i]) {
+							// compute drho/dt
+							drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
+
+							// compute the remaining time step to integrate over
+							Float remaining_time = hydro_dt - elapsed_time[i];
+
+							// solve
+							nnet::solve_system_substep(Mp, RHS,
+								reactions, construct_rates, construct_BE, eos,
+								n.Y[i], n.temp[i], Y_buffer,
+								n.rho[i], drho_dt, remaining_time, n.dt[i],
+								jumpToNse);
+						}
+				}
+
+				// living
+				break;
+			}
+
+
+
+
 			// prepare system
 			#pragma omp parallel
 			{
@@ -113,7 +144,7 @@ namespace sphexa::sphnnet {
 
 				#pragma omp for schedule(dynamic)
 				for (size_t i = 0; i < n_particles; ++i)
-					if (burning[i] && (batchID = batchIDs[i]) < eigen::batchSolver::batch_size) {
+					if (burning[i] && (batchID = batchIDs[i]) < eigen::batchSolver::constants::max_batch_size) {
 						// compute drho/dt
 						drho_dt = n.previous_rho[i] <= 0. ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
@@ -134,7 +165,7 @@ namespace sphexa::sphnnet {
 
 
 			// solve
-			size_t n_solve = std::min(num_particle_still_burning, eigen::batchSolver::batch_size);
+			size_t n_solve = std::min(num_particle_still_burning, eigen::batchSolver::constants::max_batch_size);
 			batch_solver.solve(n_solve);
 
 
@@ -147,7 +178,7 @@ namespace sphexa::sphnnet {
 
 				#pragma omp for schedule(dynamic)
 				for (size_t i = 0; i < n_particles; ++i)
-					if (burning[i] && (batchID = batchIDs[i]) < eigen::batchSolver::batch_size) {
+					if (burning[i] && (batchID = batchIDs[i]) < eigen::batchSolver::constants::max_batch_size) {
 						// retrieve results
 						batch_solver.get_res(batchID, res_buffer.data());
 

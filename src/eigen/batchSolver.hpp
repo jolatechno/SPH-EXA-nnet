@@ -7,20 +7,26 @@
 /* mostly gotten from https://github.com/OrangeOwlSolutions/CUDA-Utilities/blob/70343897abbf7a5608a6739759437f44933a5fc6/Utilities.cu */
 /*              and https://stackoverflow.com/questions/28794010/solving-dense-linear-systems-ax-b-with-cuda                          */
 /* compile:  nvcc -Xcompiler "-fopenmp -pthread -I/cm/shared/modules/generic/mpi/openmpi/4.0.1/include -pthread -L/cm/shared/modules/generic/mpi/openmpi/4.0.1/lib -lmpi -std=c++17" -DUSE_CUDA -lcublas -lcuda -lcudart -DUSE_MPI -DNOT_FROM_SPHEXA hydro-mockup.cpp -o hydro-mockup.out
-/* launch:   mpirun --bind-to core --oversubscribe --map-by ppr:1:numa -x OMP_NUM_THREADS=6 hydro-mockup.out -n 2 --test-case C-O-burning --n-particle 100
+/* launch:   mpirun --map-by ppr:1:node -x OMP_NUM_THREADS=24 hydro-mockup.out -n 2 --test-case C-O-burning --n-particle 100
 /**************************************************************************************************************************************/
 
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 
+#include <omp.h>
+
 #ifdef USE_MPI
 	#include <mpi.h>
 #endif
 
 namespace eigen::batchSolver {
-	/// batch size for the GPU batched solver
-	size_t batch_size = 10000;
+	namespace constants {
+		/// maximum batch size for the GPU batched solver
+		size_t max_batch_size = 10000;
+		/// minimum batch size before falling back to non-batcher CPU-solver
+		size_t min_batch_size = 100;
+	}
 
 	namespace util {
 		/// function to check for CUDA errors
@@ -76,69 +82,142 @@ namespace eigen::batchSolver {
 	template<typename Float>
 	class batch_solver {
 	private:
-		size_t size;
 		int dimension;
-
-		// GPU Clusters
-		Float *dev_vec_Buffer, *dev_mat_Buffer, **dev_mat_ptr, **dev_vec_ptr;
-		int *dev_pivotArray=NULL, *dev_InfoArray;
+		size_t size;
 
 		// CPU Clusters
 		std::vector<int> pivotArray, InfoArray;
 		std::vector<Float*> mat_ptr, vec_ptr;
 		std::vector<Float> vec_Buffer;
 		std::vector<Float> mat_Buffer;
-		
-		// handle
-		cublasHandle_t cublas_handle;
-	public:
-		
-#ifdef USE_MPI
-		/// allocate buffers for batch solver
+
+
+
+
+		/// solve systems on spcefic device
 		/**
-		 * assign to each rank in a node 
+		 * TODO
 		 */
-		batch_solver(size_t size_, int dimension_, MPI_Comm comm) : dimension(dimension_), size(size_) {
-			static_assert(std::is_same<Float, double>::value, "type in CUDA batch_solver must be DOUBLE for now");
+		void solve_on_device(size_t begin, size_t n_solve, int device) {
+			/*****************************/
+			/* allocating device Buffers */
+			/*****************************/
 
-		    // get number of device
-			int deviceCount;
-		    util::gpuErrchk(cudaGetDeviceCount(&deviceCount));
+			// GPU Clusters
+			Float *dev_vec_Buffer, *dev_mat_Buffer, **dev_mat_ptr, **dev_vec_ptr;
+			int *dev_pivotArray=NULL, *dev_InfoArray;
 
-		    // get number of shared memory rank
-		    MPI_Comm localComm;
-			int rank, local_rank;
-			MPI_Comm_rank(comm, &rank);
-			MPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, rank, MPI_INFO_NULL, &localComm);
-			MPI_Comm_rank(localComm, &local_rank);
+			size_t vec_begin = dimension*begin;
+			size_t mat_begin = dimension*dimension*begin;
 
-		    // spread available devices on different shared memory ranks
-		    /* !! lazy multi-GPU implementation !! */
-		    int device = local_rank%deviceCount;
+			// set device
 			cudaSetDevice(device);
 
-			/* debug */
-			std::cout << "assigning deivce " << device << "/" << deviceCount << " to local rank " << rank << " (cudaSolver)\n";
-#else
+			// create handle
+			cublasHandle_t cublas_handle;
+		    util::cublasSafeCall(cublasCreate(&cublas_handle));
+
+			// allocate GPU vectors
+			util::gpuErrchk(cudaMalloc((void**)&dev_vec_Buffer,           dimension*size*sizeof(Float)));
+			util::gpuErrchk(cudaMalloc((void**)&dev_mat_Buffer, dimension*dimension*size*sizeof(Float)));
+#ifdef PIVOTING_IMPLEMENTED
+			util::gpuErrchk(cudaMalloc((void**)&dev_pivotArray,           dimension*size*sizeof(int)));
+#endif
+			util::gpuErrchk(cudaMalloc((void**)&dev_InfoArray,                      size*sizeof(int)));
+			util::gpuErrchk(cudaMalloc((void**)&dev_mat_ptr,                        size*sizeof(double*)));
+			util::gpuErrchk(cudaMalloc((void**)&dev_vec_ptr,                        size*sizeof(double*)));
+
+
+
+
+			/***********************************/
+			/* actually solving system in batch*/
+			/***********************************/
+
+			// --- Creating the array of pointers needed as input/output to the batched getrf
+			for (int i = 0; i < n_solve; i++) {
+				mat_ptr[i + begin] = dev_mat_Buffer + dimension*dimension*i;
+				vec_ptr[i + begin] = dev_vec_Buffer + dimension*i;
+			}
+    		util::gpuErrchk(cudaMemcpy(dev_mat_ptr, mat_ptr.data() + begin, n_solve*sizeof(double*), cudaMemcpyHostToDevice));
+    		util::gpuErrchk(cudaMemcpy(dev_vec_ptr, vec_ptr.data() + begin, n_solve*sizeof(double*), cudaMemcpyHostToDevice));
+
+			// push memory to device
+			util::gpuErrchk(cudaMemcpy(dev_mat_Buffer, mat_Buffer.data() + mat_begin, dimension*dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
+
+			// LU decomposition
+			util::cublasSafeCall(cublasDgetrfBatched(cublas_handle,
+				dimension, dev_mat_ptr,
+				dimension, dev_pivotArray,
+				dev_InfoArray, n_solve));
+
+			// get Info from device
+			util::gpuErrchk(cudaMemcpy(InfoArray.data() + begin, dev_InfoArray, n_solve*sizeof(int), cudaMemcpyDeviceToHost));
+			// check for error in each matrix
+			for (int i = begin; i < n_solve + begin; ++i)
+		        if (InfoArray[i] != 0) {
+		        	std::string error = "Factorization of matrix " + std::to_string(i);
+		        	error += " Failed: Matrix may be singular (error code=" + std::to_string(InfoArray[i]) += ")";
+
+		            cudaDeviceReset();
+		            throw std::runtime_error(error);
+		        }
+
+#ifdef PIVOTING_IMPLEMENTED
+			// get pivot from device
+			util::gpuErrchk(cudaMemcpy(pivotArray.data() + vec_begin, dev_pivotArray, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost));
+			// rearange
+			util::rearrange(vec_Buffer.data() + vec_begin, pivotArray.data() + vec_begin, dimension*n_solve);
+#endif
+			// push vector data to device
+			util::gpuErrchk(cudaMemcpy(dev_vec_Buffer, vec_Buffer.data() + vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
+
+    		const double alpha = 1.;
+			// solve lower triangular part
+    		//util::cublasSafeCall(cublasDtrsm(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,     dimension, 1, &alpha, dev_mat_Buffer, dimension, dev_vec_Buffer, n_solve));
+    		util::cublasSafeCall(cublasDtrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,
+    			dimension, 1, &alpha, dev_mat_ptr,
+    			dimension, dev_vec_ptr,
+    			dimension, n_solve));
+    		// solve upper triangular part
+    		//util::cublasSafeCall(cublasDtrsm(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, dimension, 1, &alpha, dev_mat_Buffer, dimension, dev_vec_Buffer, n_solve));
+    		util::cublasSafeCall(cublasDtrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT,
+    			dimension, 1, &alpha, dev_mat_ptr,
+    			dimension, dev_vec_ptr,
+    			dimension, n_solve));
+
+			// get memory from device
+			util::gpuErrchk(cudaMemcpy(vec_Buffer.data() + vec_begin, dev_vec_Buffer, dimension*n_solve*sizeof(Float), cudaMemcpyDeviceToHost));
+
+
+			/*******************************/
+			/* deallocating device Buffers */
+			/*******************************/
+
+			// deallocate memory
+			util::gpuErrchk(cudaFree(dev_vec_Buffer));
+			util::gpuErrchk(cudaFree(dev_mat_Buffer));
+#ifdef PIVOTING_IMPLEMENTED
+			util::gpuErrchk(cudaFree(dev_pivotArray));
+#endif
+			util::gpuErrchk(cudaFree(dev_InfoArray));
+			util::gpuErrchk(cudaFree(dev_mat_ptr));
+			util::gpuErrchk(cudaFree(dev_vec_ptr));
+
+			// destroy handle
+			util::cublasSafeCall(cublasDestroy(cublas_handle));
+		}
+		
+
+
+		
+	public:
 		/// allocate buffers for batch solver
 		/**
 		 * TODO
 		 */
 		batch_solver(size_t size_, int dimension_) : dimension(dimension_), size(size_) {
 			static_assert(std::is_same<Float, double>::value, "type in CUDA batch_solver must be DOUBLE for now");
-
-		    // get number of device
-			int deviceCount;
-		    util::gpuErrchk(cudaGetDeviceCount(&deviceCount));
-
-		    // assign device
-		    /* !! should implement proper multi-GPU implementation !! */
-		    int device = 0;
-		    cudaSetDevice(device);
-#endif
-
-		    // --- CUBLAS initialization
-		    util::cublasSafeCall(cublasCreate(&cublas_handle));
 
 		    // alloc CPU buffers
 		    vec_Buffer.resize(size*dimension);
@@ -149,29 +228,6 @@ namespace eigen::batchSolver {
 #endif
 			mat_ptr.resize(size);
 			vec_ptr.resize(size);
-
-			// alloc GPU buffers
-			util::gpuErrchk(cudaMalloc((void**)&dev_vec_Buffer,           dimension*size*sizeof(Float)));
-			util::gpuErrchk(cudaMalloc((void**)&dev_mat_Buffer, dimension*dimension*size*sizeof(Float)));
-#ifdef PIVOTING_IMPLEMENTED
-			util::gpuErrchk(cudaMalloc((void**)&dev_pivotArray,           dimension*size*sizeof(int)));
-#endif
-			util::gpuErrchk(cudaMalloc((void**)&dev_InfoArray,                      size*sizeof(int)));
-			util::gpuErrchk(cudaMalloc((void**)&dev_mat_ptr,                        size*sizeof(double*)));
-			util::gpuErrchk(cudaMalloc((void**)&dev_vec_ptr,                        size*sizeof(double*)));
-		}
-
-		~batch_solver() {
-			util::gpuErrchk(cudaFree(dev_vec_Buffer));
-			util::gpuErrchk(cudaFree(dev_mat_Buffer));
-#ifdef PIVOTING_IMPLEMENTED
-			util::gpuErrchk(cudaFree(dev_pivotArray));
-#endif
-			util::gpuErrchk(cudaFree(dev_InfoArray));
-			util::gpuErrchk(cudaFree(dev_mat_ptr));
-			util::gpuErrchk(cudaFree(dev_vec_ptr));
-
-			util::cublasSafeCall(cublasDestroy(cublas_handle));
 		}
 
 
@@ -191,69 +247,29 @@ namespace eigen::batchSolver {
 		}
 
 
-
 		/// solve systems
 		/**
-		 * TODO
+		 * supports multi-GPU
 		 */
 		void solve(size_t n_solve) {
-			if (n_solve > 0) {
-				// --- Creating the array of pointers needed as input/output to the batched getrf
-				for (int i = 0; i < n_solve; i++) {
-					mat_ptr[i] = dev_mat_Buffer + dimension*dimension*i;
-					vec_ptr[i] = dev_vec_Buffer + dimension*i;
-				}
-	    		util::gpuErrchk(cudaMemcpy(dev_mat_ptr, mat_ptr.data(), n_solve*sizeof(double*), cudaMemcpyHostToDevice));
-	    		util::gpuErrchk(cudaMemcpy(dev_vec_ptr, vec_ptr.data(), n_solve*sizeof(double*), cudaMemcpyHostToDevice));
+			// get number of device
+			int deviceCount;
+		    util::gpuErrchk(cudaGetDeviceCount(&deviceCount));
 
-				// push memory to device
-				util::gpuErrchk(cudaMemcpy(dev_mat_Buffer, mat_Buffer.data(), dimension*dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
+		    // multi-GPU support here, one thread = one GPU
+		    #pragma omp parallel num_threads(deviceCount)
+		    {
+		    	// get device id = thread id
+		    	int device = omp_get_thread_num();
 
-				// LU decomposition
-				util::cublasSafeCall(cublasDgetrfBatched(cublas_handle,
-					dimension, dev_mat_ptr,
-					dimension, dev_pivotArray,
-					dev_InfoArray, n_solve));
+		    	// get range for solving
+		    	size_t begin         = n_solve*device/deviceCount;
+		    	size_t end           = n_solve*(device + 1)/deviceCount;
+		    	size_t local_n_solve = end - begin;
 
-				// get Info from device
-				util::gpuErrchk(cudaMemcpy(InfoArray.data(), dev_InfoArray, n_solve*sizeof(int), cudaMemcpyDeviceToHost));
-				// check for error in each matrix
-				#pragma omp parallel for schedule(static)
-				for (int i = 0; i < n_solve; ++i)
-			        if (InfoArray[i] != 0) {
-			        	std::string error = "Factorization of matrix " + std::to_string(i);
-			        	error += " Failed: Matrix may be singular (error code=" + std::to_string(InfoArray[i]) += ")";
-
-			            cudaDeviceReset();
-			            throw std::runtime_error(error);
-			        }
-
-#ifdef PIVOTING_IMPLEMENTED
-				// get pivot from device
-				util::gpuErrchk(cudaMemcpy(pivotArray.data(), dev_pivotArray, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost));
-				// rearange
-				util::rearrange(vec_Buffer.data(), pivotArray.data(), dimension*n_solve);
-#endif
-				// push vector data to device
-				util::gpuErrchk(cudaMemcpy(dev_vec_Buffer, vec_Buffer.data(), dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
-
-	    		const double alpha = 1.;
-				// solve lower triangular part
-	    		//util::cublasSafeCall(cublasDtrsm(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,     dimension, 1, &alpha, dev_mat_Buffer, dimension, dev_vec_Buffer, n_solve));
-	    		util::cublasSafeCall(cublasDtrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,
-	    			dimension, 1, &alpha, dev_mat_ptr,
-	    			dimension, dev_vec_ptr,
-	    			dimension, n_solve));
-	    		// solve upper triangular part
-	    		//util::cublasSafeCall(cublasDtrsm(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, dimension, 1, &alpha, dev_mat_Buffer, dimension, dev_vec_Buffer, n_solve));
-	    		util::cublasSafeCall(cublasDtrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT,
-	    			dimension, 1, &alpha, dev_mat_ptr,
-	    			dimension, dev_vec_ptr,
-	    			dimension, n_solve));
-
-				// get memory from device
-				util::gpuErrchk(cudaMemcpy(vec_Buffer.data(), dev_vec_Buffer, dimension*n_solve*sizeof(Float), cudaMemcpyDeviceToHost));
-			}
+		    	// actually solve
+		    	solve_on_device(begin, local_n_solve, device);
+		    }
 		}
 
 
@@ -279,8 +295,12 @@ namespace eigen::batchSolver {
 #include <vector>
 
 namespace eigen::batchSolver {
-	/// batch size for the GPU batched solver
-	size_t batch_size = 100;
+	namespace constants {
+		/// maximum batch size for the CPU batched solver
+		size_t max_batch_size = 10000;
+		/// minimum batch size before falling back to non-batcher CPU-solver, equal to zero
+		size_t min_batch_size = 100;
+	}
 
 	/// dummy batch CPU solver
 	/**
@@ -299,11 +319,7 @@ namespace eigen::batchSolver {
 		/**
 		 * TODO
 		 */
-#ifdef USE_MPI
-		batch_solver(size_t size_, int dimension_, MPI_Comm comm) : dimension(dimension_), size(size_) {
-#else
 		batch_solver(size_t size_, int dimension_) : dimension(dimension_), size(size_) {
-#endif
 			RHS_Buffer.resize(size);
 			res_Buffer.resize(size);
 			mat_Buffer.resize(size);
