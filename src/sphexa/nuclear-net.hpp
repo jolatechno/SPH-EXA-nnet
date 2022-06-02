@@ -5,13 +5,10 @@
 
 #include "../eos/helmholtz.hpp"
 #include "nuclear-data.hpp"
+#include "../eigen/batchSolver.hpp"
 
 #ifdef USE_MPI
 	#include "mpi/mpi-wrapper.hpp"
-#endif
-
-#ifdef USE_CUDA
-	#include "../eigen/cudaSolver.hpp"
 #endif
 
 #ifndef NOT_FROM_SPHEXA
@@ -36,7 +33,7 @@ namespace sphexa::sphnnet {
 		const size_t n_particles = n.temp.size();
 		const int dimension = n.Y[0].size();
 		
-#ifndef USE_CUDA
+#if !defined(USE_CUDA) && !defined(CPU_BATCH_SOLVER)
 		/* !!!!!!!!!!!!!
 		simple CPU parallel solver
 		!!!!!!!!!!!!! */
@@ -66,8 +63,8 @@ namespace sphexa::sphnnet {
 		GPU batch solver
 		!!!!!!!!!!!!! */
 		// intitialized bash solver data
-		size_t batch_size = std::min(n_particles, eigen::cudasolver::batch_size);
-		eigen::cudasolver::batch_solver<Float> batch_solver(batch_size, dimension + 1);
+		size_t batch_size = std::min(n_particles, eigen::batchSolver::batch_size);
+		eigen::batchSolver::batch_solver<Float> batch_solver(batch_size, dimension + 1);
 
 		// data for batch initialization
 		std::vector<int>              iter(n_particles, 0);
@@ -112,7 +109,7 @@ namespace sphexa::sphnnet {
 
 				#pragma omp for schedule(dynamic)
 				for (size_t i = 0; i < n_particles; ++i)
-					if (burning[i] && (batchID = batchIDs[i]) < eigen::cudasolver::batch_size) {
+					if (burning[i] && (batchID = batchIDs[i]) < eigen::batchSolver::batch_size) {
 						// compute drho/dt
 						drho_dt = n.previous_rho[i] <= 0. ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
@@ -133,7 +130,7 @@ namespace sphexa::sphnnet {
 
 
 			// solve
-			size_t n_solve = std::min(num_particle_still_burning, eigen::cudasolver::batch_size);
+			size_t n_solve = std::min(num_particle_still_burning, eigen::batchSolver::batch_size);
 			batch_solver.solve(n_solve);
 
 
@@ -146,7 +143,7 @@ namespace sphexa::sphnnet {
 
 				#pragma omp for schedule(dynamic)
 				for (size_t i = 0; i < n_particles; ++i)
-					if (burning[i] && (batchID = batchIDs[i]) < eigen::cudasolver::batch_size) {
+					if (burning[i] && (batchID = batchIDs[i]) < eigen::batchSolver::batch_size) {
 						// retrieve results
 						batch_solver.get_res(batchID, res_buffer.data());
 

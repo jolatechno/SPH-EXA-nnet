@@ -1,6 +1,6 @@
 #include "eigen.hpp"
 
-#ifndef CUDA_NOT_IMPLEMENTED
+#ifdef USE_CUDA
 
 /**************************************************************************************************************************************/
 /* mostly gotten from https://github.com/OrangeOwlSolutions/CUDA-Utilities/blob/70343897abbf7a5608a6739759437f44933a5fc6/Utilities.cu */
@@ -12,7 +12,7 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 
-namespace eigen::cudasolver {
+namespace eigen::batchSolver {
 	/// batch size for the GPU batched solver
 	size_t batch_size = 10000;
 
@@ -92,6 +92,8 @@ namespace eigen::cudasolver {
 		 * TODO
 		 */
 		batch_solver(size_t size_, int dimension_) : dimension(dimension_), size(size_) {
+			static_assert(std::is_same<Float, double>::value, "type in CUDA batch_solver must be DOUBLE for now");
+
 			// --- CUBLAS initialization
 		    util::cublasSafeCall(cublasCreate(&cublas_handle));
 
@@ -105,18 +107,24 @@ namespace eigen::cudasolver {
 			mat_Buffer.resize(size*dimension*dimension);
 			InfoArray.resize(size);
 			pivotArray.resize(size*dimension);
+			inout_pointers.resize(size+1);
 
 			// alloc GPU buffers
 			util::gpuErrchk(cudaMalloc((void**)&dev_vec_Buffer,           dimension*size*sizeof(Float)));
 			util::gpuErrchk(cudaMalloc((void**)&dev_mat_Buffer, dimension*dimension*size*sizeof(Float)));
 			util::gpuErrchk(cudaMalloc((void**)&dev_pivotArray,           dimension*size*sizeof(int)));
 			util::gpuErrchk(cudaMalloc((void**)&dev_InfoArray,                      size*sizeof(int)));
-			util::gpuErrchk(cudaMalloc((void**)&dev_inout_pointers,                 size*sizeof(double*)));
+			util::gpuErrchk(cudaMalloc((void**)&dev_inout_pointers,             (size+1)*sizeof(double*)));
+		}
 
-			// --- Creating the array of pointers needed as input/output to the batched getrf
-			for (int i = 0; i < size; i++)
-				inout_pointers[i] = dev_mat_Buffer + dimension*dimension*i;
-    		util::gpuErrchk(cudaMemcpy(dev_inout_pointers, inout_pointers.data(), size*sizeof(double*), cudaMemcpyHostToDevice));
+		~batch_solver() {
+			util::gpuErrchk(cudaFree(dev_vec_Buffer));
+			util::gpuErrchk(cudaFree(dev_mat_Buffer));
+			util::gpuErrchk(cudaFree(dev_pivotArray));
+			util::gpuErrchk(cudaFree(dev_InfoArray));
+			util::gpuErrchk(cudaFree(dev_inout_pointers));
+
+			util::cublasSafeCall(cublasDestroy(cublas_handle));
 		}
 
 
@@ -130,7 +138,7 @@ namespace eigen::cudasolver {
 				mat_Buffer[dimension*dimension*i + j] = M[j]; 
 
 			for (int j = 0; j < dimension; ++j)
-				vec_Buffer[dimension*i + j] = M[j]; 
+				vec_Buffer[dimension*i + j] = RHS[j]; 
 		}
 
 
@@ -140,6 +148,11 @@ namespace eigen::cudasolver {
 		 * TODO
 		 */
 		void solve(size_t n_solve) {
+			// --- Creating the array of pointers needed as input/output to the batched getrf
+			for (int i = 0; i <= n_solve; i++)
+				inout_pointers[i] = dev_mat_Buffer + dimension*dimension*i;
+    		util::gpuErrchk(cudaMemcpy(dev_inout_pointers, inout_pointers.data(), (n_solve+1)*sizeof(double*), cudaMemcpyHostToDevice));
+
 			// push memory to device
 			util::gpuErrchk(cudaMemcpy(dev_mat_Buffer, mat_Buffer.data(), dimension*dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
 
@@ -177,8 +190,6 @@ namespace eigen::cudasolver {
 	};
 }
 
-
-
 #else
 
 /*******************************************************/
@@ -188,7 +199,7 @@ namespace eigen::cudasolver {
 #include <omp.h>
 #include <vector>
 
-namespace eigen::cudasolver {
+namespace eigen::batchSolver {
 	/// batch size for the GPU batched solver
 	size_t batch_size = 100;
 
