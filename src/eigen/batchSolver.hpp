@@ -2,6 +2,7 @@
 
 #if defined(USE_CUDA) && !defined(CPU_BATCH_SOLVER)
 
+
 /**************************************************************************************************************************************/
 /* mostly gotten from https://github.com/OrangeOwlSolutions/CUDA-Utilities/blob/70343897abbf7a5608a6739759437f44933a5fc6/Utilities.cu */
 /*              and https://stackoverflow.com/questions/28794010/solving-dense-linear-systems-ax-b-with-cuda                          */
@@ -12,6 +13,10 @@
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
+
+#ifdef USE_MPI
+	#include <mpi.h>
+#endif
 
 namespace eigen::batchSolver {
 	/// batch size for the GPU batched solver
@@ -87,6 +92,34 @@ namespace eigen::batchSolver {
 		// handle
 		cublasHandle_t cublas_handle;
 	public:
+		
+#ifdef USE_MPI
+		/// allocate buffers for batch solver
+		/**
+		 * assign to each rank in a node 
+		 */
+		batch_solver(size_t size_, int dimension_, MPI_Comm comm) : dimension(dimension_), size(size_) {
+			static_assert(std::is_same<Float, double>::value, "type in CUDA batch_solver must be DOUBLE for now");
+
+			// --- CUBLAS initialization
+		    util::cublasSafeCall(cublasCreate(&cublas_handle));
+
+		    // get number of device
+			int deviceCount;
+		    util::gpuErrchk(cudaGetDeviceCount(&deviceCount));
+
+		    // get number of shared memory rank
+		    MPI_Comm localComm;
+			int rank, local_rank;
+			MPI_Comm_rank(communicator, &rank);
+			MPI_Comm_split_type(communicator, MPI_COMM_TYPE_SHARED, rank, MPI_INFO_NULL, &localComm);
+			MPI_Comm_rank(localComm, &local_size);
+
+		    // spread available devices on different shared memory ranks
+		    /* !! lazy multi-GPU implementation !! */
+		    int device = local_rank%deviceCount;
+			cudaSetDeviceFlags(device);
+#else
 		/// allocate buffers for batch solver
 		/**
 		 * TODO
@@ -97,10 +130,10 @@ namespace eigen::batchSolver {
 			// --- CUBLAS initialization
 		    util::cublasSafeCall(cublasCreate(&cublas_handle));
 
-			/* debug: */
+		    // get number of device
 			int deviceCount;
-		    cudaError_t e = cudaGetDeviceCount(&deviceCount);
-		    std::cout << "(batch_solver) number of cuda device:" << (e == cudaSuccess ? deviceCount : -1) << "\n";
+		    util::gpuErrchk(cudaGetDeviceCount(&deviceCount));
+#endif
 
 		    // alloc CPU buffers
 		    vec_Buffer.resize(size*dimension);
