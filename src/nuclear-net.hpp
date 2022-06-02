@@ -472,9 +472,9 @@ Iterative solver:
 			Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
 
 		// compute rate
-		auto [rates, drates_dT] = construct_rates(         T_theta, rho);
 		auto BE                 = construct_BE   (         T_theta, rho);
 		auto eos_struct         = eos            (Y_theta, T_theta, rho);
+		auto [rates, drates_dT] = construct_rates(Y_theta, T_theta, rho, eos_struct);
 
 		// compute value_1
 		const double drho = drho_dt*dt;

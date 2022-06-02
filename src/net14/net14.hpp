@@ -28,8 +28,9 @@ namespace nnet::net14 {
 	};
 
 	/// function to compute the corrected BE
-	template<typename Float=double>
-	std::vector<Float> compute_BE(Float const T, Float const rho) {
+	const auto compute_BE = [](const auto T, const auto rho) {
+		using Float = typename std::remove_const<decltype(T)>::type;
+
 		// ideal gaz correction
 		const Float kbt = constants::Kb*T;
 		const Float nakbt = constants::Na*kbt;
@@ -73,7 +74,7 @@ namespace nnet::net14 {
 		}
 
 		return corrected_BE;
-	}
+	};
 
 	// constant list of ordered reaction
 	const std::vector<nnet::reaction> reaction_list = {
@@ -152,8 +153,9 @@ namespace nnet::net14 {
 	};
 
 	/// compute a list of reactions for net14
-	template<typename Float=double>
-	std::pair<std::vector<Float>, std::vector<Float>> compute_reaction_rates(const Float T, const Float rho) {
+	auto const compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct) {
+		using Float = typename std::remove_const<decltype(T)>::type;
+
 		std::vector<Float> rates, drates;
 		rates.reserve(reaction_list.size());
 		drates.reserve(reaction_list.size());
@@ -743,6 +745,6 @@ namespace nnet::net14 {
 			}
 		}
 
-		return {rates, drates};
-	}
+		return std::tuple<std::vector<Float>, std::vector<Float>>{rates, drates};
+	};
 }

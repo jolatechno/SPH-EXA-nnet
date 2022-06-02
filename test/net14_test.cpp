@@ -107,10 +107,10 @@ int main(int argc, char* argv[]) {
 
 		// solve the system
 		double current_dt = isotherm ? 
-			nnet::solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, isotherm_eos,
+			nnet::solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, nnet::net14::compute_BE, isotherm_eos,
 				last_Y, last_T, Y, T,
 				rho, 0., dt) :
-			nnet::solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double>, nnet::net14::compute_BE<double>, helm_eos,
+			nnet::solve_system_NR(nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, nnet::net14::compute_BE, helm_eos,
 				last_Y, last_T, Y, T,
 				rho, 0., dt);
 		t += current_dt;

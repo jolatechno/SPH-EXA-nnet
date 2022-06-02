@@ -59,6 +59,8 @@ int main(int argc, char* argv[]) {
     nnet::constants::NR::min_it             = parser.get("--min_NR_it",   nnet::constants::NR::min_it);
     nnet::constants::NR::max_it             = parser.get("--max_NR_it",   nnet::constants::NR::max_it);
 
+    nnet::net86::constants::use_electrons   = parser.exists("--use-electrons");
+
     const int n_save                        = parser.get("--n-save", 0);
     const bool save_res_net14               = parser.exists("--output-net14");
     const bool debug_net86                  = parser.exists("--debug-net86");
@@ -104,8 +106,8 @@ int main(int argc, char* argv[]) {
 	const auto isotherm_eos = [&](const auto &Y_, const double T, const double rho_) {
 		const double cv = 1e30;
 		struct eos_output {
-			double cv, dP_dT;
-		} res{cv, 0};
+			double cv, dP_dT, dU_dYe;
+		} res{cv, 0, 0};
 		return res;
 	};
 
@@ -119,10 +121,10 @@ int main(int argc, char* argv[]) {
 
 		// solve the system
 		double current_dt = isotherm ? 
-			nnet::solve_system_NR(nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double>, nnet::net86::compute_BE<double>, isotherm_eos,
+			nnet::solve_system_NR(nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, nnet::net86::compute_BE, isotherm_eos,
 				last_Y, last_T, Y, T,
 				rho, 0., dt) :
-			nnet::solve_system_NR(nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double>, nnet::net86::compute_BE<double>, helm_eos,
+			nnet::solve_system_NR(nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, nnet::net86::compute_BE, helm_eos,
 				last_Y, last_T, Y, T,
 				rho, 0., dt);
 		t += current_dt;

@@ -8,6 +8,8 @@
 #include "electrons.hpp"
 
 namespace nnet::net86::constants {
+	bool use_electrons = false;
+
 	const int proton = 0;
 	const int neutron = 1;
 	const int alpha = 2;

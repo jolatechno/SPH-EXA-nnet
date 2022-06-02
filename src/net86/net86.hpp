@@ -102,43 +102,44 @@ namespace nnet::net86 {
 	};
 
 	/// function to compute the corrected BE
-	template<typename Float=double>
-	std::vector<Float>  compute_BE(Float const T, Float const rho) {
+	const auto compute_BE = [](const auto T, const auto rho) {
+		using Float = typename std::remove_const<decltype(T)>::type;
+
 		// ideal gaz correction
-		const Float kbt = constants::Kb*T;
-		const Float nakbt = constants::Na*kbt;
-		const Float correction = -1.5*nakbt;
+		Float kbt = constants::Kb*T;
+		Float nakbt = constants::Na*kbt;
+		Float correction = -1.5*nakbt;
 
 		std::vector<Float> corrected_BE(87);
 		for (int i = 0; i < 87; ++i)
 			corrected_BE[i] = BE[i] + correction;
 
 		// function for coulombian correction
-		static auto ggt1 = [&](const Float x) {
-			const Float a1 = -.898004;
-			const Float b1 = .96786;
-			const Float c1 = .220703;
-			const Float d1 = -.86097;
+		static auto ggt1 = [&](Float x) {
+			Float a1 = -.898004;
+			Float b1 = .96786;
+			Float c1 = .220703;
+			Float d1 = -.86097;
 
-			const Float sqroot2x = std::sqrt(std::sqrt(x));
+			Float sqroot2x = std::sqrt(std::sqrt(x));
 			return a1*x + b1*sqroot2x + c1/sqroot2x + d1;
 		};
-		static auto glt1 = [&](const Float x) {
-			const Float a1 = -.5*std::sqrt(3.);
-			const Float b1 = .29561;
-			const Float c1 = 1.9885;
+		static auto glt1 = [&](Float x) {
+			Float a1 = -.5*std::sqrt(3.);
+			Float b1 = .29561;
+			Float c1 = 1.9885;
 
 			return a1*x*std::sqrt(x) + b1*std::pow(x, c1);
 		};
 
 		// coulombian correctio
 		if (!skip_coulombian_correction) {
-			const Float ne = rho*constants::Na/2.;
-		    const Float ae = std::pow((3./4.)/(constants::pi*ne), 1./3.);
-		    const Float gam = constants::e2/(kbt*ae);
+			Float ne = rho*constants::Na/2.;
+		    Float ae = std::pow((3./4.)/(constants::pi*ne), 1./3.);
+		    Float gam = constants::e2/(kbt*ae);
 		    for (int i = 0; i < 87; ++i) {
-		    	const Float gamma = gam*std::pow(constants::Z[i], 5./3.);
-		    	const Float funcion = gamma > 1 ? ggt1(gamma) : glt1(gamma);
+		    	Float gamma = gam*std::pow(constants::Z[i], 5./3.);
+		    	Float funcion = gamma > 1 ? ggt1(gamma) : glt1(gamma);
 
 		    	if (debug) std::cout << "funcion[" << i << "]=" << funcion << (i == 13 ? "\n\n" : "\n");
 
@@ -147,7 +148,7 @@ namespace nnet::net86 {
 		}
 
 		return corrected_BE;
-	}
+	};
 
 	// constant list of ordered reaction
 	const std::vector<nnet::reaction> reaction_list = []() {
@@ -215,12 +216,41 @@ namespace nnet::net86 {
 		return reactions;
 	}();
 
-	/// compute a list of reactions for net14
-	template<typename Float>
-	std::pair<std::vector<Float>, std::vector<Float>> compute_reaction_rates(const Float T, const Float rho) {
+	/// compute a list of rates for net86
+	const auto compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct) {
+		using Float = typename std::remove_const<decltype(T)>::type;
+
 		std::vector<Float> rates, drates;
 		rates.reserve(reaction_list.size());
 		drates.reserve(reaction_list.size());
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		electron value
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		Float effe = 0, deffe = 0, deffedYe = 0, Eneutr = 0, dEneutr = 0, dEneutrdYe = 0, effp = 0, deffp = 0, deffpdYe = 0, Eaneutr = 0, dEaneutr = 0, dEaneutrdYe = 0, dUedYe = 0;
+		if (constants::use_electrons) {
+			std::array<Float, electrons::constants::nC> electron_values;
+			electrons::interpolate(T, rho*Y[86], electron_values);
+
+			effe        = electron_values[0];
+			deffe       = electron_values[1]    *1e-9;
+			deffedYe    = electron_values[2]*rho;
+			Eneutr      = electron_values[3]    *4.93e17;
+
+			dEneutr     = electron_values[4]    *4.93e17*1.e-9;
+			dEneutrdYe  = electron_values[5]*rho*4.93e17;
+
+			effp        = electron_values[6];
+			deffp       = electron_values[7];
+			deffpdYe    = electron_values[8]*rho;
+			Eaneutr     = electron_values[9];
+			dEaneutr    = electron_values[10];
+			dEaneutrdYe = electron_values[11]*rho;
+
+			dUedYe = eos_struct.dU_dYe;
+		}
+		
+          
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		fusions and fissions reactions from fits
@@ -813,6 +843,6 @@ namespace nnet::net86 {
 		}
 		
 
-		return {rates, drates};
-	}
+		return std::tuple<std::vector<Float>, std::vector<Float>>{rates, drates};
+	};
 }

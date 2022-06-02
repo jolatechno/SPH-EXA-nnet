@@ -15,9 +15,17 @@ int main() {
 #if DEBUG
 	nnet::debug = true;
 #endif
+	nnet::eos::helmholtz helm(nnet::net86::constants::Z);
 
-	auto [rate, drates] = nnet::net86::compute_reaction_rates<double>(2e9, 1e9);
-	auto BE             = nnet::net86::compute_BE<double>(            2e9, 1e9);
+	std::array<double, 86> Y, X;
+    for (int i = 0; i < 86; ++i) X[i] = 0;
+	X[nnet::net86::constants::net14_species_order[1]] = 0.5;
+	X[nnet::net86::constants::net14_species_order[2]] = 0.5;
+	for (int i = 0; i < 86; ++i) Y[i] = X[i]/nnet::net86::constants::A[i];
+
+	auto BE             = nnet::net86::compute_BE(               2e9, 1e9);
+	auto eos_struct     = helm(                               Y, 2e9, 1e9);
+	auto [rate, drates] = nnet::net86::compute_reaction_rates(Y, 2e9, 1e9, eos_struct);
 
 	std::cout << "reaction_list.size=" << nnet::net86::reaction_list.size() << ", rates.size=" << rate.size() << "\n\n";
 	
