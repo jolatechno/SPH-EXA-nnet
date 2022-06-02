@@ -250,8 +250,8 @@ int main(int argc, char* argv[]) {
 
 	particle_data.resize(last);
 	for (int i = first; i < last; ++i) {
-		particle_data.temp[i] = T_left   + (T_right   - T_left  )*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
-		particle_data.rho[i]  = rho_left + (rho_right - rho_left)*(float)(rank*n_particles + i)/(float)(size*n_particles - 1);
+		particle_data.temp[i] = T_left   + (T_right   - T_left  )*(float)(rank*n_particles + i - first)/(float)(size*n_particles - 1);
+		particle_data.rho[i]  = rho_left + (rho_right - rho_left)*(float)(rank*n_particles + i - first)/(float)(size*n_particles - 1);
 	}
 
 
