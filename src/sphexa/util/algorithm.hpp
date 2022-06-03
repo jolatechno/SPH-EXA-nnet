@@ -7,6 +7,19 @@
 #include <omp.h>
 
 /*
+definition of util::array
+*/
+
+#ifdef NOT_FROM_SPHEXA
+namespace util {
+	template<class T, int N>
+	using array = std::array<T, N>;
+}
+#else
+	#include "cstone/util/array.hpp"
+#endif
+
+/*
 Simple utilities
 stolen from QuIDS (https://github.com/jolatechno/QuIDS)
 */

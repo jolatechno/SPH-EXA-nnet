@@ -3,8 +3,8 @@
 #include <numeric>
 #include <omp.h>
 
-#include "../eos/helmholtz.hpp"
 #include "nuclear-data.hpp"
+#include "../eos/helmholtz.hpp"
 #include "../eigen/batchSolver.hpp"
 
 #ifdef USE_MPI

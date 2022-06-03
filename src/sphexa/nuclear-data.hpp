@@ -12,7 +12,6 @@
 	#include "mpi/mpi-wrapper.hpp"
 #endif
 
-#include "util/data_util.hpp"
 #ifndef NOT_FROM_SPHEXA
 	#include "sph/data_util.hpp"
 #endif
@@ -72,20 +71,7 @@ namespace sphexa::sphnnet {
 
 			return fieldNames_;
 		}();
-
-		/// io field to print out node_id for safety
-		const_vector<int> node_id;
-		/// io field to print out nuclear_particle_id for safety
-		iota_vector<size_t> nuclear_particle_id;
-
-
-		/// nuclear abundances "transpose" vector for IO
-		util::array<nuclear_IO_vector<n_species, Float>, n_species> Y_io = [&]{
-			util::array<nuclear_IO_vector<n_species, Float>, n_species> Y_io_;
-			for (int i = 0; i < n_species; ++i)
-				Y_io_[i] = nuclear_IO_vector<n_species, Float>(Y, i);
-			return Y_io_;
-		}();
+		
 
 		/*! @brief return a vector of pointers to field vectors
 	     *
@@ -94,9 +80,6 @@ namespace sphexa::sphnnet {
 	     */
 	    auto data() {
 	    	using FieldType = std::variant<
-	    		/*iota_vector<size_t>*,
-	    		const_vector<int>*,
-	    		nuclear_IO_vector<n_species, Float>*,*/
 	    		std::vector<Float>*,
 	    		std::vector<uint8_t/*bool*/>*>;
 	    	
@@ -130,10 +113,6 @@ namespace sphexa::sphnnet {
 			MPI_Comm_rank(comm, &rank);
 #endif
 
-			// initialize node_id and nuclear_particle_id
-			node_id             = const_vector<int>(rank);
-			nuclear_particle_id = iota_vector<size_t>(0);
-
 	        outputFieldNames = fieldNames;
 			outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, outFields);
     	}
@@ -143,10 +122,6 @@ namespace sphexa::sphnnet {
 #ifdef USE_MPI
 			MPI_Comm_rank(comm, &rank);
 #endif
-
-			// initialize node_id and nuclear_particle_id
-			node_id             = const_vector<int>(rank);
-			nuclear_particle_id = iota_vector<size_t>(0);
 
 			// initialize outputFieldNames with the right names
     		outputFieldNames.resize(n_species + 9);
