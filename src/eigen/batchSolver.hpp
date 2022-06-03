@@ -33,7 +33,7 @@ namespace eigen::batchSolver {
 		/**
 		 * TODO
 		 */
-		void gpuErrchk(cudaError_t code) {
+		void cudaSafeCall(cudaError_t code) {
 			if (code != cudaSuccess) {
 				std::string error = "CUDA error: ";
 				error += cudaGetErrorString(code);
@@ -51,7 +51,7 @@ namespace eigen::batchSolver {
 		int getNumDevice() {
 			// get number of device
 			int deviceCount;
-		    gpuErrchk(cudaGetDeviceCount(&deviceCount));
+		    cudaSafeCall(cudaGetDeviceCount(&deviceCount));
 		    return deviceCount;
 		}
 		
@@ -222,10 +222,15 @@ namespace eigen::batchSolver {
 		 * TODO
 		 */
 		void solve_on_device(size_t begin, size_t n_solve, int device) {
-			// set device
-			cudaSetDevice(device);
+			// set device and stream
+			cudaStream_t stream;
+			util::cudaSafeCall(cudaSetDevice(device));
+			util::cudaSafeCall(cudaStreamCreate(&stream));
+
+			// set accordingly on cublas
 			cublasHandle_t cublas_handle;
 			util::cublasSafeCall(cublasCreate(&cublas_handle));
+			util::cublasSafeCall(cublasSetStream(cublas_handle, stream));
 			
 
 			/***********************************/
@@ -245,11 +250,11 @@ namespace eigen::batchSolver {
 				mat_ptr[i + begin] = dev_mat_Buffer[device] + gpu_mat_begin + dimension*dimension*i;
 				vec_ptr[i + begin] = dev_vec_Buffer[device] + gpu_vec_begin + dimension*i;
 			}
-    		util::gpuErrchk(cudaMemcpy(dev_mat_ptr[device] + gpu_begin, mat_ptr.data() + begin, n_solve*sizeof(Float*), cudaMemcpyHostToDevice));
-    		util::gpuErrchk(cudaMemcpy(dev_vec_ptr[device] + gpu_begin, vec_ptr.data() + begin, n_solve*sizeof(Float*), cudaMemcpyHostToDevice));
+    		util::cudaSafeCall(cudaMemcpyAsync(dev_mat_ptr[device] + gpu_begin, mat_ptr.data() + begin, n_solve*sizeof(Float*), cudaMemcpyHostToDevice, stream));
+    		util::cudaSafeCall(cudaMemcpyAsync(dev_vec_ptr[device] + gpu_begin, vec_ptr.data() + begin, n_solve*sizeof(Float*), cudaMemcpyHostToDevice, stream));
 
 			// push memory to device
-			util::gpuErrchk(cudaMemcpy(dev_mat_Buffer[device] + gpu_mat_begin, mat_Buffer.data() + mat_begin, dimension*dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
+			util::cudaSafeCall(cudaMemcpyAsync(dev_mat_Buffer[device] + gpu_mat_begin, mat_Buffer.data() + mat_begin, dimension*dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice, stream));
 
 			// LU decomposition
 			int* loc_dev_pivotArray = dev_pivotArray[device] == NULL ? NULL : dev_pivotArray[device] + gpu_vec_begin;
@@ -259,7 +264,7 @@ namespace eigen::batchSolver {
 				dev_InfoArray[device] + gpu_begin, n_solve));
 
 			// get Info from device
-			util::gpuErrchk(cudaMemcpy(InfoArray.data() + begin, dev_InfoArray[device] + gpu_begin, n_solve*sizeof(int), cudaMemcpyDeviceToHost));
+			util::cudaSafeCall(cudaMemcpyAsync(InfoArray.data() + begin, dev_InfoArray[device] + gpu_begin, n_solve*sizeof(int), cudaMemcpyDeviceToHost, stream));
 			// check for error in each matrix
 			for (int i = begin; i < n_solve + begin; ++i)
 		        if (InfoArray[i] != 0) {
@@ -273,13 +278,13 @@ namespace eigen::batchSolver {
 
 		    if (dev_pivotArray[device] != NULL) {
 				// get pivot from device
-				util::gpuErrchk(cudaMemcpy(pivotArray.data() + vec_begin, loc_dev_pivotArray, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost));
+				util::cudaSafeCall(cudaMemcpyAsync(pivotArray.data() + vec_begin, loc_dev_pivotArray, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost, stream));
 				// rearange
 				util::rearrange(vec_Buffer.data() + vec_begin, pivotArray.data() + vec_begin, dimension, n_solve);
 			}
 
 			// push vector data to device
-			util::gpuErrchk(cudaMemcpy(dev_vec_Buffer[device] + gpu_vec_begin, vec_Buffer.data() + vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
+			util::cudaSafeCall(cudaMemcpyAsync(dev_vec_Buffer[device] + gpu_vec_begin, vec_Buffer.data() + vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice, stream));
 
     		const double alpha = 1.;
 			// solve lower triangular part
@@ -294,8 +299,10 @@ namespace eigen::batchSolver {
     			dimension, n_solve));
 
 			// get memory from device
-			util::gpuErrchk(cudaMemcpy(vec_Buffer.data() + vec_begin, dev_vec_Buffer[device] + gpu_vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyDeviceToHost));
+			util::cudaSafeCall(cudaMemcpyAsync(vec_Buffer.data() + vec_begin, dev_vec_Buffer[device] + gpu_vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyDeviceToHost, stream));
 
+			// destroy stream
+			util::cudaSafeCall(cudaStreamDestroy(stream));
 			// dehalocate handle
 			util::cublasSafeCall(cublasDestroy(cublas_handle));
 		}
@@ -345,12 +352,12 @@ namespace eigen::batchSolver {
 				cudaSetDevice(device);
 
 				// allocate GPU vectors
-				util::gpuErrchk(cudaMalloc((void**)&dev_vec_Buffer[device],           dimension*size*sizeof(Float)));
-				util::gpuErrchk(cudaMalloc((void**)&dev_mat_Buffer[device], dimension*dimension*size*sizeof(Float)));
-				util::gpuErrchk(cudaMalloc((void**)&dev_pivotArray[device],           dimension*size*sizeof(int)));
-				util::gpuErrchk(cudaMalloc((void**)&dev_InfoArray[device],                      size*sizeof(int)));
-				util::gpuErrchk(cudaMalloc((void**)&dev_mat_ptr[device],                        size*sizeof(Float*)));
-				util::gpuErrchk(cudaMalloc((void**)&dev_vec_ptr[device],                        size*sizeof(Float*)));
+				util::cudaSafeCall(cudaMalloc((void**)&dev_vec_Buffer[device],           dimension*size*sizeof(Float)));
+				util::cudaSafeCall(cudaMalloc((void**)&dev_mat_Buffer[device], dimension*dimension*size*sizeof(Float)));
+				util::cudaSafeCall(cudaMalloc((void**)&dev_pivotArray[device],           dimension*size*sizeof(int)));
+				util::cudaSafeCall(cudaMalloc((void**)&dev_InfoArray[device],                      size*sizeof(int)));
+				util::cudaSafeCall(cudaMalloc((void**)&dev_mat_ptr[device],                        size*sizeof(Float*)));
+				util::cudaSafeCall(cudaMalloc((void**)&dev_vec_ptr[device],                        size*sizeof(Float*)));
 		    }
 		}
 
@@ -366,13 +373,13 @@ namespace eigen::batchSolver {
 				/*******************************/
 
 				// deallocate memory
-				util::gpuErrchk(cudaFree(dev_vec_Buffer[device]));
-				util::gpuErrchk(cudaFree(dev_mat_Buffer[device]));
+				util::cudaSafeCall(cudaFree(dev_vec_Buffer[device]));
+				util::cudaSafeCall(cudaFree(dev_mat_Buffer[device]));
 				if (dev_pivotArray[device] != NULL)
-					util::gpuErrchk(cudaFree(dev_pivotArray[device]));
-				util::gpuErrchk(cudaFree(dev_InfoArray[device]));
-				util::gpuErrchk(cudaFree(dev_mat_ptr[device]));
-				util::gpuErrchk(cudaFree(dev_vec_ptr[device]));
+					util::cudaSafeCall(cudaFree(dev_pivotArray[device]));
+				util::cudaSafeCall(cudaFree(dev_InfoArray[device]));
+				util::cudaSafeCall(cudaFree(dev_mat_ptr[device]));
+				util::cudaSafeCall(cudaFree(dev_vec_ptr[device]));
 		    }
 		}
 
