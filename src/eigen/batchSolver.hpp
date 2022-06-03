@@ -20,12 +20,19 @@
 	#include <mpi.h>
 #endif
 
+#ifndef MAX_BATCH_SIZE
+	#define MAX_BATCH_SIZE 200000
+#endif
+#ifndef MIN_BATCH_SIZE
+	#define MIN_BATCH_SIZE 10000
+#endif
+
 namespace eigen::batchSolver {
 	namespace constants {
 		/// maximum batch size for the GPU batched solver
-		size_t max_batch_size = 200000;
+		size_t max_batch_size = MAX_BATCH_SIZE;
 		/// minimum batch size before falling back to non-batcher CPU-solver
-		size_t min_batch_size = 10000;
+		size_t min_batch_size = MIN_BATCH_SIZE;
 	}
 
 	namespace util {
@@ -462,12 +469,19 @@ namespace eigen::batchSolver {
 #include <omp.h>
 #include <vector>
 
+#ifndef MAX_BATCH_SIZE
+	#define MAX_BATCH_SIZE 1000
+#endif
+#ifndef MIN_BATCH_SIZE
+	#define MIN_BATCH_SIZE 0
+#endif
+
 namespace eigen::batchSolver {
 	namespace constants {
 		/// maximum batch size for the CPU batched solver
-		size_t max_batch_size = 1000;
+		size_t max_batch_size = MAX_BATCH_SIZE;
 		/// minimum batch size before falling back to non-batcher CPU-solver, equal to zero
-		size_t min_batch_size = 0;
+		size_t min_batch_size = MIN_BATCH_SIZE;
 	}
 
 	namespace util {
