@@ -63,8 +63,14 @@ namespace sphexa::sphnnet {
 		GPU batch solver
 		!!!!!!!!!!!!! */
 		// intitialized bash solver data
-		size_t batch_size = std::min(n_particles, eigen::batchSolver::constants::max_batch_size);
+		const int numDevice = eigen::batchSolver::util::getNumDevice();
+		size_t batch_size = std::min(n_particles, eigen::batchSolver::constants::max_batch_size*numDevice);
 		eigen::batchSolver::batch_solver<Float> batch_solver(batch_size, dimension + 1);
+
+#ifdef CUDA_DEBUG
+		/* debug */
+		std::cout << numDevice << " devices availables\n";
+#endif
 
 		// data for batch initialization
 		std::vector<int>              iter(n_particles, 0);
@@ -90,7 +96,8 @@ namespace sphexa::sphnnet {
 
 			// compute batchIDs
 			batchIDs[0] = 0;
-			__gnu_parallel::partial_sum(burning.begin(), burning.end(), batchIDs.begin() + 1);
+			std::transform(burning.begin(), burning.end(), batchIDs.begin() + 1, [](const uint8_t x){ return x; });
+			__gnu_parallel::partial_sum(batchIDs.begin(), batchIDs.end(), batchIDs.begin());
 			size_t num_particle_still_burning = batchIDs.back();
 
 			// exit if no particles are burning
@@ -101,7 +108,15 @@ namespace sphexa::sphnnet {
 
 
 			// fall back to simpler CPU non-batch solver if the number of particle still burning is low enough
-			if (num_particle_still_burning < eigen::batchSolver::constants::min_batch_size) {
+			if (num_particle_still_burning < eigen::batchSolver::constants::min_batch_size
+				|| numDevice == 0)
+			{
+
+#ifdef CUDA_DEBUG
+		    	/* debug: */
+		    	std::cout << "falling back to CPU solver for " << num_particle_still_burning << " particlse still burning out of " << n_particles << "\n";
+#endif
+
 				#pragma omp parallel
 				{
 					// buffers
@@ -127,7 +142,7 @@ namespace sphexa::sphnnet {
 						}
 				}
 
-				// living
+				// leaving
 				break;
 			}
 
@@ -144,7 +159,7 @@ namespace sphexa::sphnnet {
 
 				#pragma omp for schedule(dynamic)
 				for (size_t i = 0; i < n_particles; ++i)
-					if (burning[i] && (batchID = batchIDs[i]) < eigen::batchSolver::constants::max_batch_size) {
+					if (burning[i] && (batchID = batchIDs[i]) < eigen::batchSolver::constants::max_batch_size*numDevice) {
 						// compute drho/dt
 						drho_dt = n.previous_rho[i] <= 0. ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
@@ -165,7 +180,7 @@ namespace sphexa::sphnnet {
 
 
 			// solve
-			size_t n_solve = std::min(num_particle_still_burning, eigen::batchSolver::constants::max_batch_size);
+			size_t n_solve = std::min(num_particle_still_burning, eigen::batchSolver::constants::max_batch_size*numDevice);
 			batch_solver.solve(n_solve);
 
 
@@ -178,7 +193,7 @@ namespace sphexa::sphnnet {
 
 				#pragma omp for schedule(dynamic)
 				for (size_t i = 0; i < n_particles; ++i)
-					if (burning[i] && (batchID = batchIDs[i]) < eigen::batchSolver::constants::max_batch_size) {
+					if (burning[i] && (batchID = batchIDs[i]) < eigen::batchSolver::constants::max_batch_size*numDevice) {
 						// retrieve results
 						batch_solver.get_res(batchID, res_buffer.data());
 
