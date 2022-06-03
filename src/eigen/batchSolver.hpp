@@ -392,18 +392,12 @@ namespace eigen::batchSolver {
 
 
 
-		/// insert system into batch solver
+		/// get reference to system for insertion
 		/**
 		 * TODO
 		 */
-		void insert_system(size_t i, const Float* M, const Float *RHS) {
-			for (int j = 0; j < dimension; ++j)
-				for (int k = 0; k < dimension; ++k)
-					mat_Buffer[dimension*dimension*i + j + dimension*k] = M[j + dimension*k];
-					//mat_Buffer[dimension*dimension*i + dimension*j + k] = M[j + dimension*k];
-
-			for (int j = 0; j < dimension; ++j)
-				vec_Buffer[dimension*i + j] = RHS[j];
+		std::tuple<Float*, Float*> get_system_reference(size_t i) {
+			return {&mat_Buffer[dimension*dimension*i], &vec_Buffer[dimension*i]};
 		}
 
 
@@ -413,7 +407,7 @@ namespace eigen::batchSolver {
 		 */
 		void solve(size_t n_solve) {
 #ifdef CUDA_DEBUG
-		    	/* debug: */
+		    /* debug: */
 			std::cout << "solving for " << n_solve << " particles on " << deviceCount << " devices\n";
 #endif
 
@@ -445,6 +439,11 @@ namespace eigen::batchSolver {
 		    	// actually solve
 		    	solve_on_device(solve_begin, solve_size, device_id);
 		    }
+
+#ifdef CUDA_DEBUG
+		    /* debug: */
+			std::cout << "\tfinished solving\n";
+#endif
 		}
 
 
@@ -453,9 +452,8 @@ namespace eigen::batchSolver {
 		/**
 		 * TODO
 		 */
-		void get_res(size_t i, Float *res) {
-			for (int j = 0; j < dimension; ++j)
-				res[j] = vec_Buffer[dimension*i + j];
+		Float *get_res(size_t i) {
+			return &vec_Buffer[dimension*i];
 		}
 	};
 }
@@ -525,16 +523,12 @@ namespace eigen::batchSolver {
 
 
 
-		/// insert system into batch solver
+		/// get reference to system for insertion
 		/**
 		 * TODO
 		 */
-		void insert_system(size_t i, const Float* M, const Float *RHS) {
-			for (int j = 0; j < dimension; ++j) {
-				RHS_Buffer[i][j] = RHS[j];
-				for (int k = 0; k < dimension; ++k)
-					mat_Buffer[i](j, k) = M[j + dimension*k];
-			}
+		std::tuple<Float*, Float*> get_system_reference(size_t i) {
+			return {mat_Buffer[i].data(), RHS_Buffer[i].data()};
 		}
 
 
@@ -545,13 +539,19 @@ namespace eigen::batchSolver {
 		 */
 		void solve(size_t n_solve) {
 #ifdef CUDA_DEBUG
-		    	/* debug: */
+		    /* debug: */
 			std::cout << "solving for " << n_solve << " particles on CPU\n";
 #endif
 
 			#pragma omp parallel for schedule(dynamic)
 			for (size_t i = 0; i < n_solve; ++i)
 				res_Buffer[i] = eigen::solve(mat_Buffer[i], RHS_Buffer[i]);
+
+
+#ifdef CUDA_DEBUG
+		    /* debug: */
+			std::cout << "\tfinished solving\n";
+#endif
 		}
 
 
@@ -560,9 +560,8 @@ namespace eigen::batchSolver {
 		/**
 		 * TODO
 		 */
-		void get_res(size_t i, Float *res) {
-			for (int j = 0; j < dimension; ++j)
-				res[j] = res_Buffer[i][j];
+		auto &get_res(size_t i) {
+			return res_Buffer[i];
 		}
 	};
 }

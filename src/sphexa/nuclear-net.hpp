@@ -143,33 +143,32 @@ namespace sphexa::sphnnet {
 
 
 
+#ifdef CUDA_DEBUG
+		    	/* debug: */
+			std::cout << "preparing systems for " << batch_size << " particles\n";
+#endif
+
+
 
 			// prepare system
-			#pragma omp parallel
-			{
-				Float drho_dt;
-				eigen::Vector<Float> RHS(dimension + 1);
-				eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
+			#pragma omp parallel for schedule(dynamic)
+			for (size_t batchID = 0; batchID < batch_size; ++batchID) {
+				size_t i = particle_ids[batchID];
 
-				#pragma omp for schedule(dynamic)
-				for (size_t batchID = 0; batchID < batch_size; ++batchID) {
-					size_t i = particle_ids[batchID];
+				// compute drho/dt
+				Float drho_dt = n.previous_rho[i] <= 0. ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
-					// compute drho/dt
-					drho_dt = n.previous_rho[i] <= 0. ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
+				// get reference to system for insertion
+				auto [Mp, RHS] = batch_solver.get_system_reference(batchID);
 
-					// preparing system
-					nnet::prepare_system_substep(Mp, RHS,
-						reactions, construct_rates, construct_BE, eos,
-						n.Y[i], n.temp[i],
-						Y_buffer[i], T_buffer[i],
-						n.rho[i], drho_dt,
-						hydro_dt, elapsed_time[i], n.dt[i],
-						jumpToNse);
-
-					// insert into batch solver
-					batch_solver.insert_system(batchID, Mp.data(), RHS.data());
-				}
+				// preparing system
+				nnet::prepare_system_substep(Mp, RHS,
+					reactions, construct_rates, construct_BE, eos,
+					n.Y[i], n.temp[i],
+					Y_buffer[i], T_buffer[i],
+					n.rho[i], drho_dt,
+					hydro_dt, elapsed_time[i], n.dt[i],
+					jumpToNse);
 			}
 
 
@@ -180,31 +179,32 @@ namespace sphexa::sphnnet {
 
 
 			// finalize
-			#pragma omp parallel
-			{
-				eigen::Vector<Float> res_buffer(dimension + 1);
+			#pragma omp parallel for schedule(dynamic)
+			for (size_t batchID = 0; batchID < batch_size; ++batchID) {
+				size_t i = particle_ids[batchID];
+			
+				// retrieve results
+				auto res_buffer = batch_solver.get_res(batchID);
 
-				#pragma omp for schedule(dynamic)
-				for (size_t batchID = 0; batchID < batch_size; ++batchID) {
-					size_t i = particle_ids[batchID];
-				
-					// retrieve results
-					batch_solver.get_res(batchID, res_buffer.data());
-
-					// finalize
-					if(nnet::finalize_system_substep(
-						n.Y[i], n.temp[i],
-						Y_buffer[i], T_buffer[i],
-						res_buffer, hydro_dt, elapsed_time[i],
-						n.dt[i], iter[i]))
-					{
-						burning[i] = false;
-					}
-
-					// incrementing number of iteration
-					++iter[i];
+				// finalize
+				if(nnet::finalize_system_substep(
+					n.Y[i], n.temp[i],
+					Y_buffer[i], T_buffer[i],
+					res_buffer, hydro_dt, elapsed_time[i],
+					n.dt[i], iter[i]))
+				{
+					burning[i] = false;
 				}
+
+				// incrementing number of iteration
+				++iter[i];
 			}
+
+#ifdef CUDA_DEBUG
+		    	/* debug: */
+			std::cout << "finalize systems for " << batch_size << " particles\n\n";
+#endif
+
 		}
 #endif
 	}
