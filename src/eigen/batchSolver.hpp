@@ -25,7 +25,7 @@ namespace eigen::batchSolver {
 		/// maximum batch size for the GPU batched solver
 		size_t max_batch_size = 200000;
 		/// minimum batch size before falling back to non-batcher CPU-solver
-		size_t min_batch_size = 200;
+		size_t min_batch_size = 10000;
 	}
 
 	namespace util {
@@ -80,12 +80,113 @@ namespace eigen::batchSolver {
 		void rearrange(Float *vec, int *pivotArray, int dimension, size_t size) {
 			#pragma omp parallel for schedule(static)
 			for (int i = 0; i < size; ++i) {
-				size_t begin = size*i;
+				size_t begin = dimension*i;
 			    for (int j = 0; j < dimension; j++) {
 			    	const int pivot = pivotArray[begin + j] - 1;
 			    	std::swap(vec[begin + j], vec[begin + pivot]);
 			    }
 			}
+		}
+
+
+
+		/// Cublas getrfBatched templated wrapper
+		/**
+		 * TODO
+		 */
+		template<typename Float>
+		cublasStatus_t inline cublasGetrfBatched(
+			cublasHandle_t handle,
+			int n,
+			Float *const Aarray[],
+			int lda,
+			int *PivotArray,
+			int *infoArray,
+			int batchSize) 
+		{
+			throw std::runtime_error("type not supported in cublasGetrfBatched !");
+			return CUBLAS_STATUS_NOT_SUPPORTED;
+		}
+		cublasStatus_t inline cublasGetrfBatched(
+			cublasHandle_t handle,
+			int n,
+			double *const Aarray[],
+			int lda,
+			int *PivotArray,
+			int *infoArray,
+			int batchSize) 
+		{
+			return cublasDgetrfBatched(handle, n, Aarray, lda, PivotArray, infoArray, batchSize);
+		}
+		cublasStatus_t inline cublasGetrfBatched(
+			cublasHandle_t handle,
+			int n,
+			float *const Aarray[],
+			int lda,
+			int *PivotArray,
+			int *infoArray,
+			int batchSize) 
+		{
+			return cublasSgetrfBatched(handle, n, Aarray, lda, PivotArray, infoArray, batchSize);
+		}
+
+
+		/// cublas trsmBatched templated wrapper
+		/**
+		 * TODO
+		 */
+		template<typename Float>
+		cublasStatus_t inline cublasTrsmBatched(
+			cublasHandle_t    handle,
+			cublasSideMode_t  side,
+			cublasFillMode_t  uplo,
+			cublasOperation_t trans,
+			cublasDiagType_t  diag,
+			int m,
+			int n,
+			const Float *alpha,
+			const Float *const A[],
+			int lda,
+			Float *const B[],
+			int ldb,
+			int batchCount) 
+		{
+			throw std::runtime_error("type not supported in cublasTrsmBatched !");
+			return CUBLAS_STATUS_NOT_SUPPORTED;
+		}
+		cublasStatus_t inline cublasTrsmBatched(
+			cublasHandle_t    handle,
+			cublasSideMode_t  side,
+			cublasFillMode_t  uplo,
+			cublasOperation_t trans,
+			cublasDiagType_t  diag,
+			int m,
+			int n,
+			const double *alpha,
+			const double *const A[],
+			int lda,
+			double *const B[],
+			int ldb,
+			int batchCount) 
+		{
+			return cublasDtrsmBatched(handle, side, uplo, trans, diag, m, n, alpha, A, lda, B, ldb, batchCount);
+		}
+		cublasStatus_t inline cublasTrsmBatched(
+			cublasHandle_t    handle,
+			cublasSideMode_t  side,
+			cublasFillMode_t  uplo,
+			cublasOperation_t trans,
+			cublasDiagType_t  diag,
+			int m,
+			int n,
+			const float *alpha,
+			const float *const A[],
+			int lda,
+			float *const B[],
+			int ldb,
+			int batchCount) 
+		{
+			return cublasStrsmBatched(handle, side, uplo, trans, diag, m, n, alpha, A, lda, B, ldb, batchCount);
 		}
 	}
 
@@ -152,7 +253,7 @@ namespace eigen::batchSolver {
 
 			// LU decomposition
 			int* loc_dev_pivotArray = dev_pivotArray[device] == NULL ? NULL : dev_pivotArray[device] + gpu_vec_begin;
-			util::cublasSafeCall(cublasDgetrfBatched(cublas_handle,
+			util::cublasSafeCall(util::cublasGetrfBatched(cublas_handle,
 				dimension, dev_mat_ptr[device]    + gpu_begin,
 				dimension, loc_dev_pivotArray,
 				dev_InfoArray[device] + gpu_begin, n_solve));
@@ -169,24 +270,25 @@ namespace eigen::batchSolver {
 		            throw std::runtime_error(error);
 		        }
 
-			// get pivot from device
-			util::gpuErrchk(cudaMemcpy(pivotArray.data() + vec_begin, loc_dev_pivotArray, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost));
-			// rearange
-			util::rearrange(vec_Buffer.data() + vec_begin, pivotArray.data() + vec_begin, dimension, n_solve);
+
+		    if (dev_pivotArray[device] != NULL) {
+				// get pivot from device
+				util::gpuErrchk(cudaMemcpy(pivotArray.data() + vec_begin, loc_dev_pivotArray, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost));
+				// rearange
+				util::rearrange(vec_Buffer.data() + vec_begin, pivotArray.data() + vec_begin, dimension, n_solve);
+			}
 
 			// push vector data to device
 			util::gpuErrchk(cudaMemcpy(dev_vec_Buffer[device] + gpu_vec_begin, vec_Buffer.data() + vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice));
 
     		const double alpha = 1.;
 			// solve lower triangular part
-    		//util::cublasSafeCall(cublasDtrsm(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,     dimension, 1, &alpha, dev_mat_Buffer, dimension, dev_vec_Buffer, n_solve));
-    		util::cublasSafeCall(cublasDtrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,
+    		util::cublasSafeCall(util::cublasTrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,
     			dimension, 1, &alpha, dev_mat_ptr[device] + gpu_begin,
     			dimension,            dev_vec_ptr[device] + gpu_begin,
     			dimension, n_solve));
     		// solve upper triangular part
-    		//util::cublasSafeCall(cublasDtrsm(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, dimension, 1, &alpha, dev_mat_Buffer, dimension, dev_vec_Buffer, n_solve));
-    		util::cublasSafeCall(cublasDtrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT,
+    		util::cublasSafeCall(util::cublasTrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT,
     			dimension, 1, &alpha, dev_mat_ptr[device] + gpu_begin,
     			dimension,            dev_vec_ptr[device] + gpu_begin,
     			dimension, n_solve));
@@ -207,8 +309,6 @@ namespace eigen::batchSolver {
 		 * TODO
 		 */
 		batch_solver(size_t size_, int dimension_) : dimension(dimension_), size(size_) {
-			static_assert(std::is_same<Float, double>::value, "type in CUDA batch_solver must be DOUBLE for now");
-
 		    // alloc CPU buffers
 		    vec_Buffer.resize(size*dimension);
 			mat_Buffer.resize(size*dimension*dimension);
@@ -268,7 +368,8 @@ namespace eigen::batchSolver {
 				// deallocate memory
 				util::gpuErrchk(cudaFree(dev_vec_Buffer[device]));
 				util::gpuErrchk(cudaFree(dev_mat_Buffer[device]));
-				util::gpuErrchk(cudaFree(dev_pivotArray[device]));
+				if (dev_pivotArray[device] != NULL)
+					util::gpuErrchk(cudaFree(dev_pivotArray[device]));
 				util::gpuErrchk(cudaFree(dev_InfoArray[device]));
 				util::gpuErrchk(cudaFree(dev_mat_ptr[device]));
 				util::gpuErrchk(cudaFree(dev_vec_ptr[device]));
@@ -312,15 +413,6 @@ namespace eigen::batchSolver {
 		    	// get device id
 		    	const int device_id = deviceCount*thread_id/num_threads;
 
-#ifdef CUDA_DEBUG
-		    	/* debug: */
-		    	#pragma omp for ordered
-		    	for (int i = 0; i < num_threads; ++i) 
-		    		#pragma omp ordered
-		    		if (thread_id == i)
-		    			std::cout << "using " << device_id << "/" << deviceCount << "th device for the " << thread_id << "/" << num_threads << "th trhead\n";
-#endif
-
 		    	// get solving range for device
 		    	const size_t device_begin =       device_id*n_solve/deviceCount;
 		    	const size_t device_end   = (device_id + 1)*n_solve/deviceCount;
@@ -335,15 +427,6 @@ namespace eigen::batchSolver {
 		    	size_t solve_begin = device_begin +       device_thread_id*device_size/device_num_thread;
 		    	size_t solve_end   = device_begin + (device_thread_id + 1)*device_size/device_num_thread;
 		    	size_t solve_size  = solve_end - solve_begin;
-
-#ifdef CUDA_DEBUG
-		    	/* debug: */
-		    	#pragma omp for ordered
-		    	for (int i = 0; i < num_threads; ++i) 
-		    		#pragma omp ordered
-		    		if (thread_id == i)
-		    			std::cout << "solving " << solve_begin << "th to " << solve_end << "th particle out of " << n_solve << " on device " << device_id << " from thread " << thread_id << "\n";
-#endif
 
 		    	// actually solve
 		    	solve_on_device(solve_begin, solve_size, device_id);
@@ -375,9 +458,9 @@ namespace eigen::batchSolver {
 namespace eigen::batchSolver {
 	namespace constants {
 		/// maximum batch size for the CPU batched solver
-		size_t max_batch_size = 10000;
+		size_t max_batch_size = 1000;
 		/// minimum batch size before falling back to non-batcher CPU-solver, equal to zero
-		size_t min_batch_size = 100;
+		size_t min_batch_size = 0;
 	}
 
 	namespace util {
@@ -440,11 +523,14 @@ namespace eigen::batchSolver {
 		 * TODO
 		 */
 		void solve(size_t n_solve) {
-			if (n_solve > 0) {
-				#pragma omp parallel for schedule(dynamic)
-				for (size_t i = 0; i < n_solve; ++i)
-					res_Buffer[i] = eigen::solve(mat_Buffer[i], RHS_Buffer[i]);
-			}
+#ifdef CUDA_DEBUG
+		    	/* debug: */
+			std::cout << "solving for " << n_solve << " particles on CPU\n";
+#endif
+
+			#pragma omp parallel for schedule(dynamic)
+			for (size_t i = 0; i < n_solve; ++i)
+				res_Buffer[i] = eigen::solve(mat_Buffer[i], RHS_Buffer[i]);
 		}
 
 

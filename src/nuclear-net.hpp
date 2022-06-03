@@ -497,7 +497,7 @@ Iterative solver:
 	template<class Vector1, class Vector2, class Vector3, typename Float>
 	std::tuple<Float, bool> inline finalize_system_NR(
 		const Vector1 &Y, const Float T,
-		Vector2 &final_Y, Float &final_T, 
+		Vector2 &final_Y, Float &final_T,
 		const Vector3 &DY_T, Float &dt, int &i)
 	{
 		const int dimension = Y.size();
@@ -577,8 +577,11 @@ Iterative solver:
 			final_Y[i] = Y[i];
 		final_T = T;
 
-		if (rho < constants::min_rho || T < constants::min_temp)
+		// check for non-burning particles
+		if (rho < constants::min_rho || T < constants::min_temp) {
+			dt = constants::max_dt;
 			return dt;
+		}
 
 		eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 		eigen::Vector<Float> RHS(dimension + 1);
@@ -662,7 +665,7 @@ Substeping solver
 	 */
 	template<class Vector1, class Vector2, class Vector3, typename Float=double>
 	bool inline finalize_system_substep(Vector1 &final_Y, Float &final_T,
-		Vector2 &next_Y, Float &next_T, 
+		Vector2 &next_Y, Float &next_T,
 		const Vector3 &DY_T, const Float dt_tot, Float &elapsed_time,
 		Float &dt, int &i)
 	{
@@ -712,6 +715,7 @@ Substeping solver
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
 	{
+		// check for non-burning particles
 		if (final_rho < constants::min_rho || final_T < constants::min_temp)
 			return;		
 
