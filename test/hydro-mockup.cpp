@@ -237,6 +237,10 @@ int main(int argc, char* argv[]) {
 
 
 
+#ifdef USE_CUDA
+	eigen::batchSolver::util::MPI_init_device(MPI_COMM_WORLD);
+#endif
+
 
 
 
