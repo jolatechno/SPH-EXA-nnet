@@ -221,8 +221,8 @@ namespace nnet::net86 {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		std::vector<Float> rates, drates;
-		rates.reserve(reaction_list.size());
-		drates.reserve(reaction_list.size());
+		rates .resize(reaction_list.size());
+		drates.resize(reaction_list.size());
 		
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -781,37 +781,38 @@ namespace nnet::net86 {
 			C + O fusion
 			2O fusion
 			!!!!!!!!!!!!!!!!!!!!!!!! */
+			int idx = -1, jdx = -1;
 			for (int i = 0; i < 3; ++i) {
-				rates .push_back( eff[i]);
-				drates.push_back(deff[i]);
+				rates [++idx] =  eff[i];
+				drates[++jdx] = deff[i];
 			}
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			3He -> C fusion
 			!!!!!!!!!!!!!!!!!!!!!!!! */
-			rates .push_back( eff[4]);
-			drates.push_back(deff[4]);
+			rates [++idx] =  eff[4];
+			drates[++jdx] = deff[4];
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			C -> 3He fission
 			!!!!!!!!!!!!!!!!!!!!!!!! */
-			rates .push_back( l[4]);
-			drates.push_back(dl[4]);
+			rates [++idx] =  l[4];
+			drates[++jdx] = dl[4];
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			push direct reaction rates
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			for (int i = 5; i < 157; ++i) {
-				rates .push_back( eff[i]);
-				drates.push_back(deff[i]);
+				rates [++idx] =  eff[i];
+				drates[++jdx] = deff[i];
 			}
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			push inverse reaction rates
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			for (int i = 5; i < 157; ++i) {
-				rates .push_back( l[i]);
-				drates.push_back(dl[i]);
+				rates [++idx] =  l[i];
+				drates[++jdx] = dl[i];
 			}
 		}
 		

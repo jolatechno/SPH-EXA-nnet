@@ -158,8 +158,8 @@ namespace nnet::net14 {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		std::vector<Float> rates, drates;
-		rates.reserve(reaction_list.size());
-		drates.reserve(reaction_list.size());
+		rates .resize(reaction_list.size());
+		drates.resize(reaction_list.size());
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		fusions and fissions reactions from fits
@@ -704,45 +704,46 @@ namespace nnet::net14 {
 		push back rates
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 		{
-			rates .push_back( eff[0]);
-			drates.push_back(deff[0]);
+			int idx = -1, jdx = -1;
+			rates [++idx] = eff[0];
+			drates[++jdx] = deff[0];
 
-			rates .push_back( l[0]);
-			drates.push_back(dl[0]);
+			rates [++idx] =  l[0];
+			drates[++jdx] = dl[0];
 
-	      	rates .push_back( eff[13]);
-	      	drates.push_back(deff[13]);
+	      	rates [++idx] =  eff[13];
+	      	drates[++jdx] = deff[13];
 
-		    rates .push_back( eff[14]);
-		    drates.push_back(deff[14]);
+		    rates [++idx] =  eff[14];
+		    drates[++jdx] = deff[14];
 
-			rates .push_back( eff[15]);
-			drates.push_back(deff[15]);
+			rates [++idx] =  eff[15];
+			drates[++jdx] = deff[15];
 
 
 
-			rates .push_back( eff[1]);
-			drates.push_back(deff[1]);
+			rates [++idx] =  eff[1];
+			drates[++jdx] = deff[1];
 
-    		rates .push_back( eff[2]);
-    		drates.push_back(deff[2]);
+    		rates [++idx] =  eff[2];
+    		drates[++jdx] = deff[2];
 
 			for (int i = 4; i < 14; ++i) {
-				rates .push_back( eff[i - 1]);
-				drates.push_back(deff[i - 1]);
+				rates [++idx] =  eff[i - 1];
+				drates[++jdx] = deff[i - 1];
 			}
 
 
 
-			rates .push_back( l[1]);
-			drates.push_back(dl[1]);
+			rates [++idx] =  l[1];
+			drates[++jdx] = dl[1];
 
-			rates .push_back( l[2]);
-			drates.push_back(dl[2]);
+			rates [++idx] =  l[2];
+			drates[++jdx] = dl[2];
 
 			for (int i = 4; i < 14; ++i) {
-				rates .push_back( l[i - 1]);
-				drates.push_back(dl[i - 1]);
+				rates [++idx] =  l[i - 1];
+				drates[++jdx] = dl[i - 1];
 			}
 		}
 
