@@ -46,12 +46,12 @@ namespace nnet::net87 {
 	}();
 
 	/// compute a list of rates for net87
-	const auto compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct) {
+	const auto compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct, auto &rates, auto &drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
-		auto [rates, drates] = nnet::net86::compute_reaction_rates(Y, T, rho, eos_struct);
-		rates.reserve(reaction_list.size());
-		drates.reserve(reaction_list.size());
+		rates .resize(reaction_list.size());
+		drates.resize(reaction_list.size());
+		nnet::net86::compute_reaction_rates(Y, T, rho, eos_struct, rates, drates);
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		electron value
@@ -78,6 +78,6 @@ namespace nnet::net87 {
 
 		/* TODO */
 
-		return std::tuple<std::vector<Float>, std::vector<Float>>{rates, drates};
+		// return std::tuple<std::vector<Float>, std::vector<Float>>{rates, drates};
 	};
 }

@@ -22,8 +22,9 @@ int main() {
 	X[2] = 0.5;
     for (int i = 0; i < 14; ++i) Y[i] = X[i]/nnet::net14::constants::A[i];
 
+    std::vector<double> rate, drates;
 	auto BE             = nnet::net14::compute_BE(               2e9, 1e9);
-	auto [rate, drates] = nnet::net14::compute_reaction_rates(Y, 2e9, 1e9, NULL);
+	                      nnet::net14::compute_reaction_rates(Y, 2e9, 1e9, NULL, rate, drates);
 
 	std::cout << "reaction_list.size=" << nnet::net14::reaction_list.size() << ", rates.size=" << rate.size() << "\n\n";
 	

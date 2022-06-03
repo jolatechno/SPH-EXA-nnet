@@ -41,6 +41,7 @@ namespace sphexa::sphnnet {
 		{
 			// buffers
 			Float drho_dt;
+			std::vector<Float> rates, drates_dT;
 			eigen::Vector<Float> RHS(dimension + 1), Y_buffer(dimension);
 			eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 
@@ -52,6 +53,7 @@ namespace sphexa::sphnnet {
 
 					// solve
 					nnet::solve_system_substep(Mp, RHS,
+						rates, drates_dT,
 						reactions, construct_rates, construct_BE, eos,
 						n.Y[i], n.temp[i], Y_buffer,
 						n.rho[i], drho_dt, hydro_dt, n.dt[i],
@@ -116,6 +118,7 @@ namespace sphexa::sphnnet {
 				{
 					// buffers
 					Float drho_dt;
+					std::vector<Float> rates, drates_dT;
 					eigen::Vector<Float> RHS(dimension + 1), Y_buffer(dimension);
 					eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 
@@ -130,6 +133,7 @@ namespace sphexa::sphnnet {
 
 							// solve
 							nnet::solve_system_substep(Mp, RHS,
+								rates, drates_dT,
 								reactions, construct_rates, construct_BE, eos,
 								n.Y[i], n.temp[i], Y_buffer,
 								n.rho[i], drho_dt, remaining_time, n.dt[i],
@@ -151,24 +155,29 @@ namespace sphexa::sphnnet {
 
 
 			// prepare system
-			#pragma omp parallel for schedule(dynamic)
-			for (size_t batchID = 0; batchID < batch_size; ++batchID) {
-				size_t i = particle_ids[batchID];
+			#pragma omp parallel
+			{
+				std::vector<Float> rates, drates_dT;
+				
+				#pragma omp for schedule(dynamic)
+				for (size_t batchID = 0; batchID < batch_size; ++batchID) {
+					size_t i = particle_ids[batchID];
 
-				// compute drho/dt
-				Float drho_dt = n.previous_rho[i] <= 0. ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
+					// compute drho/dt
+					Float drho_dt = n.previous_rho[i] <= 0. ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
-				// get reference to system for insertion
-				auto [Mp, RHS] = batch_solver.get_system_reference(batchID);
+					// get reference to system for insertion
+					auto [Mp, RHS] = batch_solver.get_system_reference(batchID);
 
-				// preparing system
-				nnet::prepare_system_substep(Mp, RHS,
-					reactions, construct_rates, construct_BE, eos,
-					n.Y[i], n.temp[i],
-					Y_buffer[i], T_buffer[i],
-					n.rho[i], drho_dt,
-					hydro_dt, elapsed_time[i], n.dt[i],
-					jumpToNse);
+					// preparing system
+					nnet::prepare_system_substep(Mp, RHS,
+						reactions, construct_rates, construct_BE, eos,
+						n.Y[i], n.temp[i],
+						Y_buffer[i], T_buffer[i],
+						n.rho[i], drho_dt,
+						hydro_dt, elapsed_time[i], n.dt[i],
+						jumpToNse);
+				}
 			}
 
 

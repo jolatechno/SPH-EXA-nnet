@@ -217,10 +217,10 @@ namespace nnet::net86 {
 
 
 	/// compute a list of rates for net86
-	const auto compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct) {
+	const auto compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct, auto &rates, auto &drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
-		std::vector<Float> rates, drates;
+	 // std::vector<Float> rates, drates;
 		rates .resize(reaction_list.size());
 		drates.resize(reaction_list.size());
 		
@@ -815,8 +815,7 @@ namespace nnet::net86 {
 				drates[++jdx] = dl[i];
 			}
 		}
-		
 
-		return std::tuple<std::vector<Float>, std::vector<Float>>{rates, drates};
+		// return std::tuple<std::vector<Float>, std::vector<Float>>{rates, drates};
 	};
 }
