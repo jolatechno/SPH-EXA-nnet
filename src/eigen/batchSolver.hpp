@@ -560,8 +560,8 @@ namespace eigen::batchSolver {
 		/**
 		 * TODO
 		 */
-		auto &get_res(size_t i) {
-			return res_Buffer[i];
+		Float *get_res(size_t i) {
+			return res_Buffer[i].data();
 		}
 	};
 }

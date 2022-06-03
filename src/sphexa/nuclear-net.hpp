@@ -79,13 +79,13 @@ namespace sphexa::sphnnet {
 		std::vector<uint8_t/*bool*/>  burning(n_particles, true);
 		std::vector<size_t>           particle_ids(batch_size);
 		std::vector<Float>            elapsed_time(n_particles, 0.);
-		std::vector<Float>            T_buffer(n_particles);
-		decltype(n.Y)                 Y_buffer(n_particles);
+		std::vector<Float>            temp_buffers(n_particles);
+		decltype(n.Y)                 Y_buffers(n_particles);
 
 		// intialize buffers
 		for (size_t i = 0; i < n_particles; ++i) {
-			T_buffer[i] = n.temp[i];
-			Y_buffer[i] = n.Y[i];
+			temp_buffers[i] = n.temp[i];
+			Y_buffers[i] = n.Y[i];
 		}
 
 		// solving loop
@@ -130,6 +130,8 @@ namespace sphexa::sphnnet {
 
 							// compute the remaining time step to integrate over
 							Float remaining_time = hydro_dt - elapsed_time[i];
+							for (int j = 0; j < dimension; ++j)
+								Y_buffer[j] = Y_buffers[i][j];
 
 							// solve
 							nnet::solve_system_substep(Mp, RHS,
@@ -157,8 +159,11 @@ namespace sphexa::sphnnet {
 			// prepare system
 			#pragma omp parallel
 			{
+				// buffers
 				std::vector<Float> rates, drates_dT;
-				
+				eigen::Vector<Float> RHS(dimension + 1);
+				eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
+
 				#pragma omp for schedule(dynamic)
 				for (size_t batchID = 0; batchID < batch_size; ++batchID) {
 					size_t i = particle_ids[batchID];
@@ -166,17 +171,20 @@ namespace sphexa::sphnnet {
 					// compute drho/dt
 					Float drho_dt = n.previous_rho[i] <= 0. ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
-					// get reference to system for insertion
-					auto [Mp, RHS] = batch_solver.get_system_reference(batchID);
-
 					// preparing system
-					nnet::prepare_system_substep(Mp, RHS,
+					nnet::prepare_system_substep(Mp.data(), RHS.data(),
+						rates, drates_dT,
 						reactions, construct_rates, construct_BE, eos,
 						n.Y[i], n.temp[i],
-						Y_buffer[i], T_buffer[i],
+						Y_buffers[i], temp_buffers[i],
 						n.rho[i], drho_dt,
 						hydro_dt, elapsed_time[i], n.dt[i],
 						jumpToNse);
+
+					// insert
+					auto [Mp_batch, RHS_batch] = batch_solver.get_system_reference(batchID);
+					std::copy(RHS.data(), RHS.data() + (dimension + 1),                 RHS_batch);
+					std::copy(Mp.data(),  Mp.data()  + (dimension + 1)*(dimension + 1), Mp_batch);
 				}
 			}
 
@@ -198,7 +206,7 @@ namespace sphexa::sphnnet {
 				// finalize
 				if(nnet::finalize_system_substep(
 					n.Y[i], n.temp[i],
-					Y_buffer[i], T_buffer[i],
+					Y_buffers[i], temp_buffers[i],
 					res_buffer, hydro_dt, elapsed_time[i],
 					n.dt[i], iter[i]))
 				{
