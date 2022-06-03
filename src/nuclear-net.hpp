@@ -166,7 +166,7 @@ utils functions :
 		 * ...TODO
 		 */
 		template<typename Float, class Vector1, class Vector2>
-		void inline derivatives_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Vector1 const &Y, const Float rho, Vector2 &dY) {
+		void /*inline*/ derivatives_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates, Vector1 const &Y, const Float rho, Vector2 &dY) {
 			const int dimension = Y.size();
 			
 			for (int i = 0; i < dimension; ++i)
@@ -181,21 +181,17 @@ utils functions :
 				Float rate = rates[i];
 
 				// compute rate and order
-				int order = 0;
 				for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants) {
 					// divide by factorial
 					if (n_reactant_consumed != 1)
 						rate /= std::tgamma(n_reactant_consumed + 1);
 
 					// multiply by abundance
-					rate *= std::pow(Y[reactant_id], n_reactant_consumed);
-
-					// increment order
-					order += n_reactant_consumed;
+					rate *= std::pow(Y[reactant_id]*rho, n_reactant_consumed);
 				}
 
 				// correct for rho
-				rate *= std::pow(rho, order - 1);
+				rate /= rho;
 
 				// insert consumption rates
 				for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants)
@@ -216,7 +212,7 @@ utils functions :
 		 * ...TODO
 		 */
 		template<typename Float, class Vector>
-		void inline order_1_dY_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates,
+		void /*inline*/ order_1_dY_from_reactions(const std::vector<reaction> &reactions, const std::vector<Float> &rates,
 			Vector const &Y, const Float rho,
 			Float *M)
 		{
@@ -232,27 +228,23 @@ utils functions :
 
 				// compute rate and order
 				int order = 0;
-				for (auto const [_, n_reactant_consumed] : Reaction.reactants) {
+				for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
 					// divide by factorial
 					if (n_reactant_consumed != 1)
 						rate /= std::tgamma(n_reactant_consumed + 1);
 
-					// increment order
-					order += n_reactant_consumed;
+					// multiply by abundance
+					rate *= std::pow(Y[reactant_id]*rho, n_reactant_consumed - 1);
 				}
-
-				// correct for rho
-				rate *= std::pow(rho, order - 1);
 
 				if (rate > constants::epsilon_system)
 					for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
 						// compute rate
 						Float this_rate = rate;
-						this_rate *= std::pow(Y[reactant_id], n_reactant_consumed - 1);
 						for (auto &[other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
 							// multiply by abundance
 							if (other_reactant_id != reactant_id)
-								this_rate *= std::pow(Y[other_reactant_id], other_n_reactant_consumed);
+								this_rate *= Y[other_reactant_id]*rho;
 
 						// insert consumption rates
 						for (const auto [other_reactant_id, other_n_reactant_consumed] : Reaction.reactants)
