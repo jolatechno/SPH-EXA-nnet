@@ -19,10 +19,10 @@
 #else
 
 #ifndef MAX_BATCH_SIZE
-	#define MAX_BATCH_SIZE 1000
+	#define MAX_BATCH_SIZE 200000 // 1000
 #endif
 #ifndef MIN_BATCH_SIZE
-	#define MIN_BATCH_SIZE 0
+	#define MIN_BATCH_SIZE 10000  // 0
 #endif
 
 #endif
@@ -71,8 +71,8 @@ namespace eigen::batchSolver {
 /**************************************************************************************************************************************/
 /* mostly gotten from https://github.com/OrangeOwlSolutions/CUDA-Utilities/blob/70343897abbf7a5608a6739759437f44933a5fc6/Utilities.cu */
 /*              and https://stackoverflow.com/questions/28794010/solving-dense-linear-systems-ax-b-with-cuda                          */
-/* compile:  nvcc -Xcompiler "-fopenmp -I/cm/shared/modules/generic/mpi/openmpi/4.0.1/include -pthread -L/cm/shared/modules/generic/mpi/openmpi/4.0.1/lib -lmpi -std=c++17" -lcublas -lcuda -lcudart -DUSE_MPI -DNOT_FROM_SPHEXA -DUSE_CUDA -DCUDA_DEBUG hydro-mockup.cpp -o hydro-mockup.out
-/* launch:   OMP_NUM_THREADS=32 mpirun --map-by node:PE=32:span -n 1 hydro-mockup.out -n 10 --test-case C-O-burning --n-particle 1000
+/* compile:  nvcc -Xcompiler "-fopenmp -I/cm/shared/modules/generic/mpi/openmpi/4.0.1/include -pthread -L/cm/shared/modules/generic/mpi/openmpi/4.0.1/lib -lmpi -std=c++17" -lcublas -lcuda -lcudart -DUSE_MPI -DNOT_FROM_SPHEXA -DCUDA_DEBUG_ -DCPU_BATCH_SOLVER_ -DUSE_CUDA hydro-mockup.cpp -o hydro-mockup.out
+/* launch:   mpirun --oversubscribe --map-by node:PE=10:span -x OMP_NUM_THREADS=10 -n 2 hydro-mockup.out --test-case C-O-burning -n 5 --dt 1e-3 --n-particle 100000 > res.out 2> err.out &
 /**************************************************************************************************************************************/
 
 #include <cublas_v2.h>
@@ -296,7 +296,6 @@ namespace eigen::batchSolver {
 		std::vector<Float*> dev_vec_Buffer, dev_mat_Buffer;
 		std::vector<Float**> dev_mat_ptr, dev_vec_ptr;
 		std::vector<int*> dev_pivotArray, dev_InfoArray;
-		int deviceCount;
 
 
 
@@ -325,30 +324,31 @@ namespace eigen::batchSolver {
 			const size_t mat_begin = dimension*dimension*begin; 
 
 			// gpu offsets
-			const size_t gpu_begin = begin - n_solve*device/deviceCount;
+			const int deviceCount = util::getNumDevice();
+			const int device_id_  = device - constants::device_begin;
+			const size_t gpu_begin = begin - n_solve*device_id_/deviceCount;
 			const size_t gpu_vec_begin = dimension*gpu_begin;
 			const size_t gpu_mat_begin = dimension*dimension*gpu_begin; 
 
 			// --- Creating the array of pointers needed as input/output to the batched getrf
 			for (int i = 0; i < n_solve; i++) {
-				mat_ptr[i + begin] = dev_mat_Buffer[device] + gpu_mat_begin + dimension*dimension*i;
-				vec_ptr[i + begin] = dev_vec_Buffer[device] + gpu_vec_begin + dimension*i;
+				mat_ptr[i + begin] = dev_mat_Buffer[device_id_] + gpu_mat_begin + dimension*dimension*i;
+				vec_ptr[i + begin] = dev_vec_Buffer[device_id_] + gpu_vec_begin + dimension*i;
 			}
-    		cuda::cudaSafeCall(cudaMemcpyAsync(dev_mat_ptr[device] + gpu_begin, mat_ptr.data() + begin, n_solve*sizeof(Float*), cudaMemcpyHostToDevice, stream));
-    		cuda::cudaSafeCall(cudaMemcpyAsync(dev_vec_ptr[device] + gpu_begin, vec_ptr.data() + begin, n_solve*sizeof(Float*), cudaMemcpyHostToDevice, stream));
+    		cuda::cudaSafeCall(cudaMemcpyAsync(dev_mat_ptr[device_id_] + gpu_begin, mat_ptr.data() + begin, n_solve*sizeof(Float*), cudaMemcpyHostToDevice, stream));
+    		cuda::cudaSafeCall(cudaMemcpyAsync(dev_vec_ptr[device_id_] + gpu_begin, vec_ptr.data() + begin, n_solve*sizeof(Float*), cudaMemcpyHostToDevice, stream));
 
 			// push memory to device
-			cuda::cudaSafeCall(cudaMemcpyAsync(dev_mat_Buffer[device] + gpu_mat_begin, mat_Buffer.data() + mat_begin, dimension*dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice, stream));
+			cuda::cudaSafeCall(cudaMemcpyAsync(dev_mat_Buffer[device_id_] + gpu_mat_begin, mat_Buffer.data() + mat_begin, dimension*dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice, stream));
 
 			// LU decomposition
-			int* loc_dev_pivotArray = dev_pivotArray[device] == NULL ? NULL : dev_pivotArray[device] + gpu_vec_begin;
 			cublas::cublasSafeCall(cublas::cublasGetrfBatched(cublas_handle,
-				dimension, dev_mat_ptr[device]    + gpu_begin,
-				dimension, loc_dev_pivotArray,
-				dev_InfoArray[device] + gpu_begin, n_solve));
+				dimension, dev_mat_ptr[device_id_]    + gpu_begin,
+				dimension, dev_pivotArray[device_id_] + gpu_begin,
+				dev_InfoArray[device_id_]             + gpu_begin, n_solve));
 
 			// get Info from device
-			cuda::cudaSafeCall(cudaMemcpyAsync(InfoArray.data() + begin, dev_InfoArray[device] + gpu_begin, n_solve*sizeof(int), cudaMemcpyDeviceToHost, stream));
+			cuda::cudaSafeCall(cudaMemcpyAsync(InfoArray.data() + begin, dev_InfoArray[device_id_] + gpu_begin, n_solve*sizeof(int), cudaMemcpyDeviceToHost, stream));
 			// check for error in each matrix
 			for (int i = begin; i < n_solve + begin; ++i)
 		        if (InfoArray[i] != 0) {
@@ -360,30 +360,28 @@ namespace eigen::batchSolver {
 		        }
 
 
-		    if (dev_pivotArray[device] != NULL) {
-				// get pivot from device
-				cuda::cudaSafeCall(cudaMemcpyAsync(pivotArray.data() + vec_begin, loc_dev_pivotArray, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost, stream));
-				// rearange
-				util::rearrange(vec_Buffer.data() + vec_begin, pivotArray.data() + vec_begin, dimension, n_solve);
-			}
+			// get pivot from device
+			cuda::cudaSafeCall(cudaMemcpyAsync(pivotArray.data() + vec_begin, dev_pivotArray[device_id_] + gpu_begin, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost, stream));
+			// rearange
+			util::rearrange(vec_Buffer.data() + vec_begin, pivotArray.data() + vec_begin, dimension, n_solve);
 
 			// push vector data to device
-			cuda::cudaSafeCall(cudaMemcpyAsync(dev_vec_Buffer[device] + gpu_vec_begin, vec_Buffer.data() + vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice, stream));
+			cuda::cudaSafeCall(cudaMemcpyAsync(dev_vec_Buffer[device_id_] + gpu_vec_begin, vec_Buffer.data() + vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice, stream));
 
     		const double alpha = 1.;
 			// solve lower triangular part
     		cublas::cublasSafeCall(cublas::cublasTrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_LOWER, CUBLAS_OP_N, CUBLAS_DIAG_UNIT,
-    			dimension, 1, &alpha, dev_mat_ptr[device] + gpu_begin,
-    			dimension,            dev_vec_ptr[device] + gpu_begin,
+    			dimension, 1, &alpha, dev_mat_ptr[device_id_] + gpu_begin,
+    			dimension,            dev_vec_ptr[device_id_] + gpu_begin,
     			dimension, n_solve));
     		// solve upper triangular part
     		cublas::cublasSafeCall(cublas::cublasTrsmBatched(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT,
-    			dimension, 1, &alpha, dev_mat_ptr[device] + gpu_begin,
-    			dimension,            dev_vec_ptr[device] + gpu_begin,
+    			dimension, 1, &alpha, dev_mat_ptr[device_id_] + gpu_begin,
+    			dimension,            dev_vec_ptr[device_id_] + gpu_begin,
     			dimension, n_solve));
 
 			// get memory from device
-			cuda::cudaSafeCall(cudaMemcpyAsync(vec_Buffer.data() + vec_begin, dev_vec_Buffer[device] + gpu_vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyDeviceToHost, stream));
+			cuda::cudaSafeCall(cudaMemcpyAsync(vec_Buffer.data() + vec_begin, dev_vec_Buffer[device_id_] + gpu_vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyDeviceToHost, stream));
 
 			// destroy stream
 			cuda::cudaSafeCall(cudaStreamDestroy(stream));
@@ -410,7 +408,7 @@ namespace eigen::batchSolver {
 
 			// multi-GPU support here, one thread = one GPU
 			// get number of device
-			deviceCount = util::getNumDevice();
+			int deviceCount = util::getNumDevice();
 			// resize buffer
 			dev_vec_Buffer.resize(deviceCount);
 			dev_mat_Buffer.resize(deviceCount);
@@ -421,11 +419,12 @@ namespace eigen::batchSolver {
 		    #pragma omp parallel num_threads(deviceCount)
 		    {
 		    	// get device id = thread id
-		    	int device = constants::device_begin + omp_get_thread_num();
+		    	int device_id_ = omp_get_thread_num();
+		    	int device     = constants::device_begin + device_id_;
 
 		    	// get range for solving
-		    	size_t begin         = size*device/deviceCount;
-		    	size_t end           = size*(device + 1)/deviceCount;
+		    	size_t begin         =       size*device_id_/deviceCount;
+		    	size_t end           = size*(device_id_ + 1)/deviceCount;
 		    	size_t local_n_solve = end - begin;
 
 		    	/*****************************/
@@ -436,34 +435,34 @@ namespace eigen::batchSolver {
 				cudaSetDevice(device);
 
 				// allocate GPU vectors
-				cuda::cudaSafeCall(cudaMalloc((void**)&dev_vec_Buffer[device],           dimension*size*sizeof(Float)));
-				cuda::cudaSafeCall(cudaMalloc((void**)&dev_mat_Buffer[device], dimension*dimension*size*sizeof(Float)));
-				cuda::cudaSafeCall(cudaMalloc((void**)&dev_pivotArray[device],           dimension*size*sizeof(int)));
-				cuda::cudaSafeCall(cudaMalloc((void**)&dev_InfoArray[device],                      size*sizeof(int)));
-				cuda::cudaSafeCall(cudaMalloc((void**)&dev_mat_ptr[device],                        size*sizeof(Float*)));
-				cuda::cudaSafeCall(cudaMalloc((void**)&dev_vec_ptr[device],                        size*sizeof(Float*)));
+				cuda::cudaSafeCall(cudaMalloc((void**)&dev_vec_Buffer[device_id_],           dimension*size*sizeof(Float)));
+				cuda::cudaSafeCall(cudaMalloc((void**)&dev_mat_Buffer[device_id_], dimension*dimension*size*sizeof(Float)));
+				cuda::cudaSafeCall(cudaMalloc((void**)&dev_pivotArray[device_id_],           dimension*size*sizeof(int)));
+				cuda::cudaSafeCall(cudaMalloc((void**)&dev_InfoArray[device_id_],                      size*sizeof(int)));
+				cuda::cudaSafeCall(cudaMalloc((void**)&dev_mat_ptr[device_id_],                        size*sizeof(Float*)));
+				cuda::cudaSafeCall(cudaMalloc((void**)&dev_vec_ptr[device_id_],                        size*sizeof(Float*)));
 		    }
 		}
 
 		~batch_solver() {
+			int deviceCount = util::getNumDevice();
 		    // multi-GPU support here, one thread = one GPU
 		    #pragma omp parallel num_threads(deviceCount)
 		    {
 		    	// get device id = thread id
-		    	int device = omp_get_thread_num();
+		    	int device_id_ = omp_get_thread_num();
 
 		    	/*******************************/
 				/* deallocating device Buffers */
 				/*******************************/
 
 				// deallocate memory
-				cuda::cudaSafeCall(cudaFree(dev_vec_Buffer[device]));
-				cuda::cudaSafeCall(cudaFree(dev_mat_Buffer[device]));
-				if (dev_pivotArray[device] != NULL)
-					cuda::cudaSafeCall(cudaFree(dev_pivotArray[device]));
-				cuda::cudaSafeCall(cudaFree(dev_InfoArray[device]));
-				cuda::cudaSafeCall(cudaFree(dev_mat_ptr[device]));
-				cuda::cudaSafeCall(cudaFree(dev_vec_ptr[device]));
+				cuda::cudaSafeCall(cudaFree(dev_vec_Buffer[device_id_]));
+				cuda::cudaSafeCall(cudaFree(dev_mat_Buffer[device_id_]));
+				cuda::cudaSafeCall(cudaFree(dev_pivotArray[device_id_]));
+				cuda::cudaSafeCall(cudaFree(dev_InfoArray[device_id_]));
+				cuda::cudaSafeCall(cudaFree(dev_mat_ptr[device_id_]));
+				cuda::cudaSafeCall(cudaFree(dev_vec_ptr[device_id_]));
 		    }
 		}
 
@@ -485,7 +484,7 @@ namespace eigen::batchSolver {
 		void solve(size_t n_solve) {
 #ifdef CUDA_DEBUG
 		    /* debug: */
-			std::cout << "solving for " << n_solve << " particles on " << deviceCount << " devices\n";
+			std::cout << "solving for " << n_solve << " particles on " << util::getNumDevice() << " devices\n";
 #endif
 
 		    // multi-GPU support here
@@ -518,11 +517,6 @@ namespace eigen::batchSolver {
 		    	// actually solve
 		    	solve_on_device(solve_begin, solve_size, device_id);
 		    }
-
-#ifdef CUDA_DEBUG
-		    /* debug: */
-			std::cout << "\tfinished solving\n";
-#endif
 		}
 
 
@@ -600,12 +594,6 @@ namespace eigen::batchSolver {
 			#pragma omp parallel for schedule(dynamic)
 			for (size_t i = 0; i < n_solve; ++i)
 				res_Buffer[i] = eigen::solve(mat_Buffer[i], RHS_Buffer[i]);
-
-
-#ifdef CUDA_DEBUG
-		    /* debug: */
-			std::cout << "\tfinished solving\n";
-#endif
 		}
 
 

@@ -5,6 +5,8 @@
 
 #include "nuclear-data.hpp"
 #include "../eos/helmholtz.hpp"
+
+#include "../eigen/eigen.hpp"
 #include "../eigen/batchSolver.hpp"
 
 #ifdef USE_MPI
@@ -129,30 +131,41 @@ namespace sphexa::sphnnet {
 							drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
 							// compute the remaining time step to integrate over
-							Float remaining_time = hydro_dt - elapsed_time[i];
+							Float elapsed_time_ = elapsed_time[i], temp_buffer = temp_buffers[i];
 							for (int j = 0; j < dimension; ++j)
 								Y_buffer[j] = Y_buffers[i][j];
 
 							// solve
-							nnet::solve_system_substep(Mp, RHS,
-								rates, drates_dT,
-								reactions, construct_rates, construct_BE, eos,
-								n.Y[i], n.temp[i], Y_buffer,
-								n.rho[i], drho_dt, remaining_time, n.dt[i],
-								jumpToNse);
+							for (int j = iter[i];; ++j) {
+								// generate system
+								nnet::prepare_system_substep(Mp.data(), RHS.data(),
+									rates, drates_dT,
+									reactions, construct_rates, construct_BE, eos,
+									n.Y[i], n.temp[i],
+									Y_buffer, temp_buffer,
+									n.rho[i], drho_dt,
+									hydro_dt, elapsed_time_, n.dt[i],
+									jumpToNse);
+
+							// solve M*D{T, Y} = RHS
+							auto DY_T = eigen::solve(Mp, RHS, nnet::constants::epsilon_system);
+
+							// finalize
+							if(nnet::finalize_system_substep(
+								n.Y[i], n.temp[i],
+								Y_buffer, temp_buffer,
+								DY_T, hydro_dt, elapsed_time_,
+								n.dt[i], j))
+							{
+								break;
+							}
 						}
+					}
 				}
 
 				// leaving
 				break;
 			}
-
-
-
-#ifdef CUDA_DEBUG
-		    	/* debug: */
-			std::cout << "preparing systems for " << batch_size << " particles\n";
-#endif
 
 
 
@@ -216,12 +229,6 @@ namespace sphexa::sphnnet {
 				// incrementing number of iteration
 				++iter[i];
 			}
-
-#ifdef CUDA_DEBUG
-		    	/* debug: */
-			std::cout << "finalize systems for " << batch_size << " particles\n\n";
-#endif
-
 		}
 #endif
 	}
