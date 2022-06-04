@@ -69,7 +69,12 @@ namespace sphexa::sphnnet {
 		// intitialized bash solver data
 		const int numDevice = eigen::batchSolver::util::getNumDevice();
 		size_t batch_size = std::min(n_particles, eigen::batchSolver::constants::max_batch_size*numDevice);
-		eigen::batchSolver::batch_solver<Float> batch_solver(batch_size, dimension + 1);
+
+#ifdef USE_CUDA
+		eigen::batchSolver::CUDAsolver<Float> batch_solver(batch_size, dimension + 1);
+#else
+		eigen::batchSolver::CPUsolver<Float> batch_solver(batch_size, dimension + 1);
+#endif
 
 #ifdef CUDA_DEBUG
 		/* debug */

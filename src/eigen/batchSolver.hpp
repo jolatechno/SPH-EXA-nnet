@@ -6,25 +6,17 @@
 	#include <mpi.h>
 #endif
 
-
-#if defined(USE_CUDA) && !defined(CPU_BATCH_SOLVER)
+#ifdef USE_CUDA
+	#include <cublas_v2.h>
+	#include <cuda_runtime.h>
+	#include <device_launch_parameters.h>
+#endif
 
 #ifndef MAX_BATCH_SIZE
 	#define MAX_BATCH_SIZE 200000
 #endif
 #ifndef MIN_BATCH_SIZE
 	#define MIN_BATCH_SIZE 10000
-#endif
-
-#else
-
-#ifndef MAX_BATCH_SIZE
-	#define MAX_BATCH_SIZE 200000 // 1000
-#endif
-#ifndef MIN_BATCH_SIZE
-	#define MIN_BATCH_SIZE 10000  // 0
-#endif
-
 #endif
 
 /******************/
@@ -62,11 +54,10 @@ namespace eigen::batchSolver {
 			return constants::device_end - constants::device_begin;
 		}
 	}
-}
 
 
 
-#if defined(USE_CUDA) && !defined(CPU_BATCH_SOLVER)
+#ifdef CUDA
 
 /**************************************************************************************************************************************/
 /* mostly gotten from https://github.com/OrangeOwlSolutions/CUDA-Utilities/blob/70343897abbf7a5608a6739759437f44933a5fc6/Utilities.cu */
@@ -75,11 +66,6 @@ namespace eigen::batchSolver {
 /* launch:   mpirun --oversubscribe --map-by node:PE=10:span -x OMP_NUM_THREADS=10 -n 2 hydro-mockup.out --test-case C-O-burning -n 5 --dt 1e-3 --n-particle 100000 > res.out 2> err.out &
 /**************************************************************************************************************************************/
 
-#include <cublas_v2.h>
-#include <cuda_runtime.h>
-#include <device_launch_parameters.h>
-
-namespace eigen::batchSolver {
 	namespace cuda {
 		/// function to check for CUDA errors
 		/**
@@ -281,7 +267,7 @@ namespace eigen::batchSolver {
 	 * TODO
 	 */
 	template<typename Float>
-	class batch_solver {
+	class CUDAsolver {
 	private:
 		int dimension;
 		size_t size;
@@ -397,7 +383,7 @@ namespace eigen::batchSolver {
 		/**
 		 * TODO
 		 */
-		batch_solver(size_t size_, int dimension_) : dimension(dimension_), size(size_) {
+		CUDAsolver(size_t size_, int dimension_) : dimension(dimension_), size(size_) {
 		    // alloc CPU buffers
 		    vec_Buffer.resize(size*dimension);
 			mat_Buffer.resize(size*dimension*dimension);
@@ -444,7 +430,7 @@ namespace eigen::batchSolver {
 		    }
 		}
 
-		~batch_solver() {
+		~CUDAsolver() {
 			int deviceCount = util::getNumDevice();
 		    // multi-GPU support here, one thread = one GPU
 		    #pragma omp parallel num_threads(deviceCount)
@@ -529,44 +515,36 @@ namespace eigen::batchSolver {
 			return &vec_Buffer[dimension*i];
 		}
 	};
-}
+#endif
 
-#else
 
-/*******************************************************/
-/* dummy CPU solver while awaiting a CUDA batch solver */
-/*******************************************************/
 
-#include <vector>
+	/*******************************************************/
+	/* dummy CPU solver while awaiting a CUDA batch solver */
+	/*******************************************************/
 
-namespace eigen::batchSolver {
 	/// dummy batch CPU solver
 	/**
 	 * TODO
 	 */
 	template<typename Float>
-	class batch_solver {
+	class CPUsolver {
 	private:
 		int dimension;
 		size_t size;
-		std::vector<eigen::Vector<Float>> RHS_Buffer, res_Buffer;
-		std::vector<eigen::Matrix<Float>> mat_Buffer;
+
+		// Buffers
+		std::vector<Float> vec_Buffer;
+		std::vector<Float> mat_Buffer;
 	
 	public:
 		/// allocate buffers for batch solver
 		/**
 		 * TODO
 		 */
-		batch_solver(size_t size_, int dimension_) : dimension(dimension_), size(size_) {
-			RHS_Buffer.resize(size);
-			res_Buffer.resize(size);
-			mat_Buffer.resize(size);
-			#pragma omp parallel for schedule(dynamic)
-			for (size_t i = 0; i < size; ++i) {
-				RHS_Buffer[i].resize(dimension);
-				res_Buffer[i].resize(dimension);
-				mat_Buffer[i].resize(dimension, dimension);
-			}
+		CPUsolver(size_t size_, int dimension_) : dimension(dimension_), size(size_) {
+			vec_Buffer.resize(          dimension*size);
+			mat_Buffer.resize(dimension*dimension*size);
 		}
 
 
@@ -576,7 +554,7 @@ namespace eigen::batchSolver {
 		 * TODO
 		 */
 		std::tuple<Float*, Float*> get_system_reference(size_t i) {
-			return {mat_Buffer[i].data(), RHS_Buffer[i].data()};
+			return {&mat_Buffer[dimension*dimension*i], &vec_Buffer[dimension*i]};
 		}
 
 
@@ -591,9 +569,31 @@ namespace eigen::batchSolver {
 			std::cout << "solving for " << n_solve << " particles on CPU\n";
 #endif
 
-			#pragma omp parallel for schedule(dynamic)
-			for (size_t i = 0; i < n_solve; ++i)
-				res_Buffer[i] = eigen::solve(mat_Buffer[i], RHS_Buffer[i]);
+			#pragma omp parallel
+			{
+				eigen::Vector<Float> RHS(dimension);
+				eigen::Matrix<Float> Mp(dimension, dimension);
+
+				#pragma omp for schedule(dynamic)
+				for (size_t i = 0; i < n_solve; ++i) {
+					// copy system to buffer
+					auto [Mp_ref, RHS_ref] = get_system_reference(i);
+					for (auto j = 0; j < dimension; ++j) {
+						RHS[j] = RHS_ref[j];
+						for (int k = 0; k < dimension; ++k)
+							Mp(j, k) = Mp_ref[j + dimension*k];
+					}
+
+					// solve
+					auto res = eigen::solve(Mp, RHS);
+
+					// save back to buffer
+					Float *res_ref = get_res(i);
+					for (int j = 0; j < dimension; ++j)
+						res_ref[j] = res[j];
+				}
+			}
+			
 		}
 
 
@@ -603,8 +603,7 @@ namespace eigen::batchSolver {
 		 * TODO
 		 */
 		Float *get_res(size_t i) {
-			return res_Buffer[i].data();
+			return &vec_Buffer[dimension*i];
 		}
 	};
 }
-#endif
