@@ -108,7 +108,7 @@ public:
 	std::vector<std::string> outputFieldNames;
 
 	void setOutputFields(const std::vector<std::string>& outFields) {
-	    outputFieldNames = fieldNames;
+	    outputFieldNames   = fieldNames;
 		outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, outFields);
     }
 
@@ -237,7 +237,7 @@ int main(int argc, char* argv[]) {
 
 
 
-#ifdef USE_CUDA
+#if defined(USE_CUDA) && !defined(CPU_BATCH_SOLVER)
 	eigen::batchSolver::util::MPI_init_device(MPI_COMM_WORLD);
 #endif
 

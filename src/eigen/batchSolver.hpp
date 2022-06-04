@@ -266,6 +266,10 @@ namespace eigen::batchSolver {
 			int device_end   = std::max((local_rank + 1)*num_device/local_size,
 										device_begin + 1);
 			util::set_device_range(device_begin, device_end);
+
+#ifdef CUDA_DEBUG
+			std::cout << "using device " << device_begin << " to " << device_end << " on rank " << local_rank << "/" << local_size << "\n";
+#endif
 		}
 #endif
 	}
