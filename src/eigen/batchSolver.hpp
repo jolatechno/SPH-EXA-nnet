@@ -57,13 +57,13 @@ namespace eigen::batchSolver {
 
 
 
-#ifdef CUDA
+#ifdef USE_CUDA
 
 /**************************************************************************************************************************************/
 /* mostly gotten from https://github.com/OrangeOwlSolutions/CUDA-Utilities/blob/70343897abbf7a5608a6739759437f44933a5fc6/Utilities.cu */
 /*              and https://stackoverflow.com/questions/28794010/solving-dense-linear-systems-ax-b-with-cuda                          */
 /* compile:  nvcc -Xcompiler "-fopenmp -I/cm/shared/modules/generic/mpi/openmpi/4.0.1/include -pthread -L/cm/shared/modules/generic/mpi/openmpi/4.0.1/lib -lmpi -std=c++17" -lcublas -lcuda -lcudart -DUSE_MPI -DNOT_FROM_SPHEXA -DCUDA_DEBUG_ -DCPU_BATCH_SOLVER_ -DUSE_CUDA hydro-mockup.cpp -o hydro-mockup.out
-/* launch:   mpirun --oversubscribe --map-by node:PE=10:span -x OMP_NUM_THREADS=10 -n 2 hydro-mockup.out --test-case C-O-burning -n 5 --dt 1e-3 --n-particle 100000 > res.out 2> err.out &
+/* launch:   mpirun --oversubscribe --map-by node:PE=10:span -x OMP_NUM_THREADS=10 -n 2 hydro-mockup.out --test-case C-O-burning -n 10 --n-particle 100000 > res.out 2> err.out &
 /**************************************************************************************************************************************/
 
 	namespace cuda {
@@ -470,7 +470,7 @@ namespace eigen::batchSolver {
 		void solve(size_t n_solve) {
 #ifdef CUDA_DEBUG
 		    /* debug: */
-			std::cout << "solving for " << n_solve << " particles on " << util::getNumDevice() << " devices\n";
+			std::cout << "\nsolving for " << n_solve << " particles on " << util::getNumDevice() << " devices\n";
 #endif
 
 		    // multi-GPU support here
@@ -488,7 +488,7 @@ namespace eigen::batchSolver {
 		    	// get solving range for device
 		    	const size_t device_begin =       device_id_*n_solve/deviceCount;
 		    	const size_t device_end   = (device_id_ + 1)*n_solve/deviceCount;
-		    	const size_t device_size  = device_id_ - device_begin;
+		    	const size_t device_size  = device_end - device_begin;
 		    	// get thread range for device
 		    	const size_t device_thread_begin =       device_id_*num_threads/deviceCount;
 		    	const size_t device_thread_end   = (device_id_ + 1)*num_threads/deviceCount;
