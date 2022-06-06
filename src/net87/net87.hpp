@@ -21,7 +21,7 @@ namespace nnet::net87 {
 	}();
 
 	/// function to compute the corrected BE
-	const auto compute_BE = [](const auto T, const auto rho) {
+	const auto compute_BE = [](const auto T, const auto rho, auto *corrected_BE) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		// ideal gaz correction
@@ -30,10 +30,10 @@ namespace nnet::net87 {
 		Float correction = -1.5*nakbt;
 
 		// adding electrons to net86
-		std::vector<Float> corrected_BE = nnet::net86::compute_BE(T, rho);
-		corrected_BE.push_back(BE.back() + correction);
+		nnet::net86::compute_BE(T, rho, corrected_BE);
+		corrected_BE[86] = BE.back() + correction;
 
-		return corrected_BE;
+		//return corrected_BE;
 	};
 
 	/// constant list of ordered reaction
@@ -49,8 +49,6 @@ namespace nnet::net87 {
 	const auto compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct, auto &rates, auto &drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
-		rates .resize(reaction_list.size());
-		drates.resize(reaction_list.size());
 		nnet::net86::compute_reaction_rates(Y, T, rho, eos_struct, rates, drates);
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!

@@ -29,7 +29,7 @@ namespace nnet::net14 {
 	};
 
 	/// function to compute the corrected BE
-	const auto compute_BE = [](const auto T, const auto rho) {
+	const auto compute_BE = [](const auto T, const auto rho, auto *corrected_BE) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		// ideal gaz correction
@@ -37,7 +37,6 @@ namespace nnet::net14 {
 		const Float nakbt = constants::Na*kbt;
 		const Float correction = -1.5*nakbt;
 
-		std::vector<Float> corrected_BE(14);
 		for (int i = 0; i < 14; ++i)
 			corrected_BE[i] = BE[i] + correction;
 
@@ -74,7 +73,7 @@ namespace nnet::net14 {
 			}
 		}
 
-		return corrected_BE;
+		//return corrected_BE;
 	};
 
 	// constant list of ordered reaction
@@ -156,10 +155,6 @@ namespace nnet::net14 {
 	/// compute a list of reactions for net14
 	auto const compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct, auto &rates, auto &drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
-
-	 // std::vector<Float> rates, drates;
-		rates .resize(reaction_list.size());
-		drates.resize(reaction_list.size());
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		fusions and fissions reactions from fits

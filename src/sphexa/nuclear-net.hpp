@@ -43,7 +43,7 @@ namespace sphexa::sphnnet {
 		{
 			// buffers
 			Float drho_dt;
-			std::vector<Float> rates, drates_dT;
+			std::vector<Float> rates(reactions.size()), drates_dT(reactions.size());
 			eigen::Vector<Float> RHS(dimension + 1), Y_buffer(dimension);
 			eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 
@@ -125,7 +125,7 @@ namespace sphexa::sphnnet {
 				{
 					// buffers
 					Float drho_dt;
-					std::vector<Float> rates, drates_dT;
+					std::vector<Float> rates(reactions.size()), drates_dT(reactions.size());
 					eigen::Vector<Float> RHS(dimension + 1), Y_buffer(dimension);
 					eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 
@@ -178,7 +178,7 @@ namespace sphexa::sphnnet {
 			#pragma omp parallel
 			{
 				// buffers
-				std::vector<Float> rates, drates_dT;
+				std::vector<Float> rates(reactions.size()), drates_dT(reactions.size());
 				eigen::Vector<Float> RHS(dimension + 1);
 				eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 

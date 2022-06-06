@@ -23,8 +23,8 @@ int main() {
 	X[nnet::net87::constants::net14_species_order[2]] = 0.5;
 	for (int i = 0; i < 86; ++i) Y[i] = X[i]/nnet::net87::constants::A[i];
 
-    std::vector<double> rate, drates;
-	auto BE             = nnet::net87::compute_BE(               2e9, 1e9);
+    std::vector<double> rate(nnet::net87::reaction_list.size()), drates(nnet::net87::reaction_list.size()), BE(87);
+						  nnet::net87::compute_BE(               2e9, 1e9, BE.data());
 	auto eos_struct     = helm(                               Y, 2e9, 1e9);
 	                      nnet::net87::compute_reaction_rates(Y, 2e9, 1e9, eos_struct, rate, drates);
 
