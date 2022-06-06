@@ -159,7 +159,7 @@ namespace sphexa::sphnnet {
 							if(nnet::finalize_system_substep(
 								n.Y[i], n.temp[i],
 								Y_buffer, temp_buffer,
-								DY_T, hydro_dt, elapsed_time_,
+								DY_T.data(), hydro_dt, elapsed_time_,
 								n.dt[i], j))
 							{
 								break;

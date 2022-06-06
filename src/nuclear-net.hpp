@@ -438,15 +438,13 @@ Iterative solver:
 	/**
 	 * TODO
 	 */
-	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float=double>
-	void inline prepare_system_NR(Float *Mp, Float *RHS,
+	template<class func_rate, class func_BE, class func_eos, typename Float=double>
+	void inline prepare_system_NR(const int dimension, Float *Mp, Float *RHS,
 		Float *rates, Float *drates_dT,
 		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector1 &Y, Float T, Vector2 &final_Y, Float final_T, 
+		const Float *Y, Float T, Float *final_Y, Float final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
-		const int dimension = Y.size();
-
 		auto &Y_theta = final_Y;
 
 		// compute n+theta values
@@ -455,12 +453,12 @@ Iterative solver:
 			Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
 
 		// compute rate
-		auto eos_struct         = eos            (Y_theta.data(), T_theta, rho);
-			                      construct_rates(Y_theta.data(), T_theta, rho, eos_struct, rates, drates_dT);
+		auto eos_struct         = eos            (Y_theta, T_theta, rho);
+			                      construct_rates(Y_theta, T_theta, rho, eos_struct, rates, drates_dT);
 		// generate system
 		prepare_system_from_guess(dimension, Mp, RHS,
 			reactions, rates, drates_dT, construct_BE,
-			Y.data(), T, Y_theta.data(), T_theta,
+			Y, T, Y_theta, T_theta,
 			rho, drho_dt, eos_struct, dt);
 	}
 
@@ -471,19 +469,17 @@ Iterative solver:
 	/**
 	 * TODO
 	 */
-	template<class Vector1, class Vector2, class Vector3, typename Float>
-	std::tuple<Float, bool> inline finalize_system_NR(
-		const Vector1 &Y, const Float T,
-		Vector2 &final_Y, Float &final_T,
-		const Vector3 &DY_T, Float &dt, int &i)
+	template<typename Float>
+	std::tuple<Float, bool> inline finalize_system_NR(const int dimension,
+		const Float *Y, const Float T,
+		Float *final_Y, Float &final_T,
+		const Float *DY_T, Float &dt, int &i)
 	{
-		const int dimension = Y.size();
-
 		Float last_T = final_T;
-		finalize_system(dimension, Y.data(), T, final_Y.data(), final_T, DY_T.data());
+		finalize_system(dimension, Y, T, final_Y, final_T, DY_T);
 
 		// check for garbage 
-		if (util::contain_nan(final_T, final_Y.data(), dimension) || final_T < 0) {
+		if (util::contain_nan(final_T, final_Y, dimension) || final_T < 0) {
 			// set timestep
 			dt *= constants::nan_dt_step;
 
@@ -510,7 +506,7 @@ Iterative solver:
 		}
 
 		// cleanup Vector
-		util::clip(final_Y.data(), dimension, nnet::constants::epsilon_vector);
+		util::clip(final_Y, dimension, nnet::constants::epsilon_vector);
 		
 		// return condition
 		Float correction = std::abs((final_T - last_T)/final_T);
@@ -550,6 +546,7 @@ Iterative solver:
 		const Float rho, const Float drho_dt, Float &dt)
 	{
 		const int dimension = Y.size();
+
 		for (int i = 0; i < dimension; ++i)
 			final_Y[i] = Y[i];
 		final_T = T;
@@ -568,10 +565,10 @@ Iterative solver:
 		Float timestep = 0;
 		for (int i = 0;; ++i) {
 			// generate system
-			prepare_system_NR(Mp.data(), RHS.data(),
+			prepare_system_NR(dimension, Mp.data(), RHS.data(),
 				rates.data(), drates_dT.data(),
 				reactions, construct_rates, construct_BE, eos,
-				Y, T, final_Y, final_T, 
+				Y.data(), T, final_Y.data(), final_T, 
 				rho, drho_dt, dt);
 
 			// solve M*D{T, Y} = RHS
@@ -579,9 +576,10 @@ Iterative solver:
 
 			// finalize
 			auto [timestep, exit] = finalize_system_NR(
-				Y, T,
-				final_Y, final_T,
-				DY_T, dt, i);
+				dimension,
+				Y.data(), T,
+				final_Y.data(), final_T,
+				DY_T.data(), dt, i);
 			if (exit)
 				return timestep;
 		}
@@ -610,6 +608,8 @@ Substeping solver
 		const Float dt_tot, Float &elapsed_time, Float &dt,
 		const nseFunction jumpToNse=NULL)
 	{
+		const int dimension = final_Y.size();
+
 		// compute rho
 		Float rho = final_rho - drho_dt*(dt_tot - elapsed_time);
 
@@ -630,10 +630,10 @@ Substeping solver
 			used_dt = dt_tot - elapsed_time;
 
 		// prepare system
-		prepare_system_NR(Mp, RHS,
+		prepare_system_NR(dimension, Mp, RHS,
 			rates, drates_dT,
 			reactions, construct_rates, construct_BE, eos,
-			final_Y, final_T, next_Y, next_T, 
+			final_Y.data(), final_T, next_Y.data(), next_T, 
 			rho, drho_dt, used_dt);
 	}
 
@@ -644,17 +644,19 @@ Substeping solver
 	/**
 	 * TODO
 	 */
-	template<class Vector1, class Vector2, class Vector3, typename Float=double>
+	template<class Vector1, class Vector2, typename Float=double>
 	bool inline finalize_system_substep(Vector1 &final_Y, Float &final_T,
 		Vector2 &next_Y, Float &next_T,
-		const Vector3 &DY_T, const Float dt_tot, Float &elapsed_time,
+		const Float *DY_T, const Float dt_tot, Float &elapsed_time,
 		Float &dt, int &i)
 	{
+		const int dimension = final_Y.size();
+
 		// finalize system
 		Float used_dt = dt;
-		auto [timestep, converged] = finalize_system_NR(
-			final_Y, final_T,
-			next_Y, next_T,
+		auto [timestep, converged] = finalize_system_NR(dimension,
+			final_Y.data(), final_T,
+			next_Y.data(), next_T,
 			DY_T, used_dt, i);
 
 		// update timestep
@@ -726,7 +728,7 @@ Substeping solver
 			if(finalize_system_substep(
 				final_Y, final_T,
 				Y_buffer, T_buffer,
-				DY_T, dt_tot, elapsed_time,
+				DY_T.data(), dt_tot, elapsed_time,
 				dt, i))
 			{
 				break;
