@@ -372,14 +372,14 @@ First simple direct solver:
 	 *  solves non-iteratively and partialy implicitly the system represented by M (computed at a specific "guess").
 	 * ...TODO
 	 */
-	template<class Vector1, class Vector2, class Vector3, class func_BE, class eos_type, typename Float>
+	template<class func_BE, class eos_type, typename Float>
 	void inline solve_system_from_guess(
+		const int dimension,
 		const std::vector<reaction> &reactions, const Float *rates, const Float *drates_dT, const func_BE construct_BE, 
-		const Vector1 &Y, const Float T, const Vector2 &Y_guess, const Float T_guess, Vector3 &next_Y, Float &next_T,
+		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess, Float *next_Y, Float &next_T,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
 	{
-		const int dimension = Y.size();
 		if (rho < constants::min_rho || T < constants::min_temp) {
 			for (int i = 0; i < dimension; ++i)
 				next_Y[i] = Y[i];
@@ -411,13 +411,15 @@ First simple direct solver:
 	 *  solves non-iteratively and partialy implicitly the system represented by M.
 	 * ...TODO
 	 */
-	template<class Vector1, class Vector2, class func_BE, typename Float>
+	template<class func_BE, typename Float>
 	void inline solve_system(
+		const int dimension,
 		const std::vector<reaction> &reactions, const Float *rates, const Float *drates_dT, const func_BE construct_BE,
-		const Vector1 &Y, const Float T, Vector2 &next_Y, Float &next_T,
+		const Float *Y, const Float T, Float *next_Y, Float &next_T,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
 		solve_system_from_guess(
+			dimension,
 			reactions, rates, drates_dT, construct_BE,
 			Y, T, Y, T, next_Y, next_T,
 			cv, rho, value_1, dt);
@@ -453,8 +455,8 @@ Iterative solver:
 			Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
 
 		// compute rate
-		auto eos_struct         = eos            (Y_theta, T_theta, rho);
-			                      construct_rates(Y_theta, T_theta, rho, eos_struct, rates, drates_dT);
+		auto eos_struct         = eos            (Y_theta.data(), T_theta, rho);
+			                      construct_rates(Y_theta.data(), T_theta, rho, eos_struct, rates, drates_dT);
 		// generate system
 		prepare_system_from_guess(dimension, Mp, RHS,
 			reactions, rates, drates_dT, construct_BE,

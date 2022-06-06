@@ -46,7 +46,7 @@ namespace nnet::net87 {
 	}();
 
 	/// compute a list of rates for net87
-	const auto compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct, auto *rates, auto *drates) {
+	const auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *rates, auto *drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		nnet::net86::compute_reaction_rates(Y, T, rho, eos_struct, rates, drates);

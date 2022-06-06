@@ -216,7 +216,7 @@ namespace nnet::net86 {
 
 
 	/// compute a list of rates for net86
-	const auto compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct, auto *rates, auto *drates) {
+	const auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *rates, auto *drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!

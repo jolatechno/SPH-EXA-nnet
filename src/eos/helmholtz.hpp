@@ -342,17 +342,17 @@ namespace nnet::eos {
 	/**
 	*...TODO
 	 */
-	template<typename Float=double, class Vector=std::vector<Float>>
+	template<typename Float=double>
 	class helmholtz {
 	private:
 		std::vector<Float> Z;
 
 	public:
-		helmholtz(const Vector &Z_) : Z(Z_) {}
+		helmholtz(const std::vector<Float> &Z_) : Z(Z_) {}
 
 		template<class Vector2=std::vector<Float>>
 		auto operator()(const Vector2 &Y, const Float T, const Float rho) const {
-			const int dimension = Y.size();
+			const int dimension = Z.size();
 
 			// coefs
 			double fi[36];

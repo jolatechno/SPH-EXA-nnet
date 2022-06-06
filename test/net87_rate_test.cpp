@@ -24,9 +24,9 @@ int main() {
 	for (int i = 0; i < 86; ++i) Y[i] = X[i]/nnet::net87::constants::A[i];
 
     std::vector<double> rate(nnet::net87::reaction_list.size()), drates(nnet::net87::reaction_list.size()), BE(87);
-	auto eos_struct = helm(                               Y, 2e9, 1e9);
-	                  nnet::net87::compute_reaction_rates(Y, 2e9, 1e9, eos_struct, rate.data(), drates.data());
-				      nnet::net87::compute_BE(               2e9, 1e9, eos_struct, BE.data());
+	auto eos_struct = helm(                               Y.data(), 2e9, 1e9);
+	                  nnet::net87::compute_reaction_rates(Y.data(), 2e9, 1e9, eos_struct, rate.data(), drates.data());
+				      nnet::net87::compute_BE(                      2e9, 1e9, eos_struct, BE.data());
 
 	std::cout << "reaction_list.size=" << nnet::net87::reaction_list.size() << ", rates.size=" << rate.size() << "\n\n";
 	
