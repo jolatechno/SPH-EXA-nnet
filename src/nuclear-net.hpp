@@ -257,10 +257,10 @@ First simple direct solver:
 	/**
 	 * TODO
 	 */
-	template<class Vector1, class Vector2, class func_BE, class eos_type, typename Float=double>
-	void inline prepare_system_from_guess(Float *Mp, Float *RHS,
+	template<class func_BE, class eos_type, typename Float=double>
+	void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS,
 		const std::vector<reaction> &reactions, const Float *rates, const Float *drates_dT, const func_BE construct_BE, 
-		const Vector1 &Y, const Float T, const Vector2 &Y_guess, const Float T_guess,
+		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
 	{
@@ -276,19 +276,17 @@ First simple direct solver:
 	<=> DT*cv = value_1*(T + theta*DT) + DY.BE
 	<=> DT*(cv - theta*value_1) - DY.BE = value_1*T
 		------------------- */
-		const int dimension = Y.size();
-
 		if (dt == 0) {
 			std::string error = "Zero timestep in nuclear network\n";
 			error += "\tT=" + std::to_string(T) + ",\tTguess=" + std::to_string(T_guess) + "\n";
 			error += "\trho=" + std::to_string(rho) + "\n";
 			error += "\tdP/dT=" + std::to_string(eos_struct.dP_dT) + ", cv=" + std::to_string(eos_struct.cv) + "\n";
 			error += "\tY=";
-			for (auto y : Y)
-				error += std::to_string(y) + " ";
+			for (int i = 0; i < dimension; ++i)
+				error += std::to_string(Y[i]) + " ";
 			error += "\n\tYguess=";
-			for (auto y : Y_guess)
-				error += std::to_string(y) + " ";
+			for (int i = 0; i < dimension; ++i)
+				error += std::to_string(Y_guess[i]) + " ";
 			
 			throw std::runtime_error(error);
 		}
@@ -299,12 +297,12 @@ First simple direct solver:
 		std::fill(Mp,  Mp + (dimension + 1)*(dimension + 1), 0.);
 
 		// compute RHS
-		util::derivatives_from_reactions(reactions, rates, rho, Y_guess.data(), &RHS[1], dimension);
+		util::derivatives_from_reactions(reactions, rates, rho, Y_guess, &RHS[1], dimension);
 		for (int i = 0; i < dimension; ++i)
 			RHS[i + 1] *= dt;
 
 		// main matrix part
-		util::order_1_dY_from_reactions(reactions, rates, rho, Y_guess.data(), Mp, dimension);
+		util::order_1_dY_from_reactions(reactions, rates, rho, Y_guess, Mp, dimension);
 		for (int i = 0; i < dimension; ++i) {
 			//     dY = ... + theta*dt*Mp*(next_Y - Y_guess) = ... + theta*dt*Mp*(next_Y - Y + Y - Y_guess) = ... + theta*dt*Mp*dY - theta*dt*Mp*(Y_guess - Y)
 			// <=> dY*(I - theta*dt*Mp) = ... - theta*Mp*dt*(Y_guess - Y)
@@ -338,7 +336,7 @@ First simple direct solver:
 			Mp[0 + (dimension + 1)*(i + 1)] = -Mp[i + 1]/eos_struct.cv;
 
 		// include rate derivative
-		util::derivatives_from_reactions(reactions, drates_dT, rho, Y_guess.data(), &Mp[1], dimension);
+		util::derivatives_from_reactions(reactions, drates_dT, rho, Y_guess, &Mp[1], dimension);
 		for (int i = 0; i < dimension; ++i) {
 			//               __*Dt = __*(next_T - T_guess) = __*(next_T - T + T - T_guess) = __*(next_T - T) - __*(T_guess - T)
 			// <=> -__*theta*dt*Dt = ... - __*theta*dt*(T_guess - T)
@@ -393,9 +391,9 @@ First simple direct solver:
 			eigen::Vector<Float> RHS(dimension + 1);
 
 			// generate system
-			prepare_system_from_guess(Mp.data(), RHS.data(),
+			prepare_system_from_guess(dimension, Mp.data(), RHS.data(),
 				reactions, rates, drates_dT, construct_BE,
-				Y, T, Y_guess, T_guess,
+				Y.data(), T, Y_guess.data(), T_guess,
 				rho, drho_dt, eos_struct, dt);
 
 			// solve M*D{T, Y} = RHS
@@ -460,9 +458,9 @@ Iterative solver:
 		auto eos_struct         = eos            (Y_theta, T_theta, rho);
 			                      construct_rates(Y_theta, T_theta, rho, eos_struct, rates, drates_dT);
 		// generate system
-		prepare_system_from_guess(Mp, RHS,
+		prepare_system_from_guess(dimension, Mp, RHS,
 			reactions, rates, drates_dT, construct_BE,
-			Y, T, Y_theta, T_theta,
+			Y.data(), T, Y_theta.data(), T_theta,
 			rho, drho_dt, eos_struct, dt);
 	}
 
