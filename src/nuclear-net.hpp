@@ -354,10 +354,8 @@ First simple direct solver:
 	/**
 	 * TODO
 	 */
-	template<class Vector1, class Vector2, class Vector3, typename Float>
-	void inline finalize_system(const Vector1 &Y, const Float T, Vector2 &next_Y, Float &next_T, const Vector3 &DY_T) {
-		const int dimension = Y.size();
-
+	template<typename Float>
+	void inline finalize_system(const int dimension, const Float *Y, const Float T, Float *next_Y, Float &next_T, const Float *DY_T) {
 		// increment values
 		for (int i = 0; i < dimension; ++i)
 			next_Y[i] = Y[i] + DY_T[i + 1];
@@ -400,7 +398,7 @@ First simple direct solver:
 			auto DY_T = eigen::solve(Mp, RHS, dimension + 1, constants::epsilon_system);
 
 			// finalize
-			return finalize_system(Y, T, next_Y, next_T, DY_T);
+			return finalize_system(dimension, Y.data(), T, next_Y.daat(), next_T, DY_T.data());
 		}
 	}
 
@@ -480,7 +478,7 @@ Iterative solver:
 		const int dimension = Y.size();
 
 		Float last_T = final_T;
-		finalize_system(Y, T, final_Y, final_T, DY_T);
+		finalize_system(dimension, Y.data(), T, final_Y.data(), final_T, DY_T.data());
 
 		// check for garbage 
 		if (util::contain_nan(final_T, final_Y.data(), dimension) || final_T < 0) {
