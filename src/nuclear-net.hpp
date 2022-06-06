@@ -399,7 +399,7 @@ First simple direct solver:
 				rho, drho_dt, eos_struct, dt);
 
 			// solve M*D{T, Y} = RHS
-			auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
+			auto DY_T = eigen::solve(Mp, RHS, dimension + 1, constants::epsilon_system);
 
 			// finalize
 			return finalize_system(Y, T, next_Y, next_T, DY_T);
@@ -577,7 +577,7 @@ Iterative solver:
 				rho, drho_dt, dt);
 
 			// solve M*D{T, Y} = RHS
-			auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
+			auto DY_T = eigen::solve(Mp.data(), RHS.data(), dimension + 1, constants::epsilon_system);
 
 			// finalize
 			auto [timestep, exit] = finalize_system_NR(
@@ -603,7 +603,8 @@ Substeping solver
 	 * TODO
 	 */
 	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
-	void inline prepare_system_substep(Float *Mp, Float *RHS,
+	void inline prepare_system_substep(
+		Float *Mp, Float *RHS,
 		Float *rates, Float *drates_dT,
 		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
 		const Vector1 &final_Y, Float final_T, Vector2 &next_Y, Float &next_T, 
@@ -690,11 +691,12 @@ Substeping solver
 	 * Superstepping using solve_system_NR, might move it to SPH-EXA
 	 * ...TODO
 	 */
-	template<class Vector1, class Vector2, class Vector3, class Matrix, class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
-	void inline solve_system_substep(Matrix &Mp, Vector1 &RHS,
+	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
+	void inline solve_system_substep(
+		Float *Mp, Float *RHS,
 		Float *rates, Float *drates_dT,
 		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		Vector2 &final_Y, Float &final_T, Vector3 &Y_buffer,
+		Vector1 &final_Y, Float &final_T, Vector2 &Y_buffer,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
 	{
@@ -711,8 +713,8 @@ Substeping solver
 		Float elapsed_time = 0;
 		for (int i = 0;; ++i) {
 			// generate system
-			prepare_system_substep(Mp.data(), RHS.data(),
-				rates, drates_dT,
+			prepare_system_substep(
+				Mp, RHS, rates, drates_dT,
 				reactions, construct_rates, construct_BE, eos,
 				final_Y, final_T, Y_buffer, T_buffer,
 				final_rho, drho_dt,
@@ -720,7 +722,7 @@ Substeping solver
 				jumpToNse);
 
 			// solve M*D{T, Y} = RHS
-			auto DY_T = eigen::solve(Mp, RHS, constants::epsilon_system);
+			auto DY_T = eigen::solve(Mp, RHS, dimension + 1, constants::epsilon_system);
 
 			// finalize
 			if(finalize_system_substep(

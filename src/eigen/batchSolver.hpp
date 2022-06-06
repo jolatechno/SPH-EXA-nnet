@@ -585,7 +585,7 @@ namespace eigen::batchSolver {
 					}
 
 					// solve
-					auto res = eigen::solve(Mp, RHS);
+					auto res = eigen::solve(Mp.data(), RHS.data(), dimension);
 
 					// save back to buffer
 					Float *res_ref = get_res(i);

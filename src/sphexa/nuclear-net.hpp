@@ -54,8 +54,8 @@ namespace sphexa::sphnnet {
 					drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
 					// solve
-					nnet::solve_system_substep(Mp, RHS,
-						rates.data(), drates_dT.data(),
+					nnet::solve_system_substep(
+						Mp.data(), RHS.data(), rates.data(), drates_dT.data(),
 						reactions, construct_rates, construct_BE, eos,
 						n.Y[i], n.temp[i], Y_buffer,
 						n.rho[i], drho_dt, hydro_dt, n.dt[i],
@@ -143,8 +143,8 @@ namespace sphexa::sphnnet {
 							// solve
 							for (int j = iter[i];; ++j) {
 								// generate system
-								nnet::prepare_system_substep(Mp.data(), RHS.data(),
-									rates.data(), drates_dT.data(),
+								nnet::prepare_system_substep(
+									Mp.data(), RHS.data(), rates.data(), drates_dT.data(),
 									reactions, construct_rates, construct_BE, eos,
 									n.Y[i], n.temp[i],
 									Y_buffer, temp_buffer,
@@ -153,7 +153,7 @@ namespace sphexa::sphnnet {
 									jumpToNse);
 
 							// solve M*D{T, Y} = RHS
-							auto DY_T = eigen::solve(Mp, RHS, nnet::constants::epsilon_system);
+							auto DY_T = eigen::solve(Mp.data(), RHS.data(), dimension + 1, nnet::constants::epsilon_system);
 
 							// finalize
 							if(nnet::finalize_system_substep(
@@ -190,8 +190,8 @@ namespace sphexa::sphnnet {
 					Float drho_dt = n.previous_rho[i] <= 0. ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
 					// preparing system
-					nnet::prepare_system_substep(Mp.data(), RHS.data(),
-						rates.data(), drates_dT.data(),
+					nnet::prepare_system_substep(
+						Mp.data(), RHS.data(), rates.data(), drates_dT.data(),
 						reactions, construct_rates, construct_BE, eos,
 						n.Y[i], n.temp[i],
 						Y_buffers[i], temp_buffers[i],
