@@ -292,14 +292,14 @@ namespace eigen::batchSolver {
 		 */
 		void solve_on_device(size_t begin, size_t n_solve, int device) {
 			// set device and stream
-			cudaStream_t stream;
+			cudaStream_t cublasStream;
 			cuda::cudaSafeCall(cudaSetDevice(device));
-			cuda::cudaSafeCall(cudaStreamCreate(&stream));
+			cuda::cudaSafeCall(cudaStreamCreate(&cublasStream));
 
 			// set accordingly on cublas
 			cublasHandle_t cublas_handle;
 			cublas::cublasSafeCall(cublasCreate(&cublas_handle));
-			cublas::cublasSafeCall(cublasSetStream(cublas_handle, stream));
+			cublas::cublasSafeCall(cublasSetStream(cublas_handle, cublasStream));
 			
 
 			/***********************************/
@@ -316,16 +316,8 @@ namespace eigen::batchSolver {
 			const size_t gpu_vec_begin = dimension*gpu_begin;
 			const size_t gpu_mat_begin = dimension*dimension*gpu_begin; 
 
-			// --- Creating the array of pointers needed as input/output to the batched getrf
-			for (int i = 0; i < n_solve; i++) {
-				mat_ptr[i + begin] = dev_mat_Buffer[device_id_] + gpu_mat_begin + dimension*dimension*i;
-				vec_ptr[i + begin] = dev_vec_Buffer[device_id_] + gpu_vec_begin + dimension*i;
-			}
-    		cuda::cudaSafeCall(cudaMemcpyAsync(dev_mat_ptr[device_id_] + gpu_begin, mat_ptr.data() + begin, n_solve*sizeof(Float*), cudaMemcpyHostToDevice, stream));
-    		cuda::cudaSafeCall(cudaMemcpyAsync(dev_vec_ptr[device_id_] + gpu_begin, vec_ptr.data() + begin, n_solve*sizeof(Float*), cudaMemcpyHostToDevice, stream));
-
 			// push memory to device
-			cuda::cudaSafeCall(cudaMemcpyAsync(dev_mat_Buffer[device_id_] + gpu_mat_begin, mat_Buffer.data() + mat_begin, dimension*dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice, stream));
+			cuda::cudaSafeCall(cudaMemcpyAsync(dev_mat_Buffer[device_id_] + gpu_mat_begin, mat_Buffer.data() + mat_begin, dimension*dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice, cublasStream));
 
 			// LU decomposition
 			cublas::cublasSafeCall(cublas::cublasGetrfBatched(cublas_handle,
@@ -333,8 +325,16 @@ namespace eigen::batchSolver {
 				dimension, dev_pivotArray[device_id_] + gpu_begin,
 				dev_InfoArray[device_id_]             + gpu_begin, n_solve));
 
+			// synchronize
+			cuda::cudaSafeCall(cudaStreamSynchronize(cublasStream));
+			// get pivot from device
+			cuda::cudaSafeCall(cudaMemcpyAsync(pivotArray.data() + vec_begin, dev_pivotArray[device_id_] + gpu_begin, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost, cublasStream));
+
+
+#ifdef GPU_CHECK_ERRORS
+			/* for safety (debug) */
 			// get Info from device
-			cuda::cudaSafeCall(cudaMemcpyAsync(InfoArray.data() + begin, dev_InfoArray[device_id_] + gpu_begin, n_solve*sizeof(int), cudaMemcpyDeviceToHost, stream));
+			cuda::cudaSafeCall(cudaMemcpy(InfoArray.data() + begin, dev_InfoArray[device_id_] + gpu_begin, n_solve*sizeof(int), cudaMemcpyDeviceToHost));
 			// check for error in each matrix
 			for (int i = begin; i < n_solve + begin; ++i)
 		        if (InfoArray[i] != 0) {
@@ -344,15 +344,15 @@ namespace eigen::batchSolver {
 		            cudaDeviceReset();
 		            throw std::runtime_error(error);
 		        }
+#endif
 
 
-			// get pivot from device
-			cuda::cudaSafeCall(cudaMemcpyAsync(pivotArray.data() + vec_begin, dev_pivotArray[device_id_] + gpu_begin, dimension*n_solve*sizeof(int), cudaMemcpyDeviceToHost, stream));
+			// synchronize
+			cuda::cudaSafeCall(cudaStreamSynchronize(cublasStream));
 			// rearange
 			util::rearrange(vec_Buffer.data() + vec_begin, pivotArray.data() + vec_begin, dimension, n_solve);
-
 			// push vector data to device
-			cuda::cudaSafeCall(cudaMemcpyAsync(dev_vec_Buffer[device_id_] + gpu_vec_begin, vec_Buffer.data() + vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice, stream));
+			cuda::cudaSafeCall(cudaMemcpyAsync(dev_vec_Buffer[device_id_] + gpu_vec_begin, vec_Buffer.data() + vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyHostToDevice, cublasStream));
 
     		const double alpha = 1.;
 			// solve lower triangular part
@@ -367,10 +367,10 @@ namespace eigen::batchSolver {
     			dimension, n_solve));
 
 			// get memory from device
-			cuda::cudaSafeCall(cudaMemcpyAsync(vec_Buffer.data() + vec_begin, dev_vec_Buffer[device_id_] + gpu_vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyDeviceToHost, stream));
+			cuda::cudaSafeCall(cudaMemcpyAsync(vec_Buffer.data() + vec_begin, dev_vec_Buffer[device_id_] + gpu_vec_begin, dimension*n_solve*sizeof(Float), cudaMemcpyDeviceToHost, cublasStream));
 
 			// destroy stream
-			cuda::cudaSafeCall(cudaStreamDestroy(stream));
+			cuda::cudaSafeCall(cudaStreamDestroy(cublasStream));
 			// dehalocate handle
 			cublas::cublasSafeCall(cublasDestroy(cublas_handle));
 		}
@@ -411,22 +411,37 @@ namespace eigen::batchSolver {
 		    	// get range for solving
 		    	size_t begin         =       size*device_id_/deviceCount;
 		    	size_t end           = size*(device_id_ + 1)/deviceCount;
-		    	size_t local_n_solve = end - begin;
+		    	size_t local_size = end - begin;
 
 		    	/*****************************/
 				/* allocating device Buffers */
 				/*****************************/
 
-				// set device
-				cudaSetDevice(device);
+				// set device and stream
+				cudaStream_t streams[6];
+				cuda::cudaSafeCall(cudaSetDevice(device));
+				for (int i = 0; i < 6; ++i)
+					cuda::cudaSafeCall(cudaStreamCreate(&streams[i]));
 
 				// allocate GPU vectors
-				cuda::cudaSafeCall(cudaMalloc((void**)&dev_vec_Buffer[device_id_],           dimension*size*sizeof(Float)));
-				cuda::cudaSafeCall(cudaMalloc((void**)&dev_mat_Buffer[device_id_], dimension*dimension*size*sizeof(Float)));
-				cuda::cudaSafeCall(cudaMalloc((void**)&dev_pivotArray[device_id_],           dimension*size*sizeof(int)));
-				cuda::cudaSafeCall(cudaMalloc((void**)&dev_InfoArray[device_id_],                      size*sizeof(int)));
-				cuda::cudaSafeCall(cudaMalloc((void**)&dev_mat_ptr[device_id_],                        size*sizeof(Float*)));
-				cuda::cudaSafeCall(cudaMalloc((void**)&dev_vec_ptr[device_id_],                        size*sizeof(Float*)));
+				cuda::cudaSafeCall(cudaMallocAsync((void**)&dev_vec_Buffer[device_id_],           dimension*local_size*sizeof(Float),  streams[0]));
+				cuda::cudaSafeCall(cudaMallocAsync((void**)&dev_mat_Buffer[device_id_], dimension*dimension*local_size*sizeof(Float),  streams[1]));
+				cuda::cudaSafeCall(cudaMallocAsync((void**)&dev_pivotArray[device_id_],           dimension*local_size*sizeof(int),    streams[2]));
+				cuda::cudaSafeCall(cudaMallocAsync((void**)&dev_InfoArray[device_id_],                      local_size*sizeof(int),    streams[3]));
+				cuda::cudaSafeCall(cudaMallocAsync((void**)&dev_mat_ptr[device_id_],                        local_size*sizeof(Float*), streams[4]));
+				cuda::cudaSafeCall(cudaMallocAsync((void**)&dev_vec_ptr[device_id_],                        local_size*sizeof(Float*), streams[5]));
+
+				// --- Creating the array of pointers needed as input/output to the batched getrf
+				for (int i = 0; i < local_size; i++) {
+					mat_ptr[i + begin] = dev_mat_Buffer[device_id_] + dimension*dimension*i;
+					vec_ptr[i + begin] = dev_vec_Buffer[device_id_] + dimension*i;
+				}
+	    		cuda::cudaSafeCall(cudaMemcpyAsync(dev_mat_ptr[device_id_], mat_ptr.data() + begin, local_size*sizeof(Float*), cudaMemcpyHostToDevice, streams[4]));
+	    		cuda::cudaSafeCall(cudaMemcpyAsync(dev_vec_ptr[device_id_], vec_ptr.data() + begin, local_size*sizeof(Float*), cudaMemcpyHostToDevice, streams[5]));
+
+	    		// destroy stream
+	    		for (int i = 0; i < 6; ++i)
+					cuda::cudaSafeCall(cudaStreamDestroy(streams[i]));
 		    }
 		}
 
@@ -437,18 +452,26 @@ namespace eigen::batchSolver {
 		    {
 		    	// get device id = thread id
 		    	int device_id_ = omp_get_thread_num();
+		    	// set stream
+				cudaStream_t streams[6];
+				for (int i = 0; i < 6; ++i)
+					cuda::cudaSafeCall(cudaStreamCreate(&streams[i]));
 
 		    	/*******************************/
 				/* deallocating device Buffers */
 				/*******************************/
 
 				// deallocate memory
-				cuda::cudaSafeCall(cudaFree(dev_vec_Buffer[device_id_]));
-				cuda::cudaSafeCall(cudaFree(dev_mat_Buffer[device_id_]));
-				cuda::cudaSafeCall(cudaFree(dev_pivotArray[device_id_]));
-				cuda::cudaSafeCall(cudaFree(dev_InfoArray[device_id_]));
-				cuda::cudaSafeCall(cudaFree(dev_mat_ptr[device_id_]));
-				cuda::cudaSafeCall(cudaFree(dev_vec_ptr[device_id_]));
+				cuda::cudaSafeCall(cudaFreeAsync(dev_vec_Buffer[device_id_], streams[0]));
+				cuda::cudaSafeCall(cudaFreeAsync(dev_mat_Buffer[device_id_], streams[1]));
+				cuda::cudaSafeCall(cudaFreeAsync(dev_pivotArray[device_id_], streams[2]));
+				cuda::cudaSafeCall(cudaFreeAsync(dev_InfoArray[device_id_],  streams[3]));
+				cuda::cudaSafeCall(cudaFreeAsync(dev_mat_ptr[device_id_],    streams[4]));
+				cuda::cudaSafeCall(cudaFreeAsync(dev_vec_ptr[device_id_],    streams[5]));
+
+				// destroy stream
+	    		for (int i = 0; i < 6; ++i)
+					cuda::cudaSafeCall(cudaStreamDestroy(streams[i]));
 		    }
 		}
 
