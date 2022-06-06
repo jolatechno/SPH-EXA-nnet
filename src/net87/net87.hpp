@@ -21,7 +21,7 @@ namespace nnet::net87 {
 	}();
 
 	/// function to compute the corrected BE
-	const auto compute_BE = [](const auto T, const auto rho, auto *corrected_BE) {
+	const auto compute_BE = [](const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		// ideal gaz correction
@@ -30,7 +30,7 @@ namespace nnet::net87 {
 		Float correction = -1.5*nakbt;
 
 		// adding electrons to net86
-		nnet::net86::compute_BE(T, rho, corrected_BE);
+		nnet::net86::compute_BE(T, rho, eos_struct, corrected_BE);
 		corrected_BE[86] = BE.back() + correction;
 
 		//return corrected_BE;
@@ -46,7 +46,7 @@ namespace nnet::net87 {
 	}();
 
 	/// compute a list of rates for net87
-	const auto compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct, auto &rates, auto &drates) {
+	const auto compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct, auto *rates, auto *drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		nnet::net86::compute_reaction_rates(Y, T, rho, eos_struct, rates, drates);

@@ -29,7 +29,7 @@ namespace nnet::net14 {
 	};
 
 	/// function to compute the corrected BE
-	const auto compute_BE = [](const auto T, const auto rho, auto *corrected_BE) {
+	const auto compute_BE = [](const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		// ideal gaz correction
@@ -153,7 +153,7 @@ namespace nnet::net14 {
 	};
 
 	/// compute a list of reactions for net14
-	auto const compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct, auto &rates, auto &drates) {
+	auto const compute_reaction_rates = [](const auto &Y, const auto T, const auto rho, const auto &eos_struct, auto *rates, auto *drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!

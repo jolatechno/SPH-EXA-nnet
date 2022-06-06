@@ -55,7 +55,7 @@ namespace sphexa::sphnnet {
 
 					// solve
 					nnet::solve_system_substep(Mp, RHS,
-						rates, drates_dT,
+						rates.data(), drates_dT.data(),
 						reactions, construct_rates, construct_BE, eos,
 						n.Y[i], n.temp[i], Y_buffer,
 						n.rho[i], drho_dt, hydro_dt, n.dt[i],
@@ -144,7 +144,7 @@ namespace sphexa::sphnnet {
 							for (int j = iter[i];; ++j) {
 								// generate system
 								nnet::prepare_system_substep(Mp.data(), RHS.data(),
-									rates, drates_dT,
+									rates.data(), drates_dT.data(),
 									reactions, construct_rates, construct_BE, eos,
 									n.Y[i], n.temp[i],
 									Y_buffer, temp_buffer,
@@ -191,7 +191,7 @@ namespace sphexa::sphnnet {
 
 					// preparing system
 					nnet::prepare_system_substep(Mp.data(), RHS.data(),
-						rates, drates_dT,
+						rates.data(), drates_dT.data(),
 						reactions, construct_rates, construct_BE, eos,
 						n.Y[i], n.temp[i],
 						Y_buffers[i], temp_buffers[i],
