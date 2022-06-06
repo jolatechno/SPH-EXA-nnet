@@ -61,7 +61,7 @@ constants :
 			/// minimum number of newton raphson iterations
 			uint min_it = 1;
 			/// maximum number of newton raphson iterations
-			uint max_it = 10;
+			uint max_it = 11;
 			/// tolerance for the correction to break out of the newton raphson loop
 			double it_tol = 1e-7;
 		}
@@ -443,11 +443,18 @@ Iterative solver:
 		Float *rates, Float *drates_dT,
 		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
 		const Float *Y, Float T, Float *final_Y, Float final_T, 
-		const Float rho, const Float drho_dt, Float &dt)
+		const Float rho, const Float drho_dt,
+		Float &dt,  const int i)
 	{
-		auto &Y_theta = final_Y;
+		// copy if first iteration
+		if (i <= 1) {
+			for (int j = 0; j < dimension; ++j)
+				final_Y[j] = Y[j];
+			final_T = T;
+		}
 
 		// compute n+theta values
+		auto &Y_theta = final_Y;
 		Float T_theta  = (1 - constants::theta)*T    + constants::theta*final_T;
 		for (int j = 0; j < dimension; ++j)
 			Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
@@ -484,9 +491,6 @@ Iterative solver:
 			dt *= constants::nan_dt_step;
 
 			// jump back
-			for (int i = 0; i < dimension; ++i)
-				final_Y[i] = Y[i];
-			final_T = T;
 			i = 0;
 			return {0., false};
 		}
@@ -498,10 +502,10 @@ Iterative solver:
 			dt *= constants::NR::dT_T_target/dT_T;
 
 			// jump back
-			for (int i = 0; i < dimension; ++i)
-				final_Y[i] = Y[i];
-			final_T = T;
 			i = 0;
+			for (int j = 0; j < dimension; ++j)
+				final_Y[j] = Y[j];
+			final_T = T;
 			return {0., false};
 		}
 
@@ -539,18 +543,12 @@ Iterative solver:
 	 * iterative solver.
 	 * ...TODO
 	 */
-	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float=double>
-	Float inline solve_system_NR(
+	template<class func_rate, class func_BE, class func_eos, typename Float=double>
+	Float inline solve_system_NR(const int dimension,
 		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector1 &Y, Float T, Vector2 &final_Y, Float &final_T, 
+		const Float *Y, Float T, Float *final_Y, Float &final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
-		const int dimension = Y.size();
-
-		for (int i = 0; i < dimension; ++i)
-			final_Y[i] = Y[i];
-		final_T = T;
-
 		// check for non-burning particles
 		if (rho < constants::min_rho || T < constants::min_temp) {
 			dt = constants::max_dt;
@@ -563,13 +561,13 @@ Iterative solver:
 
 		// actual solving
 		Float timestep = 0;
-		for (int i = 0;; ++i) {
+		for (int i = 1;; ++i) {
 			// generate system
 			prepare_system_NR(dimension, Mp.data(), RHS.data(),
 				rates.data(), drates_dT.data(),
 				reactions, construct_rates, construct_BE, eos,
-				Y.data(), T, final_Y.data(), final_T, 
-				rho, drho_dt, dt);
+				Y, T, final_Y, final_T, 
+				rho, drho_dt, dt, i);
 
 			// solve M*D{T, Y} = RHS
 			auto DY_T = eigen::solve(Mp.data(), RHS.data(), dimension + 1, constants::epsilon_system);
@@ -577,8 +575,8 @@ Iterative solver:
 			// finalize
 			auto [timestep, exit] = finalize_system_NR(
 				dimension,
-				Y.data(), T,
-				final_Y.data(), final_T,
+				Y, T,
+				final_Y, final_T,
 				DY_T.data(), dt, i);
 			if (exit)
 				return timestep;
@@ -598,18 +596,16 @@ Substeping solver
 	/**
 	 * TODO
 	 */
-	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
-	void inline prepare_system_substep(
+	template<class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
+	void inline prepare_system_substep(const int dimension,
 		Float *Mp, Float *RHS,
 		Float *rates, Float *drates_dT,
 		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		const Vector1 &final_Y, Float final_T, Vector2 &next_Y, Float &next_T, 
+		const Float *final_Y, Float final_T, Float *next_Y, Float &next_T, 
 		const Float final_rho, const Float drho_dt,
-		const Float dt_tot, Float &elapsed_time, Float &dt,
+		const Float dt_tot, Float &elapsed_time, Float &dt, const int i,
 		const nseFunction jumpToNse=NULL)
 	{
-		const int dimension = final_Y.size();
-
 		// compute rho
 		Float rho = final_rho - drho_dt*(dt_tot - elapsed_time);
 
@@ -620,8 +616,7 @@ Substeping solver
 			elapsed_time = dt_tot;
 
 			(*jumpToNse)(reactions, construct_rates, construct_BE, eos,
-				final_Y, final_T, next_Y, next_T,
-				rho, drho_dt);
+				final_Y, final_T, rho, drho_dt);
 		}
 		
 		// insure convergence to the right time
@@ -633,8 +628,8 @@ Substeping solver
 		prepare_system_NR(dimension, Mp, RHS,
 			rates, drates_dT,
 			reactions, construct_rates, construct_BE, eos,
-			final_Y.data(), final_T, next_Y.data(), next_T, 
-			rho, drho_dt, used_dt);
+			final_Y, final_T, next_Y, next_T, 
+			rho, drho_dt, used_dt, i);
 	}
 
 
@@ -644,19 +639,18 @@ Substeping solver
 	/**
 	 * TODO
 	 */
-	template<class Vector1, class Vector2, typename Float=double>
-	bool inline finalize_system_substep(Vector1 &final_Y, Float &final_T,
-		Vector2 &next_Y, Float &next_T,
+	template<typename Float=double>
+	bool inline finalize_system_substep(const int dimension,
+		Float *final_Y, Float &final_T,
+		Float *next_Y, Float &next_T,
 		const Float *DY_T, const Float dt_tot, Float &elapsed_time,
 		Float &dt, int &i)
 	{
-		const int dimension = final_Y.size();
-
 		// finalize system
 		Float used_dt = dt;
 		auto [timestep, converged] = finalize_system_NR(dimension,
-			final_Y.data(), final_T,
-			next_Y.data(), next_T,
+			final_Y, final_T,
+			next_Y, next_T,
 			DY_T, used_dt, i);
 
 		// update timestep
@@ -664,15 +658,14 @@ Substeping solver
 			dt = used_dt;
 
 		if (converged) {
-			// jump back, increment time
-			i = 0;
-			elapsed_time += timestep;
-
 			// update state
-			const int dimension = final_Y.size();
 			for (int i = 0; i < dimension; ++i)
 				final_Y[i] = next_Y[i];
 			final_T = next_T;
+
+			// jump back, increment time
+			i = 0;
+			elapsed_time += timestep;
 
 			// check exit condition
 			if ((dt_tot - elapsed_time)/dt_tot < constants::substep::dt_tol)
@@ -691,41 +684,37 @@ Substeping solver
 	 * Superstepping using solve_system_NR, might move it to SPH-EXA
 	 * ...TODO
 	 */
-	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
-	void inline solve_system_substep(
+	template<class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
+	void inline solve_system_substep(const int dimension,
 		Float *Mp, Float *RHS,
 		Float *rates, Float *drates_dT,
 		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		Vector1 &final_Y, Float &final_T, Vector2 &Y_buffer,
+		Float *final_Y, Float &final_T, Float *Y_buffer,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
 	{
 		// check for non-burning particles
 		if (final_rho < constants::min_rho || final_T < constants::min_temp)
-			return;		
-
-		const int dimension = final_Y.size();
-		for (int i = 0; i < dimension; ++i)
-			Y_buffer[i] = final_Y[i];
-		Float T_buffer = final_T;
+			return;
 
 		// actual solving
 		Float elapsed_time = 0;
-		for (int i = 0;; ++i) {
+		Float T_buffer;
+		for (int i = 1;; ++i) {
 			// generate system
-			prepare_system_substep(
+			prepare_system_substep(dimension,
 				Mp, RHS, rates, drates_dT,
 				reactions, construct_rates, construct_BE, eos,
 				final_Y, final_T, Y_buffer, T_buffer,
 				final_rho, drho_dt,
-				dt_tot, elapsed_time, dt,
+				dt_tot, elapsed_time, dt, i,
 				jumpToNse);
 
 			// solve M*D{T, Y} = RHS
 			auto DY_T = eigen::solve(Mp, RHS, dimension + 1, constants::epsilon_system);
 
 			// finalize
-			if(finalize_system_substep(
+			if(finalize_system_substep(dimension,
 				final_Y, final_T,
 				Y_buffer, T_buffer,
 				DY_T.data(), dt_tot, elapsed_time,
@@ -745,19 +734,19 @@ Substeping solver
 	 * Superstepping using solve_system_NR, might move it to SPH-EXA
 	 * ...TODO
 	 */
-	template<class Vector1, class Vector2, class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
-	void inline solve_system_substep(const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
-		Vector1 &final_Y, Float &final_T, Vector2 &Y_buffer,
+	template<class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
+	void inline solve_system_substep(const int dimension,
+		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		Float *final_Y, Float &final_T, Float *Y_buffer,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
 	{
-		const int dimension = final_Y.size();
-
 		std::vector<Float> rates(reactions.size()), drates_dT(reactions.size());
 		eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 		eigen::Vector<Float> RHS(dimension + 1);
 
-		solve_system_substep(Mp.data(), RHS.data(),
+		solve_system_substep(dimension,
+			Mp.data(), RHS.data(),
 			rates.data(), drates_dT.data(),
 			reactions, construct_rates, construct_BE, eos,
 			final_Y, final_T, Y_buffer,

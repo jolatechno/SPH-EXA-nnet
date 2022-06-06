@@ -54,10 +54,10 @@ namespace sphexa::sphnnet {
 					drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
 					// solve
-					nnet::solve_system_substep(
+					nnet::solve_system_substep(dimension,
 						Mp.data(), RHS.data(), rates.data(), drates_dT.data(),
 						reactions, construct_rates, construct_BE, eos,
-						n.Y[i], n.temp[i], Y_buffer,
+						n.Y[i].data(), n.temp[i], Y_buffer.data(),
 						n.rho[i], drho_dt, hydro_dt, n.dt[i],
 						jumpToNse);
 				}
@@ -82,18 +82,12 @@ namespace sphexa::sphnnet {
 #endif
 
 		// data for batch initialization
-		std::vector<int>              iter(n_particles, 0);
+		std::vector<int>              iter(n_particles, 1);
 		std::vector<uint8_t/*bool*/>  burning(n_particles, true);
 		std::vector<size_t>           particle_ids(batch_size);
 		std::vector<Float>            elapsed_time(n_particles, 0.);
 		std::vector<Float>            temp_buffers(n_particles);
-		decltype(n.Y)                 Y_buffers(n_particles);
-
-		// intialize buffers
-		for (size_t i = 0; i < n_particles; ++i) {
-			temp_buffers[i] = n.temp[i];
-			Y_buffers[i] = n.Y[i];
-		}
+		std::vector<Float>            Y_buffers(n_particles*dimension);
 
 		// solving loop
 		while (true) {
@@ -138,27 +132,27 @@ namespace sphexa::sphnnet {
 							// compute the remaining time step to integrate over
 							Float elapsed_time_ = elapsed_time[i], temp_buffer = temp_buffers[i];
 							for (int j = 0; j < dimension; ++j)
-								Y_buffer[j] = Y_buffers[i][j];
+								Y_buffer[j] = Y_buffers[i*dimension + j];
 
 							// solve
 							for (int j = iter[i];; ++j) {
 								// generate system
-								nnet::prepare_system_substep(
+								nnet::prepare_system_substep(dimension,
 									Mp.data(), RHS.data(), rates.data(), drates_dT.data(),
 									reactions, construct_rates, construct_BE, eos,
-									n.Y[i], n.temp[i],
-									Y_buffer, temp_buffer,
+									n.Y[i].data(), n.temp[i],
+									Y_buffer.data(), temp_buffer,
 									n.rho[i], drho_dt,
-									hydro_dt, elapsed_time_, n.dt[i],
+									hydro_dt, elapsed_time_, n.dt[i], j,
 									jumpToNse);
 
 							// solve M*D{T, Y} = RHS
 							auto DY_T = eigen::solve(Mp.data(), RHS.data(), dimension + 1, nnet::constants::epsilon_system);
 
 							// finalize
-							if(nnet::finalize_system_substep(
-								n.Y[i], n.temp[i],
-								Y_buffer, temp_buffer,
+							if(nnet::finalize_system_substep(dimension,
+								n.Y[i].data(), n.temp[i],
+								Y_buffer.data(), temp_buffer,
 								DY_T.data(), hydro_dt, elapsed_time_,
 								n.dt[i], j))
 							{
@@ -190,13 +184,13 @@ namespace sphexa::sphnnet {
 					Float drho_dt = n.previous_rho[i] <= 0. ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
 					// preparing system
-					nnet::prepare_system_substep(
+					nnet::prepare_system_substep(dimension,
 						Mp.data(), RHS.data(), rates.data(), drates_dT.data(),
 						reactions, construct_rates, construct_BE, eos,
-						n.Y[i], n.temp[i],
-						Y_buffers[i], temp_buffers[i],
+						n.Y[i].data(), n.temp[i],
+						&Y_buffers[i*dimension], temp_buffers[i],
 						n.rho[i], drho_dt,
-						hydro_dt, elapsed_time[i], n.dt[i],
+						hydro_dt, elapsed_time[i], n.dt[i], iter[i],
 						jumpToNse);
 
 					// insert
@@ -222,9 +216,9 @@ namespace sphexa::sphnnet {
 				auto res_buffer = batch_solver.get_res(batchID);
 
 				// finalize
-				if(nnet::finalize_system_substep(
-					n.Y[i], n.temp[i],
-					Y_buffers[i], temp_buffers[i],
+				if(nnet::finalize_system_substep(dimension,
+					n.Y[i].data(), n.temp[i],
+					&Y_buffers[i*dimension], temp_buffers[i],
 					res_buffer, hydro_dt, elapsed_time[i],
 					n.dt[i], iter[i]))
 				{

@@ -155,7 +155,7 @@ void step(size_t firstIndex, size_t lastIndex,
 int main(int argc, char* argv[]) {
 	/* initial hydro data */
 	double rho_left = 1.1e9, rho_right = 0.8e9;
-	double T_left = 0.8e9, T_right = 1.1e9;
+	double T_left = 0.5e9, T_right = 1.8e9;
 
 
 
