@@ -128,10 +128,8 @@ utils functions :
 		 * clip the values in a Vector, to make 0 any negative value, or values smaller than a tolerance epsilon
 		 * ...TODO
 		 */
-		template<typename Float, class Vector>
-		void clip(Vector &X, const Float epsilon) {
-			const int dimension = X.size();
-
+		template<typename Float>
+		void clip(Float *X, const int dimension, const Float epsilon) {
 			for (int i = 0; i < dimension; ++i)
 				if (X[i] <= epsilon) //if (std::abs(X(i)) <= epsilon)
 					X[i] = 0;
@@ -144,12 +142,11 @@ utils functions :
 		/**
 		 * ...TODO
 		 */
-		template<typename Float, class Vector>
-		bool contain_nan(const Vector &Y, const Float T) {
+		template<typename Float>
+		bool contain_nan(const Float T, const Float *Y, const int dimension) {
 			if (std::isnan(T))
 				return true;
 
-			const int dimension = Y.size();
 			for (int i = 0; i < dimension; ++i)
 				if (std::isnan(Y[i]))
 					return true;
@@ -165,10 +162,8 @@ utils functions :
 		 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y.
 		 * ...TODO
 		 */
-		template<typename Float, class Vector1, class Vector2>
-		void /*inline*/ derivatives_from_reactions(const std::vector<reaction> &reactions, const Float *rates, Vector1 const &Y, const Float rho, Vector2 &dY) {
-			const int dimension = Y.size();
-			
+		template<typename Float>
+		void /*inline*/ derivatives_from_reactions(const std::vector<reaction> &reactions, const Float *rates, const Float rho, const Float *Y, Float *dY, const int dimension) {
 			for (int i = 0; i < dimension; ++i)
 				dY[i] = 0.;
 
@@ -208,13 +203,10 @@ utils functions :
 		 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y.
 		 * ...TODO
 		 */
-		template<typename Float, class Vector>
-		void /*inline*/ order_1_dY_from_reactions(const std::vector<reaction> &reactions, const Float *rates,
-			Vector const &Y, const Float rho,
-			Float *M)
+		template<typename Float>
+		void /*inline*/ order_1_dY_from_reactions(const std::vector<reaction> &reactions, const Float *rates, const Float rho,
+			Float const *Y, Float *M, const int dimension)
 		{
-			const int dimension = Y.size();
-
 			const int num_reactions = reactions.size();
 			for (int i = 0; i < num_reactions; ++i) {
 				const reaction &Reaction = reactions[i];
@@ -306,14 +298,13 @@ First simple direct solver:
       //std::fill(RHS, RHS + dimension + 1,                  0.);
 		std::fill(Mp,  Mp + (dimension + 1)*(dimension + 1), 0.);
 
-		
-		eigen::Vector<Float> dY_dt(dimension);
-		util::derivatives_from_reactions(reactions, rates, Y_guess, rho, dY_dt);
+		// compute RHS
+		util::derivatives_from_reactions(reactions, rates, rho, Y_guess.data(), &RHS[1], dimension);
 		for (int i = 0; i < dimension; ++i)
-			RHS[i + 1] = dY_dt[i]*dt;
+			RHS[i + 1] *= dt;
 
 		// main matrix part
-		util::order_1_dY_from_reactions(reactions, rates, Y_guess, rho, Mp);
+		util::order_1_dY_from_reactions(reactions, rates, rho, Y_guess.data(), Mp, dimension);
 		for (int i = 0; i < dimension; ++i) {
 			//     dY = ... + theta*dt*Mp*(next_Y - Y_guess) = ... + theta*dt*Mp*(next_Y - Y + Y - Y_guess) = ... + theta*dt*Mp*dY - theta*dt*Mp*(Y_guess - Y)
 			// <=> dY*(I - theta*dt*Mp) = ... - theta*Mp*dt*(Y_guess - Y)
@@ -347,14 +338,14 @@ First simple direct solver:
 			Mp[0 + (dimension + 1)*(i + 1)] = -Mp[i + 1]/eos_struct.cv;
 
 		// include rate derivative
-		auto &dY_dT = dY_dt;
-		util::derivatives_from_reactions(reactions, drates_dT, Y_guess, rho, dY_dT);
+		util::derivatives_from_reactions(reactions, drates_dT, rho, Y_guess.data(), &Mp[1], dimension);
 		for (int i = 0; i < dimension; ++i) {
-			Mp[(i + 1) + 0] = -constants::theta*dt*dY_dT[i];
-
 			//               __*Dt = __*(next_T - T_guess) = __*(next_T - T + T - T_guess) = __*(next_T - T) - __*(T_guess - T)
 			// <=> -__*theta*dt*Dt = ... - __*theta*dt*(T_guess - T)
-			RHS[i + 1]  += -constants::theta*dt*dY_dT[i]*(T_guess - T);
+			RHS[i + 1]  += -constants::theta*dt*Mp[(i + 1) + 0]*(T_guess - T);
+
+			// correct rate derivative
+			Mp[(i + 1) + 0] *= -constants::theta*dt;
 		}
 	}
 
@@ -494,7 +485,7 @@ Iterative solver:
 		finalize_system(Y, T, final_Y, final_T, DY_T);
 
 		// check for garbage 
-		if (util::contain_nan(final_Y, final_T) || final_T < 0) {
+		if (util::contain_nan(final_T, final_Y.data(), dimension) || final_T < 0) {
 			// set timestep
 			dt *= constants::nan_dt_step;
 
@@ -521,7 +512,7 @@ Iterative solver:
 		}
 
 		// cleanup Vector
-		util::clip(final_Y, nnet::constants::epsilon_vector);
+		util::clip(final_Y.data(), dimension, nnet::constants::epsilon_vector);
 		
 		// return condition
 		Float correction = std::abs((final_T - last_T)/final_T);
