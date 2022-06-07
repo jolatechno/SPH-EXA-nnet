@@ -82,27 +82,6 @@ namespace nnet::net14 {
 		   3He -> C fusion */
 		{{{0, 3}}, {{1}}},
 
-		/* 3He <- C fission
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{{{1}}, {{0, 3}}},
-
-
-
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		2C -> Ne + He fusion
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{{{1, 2}}, {{3}, {0}}},
-
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		C + O -> Mg + He fusion
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{{{1}, {2}}, {{4}, {0}}},
-
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		2O -> Si + He fusion
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		{{{2, 2}}, {{5}, {0}}},
-
 
 
 
@@ -127,6 +106,29 @@ namespace nnet::net14 {
 		{{{0}, {11}}, {{12}}}, // Fe + He -> Ni
 		{{{0}, {12}}, {{13}}}, // Ni + He -> Zn
 
+
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		2C -> Ne + He fusion
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		{{{1, 2}}, {{3}, {0}}},
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		C + O -> Mg + He fusion
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		{{{1}, {2}}, {{4}, {0}}},
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		2O -> Si + He fusion
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		{{{2, 2}}, {{5}, {0}}},
+
+
+
+
+		/* 3He <- C fission
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		{{{1}}, {{0, 3}}},
 
 
 
@@ -516,7 +518,7 @@ namespace nnet::net14 {
 			    const Float dvA=vA*vA*t9i2;
 			    const Float dvB=28.055*dvA*std::pow(vA, -4./3.) - 6.36e-3*t92;
 
-			    deff[13]=4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
+			    deff[13] = 4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
 
 	      		// debuging :
 				if (debug) std::cout << "dr24=" << deff[13] << "\n";
@@ -679,6 +681,17 @@ namespace nnet::net14 {
 				deltamukbt[13] = 2.*mukbt[1] - mukbt[3];
 				deltamukbt[14] = mukbt[1] + mukbt[2] - mukbt[4];
 				deltamukbt[15] = 2.*mukbt[2] - mukbt[5];
+
+				/*for (int i = 0; i < 16; ++i) {
+					const auto &Reaction = reaction_list[i];
+
+					Float deltamukbt_ = 0;
+					for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants)
+						deltamukbt_ += mukbt[reactant_id]*n_reactant_consumed;
+					for (const auto [product_id, n_product_produced] : Reaction.products)
+						deltamukbt_ -= mukbt[product_id]*n_product_produced;
+					deltamukbt[i] = deltamukbt_;
+				}*/
 			}
 
 
@@ -700,48 +713,15 @@ namespace nnet::net14 {
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 		{
 			int idx = -1, jdx = -1;
-			rates [++idx] = eff[0];
-			drates[++jdx] = deff[0];
-
-			rates [++idx] =  l[0];
-			drates[++jdx] = dl[0];
-
-	      	rates [++idx] =  eff[13];
-	      	drates[++jdx] = deff[13];
-
-		    rates [++idx] =  eff[14];
-		    drates[++jdx] = deff[14];
-
-			rates [++idx] =  eff[15];
-			drates[++jdx] = deff[15];
-
-
-
-			rates [++idx] =  eff[1];
-			drates[++jdx] = deff[1];
-
-    		rates [++idx] =  eff[2];
-    		drates[++jdx] = deff[2];
-
-			for (int i = 4; i < 14; ++i) {
-				rates [++idx] =  eff[i - 1];
-				drates[++jdx] = deff[i - 1];
+			for (int i = 0; i < 16; ++i) {
+				rates [++idx] =  eff[i];
+				drates[++jdx] = deff[i];
 			}
 
-
-
-			rates [++idx] =  l[1];
-			drates[++jdx] = dl[1];
-
-			rates [++idx] =  l[2];
-			drates[++jdx] = dl[2];
-
-			for (int i = 4; i < 14; ++i) {
-				rates [++idx] =  l[i - 1];
-				drates[++jdx] = dl[i - 1];
+			for (int i = 0; i < 13; ++i) {
+				rates [++idx] =  l[i];
+				drates[++jdx] = dl[i];
 			}
 		}
-
-		// return std::tuple<std::vector<Float>, std::vector<Float>>{rates, drates};
 	};
 }

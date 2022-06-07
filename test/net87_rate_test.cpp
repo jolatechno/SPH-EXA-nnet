@@ -28,19 +28,16 @@ int main() {
 	                  nnet::net87::compute_reaction_rates(Y.data(), 2e9, 1e9, eos_struct, rate.data(), drates.data());
 				      nnet::net87::compute_BE(                      2e9, 1e9, eos_struct, BE.data());
 
-	std::cout << "reaction_list.size=" << nnet::net87::reaction_list.size() << ", rates.size=" << rate.size() << "\n\n";
+	"net14 <-> net87:\t";
+	for (int i = 0; i < 14; ++i)
+		std::cout << i << " <-> " << nnet::net87::constants::net14_species_order[i] << ",\t";
+	std::cout << "\n\n";
 	
 	int num_special_reactions = 5, num_reactions = 157 - 5, num_reverse = 157 - 5;
 
 	// print reactions
-	std::cout << "\nspecial reaction rates:\n";
-	for (int i = 0; i < 3; ++i)
-		std::cout << "(" << i+1 << ")\t" << nnet::net87::reaction_list[i] << "\t\tR=" << rate[i] << ",\tdR/dT=" << drates[i] << "\n";
-	std::cout << "(3He -> C)\t" << nnet::net87::reaction_list[3] << "\t\tR=" << rate[3] << ",\tdR/dT=" << drates[3] << "\n";
-	std::cout << "(3He <- C)\t" << nnet::net87::reaction_list[4] << "\t\tR=" << rate[4] << ",\tdR/dT=" << drates[4] << "\n";
-
 	std::cout << "\ndirect rates:\n";
-	for (int i = 5; i < 157; ++i)
+	for (int i = 0; i < 157; ++i)
 		std::cout << "(" << i+1 << ")\t" << nnet::net87::reaction_list[i] << "\t\tR=" << rate[i] << ",\tdR/dT=" << drates[i] << "\n";
 
 	std::cout << "\nreverse rates:\n";

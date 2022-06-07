@@ -166,11 +166,6 @@ namespace nnet::net86 {
 		reactions.push_back(nnet::reaction{{{constants::main_reactant[4], 3}}, {{constants::main_product[4]}}});
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		C -> 3He fission
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		reactions.push_back(nnet::reaction{{{constants::main_product[4]}}, {{constants::main_reactant[4], 3}}});
-
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		direct reaction
 		!!!!!!!!!!!!!!!!!!!!!!!! */ 
 		for (int i = 5; i < 157; ++i) {
@@ -189,6 +184,11 @@ namespace nnet::net86 {
 			} else
 				throw std::runtime_error("Mass conservation not possible when adding reaction to net86\n");
 		}
+
+		/* !!!!!!!!!!!!!!!!!!!!!!!!
+		C -> 3He fission
+		!!!!!!!!!!!!!!!!!!!!!!!! */
+		reactions.push_back(nnet::reaction{{{constants::main_product[4]}}, {{constants::main_reactant[4], 3}}});
 		
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		inverse reaction
@@ -333,7 +333,7 @@ namespace nnet::net86 {
 		      		eff[4]=2.90e-16*(r2abe*rbeac)
 		      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
 			    } else
-		      		eff[4]=2.90e-16*(r2abe*rbeac)*(0.01 + 0.2*(1. + 4.*std::exp(-std::pow(0.025*t9i, 3.263)))/(1. + 4.*std::exp(-std::pow(t9/0.025, 9.227))))
+		      		eff[4] = 2.90e-16*(r2abe*rbeac)*(0.01 + 0.2*(1. + 4.*std::exp(-std::pow(0.025*t9i, 3.263)))/(1. + 4.*std::exp(-std::pow(t9/0.025, 9.227))))
 		      			+ 0.1*1.35e-07*t9i32*std::exp(-24.811*t9i);
 
 
@@ -356,7 +356,7 @@ namespace nnet::net86 {
 			    const Float t9a13=std::pow(t9a, 1./3.);
 			    const Float t9a56=std::pow(t9a, 5./6.);
 
-	      		eff[0]=4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
+	      		eff[0] = 4.27e+26*t9a56*t9i32*std::exp(-84.165/t9a13 - 2.12e-03*t93);
 
 
 	      		// debuging :
@@ -375,7 +375,7 @@ namespace nnet::net86 {
 		            const Float t9a13p=std::pow(t9ap, 1./3.);
 		            const Float t9a23p=t9a13p*t9a13p;
 		            const Float t9a56ap=std::pow(t9ap, 5./6.);
-		            eff[1]=1.72e+31*t9a56ap*t9i32*std::exp(-106.594/t9a13p)/(std::exp(-0.18*t9a2p) +
+		            eff[1] = 1.72e+31*t9a56ap*t9i32*std::exp(-106.594/t9a13p)/(std::exp(-0.18*t9a2p) +
 		            	1.06e-03*std::exp(2.562*t9a23p));
 		        }
 
@@ -533,7 +533,7 @@ namespace nnet::net86 {
 			    const Float dvA=vA*vA*t9i2;
 			    const Float dvB=28.055*dvA*std::pow(vA, -4./3.) - 6.36e-3*t92;
 
-			    deff[0]=4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
+			    deff[0] = 4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
 
 	      		// debuging :
 				if (debug) std::cout << "dr24=" << deff[0] << "\n";
@@ -559,7 +559,7 @@ namespace nnet::net86 {
 			        const Float dval=dvC*std::exp(vC)+1.06e-3*dvD*std::exp(vD);
 
 
-			        deff[1]=1.72e31*t9i32*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i+vA56*(dvB - dval/val))*std::exp(vB)/val*1.e-9;
+			        deff[1] = 1.72e31*t9i32*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i+vA56*(dvB - dval/val))*std::exp(vB)/val*1.e-9;
 			    }
 
 		        // debuging :
@@ -599,13 +599,13 @@ namespace nnet::net86 {
 			    const Float dvG=15.541*t9i2;
 
 				
-	      		deff[1]=(1.04e8*std::exp(vC)*t9i2*(-2.*t9i + dvC - dvB/vB)/vB
+	      		deff[5]=(1.04e8*std::exp(vC)*t9i2*(-2.*t9i + dvC - dvB/vB)/vB
        				+ 1.76e8*std::exp(vE)*t9i2*(-2.*t9i + dvE - dvD/vD)/vD
        				+ 1.25e3*std::exp(vF)*(-1.5*t9i52 + dvF*t9i32)
        				+ 1.43e-2*std::exp(vG)*(5.*t94 + dvG*t95))*1.e-9;
 
 	      		// debuging :
-				if (debug) std::cout << "drcag=" << deff[1] << "\n";
+				if (debug) std::cout << "drcag=" << deff[5] << "\n";
 	      	}
 
 			
@@ -734,10 +734,22 @@ namespace nnet::net86 {
 
 				// compute deltamukbt
 				for (int i = 0; i < 157; ++i)
-					deltamukbt[i] = mukbt[constants::main_reactant[i]] + mukbt[constants::secondary_reactant[i]] - mukbt[constants::main_product[i]] - mukbt[constants::secondary_product[i]];
+					deltamukbt[i] = mukbt[constants::main_reactant[i]] + mukbt[constants::secondary_reactant[i]] - mukbt[constants::main_product[i]];// - mukbt[constants::secondary_product[i]];
 
 				// Triple alpha correction
 				deltamukbt[4] += mukbt[constants::main_reactant[4]];
+
+				// compute deltamukbt
+				/*for (int i = 0; i < 157; ++i) {
+					const auto &Reaction = reaction_list[i];
+
+					Float deltamukbt_ = 0;
+					for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants)
+						deltamukbt_ += mukbt[reactant_id]*n_reactant_consumed;
+					for (auto const [product_id, n_product_produced] : Reaction.products)
+						deltamukbt_ -= mukbt[product_id]*n_product_produced;
+					deltamukbt[i] = deltamukbt_;
+				}*/
 			}
 
 
@@ -770,41 +782,21 @@ namespace nnet::net86 {
 		push back rates
 		!!!!!!!!!!!!!!!!!!!!!!!! */
 		{
-			/* !!!!!!!!!!!!!!!!!!!!!!!!
-			2C fusion,
-			C + O fusion
-			2O fusion
-			!!!!!!!!!!!!!!!!!!!!!!!! */
 			int idx = -1, jdx = -1;
-			for (int i = 0; i < 3; ++i) {
-				rates [++idx] =  eff[i];
-				drates[++jdx] = deff[i];
-			}
-
-			/* !!!!!!!!!!!!!!!!!!!!!!!!
-			3He -> C fusion
-			!!!!!!!!!!!!!!!!!!!!!!!! */
-			rates [++idx] =  eff[4];
-			drates[++jdx] = deff[4];
-
-			/* !!!!!!!!!!!!!!!!!!!!!!!!
-			C -> 3He fission
-			!!!!!!!!!!!!!!!!!!!!!!!! */
-			rates [++idx] =  l[4];
-			drates[++jdx] = dl[4];
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			push direct reaction rates
 			!!!!!!!!!!!!!!!!!!!!!!!! */
-			for (int i = 5; i < 157; ++i) {
-				rates [++idx] =  eff[i];
-				drates[++jdx] = deff[i];
-			}
+			for (int i = 0; i < 157; ++i) 
+				if (i != 3) {
+					rates [++idx] =  eff[i];
+					drates[++jdx] = deff[i];
+				}
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			push inverse reaction rates
 			!!!!!!!!!!!!!!!!!!!!!!!! */
-			for (int i = 5; i < 157; ++i) {
+			for (int i = 4; i < 157; ++i) {
 				rates [++idx] =  l[i];
 				drates[++jdx] = dl[i];
 			}

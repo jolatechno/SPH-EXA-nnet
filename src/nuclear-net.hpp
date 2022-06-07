@@ -190,7 +190,7 @@ utils functions :
 					dY[reactant_id] -= rate*n_reactant_consumed;
 
 				// insert production rates
-				for (auto const [product_id, n_product_produced] : Reaction.products)
+				for (const auto [product_id, n_product_produced] : Reaction.products)
 					dY[product_id] += rate*n_product_produced;
 			}
 		}
