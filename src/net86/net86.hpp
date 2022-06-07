@@ -748,7 +748,7 @@ namespace nnet::net86 {
 						deltamukbt_ += mukbt[reactant_id]*n_reactant_consumed;
 					for (auto const [product_id, n_product_produced] : Reaction.products)
 						deltamukbt_ -= mukbt[product_id]*n_product_produced;
-					deltamukbt[i] = deltamukbt_ - mukbt[constants::alpha];
+					deltamukbt[i] = deltamukbt_ + mukbt[constants::alpha];
 				}
 			}
 
