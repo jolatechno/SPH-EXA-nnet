@@ -76,22 +76,22 @@ namespace nnet::net87::electrons {
 	template<typename Float>
 	void interpolate(Float temp, Float rhoElec, std::array<double, constants::nC> &rate) {
 		// find temperature index
-		int i_temp_sup = 1;
+		int i_temp_sup = 0;
 		Float log_temp = std::log10(temp);
-		for (; i_temp_sup < constants::nTemp &&
-			constants::log_temp_ref[i_temp_sup] > log_temp;
-			++i_temp_sup) {}
+		while (i_temp_sup < constants::nTemp && constants::log_temp_ref[i_temp_sup] < log_temp)
+			++i_temp_sup;
 
 		// find rho index
-		int i_rho_sup = 1;
+		int i_rho_sup = 0;
 		Float log_rho = std::log10(rhoElec);
-		for (; i_rho_sup < constants::nRho &&
-			constants::log_rho_ref[i_rho_sup] > log_rho;
-			++i_rho_sup) {}
+		while (i_rho_sup < constants::nRho && constants::log_rho_ref[i_rho_sup] < log_rho)
+			++i_rho_sup;
 
 		// other limit index
-		int i_temp_inf = i_temp_sup - 1;
-		int i_rho_inf  = i_rho_sup - 1;
+		int i_temp_inf = std::max(0,                    i_temp_sup - 1);
+		int i_rho_inf  = std::max(0,                    i_rho_sup - 1);
+		    i_temp_sup = std::min(constants::nTemp - 1, i_temp_sup);
+		    i_rho_sup  = std::min(constants::nRho  - 1, i_rho_sup);
 
 		// distance between limits
 		Float x2x  =  constants::log_temp_ref[i_temp_sup] - log_temp;
@@ -99,7 +99,9 @@ namespace nnet::net87::electrons {
 		Float y2y  =  constants::log_rho_ref[i_rho_sup] - log_rho;
 		Float yy1  = -constants::log_rho_ref[i_rho_inf] + log_rho;
 		Float x2x1 = constants::log_temp_ref[i_temp_sup] - constants::log_temp_ref[i_temp_inf];
+			  x2x1 = x2x1 == 0 ? 2 : x2x1;
 		Float y2y1 = constants::log_rho_ref[i_rho_sup]   - constants::log_rho_ref[i_rho_inf];
+			  y2y1 = y2y1 == 0 ? 2 : y2y1;
 
 		// actual interpolation
 		for (int i = 0; i < constants::nC; ++i)

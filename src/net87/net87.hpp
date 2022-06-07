@@ -63,32 +63,34 @@ namespace nnet::net87 {
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		electron value
 		!!!!!!!!!!!!!!!!!!!!!!!! */
+		const Float Yelec   = Y[constants::electron];
+		const Float rhoElec = Yelec*rho;
 		std::array<Float, electrons::constants::nC> electron_values;
-		electrons::interpolate(T, rho*Y[86], electron_values);
+		electrons::interpolate(T, rhoElec, electron_values);
 
 		Float effe        = electron_values[0];
-		Float deffe       = electron_values[1]    *1e-9;
-		Float deffedYe    = electron_values[2]*rho;
-		Float Eneutr      = electron_values[3]    *4.93e17;
+		Float deffe       = electron_values[1]*1e-9;
+		Float deffedYe    = electron_values[2];//*rho;
+		Float Eneutr      = electron_values[3]*4.93e17;
 
-		Float dEneutr     = electron_values[4]    *4.93e17*1.e-9;
-		Float dEneutrdYe  = electron_values[5]*rho*4.93e17;
+		Float dEneutr     = electron_values[4]*4.93e17*1.e-9;
+		Float dEneutrdYe  = electron_values[5]*4.93e17;//*rho
 
 		Float effp        = electron_values[6];
 		Float deffp       = electron_values[7];
-		Float deffpdYe    = electron_values[8]*rho;
+		Float deffpdYe    = electron_values[8];//*rho;
 		Float Eaneutr     = electron_values[9];
 		Float dEaneutr    = electron_values[10];
-		Float dEaneutrdYe = electron_values[11]*rho;
+		Float dEaneutrdYe = electron_values[11];//*rho;
 
 		Float dUedYe = eos_struct.dU_dYe;
 
 		int idx = 157-1 + 157-4 -1, jdx = 157-1 + 157-4 -1;
 		// electron capture rates
-		rates [++idx] = 0.; //deffedYe;            //  effe/Y[86]/rho, !!! hack !!!
-		drates[++jdx] = 0.; //deffedYe*deffe/effe; // deffe/Y[86]/rho, !!! hack !!!
+		rates [++idx] = deffedYe; // = effe/rhoElec
+		drates[++jdx] = rhoElec == 0 ? 0 : deffe/rhoElec;
 
-		rates [++idx] = 0.; //deffpdYe;            //  effp/Y[86]/rho, !!! hack !!!
-		drates[++jdx] = 0.; //deffpdYe*deffp/effp; // deffp/Y[86]/rho, !!! hack !!!
+		rates [++idx] = deffpdYe; // = deffp/rhoElec
+		drates[++jdx] = rhoElec == 0 ? 0 : deffp/rhoElec; // deffp/Y[86]/rho, !!! hack !!!
 	};
 }
