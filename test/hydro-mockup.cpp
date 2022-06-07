@@ -128,7 +128,7 @@ public:
 void printHelp(char* name, int rank);
 
 // mockup of the step function 
-template<class func_rate, class func_BE, class func_eos, int n_species>
+template<class func_rate, class func_BE, class func_eos, size_t n_species>
 void step(size_t firstIndex, size_t lastIndex,
 	ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<n_species, double>  &n, const double dt,
 	const std::vector<nnet::reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos) {
@@ -285,7 +285,7 @@ int main(int argc, char* argv[]) {
 
 
 	std::vector<std::string> hydroOutFields   = {/*"nid", "pid",*/ "temp", "rho"};
-	std::vector<std::string> nuclearOutFields = {"temp", "rho", /*"Y(12C)", "Y(4He)"*/};
+	std::vector<std::string> nuclearOutFields = {"temp", "rho", "Y(4He)", "Y(12C)", "Y(16O)"};
 	particle_data.setOutputFields(hydroOutFields);
 	if (use_net86) {
 		nuclear_data_86.setOutputFields(nuclearOutFields, nnet::net86::constants::species_names);

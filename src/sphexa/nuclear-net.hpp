@@ -247,8 +247,8 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<class ParticlesDataType, int n_species, typename Float=double>
-	void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n) {
+	template<class ParticlesDataType,class nuclearDataType, typename Float=double>
+	void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, nuclearDataType &n) {
 		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
 	}
 
@@ -257,8 +257,8 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<class ParticlesDataType, int n_species, typename Float=double>
-	void hydroToNuclearUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
+	template<class ParticlesDataType, class nuclearDataType>
+	void hydroToNuclearUpdate(ParticlesDataType &d, nuclearDataType &n, const std::vector<std::string> &sync_fields) {
 		std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices, nuclearIOoutputFieldIndices = io::outputFieldIndices;
 		std::vector<std::string> outputFieldNamesNuclear   = n.outputFieldNames,   outputFieldNamesHydro   = d.outputFieldNames,   nuclearIOoutputFieldNames   = io::outputFieldNames;
 
@@ -290,8 +290,8 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<class ParticlesDataType, int n_species, typename Float=double>
-	void nuclearToHydroUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
+	template<class ParticlesDataType, class nuclearDataType>
+	void nuclearToHydroUpdate(ParticlesDataType &d, nuclearDataType &n, const std::vector<std::string> &sync_fields) {
 		std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices, nuclearIOoutputFieldIndices = io::outputFieldIndices;
 		std::vector<std::string> outputFieldNamesNuclear   = n.outputFieldNames,   outputFieldNamesHydro   = d.outputFieldNames,   nuclearIOoutputFieldNames   = io::outputFieldNames;
 

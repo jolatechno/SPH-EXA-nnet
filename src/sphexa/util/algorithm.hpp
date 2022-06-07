@@ -10,12 +10,7 @@
 definition of util::array
 */
 
-#ifdef NOT_FROM_SPHEXA
-namespace util {
-	template<class T, int N>
-	using array = std::array<T, N>;
-}
-#else
+#ifndef NOT_FROM_SPHEXA
 	#include "cstone/util/array.hpp"
 #endif
 

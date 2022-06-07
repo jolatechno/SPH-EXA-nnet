@@ -1,0 +1,373 @@
+mpic++ hydro-mockup.cpp -ohydro-mockup.out -DCPU_BATCH_SOLVER -DUSE_MPI -DNOT_FROM_SPHEXA -O3 --std=c++17 -fopenmp 
+In file included from ../src/sphexa/mpi/mpi-wrapper.hpp:3,
+                 from ../src/sphexa/nuclear-data.hpp:13,
+                 from hydro-mockup.cpp:15:
+../src/sphexa/mpi/../util/algorithm.hpp:16:15: error: conflicting declaration of template ‘template<class T, int N> using array = std::array<T, N>’
+   16 |         using array = std::array<T, N>;
+      |               ^~~~~
+In file included from hydro-mockup.cpp:6:
+util/sphexa_utils.hpp:13:15: note: previous declaration ‘template<class T, long unsigned int n> using array = std::array<_Tp, _Nm>’
+   13 |         using array = std::array<T, n>;
+      |               ^~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:57:9: error: ‘mpi_partition’ does not name a type
+   57 |         mpi_partition partitionFromPointers(size_t firstIndex, size_t lastIndex, const std::vector<int> &node_id, const std::vector<std::size_t> &particle_id, MPI_Comm comm)
+      |         ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:135:48: error: ‘mpi_partition’ does not name a type
+  135 |         void directSyncDataFromPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
+      |                                                ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: In function ‘void util::directSyncDataFromPartition(const int&, const T*, T*, MPI_Datatype, MPI_Comm)’:
+../src/sphexa/mpi/mpi-wrapper.hpp:139:59: error: request for member ‘send_disp’ in ‘partition’, which is of non-class type ‘const int’
+  139 |                 const size_t n_particles_send = partition.send_disp[size];
+      |                                                           ^~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:140:59: error: request for member ‘recv_disp’ in ‘partition’, which is of non-class type ‘const int’
+  140 |                 const size_t n_particles_recv = partition.recv_disp[size];
+      |                                                           ^~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:147:64: error: request for member ‘send_partition’ in ‘partition’, which is of non-class type ‘const int’
+  147 |                         send_buffer[i] = send_vector[partition.send_partition[i]];
+      |                                                                ^~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:150:59: error: request for member ‘send_count’ in ‘partition’, which is of non-class type ‘const int’
+  150 |                 MPI_Alltoallv(&send_buffer[0], &partition.send_count[0], &partition.send_disp[0], datatype,
+      |                                                           ^~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:150:85: error: request for member ‘send_disp’ in ‘partition’, which is of non-class type ‘const int’
+  150 |                 MPI_Alltoallv(&send_buffer[0], &partition.send_count[0], &partition.send_disp[0], datatype,
+      |                                                                                     ^~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:151:71: error: request for member ‘recv_count’ in ‘partition’, which is of non-class type ‘const int’
+  151 |                                           &recv_buffer[0], &partition.recv_count[0], &partition.recv_disp[0], datatype, comm);
+      |                                                                       ^~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:151:97: error: request for member ‘recv_disp’ in ‘partition’, which is of non-class type ‘const int’
+  151 |                                           &recv_buffer[0], &partition.recv_count[0], &partition.recv_disp[0], datatype, comm);
+      |                                                                                                 ^~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:156:47: error: request for member ‘recv_partition’ in ‘partition’, which is of non-class type ‘const int’
+  156 |                         recv_vector[partition.recv_partition[i]] = recv_buffer[i];
+      |                                               ^~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: At global scope:
+../src/sphexa/mpi/mpi-wrapper.hpp:158:48: error: ‘mpi_partition’ does not name a type
+  158 |         void directSyncDataFromPartition(const mpi_partition &partition, const double *send_vector, double *recv_vector, MPI_Comm comm) {
+      |                                                ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: In function ‘void util::directSyncDataFromPartition(const int&, const double*, double*, MPI_Comm)’:
+../src/sphexa/mpi/mpi-wrapper.hpp:159:17: error: ‘directSyncDataFromPartition’ was not declared in this scope; did you mean ‘util::directSyncDataFromPartition’?
+  159 |                 directSyncDataFromPartition(partition, send_vector, recv_vector, MPI_DOUBLE, comm);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                 util::directSyncDataFromPartition
+../src/sphexa/mpi/mpi-wrapper.hpp:158:14: note: ‘util::directSyncDataFromPartition’ declared here
+  158 |         void directSyncDataFromPartition(const mpi_partition &partition, const double *send_vector, double *recv_vector, MPI_Comm comm) {
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: At global scope:
+../src/sphexa/mpi/mpi-wrapper.hpp:161:48: error: ‘mpi_partition’ does not name a type
+  161 |         void directSyncDataFromPartition(const mpi_partition &partition, const float *send_vector, float *recv_vector, MPI_Comm comm) {
+      |                                                ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: In function ‘void util::directSyncDataFromPartition(const int&, const float*, float*, MPI_Comm)’:
+../src/sphexa/mpi/mpi-wrapper.hpp:162:17: error: ‘directSyncDataFromPartition’ was not declared in this scope; did you mean ‘util::directSyncDataFromPartition’?
+  162 |                 directSyncDataFromPartition(partition, send_vector, recv_vector, MPI_FLOAT, comm);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                 util::directSyncDataFromPartition
+../src/sphexa/mpi/mpi-wrapper.hpp:161:14: note: ‘util::directSyncDataFromPartition’ declared here
+  161 |         void directSyncDataFromPartition(const mpi_partition &partition, const float *send_vector, float *recv_vector, MPI_Comm comm) {
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: At global scope:
+../src/sphexa/mpi/mpi-wrapper.hpp:164:48: error: ‘mpi_partition’ does not name a type
+  164 |         void directSyncDataFromPartition(const mpi_partition &partition, const int *send_vector, int *recv_vector, MPI_Comm comm) {
+      |                                                ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: In function ‘void util::directSyncDataFromPartition(const int&, const int*, int*, MPI_Comm)’:
+../src/sphexa/mpi/mpi-wrapper.hpp:165:17: error: ‘directSyncDataFromPartition’ was not declared in this scope; did you mean ‘util::directSyncDataFromPartition’?
+  165 |                 directSyncDataFromPartition(partition, send_vector, recv_vector, MPI_INT, comm);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                 util::directSyncDataFromPartition
+../src/sphexa/mpi/mpi-wrapper.hpp:164:14: note: ‘util::directSyncDataFromPartition’ declared here
+  164 |         void directSyncDataFromPartition(const mpi_partition &partition, const int *send_vector, int *recv_vector, MPI_Comm comm) {
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: At global scope:
+../src/sphexa/mpi/mpi-wrapper.hpp:167:48: error: ‘mpi_partition’ does not name a type
+  167 |         void directSyncDataFromPartition(const mpi_partition &partition, const uint *send_vector, uint *recv_vector, MPI_Comm comm) {
+      |                                                ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: In function ‘void util::directSyncDataFromPartition(const int&, const uint*, uint*, MPI_Comm)’:
+../src/sphexa/mpi/mpi-wrapper.hpp:168:17: error: ‘directSyncDataFromPartition’ was not declared in this scope; did you mean ‘util::directSyncDataFromPartition’?
+  168 |                 directSyncDataFromPartition(partition, send_vector, recv_vector, MPI_UNSIGNED, comm);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                 util::directSyncDataFromPartition
+../src/sphexa/mpi/mpi-wrapper.hpp:167:14: note: ‘util::directSyncDataFromPartition’ declared here
+  167 |         void directSyncDataFromPartition(const mpi_partition &partition, const uint *send_vector, uint *recv_vector, MPI_Comm comm) {
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: At global scope:
+../src/sphexa/mpi/mpi-wrapper.hpp:170:48: error: ‘mpi_partition’ does not name a type
+  170 |         void directSyncDataFromPartition(const mpi_partition &partition, const size_t *send_vector, size_t *recv_vector, MPI_Comm comm) {
+      |                                                ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: In function ‘void util::directSyncDataFromPartition(const int&, const size_t*, size_t*, MPI_Comm)’:
+../src/sphexa/mpi/mpi-wrapper.hpp:171:17: error: ‘directSyncDataFromPartition’ was not declared in this scope; did you mean ‘util::directSyncDataFromPartition’?
+  171 |                 directSyncDataFromPartition(partition, send_vector, recv_vector, MPI_UNSIGNED_LONG_LONG, comm);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                 util::directSyncDataFromPartition
+../src/sphexa/mpi/mpi-wrapper.hpp:170:14: note: ‘util::directSyncDataFromPartition’ declared here
+  170 |         void directSyncDataFromPartition(const mpi_partition &partition, const size_t *send_vector, size_t *recv_vector, MPI_Comm comm) {
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: At global scope:
+../src/sphexa/mpi/mpi-wrapper.hpp:174:48: error: ‘mpi_partition’ does not name a type
+  174 |         void directSyncDataFromPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, MPI_Comm comm) {
+      |                                                ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:178:48: error: ‘mpi_partition’ does not name a type
+  178 |         void directSyncDataFromPartition(const mpi_partition &partition, const T1 *send_vector, T2 *recv_vector, MPI_Comm comm) {
+      |                                                ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:187:50: error: ‘mpi_partition’ does not name a type
+  187 |         void reversedSyncDataFromPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
+      |                                                  ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: In function ‘void util::reversedSyncDataFromPartition(const int&, const T*, T*, MPI_Datatype, MPI_Comm)’:
+../src/sphexa/mpi/mpi-wrapper.hpp:193:59: error: request for member ‘send_disp’ in ‘partition’, which is of non-class type ‘const int’
+  193 |                 const size_t n_particles_send = partition.send_disp[size];
+      |                                                           ^~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:194:59: error: request for member ‘recv_disp’ in ‘partition’, which is of non-class type ‘const int’
+  194 |                 const size_t n_particles_recv = partition.recv_disp[size];
+      |                                                           ^~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:201:64: error: request for member ‘recv_partition’ in ‘partition’, which is of non-class type ‘const int’
+  201 |                         send_buffer[i] = send_vector[partition.recv_partition[i]];
+      |                                                                ^~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:204:59: error: request for member ‘recv_count’ in ‘partition’, which is of non-class type ‘const int’
+  204 |                 MPI_Alltoallv(&send_buffer[0], &partition.recv_count[0], &partition.recv_disp[0], datatype,
+      |                                                           ^~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:204:85: error: request for member ‘recv_disp’ in ‘partition’, which is of non-class type ‘const int’
+  204 |                 MPI_Alltoallv(&send_buffer[0], &partition.recv_count[0], &partition.recv_disp[0], datatype,
+      |                                                                                     ^~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:205:71: error: request for member ‘send_count’ in ‘partition’, which is of non-class type ‘const int’
+  205 |                                           &recv_buffer[0], &partition.send_count[0], &partition.send_disp[0], datatype, comm);
+      |                                                                       ^~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:205:97: error: request for member ‘send_disp’ in ‘partition’, which is of non-class type ‘const int’
+  205 |                                           &recv_buffer[0], &partition.send_count[0], &partition.send_disp[0], datatype, comm);
+      |                                                                                                 ^~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:210:47: error: request for member ‘send_partition’ in ‘partition’, which is of non-class type ‘const int’
+  210 |                         recv_vector[partition.send_partition[i]] = recv_buffer[i];
+      |                                               ^~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: At global scope:
+../src/sphexa/mpi/mpi-wrapper.hpp:212:50: error: ‘mpi_partition’ does not name a type
+  212 |         void reversedSyncDataFromPartition(const mpi_partition &partition, const double *send_vector, double *recv_vector, MPI_Comm comm)  {
+      |                                                  ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: In function ‘void util::reversedSyncDataFromPartition(const int&, const double*, double*, MPI_Comm)’:
+../src/sphexa/mpi/mpi-wrapper.hpp:213:17: error: ‘reversedSyncDataFromPartition’ was not declared in this scope; did you mean ‘util::reversedSyncDataFromPartition’?
+  213 |                 reversedSyncDataFromPartition(partition, send_vector, recv_vector, MPI_DOUBLE, comm);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                 util::reversedSyncDataFromPartition
+../src/sphexa/mpi/mpi-wrapper.hpp:212:14: note: ‘util::reversedSyncDataFromPartition’ declared here
+  212 |         void reversedSyncDataFromPartition(const mpi_partition &partition, const double *send_vector, double *recv_vector, MPI_Comm comm)  {
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: At global scope:
+../src/sphexa/mpi/mpi-wrapper.hpp:215:50: error: ‘mpi_partition’ does not name a type
+  215 |         void reversedSyncDataFromPartition(const mpi_partition &partition, const float *send_vector, float *recv_vector, MPI_Comm comm)  {
+      |                                                  ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: In function ‘void util::reversedSyncDataFromPartition(const int&, const float*, float*, MPI_Comm)’:
+../src/sphexa/mpi/mpi-wrapper.hpp:216:17: error: ‘reversedSyncDataFromPartition’ was not declared in this scope; did you mean ‘util::reversedSyncDataFromPartition’?
+  216 |                 reversedSyncDataFromPartition(partition, send_vector, recv_vector, MPI_FLOAT, comm);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                 util::reversedSyncDataFromPartition
+../src/sphexa/mpi/mpi-wrapper.hpp:215:14: note: ‘util::reversedSyncDataFromPartition’ declared here
+  215 |         void reversedSyncDataFromPartition(const mpi_partition &partition, const float *send_vector, float *recv_vector, MPI_Comm comm)  {
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: At global scope:
+../src/sphexa/mpi/mpi-wrapper.hpp:218:50: error: ‘mpi_partition’ does not name a type
+  218 |         void reversedSyncDataFromPartition(const mpi_partition &partition, const int *send_vector, int *recv_vector, MPI_Comm comm)  {
+      |                                                  ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: In function ‘void util::reversedSyncDataFromPartition(const int&, const int*, int*, MPI_Comm)’:
+../src/sphexa/mpi/mpi-wrapper.hpp:219:17: error: ‘reversedSyncDataFromPartition’ was not declared in this scope; did you mean ‘util::reversedSyncDataFromPartition’?
+  219 |                 reversedSyncDataFromPartition(partition, send_vector, recv_vector, MPI_INT, comm);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                 util::reversedSyncDataFromPartition
+../src/sphexa/mpi/mpi-wrapper.hpp:218:14: note: ‘util::reversedSyncDataFromPartition’ declared here
+  218 |         void reversedSyncDataFromPartition(const mpi_partition &partition, const int *send_vector, int *recv_vector, MPI_Comm comm)  {
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: At global scope:
+../src/sphexa/mpi/mpi-wrapper.hpp:221:50: error: ‘mpi_partition’ does not name a type
+  221 |         void reversedSyncDataFromPartition(const mpi_partition &partition, const uint *send_vector, uint *recv_vector, MPI_Comm comm)  {
+      |                                                  ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: In function ‘void util::reversedSyncDataFromPartition(const int&, const uint*, uint*, MPI_Comm)’:
+../src/sphexa/mpi/mpi-wrapper.hpp:222:17: error: ‘reversedSyncDataFromPartition’ was not declared in this scope; did you mean ‘util::reversedSyncDataFromPartition’?
+  222 |                 reversedSyncDataFromPartition(partition, send_vector, recv_vector, MPI_UNSIGNED, comm);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                 util::reversedSyncDataFromPartition
+../src/sphexa/mpi/mpi-wrapper.hpp:221:14: note: ‘util::reversedSyncDataFromPartition’ declared here
+  221 |         void reversedSyncDataFromPartition(const mpi_partition &partition, const uint *send_vector, uint *recv_vector, MPI_Comm comm)  {
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: At global scope:
+../src/sphexa/mpi/mpi-wrapper.hpp:224:50: error: ‘mpi_partition’ does not name a type
+  224 |         void reversedSyncDataFromPartition(const mpi_partition &partition, const size_t *send_vector, size_t *recv_vector, MPI_Comm comm)  {
+      |                                                  ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: In function ‘void util::reversedSyncDataFromPartition(const int&, const size_t*, size_t*, MPI_Comm)’:
+../src/sphexa/mpi/mpi-wrapper.hpp:225:17: error: ‘reversedSyncDataFromPartition’ was not declared in this scope; did you mean ‘util::reversedSyncDataFromPartition’?
+  225 |                 reversedSyncDataFromPartition(partition, send_vector, recv_vector, MPI_UNSIGNED_LONG_LONG, comm);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                 util::reversedSyncDataFromPartition
+../src/sphexa/mpi/mpi-wrapper.hpp:224:14: note: ‘util::reversedSyncDataFromPartition’ declared here
+  224 |         void reversedSyncDataFromPartition(const mpi_partition &partition, const size_t *send_vector, size_t *recv_vector, MPI_Comm comm)  {
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp: At global scope:
+../src/sphexa/mpi/mpi-wrapper.hpp:228:50: error: ‘mpi_partition’ does not name a type
+  228 |         void reversedSyncDataFromPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, MPI_Comm comm) {
+      |                                                  ^~~~~~~~~~~~~
+../src/sphexa/mpi/mpi-wrapper.hpp:232:50: error: ‘mpi_partition’ does not name a type
+  232 |         void reversedSyncDataFromPartition(const mpi_partition &partition, const T1 *send_vector, T2 *recv_vector, MPI_Comm comm) {
+      |                                                  ^~~~~~~~~~~~~
+../src/sphexa/nuclear-data.hpp: In member function ‘void sphexa::sphnnet::NuclearDataType<n_species, Float>::setOutputFields(const std::vector<std::__cxx11::basic_string<char> >&)’:
+../src/sphexa/nuclear-data.hpp:116:25: error: ‘io’ has not been declared
+  116 |                         io::setOutputFieldsNames(n_species);
+      |                         ^~
+../src/sphexa/nuclear-data.hpp:117:67: error: ‘io’ has not been declared
+  117 |                         std::vector<std::string> hydroOutFields = io::setOutputFields(outFields);
+      |                                                                   ^~
+../src/sphexa/nuclear-data.hpp: In member function ‘void sphexa::sphnnet::NuclearDataType<n_species, Float>::setOutputFields(const std::vector<std::__cxx11::basic_string<char> >&, const std::vector<std::__cxx11::basic_string<char> >&)’:
+../src/sphexa/nuclear-data.hpp:134:25: error: ‘io’ has not been declared
+  134 |                         io::setOutputFieldsNames(species_names);
+      |                         ^~
+../src/sphexa/nuclear-data.hpp:135:59: error: ‘io’ has not been declared
+  135 |                 std::vector<std::string> hydroOutFields = io::setOutputFields(outFields);
+      |                                                           ^~
+In file included from ../src/sphexa/nuclear-net.hpp:11,
+                 from hydro-mockup.cpp:18:
+../src/sphexa/../eigen/batchSolver.hpp: In function ‘void util::set_device_range(int, int)’:
+../src/sphexa/../eigen/batchSolver.hpp:45:25: error: ‘constants’ has not been declared
+   45 |                         constants::device_begin = begin;
+      |                         ^~~~~~~~~
+../src/sphexa/../eigen/batchSolver.hpp:46:25: error: ‘constants’ has not been declared
+   46 |                         constants::device_end   = end;
+      |                         ^~~~~~~~~
+../src/sphexa/../eigen/batchSolver.hpp: In function ‘int util::getNumDevice()’:
+../src/sphexa/../eigen/batchSolver.hpp:54:32: error: ‘constants’ has not been declared
+   54 |                         return constants::device_end - constants::device_begin;
+      |                                ^~~~~~~~~
+../src/sphexa/../eigen/batchSolver.hpp:54:56: error: ‘constants’ has not been declared
+   54 |                         return constants::device_end - constants::device_begin;
+      |                                                        ^~~~~~~~~
+../src/sphexa/nuclear-net.hpp: At global scope:
+../src/sphexa/nuclear-net.hpp:251:93: error: ‘NuclearDataType’ has not been declared
+  251 |         void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n) {
+      |                                                                                             ^~~~~~~~~~~~~~~
+../src/sphexa/nuclear-net.hpp:251:108: error: expected ‘,’ or ‘...’ before ‘<’ token
+  251 |         void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n) {
+      |                                                                                                            ^
+../src/sphexa/nuclear-net.hpp: In function ‘void util::initializePartition(size_t, size_t, ParticlesDataType&, int)’:
+../src/sphexa/nuclear-net.hpp:252:17: error: ‘n’ was not declared in this scope
+  252 |                 n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
+      |                 ^
+../src/sphexa/nuclear-net.hpp:252:44: error: ‘partitionFromPointers’ is not a member of ‘sphexa::mpi’
+  252 |                 n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
+      |                                            ^~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/nuclear-net.hpp: At global scope:
+../src/sphexa/nuclear-net.hpp:261:57: error: ‘NuclearDataType’ has not been declared
+  261 |         void hydroToNuclearUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
+      |                                                         ^~~~~~~~~~~~~~~
+../src/sphexa/nuclear-net.hpp:261:72: error: expected ‘,’ or ‘...’ before ‘<’ token
+  261 |         void hydroToNuclearUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
+      |                                                                        ^
+../src/sphexa/nuclear-net.hpp: In function ‘void util::hydroToNuclearUpdate(ParticlesDataType&, int)’:
+../src/sphexa/nuclear-net.hpp:262:70: error: ‘n’ was not declared in this scope
+  262 |                 std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices, nuclearIOoutputFieldIndices = io::outputFieldIndices;
+      |                                                                      ^
+../src/sphexa/nuclear-net.hpp:266:35: error: ‘sync_fields’ was not declared in this scope
+  266 |                 n.setOutputFields(sync_fields);
+      |                                   ^~~~~~~~~~~
+../src/sphexa/nuclear-net.hpp:281:66: error: definition of ‘auto util::hydroToNuclearUpdate(ParticlesDataType&, int)::<lambda>::operator()(auto:49&&, auto:50&&) const’ is not in namespace enclosing ‘util::hydroToNuclearUpdate(ParticlesDataType&, int)::<lambda>’ [-fpermissive]
+  281 |                                 [&d, &n](auto&& send, auto &&recv){
+      |                                                                  ^
+../src/sphexa/nuclear-net.hpp: In lambda function:
+../src/sphexa/nuclear-net.hpp:282:82: error: ‘n’ is not captured
+  282 |                                         sphexa::mpi::directSyncDataFromPartition(n.partition, send, recv, d.comm);
+      |                                                                                  ^
+../src/sphexa/nuclear-net.hpp:281:40: note: the lambda has no capture-default
+  281 |                                 [&d, &n](auto&& send, auto &&recv){
+      |                                        ^
+../src/sphexa/nuclear-net.hpp:262:70: note: ‘<typeprefixerror>n’ declared here
+  262 |                 std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices, nuclearIOoutputFieldIndices = io::outputFieldIndices;
+      |                                                                      ^
+../src/sphexa/nuclear-net.hpp: In function ‘void util::hydroToNuclearUpdate(ParticlesDataType&, int)’:
+../src/sphexa/nuclear-net.hpp:285:90: error: ‘outputFieldIndicesHydro’ was not declared in this scope; did you mean ‘outputFieldIndicesNuclear’?
+  285 |                 n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro; io::outputFieldIndices = nuclearIOoutputFieldIndices;
+      |                                                                                          ^~~~~~~~~~~~~~~~~~~~~~~
+      |                                                                                          outputFieldIndicesNuclear
+../src/sphexa/nuclear-net.hpp:285:115: error: ‘io’ has not been declared
+  285 |                 n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro; io::outputFieldIndices = nuclearIOoutputFieldIndices;
+      |                                                                                                                   ^~
+../src/sphexa/nuclear-net.hpp:285:140: error: ‘nuclearIOoutputFieldIndices’ was not declared in this scope
+  285 |                 n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro; io::outputFieldIndices = nuclearIOoutputFieldIndices;
+      |                                                                                                                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/nuclear-net.hpp:286:90: error: ‘outputFieldNamesHydro’ was not declared in this scope; did you mean ‘outputFieldNamesNuclear’?
+  286 |                 n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;   io::outputFieldNames   = nuclearIOoutputFieldNames;
+      |                                                                                          ^~~~~~~~~~~~~~~~~~~~~
+      |                                                                                          outputFieldNamesNuclear
+../src/sphexa/nuclear-net.hpp:286:115: error: ‘io’ has not been declared
+  286 |                 n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;   io::outputFieldNames   = nuclearIOoutputFieldNames;
+      |                                                                                                                   ^~
+../src/sphexa/nuclear-net.hpp:286:140: error: ‘nuclearIOoutputFieldNames’ was not declared in this scope
+  286 |                 n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;   io::outputFieldNames   = nuclearIOoutputFieldNames;
+      |                                                                                                                                            ^~~~~~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/nuclear-net.hpp: At global scope:
+../src/sphexa/nuclear-net.hpp:294:57: error: ‘NuclearDataType’ has not been declared
+  294 |         void nuclearToHydroUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
+      |                                                         ^~~~~~~~~~~~~~~
+../src/sphexa/nuclear-net.hpp:294:72: error: expected ‘,’ or ‘...’ before ‘<’ token
+  294 |         void nuclearToHydroUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
+      |                                                                        ^
+../src/sphexa/nuclear-net.hpp: In function ‘void util::nuclearToHydroUpdate(ParticlesDataType&, int)’:
+../src/sphexa/nuclear-net.hpp:295:70: error: ‘n’ was not declared in this scope
+  295 |                 std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices, nuclearIOoutputFieldIndices = io::outputFieldIndices;
+      |                                                                      ^
+../src/sphexa/nuclear-net.hpp:298:35: error: ‘sync_fields’ was not declared in this scope
+  298 |                 d.setOutputFields(sync_fields);
+      |                                   ^~~~~~~~~~~
+../src/sphexa/nuclear-net.hpp:310:66: error: definition of ‘auto util::nuclearToHydroUpdate(ParticlesDataType&, int)::<lambda>::operator()(auto:51&&, auto:52&&) const’ is not in namespace enclosing ‘util::nuclearToHydroUpdate(ParticlesDataType&, int)::<lambda>’ [-fpermissive]
+  310 |                                 [&d, &n](auto&& send, auto &&recv){
+      |                                                                  ^
+../src/sphexa/nuclear-net.hpp: In lambda function:
+../src/sphexa/nuclear-net.hpp:311:84: error: ‘n’ is not captured
+  311 |                                         sphexa::mpi::reversedSyncDataFromPartition(n.partition, send, recv, d.comm);
+      |                                                                                    ^
+../src/sphexa/nuclear-net.hpp:310:40: note: the lambda has no capture-default
+  310 |                                 [&d, &n](auto&& send, auto &&recv){
+      |                                        ^
+../src/sphexa/nuclear-net.hpp:295:70: note: ‘<typeprefixerror>n’ declared here
+  295 |                 std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices, nuclearIOoutputFieldIndices = io::outputFieldIndices;
+      |                                                                      ^
+../src/sphexa/nuclear-net.hpp: In function ‘void util::nuclearToHydroUpdate(ParticlesDataType&, int)’:
+../src/sphexa/nuclear-net.hpp:314:90: error: ‘outputFieldIndicesHydro’ was not declared in this scope; did you mean ‘outputFieldIndicesNuclear’?
+  314 |                 n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro; io::outputFieldIndices = nuclearIOoutputFieldIndices;
+      |                                                                                          ^~~~~~~~~~~~~~~~~~~~~~~
+      |                                                                                          outputFieldIndicesNuclear
+../src/sphexa/nuclear-net.hpp:314:115: error: ‘io’ has not been declared
+  314 |                 n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro; io::outputFieldIndices = nuclearIOoutputFieldIndices;
+      |                                                                                                                   ^~
+../src/sphexa/nuclear-net.hpp:314:140: error: ‘nuclearIOoutputFieldIndices’ was not declared in this scope
+  314 |                 n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro; io::outputFieldIndices = nuclearIOoutputFieldIndices;
+      |                                                                                                                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+../src/sphexa/nuclear-net.hpp:315:90: error: ‘outputFieldNamesHydro’ was not declared in this scope; did you mean ‘outputFieldNamesNuclear’?
+  315 |                 n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;   io::outputFieldNames   = nuclearIOoutputFieldNames;
+      |                                                                                          ^~~~~~~~~~~~~~~~~~~~~
+      |                                                                                          outputFieldNamesNuclear
+../src/sphexa/nuclear-net.hpp:315:115: error: ‘io’ has not been declared
+  315 |                 n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;   io::outputFieldNames   = nuclearIOoutputFieldNames;
+      |                                                                                                                   ^~
+../src/sphexa/nuclear-net.hpp:315:140: error: ‘nuclearIOoutputFieldNames’ was not declared in this scope
+  315 |                 n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;   io::outputFieldNames   = nuclearIOoutputFieldNames;
+      |                                                                                                                                            ^~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from hydro-mockup.cpp:19:
+../src/sphexa/initializers.hpp: At global scope:
+../src/sphexa/initializers.hpp:14:9: error: ‘NuclearDataType’ does not name a type
+   14 |         NuclearDataType<n_species, Float> initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
+      |         ^~~~~~~~~~~~~~~
+../src/sphexa/initializers.hpp:47:9: error: ‘NuclearDataType’ does not name a type
+   47 |         NuclearDataType<n_species, Float> initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
+      |         ^~~~~~~~~~~~~~~
+../src/sphexa/initializers.hpp:81:9: error: ‘NuclearDataType’ does not name a type
+   81 |         NuclearDataType<n_species, Float> initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
+      |         ^~~~~~~~~~~~~~~
+../src/sphexa/initializers.hpp:109:9: error: ‘NuclearDataType’ does not name a type
+  109 |         NuclearDataType<n_species, Float> initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const Vector &Y0) {
+      |         ^~~~~~~~~~~~~~~
+hydro-mockup.cpp: In function ‘int util::main(int, char**)’:
+hydro-mockup.cpp:280:49: error: ‘initNuclearDataFromConst’ is not a member of ‘sphexa::sphnnet’
+  280 |         auto nuclear_data_86 = sphexa::sphnnet::initNuclearDataFromConst<86>(first, last, particle_data, Y0_86);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+hydro-mockup.cpp:281:49: error: ‘initNuclearDataFromConst’ is not a member of ‘sphexa::sphnnet’
+  281 |         auto nuclear_data_14 = sphexa::sphnnet::initNuclearDataFromConst<14>(first, last, particle_data, Y0_14);
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/12.1.0/algorithm:61,
+                 from util/arg_parser.hpp:3,
+                 from hydro-mockup.cpp:5:
+/usr/include/c++/12.1.0/bits/stl_algo.h: At global scope:
+/usr/include/c++/12.1.0/bits/stl_algo.h:492:5: warning: ‘bool std::any_of(_IIter, _IIter, _Predicate) [with _IIter = __gnu_cxx::__normal_iterator<const __cxx11::basic_string<char>*, vector<__cxx11::basic_string<char> > >; _Predicate = isExtraOutputStep(size_t, double, double, const std::vector<std::__cxx11::basic_string<char> >&)::<lambda(const string&)>]’ used but never defined
+  492 |     any_of(_InputIterator __first, _InputIterator __last, _Predicate __pred)
+      |     ^~~~~~
+make: *** [Makefile:11: hydro-mockup] Error 1

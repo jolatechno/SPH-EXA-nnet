@@ -9,11 +9,13 @@
 #include <iostream>
 
 namespace util {
-	template<class T, int n>
+	template<class T, long unsigned int n>
 	using array = std::array<T, n>;
 }
-template<class T, int n>
-std::ostream& operator<<(std::ostream& os, const util::array<T, n>& Y);
+
+template<typename T, size_t n>
+std::ofstream& operator<<(std::ofstream& os, const std::array<T, n>& Y);
+
 namespace sphexa {
 	namespace fileutils {
 		/*! @brief write fields as columns to an ASCII file
@@ -60,9 +62,9 @@ namespace sphexa {
 	auto getOutputArrays(Dataset& dataset)
 	{
 	    auto fieldPointers = dataset.data();
-	    using FieldType    = std::variant<float*, double*, int*, unsigned*, uint64_t*, uint8_t* /*,
+	    using FieldType    = std::variant<float*, double*, int*, unsigned*, uint64_t*, uint8_t*,
 	    	util::array<double, 14>*, util::array<double, 86>*, util::array<double, 87>*,
-	    	util::array<float, 14>*,  util::array<float, 86>*,  util::array<float, 87>* */>;
+	    	util::array<float, 14>*,  util::array<float, 86>*,  util::array<float, 87>*>;
 
 	    std::vector<FieldType> outputFields;
 	    outputFields.reserve(dataset.outputFieldIndices.size());

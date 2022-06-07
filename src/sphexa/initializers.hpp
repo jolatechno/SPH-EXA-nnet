@@ -10,7 +10,7 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<int n_species, typename Float=double, class initFunc, class ParticlesDataType>
+	template<size_t n_species, typename Float=double, class initFunc, class ParticlesDataType>
 	NuclearDataType<n_species, Float> initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
 		NuclearDataType<n_species, Float> n;
 
@@ -43,7 +43,7 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<int n_species, typename Float=double, class initFunc, class ParticlesDataType>
+	template<size_t n_species, typename Float=double, class initFunc, class ParticlesDataType>
 	NuclearDataType<n_species, Float> initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
 		NuclearDataType<n_species, Float> n;
 
@@ -77,7 +77,7 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<int n_species, typename Float=double, class initFunc, class ParticlesDataType>
+	template<size_t n_species, typename Float=double, class initFunc, class ParticlesDataType>
 	NuclearDataType<n_species, Float> initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
 		NuclearDataType<n_species, Float> n;
 
@@ -105,7 +105,7 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<int n_species, typename Float=double, class Vector, class ParticlesDataType>
+	template<size_t n_species, typename Float=double, class Vector, class ParticlesDataType>
 	NuclearDataType<n_species, Float> initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const Vector &Y0) {
 		NuclearDataType<n_species, Float> n;
 

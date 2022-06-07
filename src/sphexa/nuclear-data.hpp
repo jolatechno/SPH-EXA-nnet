@@ -22,7 +22,7 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<int n_species, typename Float=double>
+	template<size_t n_species, typename Float=double>
 	struct NuclearDataType {
 	public:
 		/// hydro data
@@ -78,7 +78,7 @@ namespace sphexa::sphnnet {
 	     */
 	    auto data() {
 	    	using FieldType = std::variant<
-	    		//std::vector<util::array<Float, n_species>>*,
+	    		std::vector<util::array<Float, n_species>>*,
 	    		std::vector<Float>*,
 	    		std::vector<uint8_t/*bool*/>*>;
 	    	
@@ -93,13 +93,13 @@ namespace sphexa::sphnnet {
 			ret[6] = &temp;
 			ret[7] = &rho;
 			ret[8] = &previous_rho;
-			ret[9] = (std::vector<Float>*)nullptr; //&Y;
+			ret[9] = &Y;
 
 			return ret;
 	    }
 
 	    bool isAllocated(int i) const {
-	    	if (i <= 1 || i >= 9)
+	    	if (i < 2)
 	    		return false;
 	    	return true;
 	    }
@@ -115,7 +115,7 @@ namespace sphexa::sphnnet {
 			// separate nuclear fields from hydro fields
 			io::setOutputFieldsNames(n_species);
 			std::vector<std::string> hydroOutFields = io::setOutputFields(outFields);
-			bool print_nuclear = outputFieldNames.size() < outFields.size();
+			bool print_nuclear = hydroOutFields.size() < outFields.size();
 
 	        outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, hydroOutFields);
 	        if (print_nuclear)
@@ -133,7 +133,7 @@ namespace sphexa::sphnnet {
 			// separate nuclear fields from hydro fields
 			io::setOutputFieldsNames(species_names);
 	        std::vector<std::string> hydroOutFields = io::setOutputFields(outFields);
-			bool print_nuclear = outputFieldNames.size() < outFields.size();
+			bool print_nuclear = hydroOutFields.size() < outFields.size();
 
 	        outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, hydroOutFields);
 	        if (print_nuclear)

@@ -31,7 +31,7 @@ namespace sphexa::sphnnet::io {
 		// separate nuclear and hydro vectors
 		for (auto it = hydroOutFields.rbegin(); it != hydroOutFields.rend(); ++it)
 			if (std::count(outputFieldNames.begin(), outputFieldNames.end(), *it)) {
-				nuclearOutFields.push_back(*it);
+				nuclearOutFields.insert(nuclearOutFields.begin(), *it);
 				hydroOutFields.erase(it.base());
 			}
 
@@ -44,9 +44,9 @@ namespace sphexa::sphnnet::io {
 /**
  * TODO
  */
-template<class T, int n>
-std::ostream& operator<<(std::ostream& os, const util::array<T, n>& Y) {
+template<typename T, size_t n>
+std::ofstream& operator<<(std::ofstream& os, const std::array<T, n>& Y) {
 	for (int idx : sphexa::sphnnet::io::outputFieldIndices)
-		std::cout << Y[idx] << " ";
+		os << Y[idx] << " ";
     return os;
 }
