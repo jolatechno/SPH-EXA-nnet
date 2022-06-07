@@ -347,15 +347,12 @@ int main(int argc, char* argv[]) {
 		auto duration = ((float)std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count())/1e3;
 		auto avg_duration = duration/n_max;
 		std::cout << "\nexec time: " << duration << "s (avg=" << avg_duration << "s/it, max=" << max_time << "s/it, min=" << min_time  << "s/it)\n\n";
-	}
-	
 
-	if (rank == 0) {
+
 		for (auto name : hydroOutFields)
 			std::cout << name << " ";
 		std::cout << "\n";
 	}
-	
 	MPI_Barrier(MPI_COMM_WORLD);
 	dump(particle_data, first, first + n_print, "/dev/stdout");
 	dump(particle_data, last - n_print,   last, "/dev/stdout");
@@ -368,6 +365,7 @@ int main(int argc, char* argv[]) {
 			std::cout << name << " ";
 		std::cout << "\n";
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
 	if (use_net86) {
 		dump(nuclear_data_86, 0,                             n_print,             "/dev/stdout");
 		dump(nuclear_data_86, n_nuclear_particles - n_print, n_nuclear_particles, "/dev/stdout");
