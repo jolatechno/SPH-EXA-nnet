@@ -67,7 +67,7 @@ namespace nnet::net14 {
 		    	const Float gamma = gam*std::pow(constants::Z[i], 5./3.);
 		    	const Float funcion = gamma > 1 ? ggt1(gamma) : glt1(gamma);
 
-		    	if (debug) std::cout << "funcion[" << i << "]=" << funcion << (i == 13 ? "\n\n" : "\n");
+		    	// if (debug) std::cout << "funcion[" << i << "]=" << funcion << (i == 13 ? "\n\n" : "\n");
 
 			    corrected_BE[i] -= nakbt*funcion;
 			}

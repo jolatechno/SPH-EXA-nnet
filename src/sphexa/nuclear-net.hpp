@@ -76,11 +76,6 @@ namespace sphexa::sphnnet {
 		eigen::batchSolver::CPUsolver<Float> batch_solver(batch_size, dimension + 1);
 #endif
 
-#ifdef CUDA_DEBUG
-		/* debug */
-		std::cout << numDevice << " devices availables\n";
-#endif
-
 		// data for batch initialization
 		std::vector<int>              iter(n_particles, 1);
 		std::vector<uint8_t/*bool*/>  burning(n_particles, true);
@@ -109,12 +104,6 @@ namespace sphexa::sphnnet {
 			// or if no devices are available
 				|| numDevice == 0)
 			{
-
-#ifdef CUDA_DEBUG
-		    	/* debug: */
-		    	std::cout << "falling back to CPU solver for " << batch_size << " particlse still burning out of " << n_particles << "\n";
-#endif
-
 				#pragma omp parallel
 				{
 					// buffers

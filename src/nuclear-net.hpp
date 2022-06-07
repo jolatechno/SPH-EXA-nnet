@@ -121,15 +121,15 @@ utils functions :
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 
-
 	namespace util {
+#pragma omp declare target
 		/// clip the values in a Vector
 		/**
 		 * clip the values in a Vector, to make 0 any negative value, or values smaller than a tolerance epsilon
 		 * ...TODO
 		 */
 		template<typename Float>
-		void clip(Float *X, const int dimension, const Float epsilon) {
+		void inline  clip(Float *X, const int dimension, const Float epsilon) {
 			for (int i = 0; i < dimension; ++i)
 				if (X[i] <= epsilon) //if (std::abs(X(i)) <= epsilon)
 					X[i] = 0;
@@ -143,7 +143,7 @@ utils functions :
 		 * ...TODO
 		 */
 		template<typename Float>
-		bool contain_nan(const Float T, const Float *Y, const int dimension) {
+		bool inline contain_nan(const Float T, const Float *Y, const int dimension) {
 			if (std::isnan(T))
 				return true;
 
@@ -163,7 +163,7 @@ utils functions :
 		 * ...TODO
 		 */
 		template<typename Float>
-		void /*inline*/ derivatives_from_reactions(const std::vector<reaction> &reactions, const Float *rates, const Float rho, const Float *Y, Float *dY, const int dimension) {
+		void inline derivatives_from_reactions(const std::vector<reaction> &reactions, const Float *rates, const Float rho, const Float *Y, Float *dY, const int dimension) {
 			for (int i = 0; i < dimension; ++i)
 				dY[i] = 0.;
 
@@ -204,7 +204,7 @@ utils functions :
 		 * ...TODO
 		 */
 		template<typename Float>
-		void /*inline*/ order_1_dY_from_reactions(const std::vector<reaction> &reactions, const Float *rates, const Float rho,
+		void inline order_1_dY_from_reactions(const std::vector<reaction> &reactions, const Float *rates, const Float rho,
 			Float const *Y, Float *M, const int dimension)
 		{
 			const int num_reactions = reactions.size();
@@ -243,6 +243,7 @@ utils functions :
 					}
 			}
 		}
+#pragma omp end declare target
 	}
 
 
@@ -253,6 +254,7 @@ First simple direct solver:
 
 
 
+#pragma omp declare target
 	/// generate the system to be solve (with rates computed at a specific "guess") 
 	/**
 	 * TODO
@@ -363,6 +365,7 @@ First simple direct solver:
 		// update temperature
 		next_T = T + DY_T[0];
 	}
+#pragma omp end declare target
 
 
 

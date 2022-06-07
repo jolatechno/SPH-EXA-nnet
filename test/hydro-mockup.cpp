@@ -155,8 +155,8 @@ void step(size_t firstIndex, size_t lastIndex,
 
 int main(int argc, char* argv[]) {
 	/* initial hydro data */
-	double rho_left = 1.1e9, rho_right = 0.8e9;
-	double T_left = 0.5e9, T_right = 1.8e9;
+	const double rho_left = 1.1e9, rho_right = 0.8e9;
+	const double T_left = 0.5e9, T_right = 1.5e9;
 
 
 
@@ -255,8 +255,8 @@ int main(int argc, char* argv[]) {
 
 	particle_data.resize(last);
 	for (int i = first; i < last; ++i) {
-		particle_data.temp[i] = T_left   + (T_right   - T_left  )*(float)(rank*n_particles + i - first)/(float)(size*n_particles - 1);
-		particle_data.rho[i]  = rho_left + (rho_right - rho_left)*(float)(rank*n_particles + i - first)/(float)(size*n_particles - 1);
+		particle_data.temp[i] = T_left   + (T_right   - T_left  )*((float)(total_n_particles*rank/size + i-first))/((float)(total_n_particles - 1));
+		particle_data.rho[i]  = rho_left + (rho_right - rho_left)*((float)(total_n_particles*rank/size + i-first))/((float)(total_n_particles - 1));
 	}
 
 
