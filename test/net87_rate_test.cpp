@@ -15,7 +15,7 @@ int main() {
 #if DEBUG
 	nnet::debug = true;
 #endif
-	nnet::eos::helmholtz helm(nnet::net87::constants::Z);
+	nnet::eos::helmholtz_functor helm(nnet::net87::constants::Z);
 
 	std::array<double, 86> Y, X;
     for (int i = 0; i < 86; ++i) X[i] = 0;

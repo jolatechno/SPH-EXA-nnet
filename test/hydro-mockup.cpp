@@ -73,7 +73,7 @@ public:
 	std::vector<double> x, y, z;
 
 	// hydro data
-	std::vector<double> rho, temp; //...
+	std::vector<double> rho, temp, cv; //...
 
 	void resize(const size_t N) {
 		node_id.resize(N);
@@ -82,13 +82,14 @@ public:
 		x.resize(N);
 		y.resize(N);
 		z.resize(N);
+		z.resize(N);
 
 		rho.resize(N);
 		temp.resize(N);
 	}
 
 	const std::vector<std::string> fieldNames = {
-		"nid", "pid", "rho", "temp", "x", "y", "z"
+		"nid", "pid", "rho", "temp", "x", "y", "z", "cv"
 	};
 
 	auto data() {
@@ -98,8 +99,8 @@ public:
 	    	std::vector<uint8_t/*bool*/>*,
 	    	std::vector<double>*>;
 
-	    std::array<FieldType, 7> ret = {
-	    	&node_id, &particle_id, &rho, &temp, &x, &y, &z};
+	    std::array<FieldType, 8> ret = {
+	    	&node_id, &particle_id, &rho, &temp, &x, &y, &z, &cv};
 
 	    return ret;
 	}
@@ -267,8 +268,8 @@ int main(int argc, char* argv[]) {
 
 
 
-	const nnet::eos::helmholtz helm_eos_86 = nnet::eos::helmholtz(nnet::net86::constants::Z);
-	const nnet::eos::helmholtz helm_eos_14 = nnet::eos::helmholtz(nnet::net14::constants::Z);
+	const nnet::eos::helmholtz_functor helm_eos_86 = nnet::eos::helmholtz_functor(nnet::net86::constants::Z);
+	const nnet::eos::helmholtz_functor helm_eos_14 = nnet::eos::helmholtz_functor(nnet::net14::constants::Z);
 	const struct eos_output {
 		double cv, dP_dT, dU_dYe;
 	} isotherm_res{1e20, 0, 0};

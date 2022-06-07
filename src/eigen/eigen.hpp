@@ -29,13 +29,13 @@ namespace eigen {
 
 
 	/// dot product function
-	template<class Vector1, class Vector2>
-	double dot(Vector1 const &X, Vector2 const &Y) {
+	template<class it1, class it2>
+	double dot(it1 const X_begin, it1 const X_end, it2 const Y_begin) {
 		double res = 0;
-		const int n = std::min(X.size(), Y.size());
+		const int n = std::distance(X_begin, X_end);
 
 		for (int i = 0; i < n; ++i)
-			res += X[i]*Y[i];
+			res += X_begin[i]*Y_begin[i];
 
 		return res;
 	}

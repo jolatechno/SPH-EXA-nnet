@@ -240,15 +240,18 @@ namespace sphexa::sphnnet {
 	void computeHelmEOS(Data &n, const Vector &Z) {
 		size_t n_particles = n.Y.size();
 
-		const nnet::eos::helmholtz helm(Z);
-
 		#pragma omp parallel for schedule(dynamic)
 		for (size_t i = 0; i < n_particles; ++i) {
-			auto eos_struct = helm(n.Y[i], n.temp[i], n.rho[i]);
+			// compute abar and zbar
+			auto abar = std::accumulate(n.Y[i].begin(), n.Y[i].end(), 0.f);
+			auto zbar = eigen::dot(n.Y[i].begin(), n.Y[i].end(), Z);
 
-			n.u[i] = eos_struct.u;
-			n.c[i] = eos_struct.c;
-			n.p[i] = eos_struct.p;
+			auto eos_struct = nnet::eos::helmholtz(abar, zbar, n.temp[i], n.rho[i]);
+
+		 // n.u[i]  = eos_struct.u;
+			n.cv[i] = eos_struct.cv;
+			n.c[i]  = eos_struct.c;
+			n.p[i]  = eos_struct.p;
 		}
 	}
 

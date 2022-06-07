@@ -25,7 +25,7 @@ namespace sphexa::sphnnet {
 	struct NuclearDataType {
 	public:
 		/// hydro data
-		std::vector<Float> c, p, u, rho, temp, previous_rho; // drho_dt
+		std::vector<Float> c, p, cv, rho, temp, previous_rho; // drho_dt
 
 		/// nuclear abundances (vector of vector)
 		std::vector<util::array<Float, n_species>> Y;
@@ -46,7 +46,7 @@ namespace sphexa::sphnnet {
 			temp.resize(N);
 			c.resize(N);
 			p.resize(N);
-			u.resize(N);
+			cv.resize(N);
 
 			Y.resize(N);
 
@@ -61,7 +61,7 @@ namespace sphexa::sphnnet {
 	        fieldNames_[2] = "dt";
 	        fieldNames_[3] = "c";
 	        fieldNames_[4] = "p";
-	        fieldNames_[5] = "u";
+	        fieldNames_[5] = "cv";
 	        fieldNames_[6] = "temp";
 	        fieldNames_[7] = "rho";
 	        fieldNames_[8] = "previous_rho";
@@ -71,7 +71,7 @@ namespace sphexa::sphnnet {
 
 			return fieldNames_;
 		}();
-		
+
 
 		/*! @brief return a vector of pointers to field vectors
 	     *
@@ -90,7 +90,7 @@ namespace sphexa::sphnnet {
 			ret[2] = &dt;
 			ret[3] = &c;
 			ret[4] = &p;
-			ret[5] = &u;
+			ret[5] = &cv;
 			ret[6] = &temp;
 			ret[7] = &rho;
 			ret[8] = &previous_rho;
@@ -129,8 +129,8 @@ namespace sphexa::sphnnet {
 	        outputFieldNames[1] = "pid";
 	        outputFieldNames[2] = "dt";
 	        outputFieldNames[3] = "c";
-	        outputFieldNames[4] = "c";
-	        outputFieldNames[5] = "p";
+	        outputFieldNames[4] = "p";
+	        outputFieldNames[5] = "cv";
 	        outputFieldNames[6] = "temp";
 	        outputFieldNames[7] = "rho";
 	        outputFieldNames[8] = "previous_rho";

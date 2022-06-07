@@ -670,7 +670,7 @@ namespace nnet::net14 {
 			            mukbt[i] = a1*gamp + 4.*(b1*sqroot2gamp - c1/sqroot2gamp) + d1*std::log(gamp) - e1;
 				}
 
-				// compute deltamukbt
+				/*// compute deltamukbt
 				for (int i = 0; i < 14; ++i)
 					deltamukbt[i] = mukbt[i] + mukbt[0] - mukbt[i + 1];
 
@@ -680,9 +680,10 @@ namespace nnet::net14 {
 				// 2C -> Mg and 2O -> S
 				deltamukbt[13] = 2.*mukbt[1] - mukbt[3];
 				deltamukbt[14] = mukbt[1] + mukbt[2] - mukbt[4];
-				deltamukbt[15] = 2.*mukbt[2] - mukbt[5];
+				deltamukbt[15] = 2.*mukbt[2] - mukbt[5];*/
 
-				/*for (int i = 0; i < 16; ++i) {
+
+				for (int i = 0; i < 16; ++i) {
 					const auto &Reaction = reaction_list[i];
 
 					Float deltamukbt_ = 0;
@@ -690,8 +691,8 @@ namespace nnet::net14 {
 						deltamukbt_ += mukbt[reactant_id]*n_reactant_consumed;
 					for (const auto [product_id, n_product_produced] : Reaction.products)
 						deltamukbt_ -= mukbt[product_id]*n_product_produced;
-					deltamukbt[i] = deltamukbt_;
-				}*/
+					deltamukbt[i] = deltamukbt_ - mukbt[0];
+				}
 			}
 
 

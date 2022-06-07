@@ -78,8 +78,8 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < 14; ++i) last_Y[i] = X[i]/nnet::net14::constants::A[i];
 
 
-	// double E_in = eigen::dot(last_Y, nnet::net14::BE) + cv*last_T ;
-	double m_in = eigen::dot(last_Y, nnet::net14::constants::A);
+	// double E_in = eigen::dot(last_Y.begin(), last_Y.end(), nnet::net14::BE.begin()) + cv*last_T ;
+	double m_in = eigen::dot(last_Y.begin(), last_Y.end(), nnet::net14::constants::A.begin());
 
 	if (n_save > 0) {
 		std::cerr << "\"t\",\"dt\",,\"T\",,";
@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
 		std::cerr << ",\"Dm/m\"\n";
 	}
 
-	const nnet::eos::helmholtz helm_eos(nnet::net14::constants::Z);
+	const nnet::eos::helmholtz_functor helm_eos(nnet::net14::constants::Z);
 	const auto isotherm_eos = [&](const auto &Y_, const double T, const double rho_) {
 		const double cv = 1e20; //1.5 * /*Rgasid*/8.31e7 * /*mu*/0.72; 		// typical cv from net14 fortran
 		struct eos_output {
@@ -118,16 +118,16 @@ int main(int argc, char* argv[]) {
 		nnet::debug = false;
 
 
-		// double E_tot = eigen::dot(Y, nnet::net14::BE) + cv*T;
+		// double E_tot = eigen::dot(Y.begin(), Y.end(), nnet::net14::BE.begin()) + cv*T;
 		// double dE_E = (E_tot - E_in)/E_in;
 
-		double m_tot = eigen::dot(Y, nnet::net14::constants::A);
+		double m_tot = eigen::dot(Y.begin(), Y.end(), nnet::net14::constants::A.begin());
 		double dm_m = (m_tot - m_in)/m_in;
 
 		// formated print (stderr)
 		if (n_save > 0)
 			if (n_save >= n_max || (n_max - i) % (int)((float)n_max/(float)n_save) == 0 || t >= t_max) {
-				for (int i = 0; i < 14; ++i) X[i] = Y[i]*nnet::net14::constants::A[i]/eigen::dot(Y, nnet::net14::constants::A);
+				for (int i = 0; i < 14; ++i) X[i] = Y[i]*nnet::net14::constants::A[i]/eigen::dot(Y.begin(), Y.end(), nnet::net14::constants::A.begin());
 				std::cerr << t << "," << dt << ",," << T << ",,";
 				for (int i = 0; i < 14; ++i) std::cerr << X[i] << ",";
 				std::cerr << "," << dm_m << "\n";
@@ -136,11 +136,11 @@ int main(int argc, char* argv[]) {
 		// debug print
 		if (n_print > 0)
 			if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0 || t >= t_max) {
-				for (int i = 0; i < 14; ++i) X[i] = Y[i]*nnet::net14::constants::A[i]/eigen::dot(Y, nnet::net14::constants::A);
+				for (int i = 0; i < 14; ++i) X[i] = Y[i]*nnet::net14::constants::A[i]/eigen::dot(Y.begin(), Y.end(), nnet::net14::constants::A.begin());
 				std::cout << "\n(t=" << t << ", dt=" << dt << "):\t";
 				for (int i = 0; i < 14; ++i) std::cout << X[i] << ", ";
 
-				auto state = helm_eos(last_Y, last_T, rho);
+				auto state = helm_eos(last_Y.begin(), last_T, rho);
 				std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << "),\tcv=" << state.cv << ",\tdP/dT=" << state.dP_dT << ",\t" << T << "\n";
 			}
 
