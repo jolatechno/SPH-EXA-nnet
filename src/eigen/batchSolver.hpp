@@ -485,7 +485,7 @@ namespace eigen::batchSolver {
 		void solve(size_t n_solve) {
 #ifdef CUDA_DEBUG
 		    /* debug: */
-			std::cout << "\nsolving for " << n_solve << " particles on " << util::getNumDevice() << " devices\n";
+			std::cout << "\tsolving for " << n_solve << " particles on device " << constants::device_begin << "-" << constants::device_end << "\n";
 #endif
 
 		    // multi-GPU support here
@@ -581,7 +581,7 @@ namespace eigen::batchSolver {
 		void solve(size_t n_solve) {
 #ifdef CUDA_DEBUG
 		    /* debug: */
-			std::cout << "solving for " << n_solve << " particles on CPU\n";
+			std::cout << "\tsolving for " << n_solve << " particles on CPU\n";
 #endif
 
 			#pragma omp parallel
