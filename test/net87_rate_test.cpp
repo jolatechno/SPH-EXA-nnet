@@ -17,11 +17,12 @@ int main() {
 #endif
 	nnet::eos::helmholtz_functor helm(nnet::net87::constants::Z);
 
-	std::array<double, 86> Y, X;
-    for (int i = 0; i < 86; ++i) X[i] = 0;
+	std::array<double, 87> Y, X;
+    for (int i = 0; i < 87; ++i) X[i] = 0;
 	X[nnet::net87::constants::net14_species_order[1]] = 0.5;
 	X[nnet::net87::constants::net14_species_order[2]] = 0.5;
 	for (int i = 0; i < 86; ++i) Y[i] = X[i]/nnet::net87::constants::A[i];
+	Y[86] = 1;
 
     std::vector<double> rate(nnet::net87::reaction_list.size()), drates(nnet::net87::reaction_list.size()), BE(87);
 	auto eos_struct = helm(                               Y.data(), 2e9, 1e9);
@@ -37,11 +38,15 @@ int main() {
 
 	// print reactions
 	std::cout << "\ndirect rates:\n";
-	for (int i = 0; i < 157; ++i)
+	for (int i = 0; i < 157-1; ++i)
 		std::cout << "(" << i+1 << ")\t" << nnet::net87::reaction_list[i] << "\t\tR=" << rate[i] << ",\tdR/dT=" << drates[i] << "\n";
 
 	std::cout << "\nreverse rates:\n";
-	for (int i = 157; i < 157 + (157 - 5); ++i)
+	for (int i = 157-1; i < 157-1 + 157-4; ++i)
+		std::cout << "(" << i-(157 - 5)+1 << ")\t" << nnet::net87::reaction_list[i] << "\t\tR=" << rate[i] << ",\tdR/dT=" << drates[i] << "\n";
+
+	std::cout << "\nelectron capture rates:\n";
+	for (int i = 157-1 + 157-4; i < nnet::net87::reaction_list.size(); ++i)
 		std::cout << "(" << i-(157 - 5)+1 << ")\t" << nnet::net87::reaction_list[i] << "\t\tR=" << rate[i] << ",\tdR/dT=" << drates[i] << "\n";
 
 	std::cout << "\nBE: ";

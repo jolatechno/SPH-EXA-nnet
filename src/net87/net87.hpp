@@ -16,7 +16,10 @@ namespace nnet::net87 {
 	/// constant mass-excendent values
 	const std::vector<double> BE = [](){
 		std::vector<double> BE_ = nnet::net86::BE;
+
+		// electron energy
 		BE_.push_back(0.782*constants::Mev_to_cJ);
+
 		return BE_;
 	}();
 
@@ -33,6 +36,10 @@ namespace nnet::net87 {
 		nnet::net86::compute_BE(T, rho, eos_struct, corrected_BE);
 		corrected_BE[86] = BE.back() + correction;
 
+		// electron energy corrections
+		// BE_[constants::proton]  += Eneutr;
+		// BE_[constants::neutron] += Eaneutr;
+
 		//return corrected_BE;
 	};
 
@@ -40,7 +47,9 @@ namespace nnet::net87 {
 	const std::vector<nnet::reaction> reaction_list = []() {
 		std::vector<nnet::reaction> reactions = nnet::net86::reaction_list;
 
-		/* TODO */
+		// electron captures
+		reactions.push_back(nnet::reaction{{{constants::proton},  {constants::electron}}, {{constants::neutron}}});
+		reactions.push_back(nnet::reaction{{{constants::neutron}, {constants::electron}}, {{constants::proton}}}); // assume position = electron
 
 		return reactions;
 	}();
@@ -74,8 +83,12 @@ namespace nnet::net87 {
 
 		Float dUedYe = eos_struct.dU_dYe;
 
-		/* TODO */
+		int idx = 157-1 + 157-4 -1, jdx = 157-1 + 157-4 -1;
+		// electron capture rates
+		rates [++idx] = 0.; //deffedYe;            //  effe/Y[86]/rho, !!! hack !!!
+		drates[++jdx] = 0.; //deffedYe*deffe/effe; // deffe/Y[86]/rho, !!! hack !!!
 
-		// return std::tuple<std::vector<Float>, std::vector<Float>>{rates, drates};
+		rates [++idx] = 0.; //deffpdYe;            //  effp/Y[86]/rho, !!! hack !!!
+		drates[++jdx] = 0.; //deffpdYe*deffp/effp; // deffp/Y[86]/rho, !!! hack !!!
 	};
 }
