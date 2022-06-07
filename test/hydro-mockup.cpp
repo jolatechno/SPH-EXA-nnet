@@ -262,12 +262,6 @@ int main(int argc, char* argv[]) {
 
 
 
-	std::vector<std::string> outFields = {/*"nid", "pid",*/ "temp", "rho"};
-	particle_data.setOutputFields(outFields);
-
-
-
-
 	const nnet::eos::helmholtz_functor helm_eos_86 = nnet::eos::helmholtz_functor(nnet::net86::constants::Z);
 	const nnet::eos::helmholtz_functor helm_eos_14 = nnet::eos::helmholtz_functor(nnet::net14::constants::Z);
 	const struct eos_output {
@@ -285,6 +279,19 @@ int main(int argc, char* argv[]) {
 	sphexa::mpi::initializePointers(first, last, particle_data.node_id, particle_data.particle_id, particle_data.comm);
 	auto nuclear_data_86 = sphexa::sphnnet::initNuclearDataFromConst<86>(first, last, particle_data, Y0_86);
 	auto nuclear_data_14 = sphexa::sphnnet::initNuclearDataFromConst<14>(first, last, particle_data, Y0_14);
+	const size_t n_nuclear_particles = nuclear_data_14.Y.size();
+
+
+
+
+	std::vector<std::string> hydroOutFields   = {/*"nid", "pid",*/ "temp", "rho"};
+	std::vector<std::string> nuclearOutFields = {"temp", "rho", /*"Y(12C)", "Y(4He)"*/};
+	particle_data.setOutputFields(hydroOutFields);
+	if (use_net86) {
+		nuclear_data_86.setOutputFields(nuclearOutFields, nnet::net86::constants::species_names);
+	} else
+		nuclear_data_14.setOutputFields(nuclearOutFields, nnet::net14::constants::species_names);
+
 
 
 
@@ -344,7 +351,7 @@ int main(int argc, char* argv[]) {
 	
 
 	if (rank == 0) {
-		for (auto name : outFields)
+		for (auto name : hydroOutFields)
 			std::cout << name << " ";
 		std::cout << "\n";
 	}
@@ -352,6 +359,22 @@ int main(int argc, char* argv[]) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	dump(particle_data, first, first + n_print, "/dev/stdout");
 	dump(particle_data, last - n_print,   last, "/dev/stdout");
+
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	if (rank == 0) {
+		std::cout << "\n";
+		for (auto name : nuclearOutFields)
+			std::cout << name << " ";
+		std::cout << "\n";
+	}
+	if (use_net86) {
+		dump(nuclear_data_86, 0,                             n_print,             "/dev/stdout");
+		dump(nuclear_data_86, n_nuclear_particles - n_print, n_nuclear_particles, "/dev/stdout");
+	} else {
+		dump(nuclear_data_14, 0,                             n_print,             "/dev/stdout");
+		dump(nuclear_data_14, n_nuclear_particles - n_print, n_nuclear_particles, "/dev/stdout");
+	}
 
 	MPI_Finalize();
 

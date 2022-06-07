@@ -3,6 +3,7 @@
 #include <numeric>
 #include <omp.h>
 
+#include "nuclear-io.hpp"
 #include "nuclear-data.hpp"
 #include "../eos/helmholtz.hpp"
 
@@ -15,9 +16,6 @@
 
 #ifndef NOT_FROM_SPHEXA
 	#include "sph/data_util.hpp"
-#else
-	template<class Dataset>
-	auto sphexa::getOutputArrays(Dataset &dataset);
 #endif
 
 #include "../nuclear-net.hpp"
@@ -261,18 +259,18 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
 	void hydroToNuclearUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
-		std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices;
-		std::vector<std::string> outputFieldNamesNuclear   = n.outputFieldNames,   outputFieldNamesHydro   = d.outputFieldNames;
+		std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices, nuclearIOoutputFieldIndices = io::outputFieldIndices;
+		std::vector<std::string> outputFieldNamesNuclear   = n.outputFieldNames,   outputFieldNamesHydro   = d.outputFieldNames,   nuclearIOoutputFieldNames   = io::outputFieldNames;
 
 		// get particle data
 		n.setOutputFields(sync_fields);
-		auto nuclearData = sphexa::getOutputArrays(n);
+		auto nuclearData  = sphexa::getOutputArrays(n);
 
 		// get nuclear data
 		std::vector<std::string> particleDataFields = sync_fields;
 		std::replace(particleDataFields.begin(), particleDataFields.end(), std::string("previous_rho"), std::string("rho")); // replace "previous_rho" by "rho" for particle data
 		d.setOutputFields(particleDataFields);
-		auto particleData  = sphexa::getOutputArrays(d);
+		auto particleData = sphexa::getOutputArrays(d);
 
 		const int n_fields = sync_fields.size();
 		if (particleData.size() != n_fields || nuclearData.size() != n_fields)
@@ -284,8 +282,8 @@ namespace sphexa::sphnnet {
 					sphexa::mpi::directSyncDataFromPartition(n.partition, send, recv, d.comm);
 				}, particleData[field], nuclearData[field]);
 
-		n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro;
-		n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;
+		n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro; io::outputFieldIndices = nuclearIOoutputFieldIndices;
+		n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;   io::outputFieldNames   = nuclearIOoutputFieldNames;
 	}
 
 	/// sending back hydro data from NuclearDataType to ParticlesDataType
@@ -294,16 +292,14 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType, int n_species, typename Float=double>
 	void nuclearToHydroUpdate(ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const std::vector<std::string> &sync_fields) {
-		std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices;
-		std::vector<std::string> outputFieldNamesNuclear   = n.outputFieldNames,   outputFieldNamesHydro   = d.outputFieldNames;
+		std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices, nuclearIOoutputFieldIndices = io::outputFieldIndices;
+		std::vector<std::string> outputFieldNamesNuclear   = n.outputFieldNames,   outputFieldNamesHydro   = d.outputFieldNames,   nuclearIOoutputFieldNames   = io::outputFieldNames;
 
 		d.setOutputFields(sync_fields);
 		n.setOutputFields(sync_fields);
 
-		using FieldType = std::variant<float*, double*, int*, unsigned*, size_t*, uint8_t*/*bool* */>;
-
-		std::vector<FieldType> particleData = sphexa::getOutputArrays(d);
-		std::vector<FieldType> nuclearData  = sphexa::getOutputArrays(n);
+		auto particleData = sphexa::getOutputArrays(d);
+		auto nuclearData  = sphexa::getOutputArrays(n);
 
 		const int n_fields = sync_fields.size();
 		if (particleData.size() != n_fields || nuclearData.size() != n_fields)
@@ -315,8 +311,8 @@ namespace sphexa::sphnnet {
 					sphexa::mpi::reversedSyncDataFromPartition(n.partition, send, recv, d.comm);
 				}, nuclearData[field], particleData[field]);
 
-		n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro;
-		n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;
+		n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro; io::outputFieldIndices = nuclearIOoutputFieldIndices;
+		n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;   io::outputFieldNames   = nuclearIOoutputFieldNames;
 	}
 #endif
 }

@@ -6,6 +6,7 @@
 #include <variant>
 
 #include "../nuclear-net.hpp"
+#include "nuclear-io.hpp"
 
 #ifdef USE_MPI
 	#include <mpi.h>
@@ -55,7 +56,7 @@ namespace sphexa::sphnnet {
 
 		/// base fieldNames (without knowledge of nuclear species names)
 		const std::vector<std::string> fieldNames = []() {
-			std::vector<std::string> fieldNames_(n_species + 10);
+			std::vector<std::string> fieldNames_(9);
 			fieldNames_[0] = "nid";
 	        fieldNames_[1] = "pid";
 	        fieldNames_[2] = "dt";
@@ -65,9 +66,6 @@ namespace sphexa::sphnnet {
 	        fieldNames_[6] = "temp";
 	        fieldNames_[7] = "rho";
 	        fieldNames_[8] = "previous_rho";
-
-	        for (int i = 0; i < n_species; ++i)
-				fieldNames_[i + 9] = "Y(" + std::to_string(i) + ")";
 
 			return fieldNames_;
 		}();
@@ -80,10 +78,11 @@ namespace sphexa::sphnnet {
 	     */
 	    auto data() {
 	    	using FieldType = std::variant<
+	    		//std::vector<util::array<Float, n_species>>*,
 	    		std::vector<Float>*,
 	    		std::vector<uint8_t/*bool*/>*>;
 	    	
-			util::array<FieldType, n_species + 9> ret;
+			util::array<FieldType, 10> ret;
 
 			ret[0] = (std::vector<Float>*)nullptr; //&node_id;
 			ret[1] = (std::vector<Float>*)nullptr; //&nuclear_particle_id;
@@ -94,9 +93,7 @@ namespace sphexa::sphnnet {
 			ret[6] = &temp;
 			ret[7] = &rho;
 			ret[8] = &previous_rho;
-
-			for (int i = 0; i < n_species; ++i)
-				ret[i + 9] = (std::vector<Float>*)nullptr; //&Y_io[i];
+			ret[9] = (std::vector<Float>*)nullptr; //&Y;
 
 			return ret;
 	    }
@@ -114,7 +111,15 @@ namespace sphexa::sphnnet {
 #endif
 
 	        outputFieldNames = fieldNames;
-			outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, outFields);
+
+			// separate nuclear fields from hydro fields
+			io::setOutputFieldsNames(n_species);
+			std::vector<std::string> hydroOutFields = io::setOutputFields(outFields);
+			bool print_nuclear = outputFieldNames.size() < outFields.size();
+
+	        outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, hydroOutFields);
+	        if (print_nuclear)
+	        	outputFieldIndices.push_back(9);
     	}
 
     	void setOutputFields(const std::vector<std::string>& outFields, const std::vector<std::string> &species_names) {
@@ -123,22 +128,16 @@ namespace sphexa::sphnnet {
 			MPI_Comm_rank(comm, &rank);
 #endif
 
-			// initialize outputFieldNames with the right names
-    		outputFieldNames.resize(n_species + 9);
-	        outputFieldNames[0] = "nid";
-	        outputFieldNames[1] = "pid";
-	        outputFieldNames[2] = "dt";
-	        outputFieldNames[3] = "c";
-	        outputFieldNames[4] = "p";
-	        outputFieldNames[5] = "cv";
-	        outputFieldNames[6] = "temp";
-	        outputFieldNames[7] = "rho";
-	        outputFieldNames[8] = "previous_rho";
+    		outputFieldNames = fieldNames;
 
-	        for (int i = 0; i < n_species; ++i)
-				outputFieldNames[i + 9] = "Y(" + species_names[i] + ")";
+			// separate nuclear fields from hydro fields
+			io::setOutputFieldsNames(species_names);
+	        std::vector<std::string> hydroOutFields = io::setOutputFields(outFields);
+			bool print_nuclear = outputFieldNames.size() < outFields.size();
 
-	        outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, outFields);
+	        outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, hydroOutFields);
+	        if (print_nuclear)
+	        	outputFieldIndices.push_back(9);
     	}
 
 		//! @brief particle fields selected for file output
