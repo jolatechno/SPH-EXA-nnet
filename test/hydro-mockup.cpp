@@ -96,7 +96,6 @@ public:
 	    using FieldType = std::variant<
 	    	std::vector<size_t>*,
 	    	std::vector<int>*,
-	    	std::vector<uint8_t/*bool*/>*,
 	    	std::vector<double>*>;
 
 	    std::array<FieldType, 8> ret = {
@@ -284,8 +283,8 @@ int main(int argc, char* argv[]) {
 
 
 
-	std::vector<std::string> hydroOutFields   = {/*"nid", "pid",*/ "temp", "rho"};
-	std::vector<std::string> nuclearOutFields = {"temp", "rho", "Y(4He)", "Y(12C)", "Y(16O)"};
+	std::vector<std::string> hydroOutFields   = {"nid", "pid", "temp", "rho"};
+	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "Y(4He)", "Y(12C)", "Y(16O)"};
 	particle_data.setOutputFields(hydroOutFields);
 	if (use_net86) {
 		nuclear_data_86.setOutputFields(nuclearOutFields, nnet::net86::constants::species_names);

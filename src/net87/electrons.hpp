@@ -89,7 +89,7 @@ namespace nnet::net87::electrons {
 
 		// other limit index
 		int i_temp_inf = std::max(0,                    i_temp_sup - 1);
-		int i_rho_inf  = std::max(0,                    i_rho_sup - 1);
+		int i_rho_inf  = std::max(0,                    i_rho_sup  - 1);
 		    i_temp_sup = std::min(constants::nTemp - 1, i_temp_sup);
 		    i_rho_sup  = std::min(constants::nRho  - 1, i_rho_sup);
 

@@ -34,6 +34,10 @@ namespace sphexa::sphnnet {
 		/// timesteps
 		std::vector<Float> dt;
 
+		// particle ID and nodeID
+		std::vector<int> node_id;
+		std::vector<size_t> particle_id;
+
 		/// mpi communicator
 #ifdef USE_MPI
     	MPI_Comm comm=MPI_COMM_WORLD;
@@ -52,6 +56,16 @@ namespace sphexa::sphnnet {
 			Y.resize(N);
 
 			dt.resize(N, nnet::constants::initial_dt);
+
+			int rank = 0;
+#ifdef USE_MPI
+			MPI_Comm_rank(comm, &rank);
+#endif
+			node_id.resize(N);
+			std::fill(node_id.begin(), node_id.end(), rank);
+
+			particle_id.resize(N);
+			std::iota(particle_id.begin(), particle_id.end(), 0);
 		}
 
 		/// base fieldNames (without knowledge of nuclear species names)
@@ -79,13 +93,14 @@ namespace sphexa::sphnnet {
 	    auto data() {
 	    	using FieldType = std::variant<
 	    		std::vector<util::array<Float, n_species>>*,
-	    		std::vector<Float>*,
-	    		std::vector<uint8_t/*bool*/>*>;
+	    		std::vector<int>*,
+	    		std::vector<size_t>*,
+	    		std::vector<Float>*>;
 	    	
 			util::array<FieldType, 10> ret;
 
-			ret[0] = (std::vector<Float>*)nullptr; //&node_id;
-			ret[1] = (std::vector<Float>*)nullptr; //&nuclear_particle_id;
+			ret[0] = &node_id;
+			ret[1] = &particle_id;
 			ret[2] = &dt;
 			ret[3] = &c;
 			ret[4] = &p;
@@ -99,8 +114,6 @@ namespace sphexa::sphnnet {
 	    }
 
 	    bool isAllocated(int i) const {
-	    	if (i < 2)
-	    		return false;
 	    	return true;
 	    }
 
