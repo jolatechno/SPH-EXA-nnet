@@ -712,7 +712,7 @@ Substeping solver
 
 
 
-
+#pragma omp declare target
 	/* actual substepping solver: */
 	/// function to supperstep (can include jumping to NSE)
 	/**
@@ -771,20 +771,20 @@ Substeping solver
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline solve_system_substep(const int dimension,
 		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
-		Float *final_Y, Float &final_T, Float *Y_buffer,
+		Float *final_Y, Float &final_T,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
 	{
 		std::vector<Float> rates(reactions.size()), drates_dT(reactions.size());
 		eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
-		eigen::Vector<Float> RHS(dimension + 1);
-		eigen::Vector<Float> DY_T(dimension + 1);
+		eigen::Vector<Float> RHS(dimension + 1), DY_T(dimension + 1), Y_buffer(dimension);
 
 		solve_system_substep(dimension,
 			Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
 			reactions, construct_BE_rate, eos,
-			final_Y, final_T, Y_buffer,
+			final_Y, final_T, Y_buffer.data(),
 			final_rho, drho_dt, dt_tot, dt,
 			jumpToNse);
 	}
+#pragma omp end declare target
 }

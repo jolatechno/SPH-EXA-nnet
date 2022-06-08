@@ -231,7 +231,7 @@ namespace sphexa::sphnnet {
 		!!!!!!!!!!!!!!!!!!!! */
 		// buffers
 		// to allocate
-		Float drho_dt, temp_buffer, elapsed_time, *Mp, *RHS, *Y_buffer, *DY_T, *rates, *drates_dT;
+		Float drho_dt; //, temp_buffer, elapsed_time; //, *Mp, *RHS, *Y_buffer, *DY_T, *rates, *drates_dT;
 		// to
 		Float *previous_rho_ = n.previous_rho.data(), *rho_ = n.rho.data();
 		// tofrom
@@ -240,39 +240,20 @@ namespace sphexa::sphnnet {
 
 		const int num_reactions = reactions.size();
 		#pragma omp target data \
-			map(to: rho_[0:n_particles],previous_rho_[0:n_particles]) \
-			map(tofrom:temp_[0:n_particles],dt_[0:n_particles],Y_[0:dimension*n_particles]) \
-			map(alloc:Mp[0:(dimension + 1)*(dimension + 1)*n_particles],RHS[0:(dimension + 1)*n_particles],DY_T[0:(dimension + 1)*n_particles],Y_buffer[0:dimension*n_particles],rates[0:num_reactions*n_particles],drates_dT[0:num_reactions*n_particles])
-	    #pragma omp target teams distribute parallel for private(drho_dt,temp_buffer,elapsed_time)
+			map(to:    rho_ [0:n_particles], previous_rho_[0:n_particles]) \
+			map(tofrom:temp_[0:n_particles], dt_          [0:n_particles], Y_[0:dimension*n_particles]) // \
+			// map(alloc: Mp   [0:(dimension + 1)*(dimension + 1)*n_particles], RHS          [0:(dimension + 1)*n_particles], DY_T[0:(dimension + 1)*n_particles], Y_buffer[0:dimension*n_particles], rates[0:num_reactions*n_particles], drates_dT[0:num_reactions*n_particles])
+	    #pragma omp target teams distribute parallel for private(drho_dt) // ,temp_buffer,elapsed_time)
 		for (size_t i = 0; i < n_particles; ++i) {
 			// compute drho/dt
 			drho_dt = previous_rho_[i] <= 0 ? 0. : (rho_[i] - previous_rho_[i])/previous_dt;
 
 			// solve
-			for (int j = 1;; ++j) {
-				// generate system
-				nnet::prepare_system_substep(dimension,
-					&Mp[(dimension + 1)*(dimension + 1)*i], &RHS[(dimension + 1)*i], &rates[num_reactions*i], &drates_dT[num_reactions*i],
-					reactions, construct_rates_BE, eos,
-					&Y_[dimension*i], temp_[i],
-					&Y_buffer[dimension*i], temp_buffer,
-					rho_[i], drho_dt,
-					hydro_dt, elapsed_time, n.dt[i], j,
-					jumpToNse);
-
-				// solve M*D{T, Y} = RHS
-				eigen::solve(&Mp[(dimension + 1)*(dimension + 1)*i], &RHS[(dimension + 1)*i], &DY_T[(dimension + 1)*i], dimension + 1, nnet::constants::epsilon_system);
-
-				// finalize
-				if(nnet::finalize_system_substep(dimension,
-					&Y_[dimension*i], temp_[i],
-					&Y_buffer[dimension*i], temp_buffer,
-					&DY_T[(dimension + 1)*i], hydro_dt, elapsed_time,
-					dt_[i], j))
-				{
-					break;
-				}
-			}
+			nnet::solve_system_substep(dimension,
+				reactions, construct_rates_BE, eos,
+				&Y_[dimension*i], temp_[i],
+				rho_[i], drho_dt, hydro_dt, dt_[i],
+				jumpToNse);
 		}
 
 		std::cout << "ended GPU solver\n";
