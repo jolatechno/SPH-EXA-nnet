@@ -184,24 +184,6 @@ namespace nnet::net86 {
 		for (int i = 0; i < 86; ++i)
 			corrected_BE[i] = BE[i] + correction;
 
-		// function for coulombian correction
-		static auto ggt1 = [&](Float x) {
-			Float a1 = -.898004;
-			Float b1 = .96786;
-			Float c1 = .220703;
-			Float d1 = -.86097;
-
-			Float sqroot2x = std::sqrt(std::sqrt(x));
-			return a1*x + b1*sqroot2x + c1/sqroot2x + d1;
-		};
-		static auto glt1 = [&](Float x) {
-			Float a1 = -.5*std::sqrt(3.);
-			Float b1 = .29561;
-			Float c1 = 1.9885;
-
-			return a1*x*std::sqrt(x) + b1*std::pow(x, c1);
-		};
-
 		// coulombian correctio
 		if (!skip_coulombian_correction) {
 			Float ne = rho*constants::Na/2.;
@@ -209,7 +191,7 @@ namespace nnet::net86 {
 		    Float gam = constants::e2/(kbt*ae);
 		    for (int i = 0; i < 86; ++i) {
 		    	Float gamma = gam*std::pow(constants::Z[i], 5./3.);
-		    	Float funcion = gamma > 1 ? ggt1(gamma) : glt1(gamma);
+		    	Float funcion = gamma > 1 ? constants::ggt1(gamma) : constants::glt1(gamma);
 
 		    	//  if (debug) std::cout << "funcion[" << i << "]=" << funcion << (i == 13 ? "\n\n" : "\n");
 

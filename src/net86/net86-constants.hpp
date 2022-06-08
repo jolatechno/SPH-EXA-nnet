@@ -130,6 +130,28 @@ namespace nnet::net86::constants {
 #ifdef OMP_TARGET_SOLVER
 	#pragma omp declare target
 #endif
+	/// function for coulombian correction
+	template<typename Float>
+	Float inline ggt1(const Float x) {
+		static Float a1 = -.898004;
+		static Float b1 = .96786;
+		static Float c1 = .220703;
+		static Float d1 = -.86097;
+
+		Float sqroot2x = std::sqrt(std::sqrt(x));
+		return a1*x + b1*sqroot2x + c1/sqroot2x + d1;
+	}
+	/// function for coulombian correction
+	template<typename Float>
+	Float inline glt1(const Float x) {
+		static Float a1 = -.5*std::sqrt(3.);
+		static Float b1 = .29561;
+		static Float c1 = 1.9885;
+
+		return a1*x*std::sqrt(x) + b1*std::pow(x, c1);
+	}
+
+
     // reactant and products
 	static const inline int main_reactant[157] = { // (-1 applied)
 		 3,  3,  4,  0,  2,  3,  4,

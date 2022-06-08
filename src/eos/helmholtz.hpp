@@ -283,42 +283,43 @@ namespace nnet::eos {
 
 		// quintic hermite polynomial statement functions
 		// psi0 and its derivatives
-		static const inline auto psi0 = [](const double z) {
+		double inline psi0(const double z) {
 			return z*z*z*(z*(-6.*z + 15.) - 10.) + 1.;
-		};
-		static const inline auto dpsi0 = [](const double z) {
+		}
+		double inline dpsi0(const double z) {
 			return z*z*(z*(-30.*z + 60.) - 30.);
 		};
-		static const inline auto  ddpsi0 = [](const double z) {
+		double inline  ddpsi0(const double z) {
 			return z*(z*(-120.*z + 180.) -60.);
 		};
 
 		// psi1 and its derivatives
-		static const inline auto psi1 = [](const double z) {
+		double inline psi1(const double z) {
 			return z*(z*z*(z*(-3.*z + 8.) - 6.) + 1.);
 		};
-		static const inline auto dpsi1 = [](const double z) {
+		double inline dpsi1(const double z) {
 			return z*z*(z*(-15.*z + 32.) - 18.) + 1.;
 		};
-		static const inline auto ddpsi1 = [](const double z) {
+		double inline ddpsi1(const double z) {
 			return z*(z*(-60.*z + 96.) -36.);
 		};
 
 		// psi2  and its derivatives
-		static const inline auto psi2 = [](const double z) {
+		double inline psi2(const double z) {
 			return 0.5*z*z*(z*(z*(-z + 3.) - 3.) + 1.);
 		};
-		static const inline auto dpsi2 = [](const double z) {
+		double inline dpsi2(const double z) {
 			return  0.5*z*(z*(z*(-5.*z + 12.) - 9.) + 2.);
 		};
-		static const inline auto ddpsi2 = [](const double z) {
+		double inline ddpsi2(const double z) {
 			return 0.5*(z*(z*(-20.*z + 36.) - 18.) + 2.);
 		};
 
 		// biquintic hermite polynomial statement function
-		auto const h5 = [](const double *fi,
+		double inline h5(const double *fi,
 			const double w0t, const double w1t, const double w2t, const double w0mt, const double w1mt, const double w2mt,
-			const double w0d,const double w1d, const double w2d, const double w0md, const double w1md, const double w2md) {
+			const double w0d,const double w1d, const double w2d, const double w0md, const double w1md, const double w2md)
+		{
 		    return fi[0]*w0d*w0t  +  fi[1]*w0md*w0t
 		    	+  fi[2]*w0d*w0mt +  fi[3]*w0md*w0mt
 		    	+  fi[4]*w0d*w1t  +  fi[5]*w0md*w1t
@@ -342,24 +343,25 @@ namespace nnet::eos {
 
 		// cubic hermite polynomial statement functions
 		// psi0 and its derivatives
-		auto const xpsi0 = [](const double z) {
+		double inline xpsi0(const double z) {
 			return z*z*(2.*z - 3.) + 1.;
 		};
-		auto const xdpsi0 = [](const double z) {
+		double inline xdpsi0(const double z) {
 			return z*(6.*z - 6.);
 		};
 
 		// psi1 & derivatives
-		auto const xpsi1 = [](const double z) {
+		double inline xpsi1(const double z) {
 			return z*(z*(z - 2.) + 1.);
 		};
-		auto const xdpsi1 = [](const double z) {
+		double inline xdpsi1(const double z) {
 			return z*(3.*z - 4.) + 1.;
 		};
 
 		// bicubic hermite polynomial statement function
-		auto const h3 = [](const double *fi,
-			const double w0t, const double w1t, const double w0mt, const double w1mt, const double w0d, const double w1d, const double w0md, const double w1md) {
+		double inline h3(const double *fi,
+			const double w0t, const double w1t, const double w0mt, const double w1mt, const double w0d, const double w1d, const double w0md, const double w1md)
+		{
 		    return fi[0]*w0d*w0t  +  fi[1]*w0md*w0t
 		    	+  fi[2]*w0d*w0mt +  fi[3]*w0md*w0mt
 		    	+  fi[4]*w0d*w1t  +  fi[5]*w0md*w1t
@@ -372,7 +374,7 @@ namespace nnet::eos {
 
 
 		// get correspong table indices
-		std::pair<int, int> get_table_indices(const double T, const double rho, const double abar, const double zbar) {
+		std::pair<int, int> inline get_table_indices(const double T, const double rho, const double abar, const double zbar) {
 			const double ye = std::max(1e-16, zbar/abar);
 			const double din = ye*rho;
 
@@ -402,7 +404,7 @@ namespace nnet::eos {
 	*...TODO
 	 */
 	template<typename Float>
-	auto helmholtz(double abar, double zbar, Float T, Float rho) {
+	auto inline helmholtz(double abar, double zbar, Float T, Float rho) {
 		// coefs
 		double fi[36];
 

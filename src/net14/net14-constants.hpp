@@ -45,6 +45,30 @@ namespace nnet::net14::constants {
 		"4He", "12C", "16O", "20Ne", "24Mg", "28Si", "32S", "36Ar", "40Ca", "44Ti", "48Cr", "52Fe", "56Ni", "60Zn"
 	};
 
+
+
+	/// function for coulombian correction
+	template<typename Float>
+	Float inline ggt1(const Float x) {
+		const Float a1 = -.898004;
+		const Float b1 = .96786;
+		const Float c1 = .220703;
+		const Float d1 = -.86097;
+
+		const Float sqroot2x = std::sqrt(std::sqrt(x));
+		return a1*x + b1*sqroot2x + c1/sqroot2x + d1;
+	}
+	/// function for coulombian correction
+	template<typename Float>
+	Float inline glt1(const Float x) {
+		const Float a1 = -.5*std::sqrt(3.);
+		const Float b1 = .29561;
+		const Float c1 = 1.9885;
+
+		return a1*x*std::sqrt(x) + b1*std::pow(x, c1);
+	}
+
+
 	namespace fits {
 #ifdef OMP_TARGET_SOLVER
 	#pragma omp declare target

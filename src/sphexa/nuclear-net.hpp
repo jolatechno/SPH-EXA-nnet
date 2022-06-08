@@ -115,7 +115,7 @@ namespace sphexa::sphnnet {
 			// or if no devices are available
 				numDevice == 0)
 			{
-				#pragma omp parallel for schedule(dynamic) firstprivate(Mp, RHS, /*DY_T,*/ rates, drates_dT, Y_buffer)
+				#pragma omp parallel for schedule(dynamic) firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer)
 				for (size_t i = 0; i < n_particles; ++i)
 					if (burning[i]) {
 						// compute drho/dt
