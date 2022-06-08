@@ -14,7 +14,7 @@ namespace util {
 }
 
 template<typename T, size_t n>
-std::ofstream& operator<<(std::ofstream& os, const std::array<T, n>& Y);
+std::ofstream& operator<<(std::ofstream& os, const util::array<T, n>& Y);
 
 namespace sphexa {
 	namespace fileutils {
