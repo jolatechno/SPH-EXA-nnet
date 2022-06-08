@@ -117,6 +117,7 @@ namespace nnet::eos {
 	   		std::stringstream helm_table;
 	   		helm_table << helmolt_table;
 
+#pragma omp declare target
 	   		// define tables
 	   		ivector d;
 	   		imvector dd_sav, dd2_sav, ddi_sav, dd2i_sav, dd3i_sav ;
@@ -132,6 +133,7 @@ namespace nnet::eos {
 	   			ef, efd, eft, efdt,
 
 	   			xf, xfd, xft, xfdt;
+#pragma omp end declare target
 
 			// read the helmholtz free energy and its derivatives
 			for (int i = 0; i < imax; ++i) {
@@ -341,6 +343,7 @@ namespace nnet::eos {
 
 
 
+#pragma omp declare target
 	/// helmholtz eos
 	/**
 	*...TODO
@@ -355,7 +358,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		if (debug) std::cout << "T=" << T << ", rho=" << rho << ", abar=" << abar << ", zbar=" << zbar << "\n";
+		// if (debug) std::cout << "T=" << T << ", rho=" << rho << ", abar=" << abar << ", zbar=" << zbar << "\n";
 
 
 		// compute polynoms rates
@@ -486,50 +489,6 @@ namespace nnet::eos {
 
 
 
-
-		/* debug: */
-		if (debug) {
-			std::cout << "	fi[" << 0 << "]=" <<  helmholtz_constants::f(iat + 0, jat + 0) << "\n";
-			std::cout << "	fi[" << 1 << "]=" <<  helmholtz_constants::f(iat + 0, jat + 0) << "\n";
-			std::cout << "	fi[" << 2 << "]=" <<  helmholtz_constants::f(iat + 0, jat + 1) << "\n";
-			std::cout << "	fi[" << 3 << "]=" <<  helmholtz_constants::f(iat + 1, jat + 1) << "\n";
-			std::cout << "	fi[" << 4 << "]=" <<  helmholtz_constants::ft(iat + 0, jat + 0) << "\n";
-			std::cout << "	fi[" << 5 << "]=" <<  helmholtz_constants::ft(iat + 1, jat + 0) << "\n";
-			std::cout << "	fi[" << 6 << "]=" <<  helmholtz_constants::ft(iat + 0, jat + 1) << "\n";
-			std::cout << "	fi[" << 7 << "]=" <<  helmholtz_constants::ft(iat + 1, jat + 1) << "\n";
-			std::cout << "	fi[" << 8 << "]=" <<  helmholtz_constants::ftt(iat + 0, jat + 0) << "\n";
-			std::cout << "	fi[" << 9 << "]=" <<  helmholtz_constants::ftt(iat + 1, jat + 0) << "\n";
-			std::cout << "	fi[" << 10 << "]=" <<  helmholtz_constants::ftt(iat + 0, jat + 1) << "\n";
-			std::cout << "	fi[" << 11 << "]=" <<  helmholtz_constants::ftt(iat + 1, jat + 1) << "\n";
-			std::cout << "	fi[" << 12 << "]=" <<  helmholtz_constants::fd(iat + 0, jat + 0) << "\n";
-			std::cout << "	fi[" << 13 << "]=" <<  helmholtz_constants::fd(iat + 1, jat + 0) << "\n";
-			std::cout << "	fi[" << 14 << "]=" <<  helmholtz_constants::fd(iat + 0, jat + 1) << "\n";
-			std::cout << "	fi[" << 15 << "]=" <<  helmholtz_constants::fd(iat + 1, jat + 1) << "\n";
-			std::cout << "	fi[" << 16 << "]=" <<  helmholtz_constants::fdd(iat + 0, jat + 0) << "\n";
-			std::cout << "	fi[" << 17 << "]=" <<  helmholtz_constants::fdd(iat + 1, jat + 0) << "\n";
-			std::cout << "	fi[" << 18 << "]=" <<  helmholtz_constants::fdd(iat + 0, jat + 1) << "\n";
-			std::cout << "	fi[" << 19 << "]=" <<  helmholtz_constants::fdd(iat + 1, jat + 1) << "\n";
-			std::cout << "	fi[" << 20 << "]=" <<  helmholtz_constants::fdt(iat + 0, jat + 0) << "\n";
-			std::cout << "	fi[" << 21 << "]=" <<  helmholtz_constants::fdt(iat + 1, jat + 0) << "\n";
-			std::cout << "	fi[" << 22 << "]=" <<  helmholtz_constants::fdt(iat + 0, jat + 1) << "\n";
-			std::cout << "	fi[" << 23 << "]=" <<  helmholtz_constants::fdt(iat + 1, jat + 1) << "\n";
-			std::cout << "	fi[" << 24 << "]=" <<  helmholtz_constants::fddt(iat + 0, jat + 0) << "\n";
-			std::cout << "	fi[" << 25 << "]=" <<  helmholtz_constants::fddt(iat + 1, jat + 0) << "\n";
-			std::cout << "	fi[" << 26 << "]=" <<  helmholtz_constants::fddt(iat + 0, jat + 1) << "\n";
-			std::cout << "	fi[" << 27 << "]=" <<  helmholtz_constants::fddt(iat + 1, jat + 1) << "\n";
-			std::cout << "	fi[" << 28 << "]=" <<  helmholtz_constants::fdtt(iat + 0, jat + 0) << "\n";
-			std::cout << "	fi[" << 29 << "]=" <<  helmholtz_constants::fdtt(iat + 1, jat + 0) << "\n";
-			std::cout << "	fi[" << 30 << "]=" <<  helmholtz_constants::fdtt(iat + 0, jat + 1) << "\n";
-			std::cout << "	fi[" << 31 << "]=" <<  helmholtz_constants::fdtt(iat + 1, jat + 1) << "\n";
-			std::cout << "	fi[" << 32 << "]=" <<  helmholtz_constants::fddtt(iat + 0, jat + 0) << "\n";
-			std::cout << "	fi[" << 33 << "]=" <<  helmholtz_constants::fddtt(iat + 1, jat + 0) << "\n";
-			std::cout << "	fi[" << 34 << "]=" <<  helmholtz_constants::fddtt(iat + 0, jat + 1) << "\n";
-			std::cout << "	fi[" << 35 << "]=" <<  helmholtz_constants::fddtt(iat + 1, jat + 1) << "\n";
-		}
-
-
-
-
 		// various differences
 		Float xt  = std::max( (T - helmholtz_constants::t[jat])*helmholtz_constants::dti_sav[jat], 0.);
 		Float xd  = std::max( (din - helmholtz_constants::d[iat])*helmholtz_constants::ddi_sav[iat], 0.);
@@ -538,7 +497,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		if (debug) std::cout << "xt=" << xt << " = (T - t[" << jat << "]=" << helmholtz_constants::t[jat] << ")* dti_sav[" << jat << "]=" << helmholtz_constants::dti_sav[jat] << "\n";
+		// if (debug) std::cout << "xt=" << xt << " = (T - t[" << jat << "]=" << helmholtz_constants::t[jat] << ")* dti_sav[" << jat << "]=" << helmholtz_constants::dti_sav[jat] << "\n";
 
 
 		// the six rhosity and six temperature basis functions;
@@ -548,7 +507,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		if (debug) std::cout << "si0t=" << si0t << " = psi0(xt=" << xt << ")\n";
+		// if (debug) std::cout << "si0t=" << si0t << " = psi0(xt=" << xt << ")\n";
 
 
 		Float si0mt =  helmholtz_constants::psi0(mxt);
@@ -623,13 +582,6 @@ namespace nnet::eos {
 		Float df_tt = helmholtz_constants::h5(fi,
 			ddsi0t, ddsi1t, ddsi2t, ddsi0mt, ddsi1mt, ddsi2mt,
 			si0d,   si1d,   si2d,   si0md,   si1md,   si2md);
-
-
-
-		/* debug: */
-		if (debug) std::cout << "df_tt=" << df_tt << " = h5(" << iat << ", " << jat << ",\n\t" <<
-			ddsi0t << ", " << ddsi1t << ", " << ddsi2t << ", " << ddsi0mt << ", " << ddsi1mt << ", " << ddsi2mt << ",\n\t" <<
-			si0d << ", " << si1d << ", " << si2d << ", " << si0md << ", " << si1md << ", " << si2md << ")\n";
 
 
 
@@ -819,7 +771,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		if (debug) std::cout << "dsepdt=" << dsepdt << " = -df_tt=" << df_tt << " * ye=" << ye << "\n";
+		// if (debug) std::cout << "dsepdt=" << dsepdt << " = -df_tt=" << df_tt << " * ye=" << ye << "\n";
 
 
 		Float eele    = ye*free + T*sele;
@@ -830,7 +782,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		if (debug) std::cout << "deepdt=" << deepdt << " = dsepdt=" << dsepdt << " * T" << "\n";
+		// if (debug) std::cout << "deepdt=" << deepdt << " = dsepdt=" << dsepdt << " * T" << "\n";
 
 
 		// coulomb section:
@@ -846,7 +798,7 @@ namespace nnet::eos {
 		Float dsda     = z*dxnida;
 
 		/* debug: */
-		if (debug) std::cout << "s=" << s << " = z=" << z << " * xni=" << xni << "\n";
+		// if (debug) std::cout << "s=" << s << " = z=" << z << " * xni=" << xni << "\n";
 
 
 		Float lami     = std::pow(1./s, 1./3.);
@@ -863,7 +815,7 @@ namespace nnet::eos {
 		Float plasgdz  = 2.0*plasg/zbar;
 
 		/* debug: */
-		if (debug) std::cout << "plasg=" << plasg << " = zbar=" << zbar << "^2 * esqu=" << helmholtz_constants::esqu << " * ktinv=" << ktinv << " * inv_lami=" << inv_lami << "\n";
+		// if (debug) std::cout << "plasg=" << plasg << " = zbar=" << zbar << "^2 * esqu=" << helmholtz_constants::esqu << " * ktinv=" << ktinv << " * inv_lami=" << inv_lami << "\n";
 
 
 		Float ecoul, pcoul, scoul,
@@ -887,7 +839,7 @@ namespace nnet::eos {
 
 
 			/* debug: */
-			if (debug) std::cout << "decouldt=" << decouldt << " = y=" << y << " * plasgdt=" << decouldt << " + ecoul=" << ecoul << " / T" << "\n";
+			// if (debug) std::cout << "decouldt=" << decouldt << " = y=" << y << " * plasgdt=" << decouldt << " + ecoul=" << ecoul << " / T" << "\n";
 
 			y        = rho/3.;
 			dpcouldd = ecoul + y*decouldd/3.;
@@ -925,7 +877,7 @@ namespace nnet::eos {
 
 
 			/* debug: */
-			if (debug) std::cout << "decouldt=" << decouldt << " = s=" << s << " * dpcouldt=" << dpcouldt <<"\n";
+			// if (debug) std::cout << "decouldt=" << decouldt << " = s=" << s << " * dpcouldt=" << dpcouldt <<"\n";
 
 
 			s        = -helmholtz_constants::avo*helmholtz_constants::kerg/(abar*plasg)*(1.5*helmholtz_constants::c2*x - helmholtz_constants::a2*(helmholtz_constants::b2 - 1.)*y);
@@ -987,7 +939,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		if (debug) std::cout << "degasdt=" << degasdt << " = deiondt=" << deiondt << " + deepdt=" << deepdt << " + decouldt=" << decouldt << "\n";
+		// if (debug) std::cout << "degasdt=" << degasdt << " = deiondt=" << deiondt << " + deepdt=" << deepdt << " + decouldt=" << decouldt << "\n";
 
 
 		// add in radiation to get the total
@@ -1012,7 +964,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		if (debug) std::cout << "rhoerdt(cv)=" << rhoerdt << " = deraddt=" << deraddt << " + degasdt=" << degasdt << "\n\n";
+		// if (debug) std::cout << "rhoerdt(cv)=" << rhoerdt << " = deraddt=" << deraddt << " + degasdt=" << degasdt << "\n\n";
 
 
 		// for the gas
@@ -1109,5 +1061,6 @@ namespace nnet::eos {
 			return helmholtz(abar, zbar, T, rho);
 		}
 	};
+#pragma omp end declare target
 }
 

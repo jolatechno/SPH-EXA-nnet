@@ -438,6 +438,7 @@ Iterative solver:
 
 
 
+#pragma omp declare target
 	/// generate the system to be solve for the iterative solver
 	/**
 	 * TODO
@@ -537,6 +538,7 @@ Iterative solver:
 		// continue the loop
 		return {0., false};
 	}
+#pragma omp end declare target
 
 
 
@@ -596,6 +598,7 @@ Substeping solver
 
 
 
+#pragma omp declare target
 	/// generate the system to be solve for the substepping solver
 	/**
 	 * TODO
@@ -678,6 +681,7 @@ Substeping solver
 
 		return false;
 	}
+#pragma omp end declare target
 
 
 

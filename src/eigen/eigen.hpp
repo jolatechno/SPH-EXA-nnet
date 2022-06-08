@@ -28,6 +28,7 @@ namespace eigen {
 
 
 
+#pragma omp declare target
 	/// dot product function
 	template<class it1, class it2>
 	double dot(it1 const X_begin, it1 const X_end, it2 const Y_begin) {
@@ -39,6 +40,7 @@ namespace eigen {
 
 		return res;
 	}
+#pragma omp end declare target
 
 	/// vector type
 	template<typename Type>
@@ -79,6 +81,7 @@ namespace eigen {
 
 
 
+#pragma omp declare target
 	/// custom analytical solver
 	template<typename Float=double>
 	Vector<Float> solve(Float *M, Float *RHS, const int n, Float epsilon=0) {
@@ -124,4 +127,5 @@ namespace eigen {
 
 		return X;
 	}
+#pragma omp end declare target
 }
