@@ -71,9 +71,9 @@ namespace nnet::net87::electrons {
 		auto const [log_temp_ref_, log_rho_ref_, electron_rate_] = read_table();
 
 #pragma omp declare target
-		auto const log_temp_ref  = log_temp_ref_;
-		auto const log_rho_ref   = log_rho_ref_;
-		auto const electron_rate = electron_rate_;
+		static const inline auto log_temp_ref  = log_temp_ref_;
+		static const inline auto log_rho_ref   = log_rho_ref_;
+		static const inline auto electron_rate = electron_rate_;
 	}
 
 	/// interpolate electron rate

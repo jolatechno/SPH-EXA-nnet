@@ -13,10 +13,10 @@ namespace nnet::net14::constants {
 	const double Mev_to_cJ = 9.648529392e17;
 
 	/// constant atomic number values
-	const std::vector<double> Z = {2, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30};
+	static const inline std::vector<double> Z{2, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30};
 
 	/// constant number of masses values
-	const std::vector<double> A = {4, 12, 16, 20, 24, 28, 32,  36, 40, 44, 48, 52, 56, 60};
+	static const inline std::vector<double> A{4, 12, 16, 20, 24, 28, 32,  36, 40, 44, 48, 52, 56, 60};
 #pragma omp end declare target
 
 	/// order of nuclear species
@@ -74,9 +74,9 @@ namespace nnet::net14::constants {
 			return 23;
 		}
 
-		const double q[14 - 4] = {9.3160e0, 9.9840e0, 6.9480e0, 6.6390e0, 7.0400e0, 5.1270e0, 7.6920e0, 7.9390e0, 7.9950e0, 2.7080e0};
+		static const inline double q[14 - 4] = {9.3160e0, 9.9840e0, 6.9480e0, 6.6390e0, 7.0400e0, 5.1270e0, 7.6920e0, 7.9390e0, 7.9950e0, 2.7080e0};
 
-		const double fit[14 - 4][8] = {
+		static const inline double fit[14 - 4][8] = {
 			{1.335429e2, -2.504361e0,   7.351683e1, -2.217197e2,  1.314774e1, -7.475602e-1, 9.602703e1,  1.583615e2},
 			{1.429069e2, -3.288633e0,   1.042707e2, -2.650548e2,  1.391863e1, -6.999523e-1, 1.216164e2,  1.677677e2},
 			{9.710066e1, -3.324446e0,   5.358524e1, -1.656830e2,  7.199997e0, -2.828443e-1, 7.933873e1,  1.219924e2},
@@ -89,7 +89,7 @@ namespace nnet::net14::constants {
 			{-1.043410e3, 2.280261e1,  -2.281027e3,  3.453872e3, -1.969194e2,  1.101885e1, -1.685657e3, -1.018421e3}
 		};
 
-		const double choose[14 - 4 + 1][24] = {
+		static const inline double choose[14 - 4 + 1][24] = {
 			{
 				1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000016,
 				1.000382, 1.002544, 1.009003, 1.022212, 1.043747, 1.074176, 1.113314, 1.215134, 1.343451, 1.493867, 1.664363, 1.854977

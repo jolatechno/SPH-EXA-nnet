@@ -12,7 +12,7 @@ namespace nnet::net14 {
 	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
-	const std::vector<double> BE = {
+	static const inline std::vector<double> BE{
 		0, 
 		 7.27440*constants::Mev_to_cJ,
 		14.43580*constants::Mev_to_cJ,
@@ -30,7 +30,7 @@ namespace nnet::net14 {
 	};
 
 	// constant list of ordered reaction
-	const std::vector<nnet::reaction> reaction_list = {
+	static const inline std::vector<nnet::reaction> reaction_list = {
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		   3He -> C fusion */
 		{{{0, 3}}, {{1}}},
@@ -108,7 +108,7 @@ namespace nnet::net14 {
 	};
 
 	/// compute a list of reactions for net14
-	auto const compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
+	static const inline auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		/*********************************************/

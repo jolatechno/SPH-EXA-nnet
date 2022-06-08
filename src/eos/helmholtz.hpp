@@ -235,77 +235,77 @@ namespace nnet::eos {
 
 
 #pragma omp declare target
-		const auto d        = d_;
-		const auto dd_sav   = dd_sav_;
-		const auto dd2_sav  = dd2_sav_;
-		const auto ddi_sav  = ddi_sav_;
-		const auto dd2i_sav = dd2i_sav_;
-		const auto dd3i_sav = dd3i_sav_;
+		static const inline auto d        = d_;
+		static const inline auto dd_sav   = dd_sav_;
+		static const inline auto dd2_sav  = dd2_sav_;
+		static const inline auto ddi_sav  = ddi_sav_;
+		static const inline auto dd2i_sav = dd2i_sav_;
+		static const inline auto dd3i_sav = dd3i_sav_;
 
-		const auto t        = t_;
-		const auto dt_sav   = dt_sav_;
-		const auto dt2_sav  = dt2_sav_;
-		const auto dti_sav  = dti_sav_;
-		const auto dt2i_sav = dt2i_sav_;
-		const auto dt3i_sav = dt3i_sav_;
+		static const inline auto t        = t_;
+		static const inline auto dt_sav   = dt_sav_;
+		static const inline auto dt2_sav  = dt2_sav_;
+		static const inline auto dti_sav  = dti_sav_;
+		static const inline auto dt2i_sav = dt2i_sav_;
+		static const inline auto dt3i_sav = dt3i_sav_;
 
-		const auto f        = f_;
-		const auto fd       = fd_;
-		const auto ft       = ft_;
-		const auto fdd      = fdd_;
-		const auto ftt      = ftt_;
-		const auto fdt      = fdt_;
-		const auto fddt     = fddt_;
-		const auto fdtt     = fdtt_;
-		const auto fddtt    = fddtt_;
+		static const inline auto f        = f_;
+		static const inline auto fd       = fd_;
+		static const inline auto ft       = ft_;
+		static const inline auto fdd      = fdd_;
+		static const inline auto ftt      = ftt_;
+		static const inline auto fdt      = fdt_;
+		static const inline auto fddt     = fddt_;
+		static const inline auto fdtt     = fdtt_;
+		static const inline auto fddtt    = fddtt_;
 
-		const auto dpdf     = dpdf_;
-		const auto dpdfd    = dpdfd_;
-		const auto dpdft    = dpdft_;
-		const auto dpdfdt   = dpdfdt_;
+		static const inline auto dpdf     = dpdf_;
+		static const inline auto dpdfd    = dpdfd_;
+		static const inline auto dpdft    = dpdft_;
+		static const inline auto dpdfdt   = dpdfdt_;
 
-		const auto ef       = ef_;
-		const auto efd      = efd_;
-		const auto eft      = eft_;
-		const auto efdt     = efdt_;
+		static const inline auto ef       = ef_;
+		static const inline auto efd      = efd_;
+		static const inline auto eft      = eft_;
+		static const inline auto efdt     = efdt_;
 
-		const auto xf       = xf_;
-		const auto xfd      = xfd_;
-		const auto xft      = xft_;
-		const auto xfdt     = xfdt_;
+		static const inline auto xf       = xf_;
+		static const inline auto xfd      = xfd_;
+		static const inline auto xft      = xft_;
+		static const inline auto xfdt     = xfdt_;
 
 
 		// quintic hermite polynomial statement functions
 		// psi0 and its derivatives
-		auto const psi0 = [](const double z) {
+		static const inline auto psi0 = [](const double z) {
 			return z*z*z*(z*(-6.*z + 15.) - 10.) + 1.;
 		};
-		auto const dpsi0 = [](const double z) {
+		static const inline auto dpsi0 = [](const double z) {
 			return z*z*(z*(-30.*z + 60.) - 30.);
 		};
-		auto const ddpsi0 = [](const double z) {
+		static const inline auto  ddpsi0 = [](const double z) {
 			return z*(z*(-120.*z + 180.) -60.);
 		};
 
 		// psi1 and its derivatives
-		auto const psi1 = [](const double z) {
+		static const inline auto psi1 = [](const double z) {
 			return z*(z*z*(z*(-3.*z + 8.) - 6.) + 1.);
 		};
-		auto const dpsi1 = [](const double z) {
+		static const inline auto dpsi1 = [](const double z) {
 			return z*z*(z*(-15.*z + 32.) - 18.) + 1.;
 		};
-		auto const ddpsi1 = [](const double z) {
+		static const inline auto ddpsi1 = [](const double z) {
 			return z*(z*(-60.*z + 96.) -36.);
 		};
 
 		// psi2  and its derivatives
-		auto const psi2 = [](const double z) {
+		static const inline auto psi2 = [](const double z) {
 			return 0.5*z*z*(z*(z*(-z + 3.) - 3.) + 1.);
 		};
-		auto const dpsi2 = [](const double z) {
+		static const inline auto dpsi2 = [](const double z) {
 			return  0.5*z*(z*(z*(-5.*z + 12.) - 9.) + 2.);
 		};
-		auto const ddpsi2 = [](const double z) {
+		static const inline auto ddpsi2 = [](const double z) {
 			return 0.5*(z*(z*(-20.*z + 36.) - 18.) + 2.);
 		};
 

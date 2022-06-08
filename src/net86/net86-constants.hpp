@@ -22,7 +22,7 @@ namespace nnet::net86::constants {
 	const double Mev_to_cJ = 9.648529392e17;
 
 	/// constant atomic number values
-	const std::vector<double> Z = {
+	static const inline std::vector<double> Z{
 		 1,  0,  2,  6,  8, 10, 11,
 		12, 12, 10, 11, 12, 11, 10,
 		13, 14, 14, 12, 13, 14, 13,
@@ -39,7 +39,7 @@ namespace nnet::net86::constants {
 	};
 
 	/// constant number of masses values
-	const std::vector<double> A = {
+	static const inline std::vector<double> A{
 		 1,  1,  4, 12, 16, 20, 21,
 		24, 23, 21, 23, 22, 22, 22,
 		25, 28, 27, 25, 27, 26, 26,
@@ -125,7 +125,7 @@ namespace nnet::net86::constants {
 
 #pragma omp declare target
     // reactant and products
-	const int main_reactant[157] = { // (-1 applied)
+	static const inline int main_reactant[157] = { // (-1 applied)
 		 3,  3,  4,  0,  2,  3,  4,
 		 5,  8, 11,  5, 12,  6,  6,  9,  7, 16, 19,  7, 20, 14, 14, 17,
 		15, 24, 27, 15, 28, 22, 22, 25, 23, 32, 35, 23, 36, 30, 30, 33,
@@ -139,7 +139,7 @@ namespace nnet::net86::constants {
 		 5,  7, 15, 23, 31, 39, 47, 55, 63, 71,
 		 5,  7, 15, 23, 31, 39, 47, 55, 63, 71
     };
-    const int secondary_reactant[157] = { // (-1 applied)
+    static const inline int secondary_reactant[157] = { // (-1 applied)
     	3, 4, 4, 0, 2, 2, 2,
     	0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1,
     	0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1,
@@ -151,7 +151,7 @@ namespace nnet::net86::constants {
     	2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
     	2, 2, 2, 2, 2, 2, 2, 2, 2, 2
     };
-    const int main_product[157] = { // (-1 applied)
+    static const inline int main_product[157] = { // (-1 applied)
     	 5,  7, 15,  0,  3,  4,  5,
     	 6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
     	22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 
@@ -206,7 +206,7 @@ namespace nnet::net86::constants {
 			return 23;
 		}
 
-		const double q[157 - 7] = {
+		static const inline double q[157 - 7] = {
 			2.4310, 16.532, 13.147, 6.7610, 12.419,
 			5.5020, 11.069, 10.364, 2.2710, 17.179, 13.312,
 			7.3310, 13.058, 5.5180, 11.366, 11.093, 2.7480,
@@ -235,7 +235,7 @@ namespace nnet::net86::constants {
 			2.4130
 		};
 
-		const double fit[157 - 7][8] = {
+		static const inline double fit[157 - 7][8] = {
 		    { 35.48986, -1.806713, 35.44666, -67.56999, 4.000620, -.2335706, 31.89835, 57.73614 },
 		    { 11.39207, -1.837460e-2, 3.219166, -5.407895, 5.745295e-2, 6.107425e-3, 3.343716, 36.42029 },
 		    { 7.719048, 5.644467e-3, -.2121762, 4.680793, -.6838608, 5.149486e-2, -.4863560, 29.97184 },
@@ -388,7 +388,7 @@ namespace nnet::net86::constants {
 		    { 221.1075, -7.421734, 295.3902, -551.2794, 36.41244, -2.338715, 254.6778, 221.1858 }
 		};
 
-		const double choose[87 - 6][24] = {
+		static const inline double choose[87 - 6][24] = {
 			{
 				1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000016,
 				1.000382, 1.002544, 1.009003, 1.022212, 1.043747, 1.074176, 1.113314, 1.215134, 1.343451, 1.493867, 1.664363, 1.854977
