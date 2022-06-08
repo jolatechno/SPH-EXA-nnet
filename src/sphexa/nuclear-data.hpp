@@ -15,6 +15,8 @@
 
 #ifndef NOT_FROM_SPHEXA
 	#include "sph/data_util.hpp"
+	#include "sph/field_states.hpp"
+	#include "cstone/util/util.hpp"
 #endif
 
 namespace sphexa::sphnnet {
@@ -23,7 +25,7 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<size_t n_species, typename Float=double>
-	struct NuclearDataType {
+	struct NuclearDataType : public FieldStates<NuclearDataType<n_species, Float>> {
 	public:
 		// types
 		using RealType = Float;
@@ -57,44 +59,55 @@ namespace sphexa::sphnnet {
 #endif
 
 		/// resize the number of particules
-		void resize(const size_t N) {
-			rho.resize(N, 0.);
-			previous_rho.resize(N, 0.);
-			temp.resize(N);
-			c.resize(N);
-			p.resize(N);
-			cv.resize(N);
+		void resize(size_t size) {
+	        double growthRate = 1;
+	        auto   data_      = data();
 
-			Y.resize(N);
+	        for (size_t i = 0; i < data_.size(); ++i) {
+	            if (this->isAllocated(i)) {
+	            	// actually resize
+	                std::visit([&](auto& arg) { 
+	                	size_t previous_size = arg->size();
+	                	reallocate(*arg, size, growthRate); 
 
-			dt.resize(N, nnet::constants::initial_dt);
-
-			int rank = 0;
+	                	using T = decltype((*arg)[0]);
+	                	if constexpr (std::is_convertible<T, int>::value) {
+	                		// fill node_id
+			                if ((void*)arg == (void*)(&node_id)) {
+		        				int rank = 0;
 #ifdef USE_MPI
-			MPI_Comm_rank(comm, &rank);
+								MPI_Comm_rank(comm, &rank);
 #endif
-			node_id.resize(N);
-			std::fill(node_id.begin(), node_id.end(), rank);
+								std::fill(node_id.begin() + previous_size, node_id.end(), rank);
+			                }
 
-			particle_id.resize(N);
-			std::iota(particle_id.begin(), particle_id.end(), 0);
-		}
+			                // fill particle ID
+			                else if ((void*)arg == (void*)(&particle_id)) {
+			                	std::iota(particle_id.begin() + previous_size, particle_id.end(), previous_size);
+			                }
+
+			                // fill rho or previous_rho
+			                else if ((void*)arg == (void*)(&rho) || (void*)arg == (void*)(&previous_rho)) {
+			                	std::fill(arg->begin() + previous_size, arg->end(), 0.);
+			                }
+
+			    			// fill dt
+			                else if ((void*)arg == (void*)(&dt)) {
+			                	std::fill(dt.begin() + previous_size, dt.end(), nnet::constants::initial_dt);
+			                }
+			            }
+	                }, data_[i]);
+	            }
+	        }
+
+	        // devPtrs.resize(size);
+	    }
+
 
 		/// base fieldNames (without knowledge of nuclear species names)
-		const std::vector<std::string> fieldNames = []() {
-			std::vector<std::string> fieldNames_(9);
-			fieldNames_[0] = "nid";
-	        fieldNames_[1] = "pid";
-	        fieldNames_[2] = "dt";
-	        fieldNames_[3] = "c";
-	        fieldNames_[4] = "p";
-	        fieldNames_[5] = "cv";
-	        fieldNames_[6] = "temp";
-	        fieldNames_[7] = "rho";
-	        fieldNames_[8] = "previous_rho";
-
-			return fieldNames_;
-		}();
+		inline static constexpr std::array fieldNames {
+			"nid", "pid", "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y",
+		};
 
 
 		/*! @brief return a vector of pointers to field vectors
@@ -125,26 +138,24 @@ namespace sphexa::sphnnet {
 			return ret;
 	    }
 
-	    bool isAllocated(int i) const {
-	    	return true;
-	    }
-
 	    void setOutputFields(const std::vector<std::string>& outFields) {
 	    	int rank = 0;
 #ifdef USE_MPI
 			MPI_Comm_rank(comm, &rank);
 #endif
 
-	        outputFieldNames = fieldNames;
+	        outputFieldNames = outFields;
 
 			// separate nuclear fields from hydro fields
 			io::setOutputFieldsNames(n_species);
 			std::vector<std::string> hydroOutFields = io::setOutputFields(outFields);
-			bool print_nuclear = hydroOutFields.size() < outFields.size();
 
-	        outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, hydroOutFields);
-	        if (print_nuclear)
-	        	outputFieldIndices.push_back(9);
+			// add output field
+			bool print_nuclear = hydroOutFields.size() < outFields.size();
+	        if (print_nuclear && !std::count(hydroOutFields.begin(), hydroOutFields.end(), "Y"))
+	        	hydroOutFields.push_back("Y");
+
+	        outputFieldIndices = sphexa::fieldStringsToInt(fieldNames, hydroOutFields);
     	}
 
     	void setOutputFields(const std::vector<std::string>& outFields, const std::vector<std::string> &species_names) {
@@ -153,16 +164,18 @@ namespace sphexa::sphnnet {
 			MPI_Comm_rank(comm, &rank);
 #endif
 
-    		outputFieldNames = fieldNames;
+    		outputFieldNames = outFields;
 
 			// separate nuclear fields from hydro fields
 			io::setOutputFieldsNames(species_names);
 	        std::vector<std::string> hydroOutFields = io::setOutputFields(outFields);
-			bool print_nuclear = hydroOutFields.size() < outFields.size();
 
-	        outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, hydroOutFields);
-	        if (print_nuclear)
-	        	outputFieldIndices.push_back(9);
+	        // add output field
+			bool print_nuclear = hydroOutFields.size() < outFields.size();
+	        if (print_nuclear && !std::count(hydroOutFields.begin(), hydroOutFields.end(), "Y"))
+	        	hydroOutFields.push_back("Y");
+
+	        outputFieldIndices = sphexa::fieldStringsToInt(fieldNames, hydroOutFields);
     	}
 
 		//! @brief particle fields selected for file output

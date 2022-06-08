@@ -281,7 +281,7 @@ First simple direct solver:
 		if (dt == 0) {
 			std::string error = "Zero timestep in nuclear network\n";
 			error += "\tT=" + std::to_string(T) + ",\tTguess=" + std::to_string(T_guess) + "\n";
-			error += "\trho=" + std::to_string(rho) + "\n";
+			error += "\trho=" + std::to_string(rho) + "\tdrho/dt=" + std::to_string(drho_dt) + "\n";
 			error += "\tdP/dT=" + std::to_string(eos_struct.dP_dT) + ", cv=" + std::to_string(eos_struct.cv) + "\n";
 			error += "\tY=";
 			for (int i = 0; i < dimension; ++i)

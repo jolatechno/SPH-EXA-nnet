@@ -11,9 +11,7 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<size_t n_species, typename Float=double, class initFunc, class ParticlesDataType>
-	NuclearDataType<n_species, Float> initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
-		NuclearDataType<n_species, Float> n;
-
+	void initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const initFunc initializer) {
 		int size;
 		MPI_Comm_size(d.comm, &size);
 
@@ -35,8 +33,6 @@ namespace sphexa::sphnnet {
 		#pragma omp parallel for schedule(dynamic)
 		for (int i = 0; i < local_nuclear_n_particles; ++i)
 			n.Y[i] = initializer(x[i], y[i], z[i]);
-
-		return n;
 	}
 
 	/// intialize nuclear data, from a function of radius:
@@ -44,9 +40,7 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<size_t n_species, typename Float=double, class initFunc, class ParticlesDataType>
-	NuclearDataType<n_species, Float> initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
-		NuclearDataType<n_species, Float> n;
-
+	void initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const initFunc initializer) {
 		int size;
 		MPI_Comm_size(d.comm, &size);
 
@@ -69,8 +63,6 @@ namespace sphexa::sphnnet {
 		#pragma omp parallel for schedule(dynamic)
 		for (int i = 0; i < local_nuclear_n_particles; ++i)
 			n.Y[i] = initializer(r[i]);
-
-		return n;
 	}
 
 	/// intialize nuclear data, from a function of density:
@@ -78,9 +70,7 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<size_t n_species, typename Float=double, class initFunc, class ParticlesDataType>
-	NuclearDataType<n_species, Float> initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
-		NuclearDataType<n_species, Float> n;
-
+	void initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const initFunc initializer) {
 		int size;
 		MPI_Comm_size(d.comm, &size);
 
@@ -96,8 +86,6 @@ namespace sphexa::sphnnet {
 		#pragma omp parallel for schedule(dynamic)
 		for (int i = 0; i < local_nuclear_n_particles; ++i)
 			n.Y[i] = initializer(n.rho[i]);
-
-		return n;
 	}
 
 
@@ -106,9 +94,7 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<size_t n_species, typename Float=double, class Vector, class ParticlesDataType>
-	NuclearDataType<n_species, Float> initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const Vector &Y0) {
-		NuclearDataType<n_species, Float> n;
-
+	void initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const Vector &Y0) {
 		int size;
 		MPI_Comm_size(d.comm, &size);
 
@@ -123,7 +109,5 @@ namespace sphexa::sphnnet {
 		#pragma omp parallel for schedule(dynamic)
 		for (int i = 0; i < local_nuclear_n_particles; ++i)
 			n.Y[i] = Y0;
-
-		return n;
 	}
 }

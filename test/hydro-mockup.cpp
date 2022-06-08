@@ -271,15 +271,27 @@ int main(int argc, char* argv[]) {
 	};
 
 
+	sphexa::sphnnet::NuclearDataType<86, double> nuclear_data_86;
+	sphexa::sphnnet::NuclearDataType<14, double> nuclear_data_14;
 
 	/* !!!!!!!!!!!!
 	initialize nuclear data
 	!!!!!!!!!!!! */
+	size_t n_nuclear_particles;
 	sphexa::mpi::initializePointers(first, last, particle_data.node_id, particle_data.particle_id, particle_data.comm);
-	auto nuclear_data_86 = sphexa::sphnnet::initNuclearDataFromConst<86>(first, last, particle_data, Y0_86);
-	auto nuclear_data_14 = sphexa::sphnnet::initNuclearDataFromConst<14>(first, last, particle_data, Y0_14);
-	const size_t n_nuclear_particles = nuclear_data_14.Y.size();
+	if (use_net86) {
+		nuclear_data_86.setConserved("nid", "pid", "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");
+			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
+		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_86, Y0_86);
 
+		n_nuclear_particles = nuclear_data_86.Y.size();
+	} else {
+		nuclear_data_14.setConserved("nid", "pid", "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");
+			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
+		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_14, Y0_14);
+
+		n_nuclear_particles = nuclear_data_14.Y.size();
+	}
 
 
 
