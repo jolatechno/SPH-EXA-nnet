@@ -14,7 +14,7 @@ namespace nnet::net14 {
 	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
-	inline static constexpr std::array<double, 14> BE{
+	static const inline std::vector<double> BE{
 		0, 
 		 7.27440*constants::Mev_to_cJ,
 		14.43580*constants::Mev_to_cJ,

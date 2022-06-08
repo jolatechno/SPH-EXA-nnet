@@ -7,12 +7,14 @@
 #include "net86-constants.hpp"
 
 namespace nnet::net86 {
-#pragma omp declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	/// if true ignore coulombian corrections
 	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
-	inline static constexpr std::array<double, 86> BE{
+	static const inline std::vector<double> BE{
 		0, 0,
 		28.296 *constants::Mev_to_cJ,
 		92.163 *constants::Mev_to_cJ,
@@ -779,5 +781,7 @@ namespace nnet::net86 {
 
 		// return std::tuple<std::vector<Float>, std::vector<Float>>{rates, drates};
 	};
-#pragma omp end declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 }

@@ -24,7 +24,7 @@ namespace nnet::net86::constants {
 	const double Mev_to_cJ = 9.648529392e17;
 
 	/// constant atomic number values
-	inline static constexpr std::array<double, 87> Z{
+	static const inline std::vector<double> Z{
 		 1,  0,  2,  6,  8, 10, 11,
 		12, 12, 10, 11, 12, 11, 10,
 		13, 14, 14, 12, 13, 14, 13,
@@ -41,7 +41,7 @@ namespace nnet::net86::constants {
 	};
 
 	/// constant number of masses values
-	inline static constexpr std::array<double, 87> A{
+	static const inline std::vector<double> A{
 		 1,  1,  4, 12, 16, 20, 21,
 		24, 23, 21, 23, 22, 22, 22,
 		25, 28, 27, 25, 27, 26, 26,

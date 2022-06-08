@@ -17,7 +17,7 @@ namespace nnet::net87 {
 	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
-	inline static constexpr std::array<double, 87> BE = [](){
+	static const inline std::vector<double> BE = [](){
 		std::vector<double> BE_ = nnet::net86::BE;
 
 		// electron energy
