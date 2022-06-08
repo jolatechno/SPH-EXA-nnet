@@ -6,6 +6,7 @@
 
 // base implementations
 namespace eigen {
+#pragma omp declare target
 	/// custom fixed-size matrix type
 	template<typename Type, int n, int m>
 	class fixed_size_matrix {
@@ -28,7 +29,6 @@ namespace eigen {
 
 
 
-#pragma omp declare target
 	/// dot product function
 	template<class it1, class it2>
 	double dot(it1 const X_begin, it1 const X_end, it2 const Y_begin) {
@@ -40,11 +40,13 @@ namespace eigen {
 
 		return res;
 	}
-#pragma omp end declare target
+
 
 	/// vector type
 	template<typename Type>
 	using Vector = std::vector<Type>;
+
+
 
 	/// custom matrix type
 	template<typename Type>
@@ -81,7 +83,6 @@ namespace eigen {
 
 
 
-#pragma omp declare target
 	/// custom analytical solver
 	template<typename Float=double>
 	void solve(Float *M, Float *RHS, Float *X, const int n, Float epsilon=0) {

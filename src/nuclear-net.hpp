@@ -75,7 +75,6 @@ constants :
 			double dt_nse_tol = 0; //1e-8; // !!!! useless for now
 		}
 	}
-#pragma omp end declare target
 
 
 
@@ -124,7 +123,6 @@ utils functions :
 
 
 	namespace util {
-#pragma omp declare target
 		/// clip the values in a Vector
 		/**
 		 * clip the values in a Vector, to make 0 any negative value, or values smaller than a tolerance epsilon
@@ -245,8 +243,8 @@ utils functions :
 					}
 			}
 		}
-#pragma omp end declare target
 	}
+#pragma omp end declare target
 
 
 

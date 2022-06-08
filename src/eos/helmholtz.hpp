@@ -241,12 +241,14 @@ namespace nnet::eos {
 		const auto ddi_sav  = ddi_sav_;
 		const auto dd2i_sav = dd2i_sav_;
 		const auto dd3i_sav = dd3i_sav_;
+
 		const auto t        = t_;
 		const auto dt_sav   = dt_sav_;
 		const auto dt2_sav  = dt2_sav_;
 		const auto dti_sav  = dti_sav_;
 		const auto dt2i_sav = dt2i_sav_;
 		const auto dt3i_sav = dt3i_sav_;
+
 		const auto f        = f_;
 		const auto fd       = fd_;
 		const auto ft       = ft_;
@@ -256,14 +258,17 @@ namespace nnet::eos {
 		const auto fddt     = fddt_;
 		const auto fdtt     = fdtt_;
 		const auto fddtt    = fddtt_;
+
 		const auto dpdf     = dpdf_;
 		const auto dpdfd    = dpdfd_;
 		const auto dpdft    = dpdft_;
 		const auto dpdfdt   = dpdfdt_;
+
 		const auto ef       = ef_;
 		const auto efd      = efd_;
 		const auto eft      = eft_;
 		const auto efdt     = efdt_;
+
 		const auto xf       = xf_;
 		const auto xfd      = xfd_;
 		const auto xft      = xft_;

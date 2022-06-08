@@ -28,6 +28,7 @@
 
 namespace nnet::net87::electrons {
 	namespace constants {
+#pragma omp declare target
 		// table size
 		const int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
 
@@ -35,14 +36,15 @@ namespace nnet::net87::electrons {
 		typedef eigen::fixed_size_matrix<std::array<double, nC>, nTemp, nRho> rateMatrix; // double[nRho][nTemp][nC]
 		typedef std::array<double, nRho> rhoVector;
 		typedef std::array<double, nTemp> tempVector;
-
-		// read table
-		const std::string electron_rate_table = { 
-			#include ELECTRON_TABLE_PATH
-		};
+#pragma omp end declare target
 
 		// read electron rate constants table
 		std::tuple<tempVector, rhoVector, rateMatrix> read_table() {
+			// read table
+			const std::string electron_rate_table = { 
+				#include ELECTRON_TABLE_PATH
+			};
+
 			// read file
 	   		std::stringstream rate_table;
 	   		rate_table << electron_rate_table;
@@ -66,7 +68,12 @@ namespace nnet::net87::electrons {
 		}
 
 		// tables
-		auto const [log_temp_ref, log_rho_ref, electron_rate] = read_table();
+		auto const [log_temp_ref_, log_rho_ref_, electron_rate_] = read_table();
+
+#pragma omp declare target
+		auto const log_temp_ref  = log_temp_ref_;
+		auto const log_rho_ref   = log_rho_ref_;
+		auto const electron_rate = electron_rate_;
 	}
 
 	/// interpolate electron rate
@@ -110,4 +117,5 @@ namespace nnet::net87::electrons {
 					+  constants::electron_rate(i_temp_inf, i_rho_sup)[i]*x2x*yy1
 					+  constants::electron_rate(i_temp_sup, i_rho_sup)[i]*xx1*yy1)/(x2x1*y2y1);
 	}
+#pragma omp end declare target
 }
