@@ -8,6 +8,9 @@
 #include "electrons.hpp"
 
 namespace nnet::net87 {
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	namespace constants = nnet::net86::constants;
 
 	/// if true ignore coulombian corrections
@@ -94,4 +97,7 @@ namespace nnet::net87 {
 		rates [++idx] = deffpdYe; // = deffp/rhoElec
 		drates[++jdx] = rhoElec == 0 ? 0 : deffp/rhoElec; // deffp/Y[86]/rho, !!! hack !!!
 	};
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 }

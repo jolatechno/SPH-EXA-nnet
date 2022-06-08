@@ -440,8 +440,9 @@ Iterative solver:
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 
-
-#pragma omp declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	/// generate the system to be solve for the iterative solver
 	/**
 	 * TODO
@@ -542,7 +543,9 @@ Iterative solver:
 		// continue the loop
 		return {0., false};
 	}
-#pragma omp end declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 
 
 
@@ -626,7 +629,9 @@ Substeping solver
 
 
 
-#pragma omp declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	/// generate the system to be solve for the substepping solver
 	/**
 	 * TODO
@@ -708,11 +713,15 @@ Substeping solver
 
 		return false;
 	}
-#pragma omp end declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 
 
 
-#pragma omp declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	/* actual substepping solver: */
 	/// function to supperstep (can include jumping to NSE)
 	/**
@@ -786,5 +795,7 @@ Substeping solver
 			final_rho, drho_dt, dt_tot, dt,
 			jumpToNse);
 	}
-#pragma omp end declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 }

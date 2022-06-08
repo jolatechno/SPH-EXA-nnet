@@ -7,7 +7,9 @@
 #include "../net14/net14-constants.hpp"
 
 namespace nnet::net86::constants {
-#pragma omp declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	const int proton = 0;
 	const int neutron = 1;
 	const int alpha = 2;
@@ -54,7 +56,9 @@ namespace nnet::net86::constants {
 		54, 57, 60, 59, 57, 59, 58,
 		58, 58, /*A=0 for electrons*/0
 	};
-#pragma omp end declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 
 	/// order of nuclear species
 	const std::vector<int> species_order = []() {
@@ -123,7 +127,9 @@ namespace nnet::net86::constants {
 		return net14_species_order_;
 	}();
 
-#pragma omp declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
     // reactant and products
 	static const inline int main_reactant[157] = { // (-1 applied)
 		 3,  3,  4,  0,  2,  3,  4,
@@ -635,5 +641,7 @@ namespace nnet::net86::constants {
 			}
         };
 	}
-#pragma omp end declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 }

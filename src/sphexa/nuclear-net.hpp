@@ -37,35 +37,42 @@ namespace sphexa::sphnnet {
 
 		const size_t n_particles = n.temp.size();
 		const int dimension = n.Y[0].size();
+
+		// buffers
+		std::vector<Float> rates(reactions.size()), drates_dT(reactions.size());
+		eigen::Vector<Float> RHS(dimension + 1), DY_T(dimension + 1), Y_buffer(dimension);
+		eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 		
-#ifndef OMP_TARGET_SOLVER
-#if !defined(USE_CUDA) && !defined(CPU_BATCH_SOLVER)
+#if (!defined(USE_CUDA) && !defined(CPU_BATCH_SOLVER)) || defined(OMP_TARGET_SOLVER)
 		/* !!!!!!!!!!!!!!!!!!!!!!!
 		simple CPU parallel solver
-		!!!!!!!!!!!!!!!!!!!!!!! */
-		#pragma omp parallel
-		{
-			// buffers
-			Float drho_dt;
-			std::vector<Float> rates(reactions.size()), drates_dT(reactions.size());
-			eigen::Vector<Float> RHS(dimension + 1), DY_T(dimension + 1), Y_buffer(dimension);
-			eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
+		!!!!!!!!!!!!!!!!!!!!!!! */// to
+		Float *previous_rho_ = n.previous_rho.data(), *rho_ = n.rho.data();
+		// tofrom
+		Float *dt_ = n.dt.data(), *temp_ = n.temp.data(), *Y_ = n.Y[0].data();
 
-			#pragma omp for schedule(dynamic)
-			for (size_t i = 0; i < n_particles; ++i) 
-				if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp) {
-					// compute drho/dt
-					drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
-					// solve
-					nnet::solve_system_substep(dimension,
-						Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
-						reactions, construct_rates_BE, eos,
-						n.Y[i].data(), n.temp[i], Y_buffer.data(),
-						n.rho[i], drho_dt, hydro_dt, n.dt[i],
-						jumpToNse);
-				}
-		}
+	#ifdef OMP_TARGET_SOLVER
+		const int num_reactions = reactions.size();
+		
+		#pragma omp target data map(to: rho_[0:n_particles], previous_rho_[0:n_particles]) map(tofrom: temp_[0:n_particles], dt_[0:n_particles], Y_[0:dimension*n_particles])
+	    #pragma omp target teams distribute parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer)
+	#else
+		#pragma omp parallel for schedule(dynamic) firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer)
+	#endif	
+		for (size_t i = 0; i < n_particles; ++i) 
+			if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp) {
+				// compute drho/dt
+				Float drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
+
+				// solve
+				nnet::solve_system_substep(dimension,
+					Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
+					reactions, construct_rates_BE, eos,
+					&Y_[dimension*i], temp_[i], Y_buffer.data(),
+					rho_[i], drho_dt, hydro_dt, dt_[i],
+					jumpToNse);
+			}
 #else
 		/* !!!!!!!!!!!!!
 		GPU batch solver
@@ -74,11 +81,11 @@ namespace sphexa::sphnnet {
 		const int numDevice = eigen::batchSolver::util::getNumDevice();
 		size_t batch_size = std::min(n_particles, eigen::batchSolver::constants::max_batch_size*numDevice);
 
-#ifdef USE_CUDA
+	#ifdef USE_CUDA
 		eigen::batchSolver::CUDAsolver<Float> batch_solver(batch_size, dimension + 1);
-#else
+	#else
 		eigen::batchSolver::CPUsolver<Float> batch_solver(batch_size, dimension + 1);
-#endif
+	#endif
 
 		// data for batch initialization
 		std::vector<int>              iter(n_particles, 1);
@@ -104,40 +111,32 @@ namespace sphexa::sphnnet {
 
 
 			// fall back to simpler CPU non-batch solver if the number of particle still burning is low enough
-			if (batch_size <= eigen::batchSolver::constants::min_batch_size
+			if (batch_size <= eigen::batchSolver::constants::min_batch_size ||
 			// or if no devices are available
-				|| numDevice == 0)
+				numDevice == 0)
 			{
-				#pragma omp parallel
-				{
-					// buffers
-					Float drho_dt;
-					std::vector<Float>   rates(reactions.size()), drates_dT(reactions.size());
-					eigen::Vector<Float> RHS(dimension + 1), DY_T(dimension + 1), Y_buffer(dimension);
-					eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
+				#pragma omp parallel for schedule(dynamic) firstprivate(Mp, RHS, /*DY_T,*/ rates, drates_dT, Y_buffer)
+				for (size_t i = 0; i < n_particles; ++i)
+					if (burning[i]) {
+						// compute drho/dt
+						Float drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
-					#pragma omp for schedule(dynamic)
-					for (size_t i = 0; i < n_particles; ++i)
-						if (burning[i]) {
-							// compute drho/dt
-							drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
+						// compute the remaining time step to integrate over
+						Float elapsed_time_ = elapsed_time[i], temp_buffer = temp_buffers[i];
+						for (int j = 0; j < dimension; ++j)
+							Y_buffer[j] = Y_buffers[i*dimension + j];
 
-							// compute the remaining time step to integrate over
-							Float elapsed_time_ = elapsed_time[i], temp_buffer = temp_buffers[i];
-							for (int j = 0; j < dimension; ++j)
-								Y_buffer[j] = Y_buffers[i*dimension + j];
-
-							// solve
-							for (int j = iter[i];; ++j) {
-								// generate system
-								nnet::prepare_system_substep(dimension,
-									Mp.data(), RHS.data(), rates.data(), drates_dT.data(),
-									reactions, construct_rates_BE, eos,
-									n.Y[i].data(), n.temp[i],
-									Y_buffer.data(), temp_buffer,
-									n.rho[i], drho_dt,
-									hydro_dt, elapsed_time_, n.dt[i], j,
-									jumpToNse);
+						// solve
+						for (int j = iter[i];; ++j) {
+							// generate system
+							nnet::prepare_system_substep(dimension,
+								Mp.data(), RHS.data(), rates.data(), drates_dT.data(),
+								reactions, construct_rates_BE, eos,
+								n.Y[i].data(), n.temp[i],
+								Y_buffer.data(), temp_buffer,
+								n.rho[i], drho_dt,
+								hydro_dt, elapsed_time_, n.dt[i], j,
+								jumpToNse);
 
 							// solve M*D{T, Y} = RHS
 							eigen::solve(Mp.data(), RHS.data(), DY_T.data(), dimension + 1, nnet::constants::epsilon_system);
@@ -153,7 +152,6 @@ namespace sphexa::sphnnet {
 							}
 						}
 					}
-				}
 
 				// leaving
 				break;
@@ -162,35 +160,27 @@ namespace sphexa::sphnnet {
 
 
 			// prepare system
-			#pragma omp parallel
-			{
-				// buffers
-				std::vector<Float> rates(reactions.size()), drates_dT(reactions.size());
-				eigen::Vector<Float> RHS(dimension + 1);
-				eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
+			#pragma omp parallel for schedule(dynamic) private(Mp, RHS, /*DY_T,*/ rates, drates_dT /*, Y_buffer*/)
+			for (size_t batchID = 0; batchID < batch_size; ++batchID) {
+				size_t i = particle_ids[batchID];
 
-				#pragma omp for schedule(dynamic)
-				for (size_t batchID = 0; batchID < batch_size; ++batchID) {
-					size_t i = particle_ids[batchID];
+				// compute drho/dt
+				Float drho_dt = n.previous_rho[i] <= 0. ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
 
-					// compute drho/dt
-					Float drho_dt = n.previous_rho[i] <= 0. ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
+				// preparing system
+				nnet::prepare_system_substep(dimension,
+					Mp.data(), RHS.data(), rates.data(), drates_dT.data(),
+					reactions, construct_rates_BE, eos,
+					n.Y[i].data(), n.temp[i],
+					&Y_buffers[i*dimension], temp_buffers[i],
+					n.rho[i], drho_dt,
+					hydro_dt, elapsed_time[i], n.dt[i], iter[i],
+					jumpToNse);
 
-					// preparing system
-					nnet::prepare_system_substep(dimension,
-						Mp.data(), RHS.data(), rates.data(), drates_dT.data(),
-						reactions, construct_rates_BE, eos,
-						n.Y[i].data(), n.temp[i],
-						&Y_buffers[i*dimension], temp_buffers[i],
-						n.rho[i], drho_dt,
-						hydro_dt, elapsed_time[i], n.dt[i], iter[i],
-						jumpToNse);
-
-					// insert
-					auto [Mp_batch, RHS_batch] = batch_solver.get_system_reference(batchID);
-					std::copy(RHS.data(), RHS.data() + (dimension + 1),                 RHS_batch);
-					std::copy(Mp.data(),  Mp.data()  + (dimension + 1)*(dimension + 1), Mp_batch);
-				}
+				// insert
+				auto [Mp_batch, RHS_batch] = batch_solver.get_system_reference(batchID);
+				std::copy(RHS.data(), RHS.data() + (dimension + 1),                 RHS_batch);
+				std::copy(Mp.data(),  Mp.data()  + (dimension + 1)*(dimension + 1), Mp_batch);
 			}
 
 
@@ -222,53 +212,6 @@ namespace sphexa::sphnnet {
 				++iter[i];
 			}
 		}
-#endif
-#else
-		std::cout << "starting GPU solver\n";
-
-		/* !!!!!!!!!!!!!!!!!!!!
-		Openmp teams GPU solver
-		!!!!!!!!!!!!!!!!!!!! */
-		// buffers
-		// to
-		Float *previous_rho_ = n.previous_rho.data(), *rho_ = n.rho.data();
-		// tofrom
-		Float *dt_ = n.dt.data(), *temp_ = n.temp.data(), *Y_ = n.Y[0].data();
-
-
-		const int num_reactions = reactions.size();
-		#pragma omp target data map(to:     rho_ [0:n_particles], previous_rho_[0:n_particles]) \
-								map(tofrom: temp_[0:n_particles], dt_          [0:n_particles], Y_[0:dimension*n_particles])
-	    #pragma omp target teams
-	    {
-	    	/*// buffers
-			Float drho_dt;
-			std::vector<Float>   rates(num_reactions), drates_dT(num_reactions);
-			eigen::Vector<Float> RHS(dimension + 1), DY_T(dimension + 1), Y_buffer(dimension);
-			eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);*/
-
-		    #pragma omp distribute parallel for // private(rates, drates_dT, RHS, DY_T, Y_buffer, drho_dt)
-			for (size_t i = 0; i < n_particles; ++i) {
-				// buffers
-				Float drho_dt;
-				std::vector<Float>   rates(num_reactions), drates_dT(num_reactions);
-				eigen::Vector<Float> RHS(dimension + 1), DY_T(dimension + 1), Y_buffer(dimension);
-				eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
-
-				// compute drho/dt
-				drho_dt = previous_rho_[i] <= 0 ? 0. : (rho_[i] - previous_rho_[i])/previous_dt;
-
-				// solve
-				nnet::solve_system_substep(dimension,
-					Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
-					reactions, construct_rates_BE, eos,
-					&Y_[dimension*i], temp_[i], Y_buffer.data(),
-					rho_[i], drho_dt, hydro_dt, dt_[i],
-					jumpToNse);
-			}
-		}
-
-		std::cout << "ended GPU solver\n";
 #endif
 	}
 

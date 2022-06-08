@@ -6,7 +6,9 @@
 
 // base implementations
 namespace eigen {
-#pragma omp declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	/// custom fixed-size matrix type
 	template<typename Type, int n, int m>
 	class fixed_size_matrix {
@@ -124,5 +126,7 @@ namespace eigen {
 			X[i] = res;
 		}
 	}
-#pragma omp end declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 }

@@ -26,7 +26,9 @@
 #include <math.h>
 
 namespace nnet::eos {
-#pragma omp declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	/* !!!!!!!!!!!!
 	debuging :
 	!!!!!!!!!!!! */
@@ -90,7 +92,9 @@ namespace nnet::eos {
         const double b2    =  1.9885;
         const double c2    =  0.288675;
         const double esqu  =  qe*qe;
-#pragma omp end declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 
 		// read helmholtz constants table
 		std::tuple<
@@ -234,7 +238,9 @@ namespace nnet::eos {
 	   	] = read_table();
 
 
-#pragma omp declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 		static const inline auto d        = d_;
 		static const inline auto dd_sav   = dd_sav_;
 		static const inline auto dd2_sav  = dd2_sav_;
@@ -378,7 +384,9 @@ namespace nnet::eos {
 
 			return {jat, iat};
 		}
-#pragma omp end declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 	}
 
 
@@ -386,7 +394,9 @@ namespace nnet::eos {
 
 
 
-#pragma omp declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	/// helmholtz eos
 	/**
 	*...TODO
@@ -1104,6 +1114,8 @@ namespace nnet::eos {
 			return helmholtz(abar, zbar, T, rho);
 		}
 	};
-#pragma omp end declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 }
 
