@@ -25,9 +25,9 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<class Data, class func_rate, class func_BE, class func_eos, typename Float, class nseFunction=void*>
+	template<class Data, class func_type, class func_eos, typename Float, class nseFunction=void*>
 	void computeNuclearReactions(Data &n, const Float hydro_dt, const Float previous_dt,
-		const std::vector<nnet::reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const std::vector<nnet::reaction> &reactions, const func_type construct_rates_BE, const func_eos eos,
 		const nseFunction jumpToNse=NULL)
 	{
 		const size_t n_particles = n.temp.size();
@@ -54,7 +54,7 @@ namespace sphexa::sphnnet {
 					// solve
 					nnet::solve_system_substep(dimension,
 						Mp.data(), RHS.data(), rates.data(), drates_dT.data(),
-						reactions, construct_rates, construct_BE, eos,
+						reactions, construct_rates_BE, eos,
 						n.Y[i].data(), n.temp[i], Y_buffer.data(),
 						n.rho[i], drho_dt, hydro_dt, n.dt[i],
 						jumpToNse);
@@ -126,7 +126,7 @@ namespace sphexa::sphnnet {
 								// generate system
 								nnet::prepare_system_substep(dimension,
 									Mp.data(), RHS.data(), rates.data(), drates_dT.data(),
-									reactions, construct_rates, construct_BE, eos,
+									reactions, construct_rates_BE, eos,
 									n.Y[i].data(), n.temp[i],
 									Y_buffer.data(), temp_buffer,
 									n.rho[i], drho_dt,
@@ -173,7 +173,7 @@ namespace sphexa::sphnnet {
 					// preparing system
 					nnet::prepare_system_substep(dimension,
 						Mp.data(), RHS.data(), rates.data(), drates_dT.data(),
-						reactions, construct_rates, construct_BE, eos,
+						reactions, construct_rates_BE, eos,
 						n.Y[i].data(), n.temp[i],
 						&Y_buffers[i*dimension], temp_buffers[i],
 						n.rho[i], drho_dt,

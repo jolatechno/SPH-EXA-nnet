@@ -259,9 +259,9 @@ First simple direct solver:
 	/**
 	 * TODO
 	 */
-	template<class func_BE, class eos_type, typename Float=double>
+	template<class eos_type, class func_type, typename Float=double>
 	void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS,
-		const std::vector<reaction> &reactions, const Float *rates, const Float *drates_dT, const func_BE construct_BE, 
+		const std::vector<reaction> &reactions, Float *rates, Float *drates_dT, const func_type construct_BE_rate, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
@@ -298,6 +298,12 @@ First simple direct solver:
       //std::fill(RHS, RHS + dimension + 1,                  0.);
 		std::fill(Mp,  Mp + (dimension + 1)*(dimension + 1), 0.);
 
+		// construct BE in plance
+		construct_BE_rate(Y_guess, T_guess, rho, eos_struct, &Mp[1], rates, drates_dT);
+		// swap
+		for (int i = 0; i < dimension; ++i)
+			Mp[0 + (dimension + 1)*(i + 1)] = -Mp[i + 1]/eos_struct.cv;
+
 		// compute RHS
 		util::derivatives_from_reactions(reactions, rates, rho, Y_guess, &RHS[1], dimension);
 		for (int i = 0; i < dimension; ++i)
@@ -330,12 +336,6 @@ First simple direct solver:
 		// energy equation
 		RHS[0] = T*value_1/eos_struct.cv;
 		Mp[0] = 1 - constants::theta*value_1/eos_struct.cv;
-
-		// construct BE in plance
-		construct_BE(T_guess, rho, eos_struct, &Mp[1]);
-		// swap
-		for (int i = 0; i < dimension; ++i)
-			Mp[0 + (dimension + 1)*(i + 1)] = -Mp[i + 1]/eos_struct.cv;
 
 		// include rate derivative
 		util::derivatives_from_reactions(reactions, drates_dT, rho, Y_guess, &Mp[1], dimension);
@@ -375,10 +375,10 @@ First simple direct solver:
 	 *  solves non-iteratively and partialy implicitly the system represented by M (computed at a specific "guess").
 	 * ...TODO
 	 */
-	template<class func_BE, class eos_type, typename Float>
+	template<class func_type, class eos_type, typename Float>
 	void inline solve_system_from_guess(
 		const int dimension,
-		const std::vector<reaction> &reactions, const Float *rates, const Float *drates_dT, const func_BE construct_BE, 
+		const std::vector<reaction> &reactions, Float *rates, Float *drates_dT, const func_type construct_BE_rate, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess, Float *next_Y, Float &next_T,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
@@ -393,7 +393,7 @@ First simple direct solver:
 
 			// generate system
 			prepare_system_from_guess(dimension, Mp.data(), RHS.data(),
-				reactions, rates, drates_dT, construct_BE,
+				reactions, rates, drates_dT, construct_BE_rate,
 				Y.data(), T, Y_guess.data(), T_guess,
 				rho, drho_dt, eos_struct, dt);
 
@@ -414,16 +414,17 @@ First simple direct solver:
 	 *  solves non-iteratively and partialy implicitly the system represented by M.
 	 * ...TODO
 	 */
-	template<class func_BE, typename Float>
+	template<class func_type, typename Float>
 	void inline solve_system(
 		const int dimension,
-		const std::vector<reaction> &reactions, const Float *rates, const Float *drates_dT, const func_BE construct_BE,
+		const std::vector<reaction> &reactions, const func_type construct_BE_rate,
 		const Float *Y, const Float T, Float *next_Y, Float &next_T,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
+		std::vector<Float> rates(dimension*dimension), drates_dT(dimension*dimension);
 		solve_system_from_guess(
 			dimension,
-			reactions, rates, drates_dT, construct_BE,
+			reactions, rates.data(), drates_dT.data(), construct_BE_rate,
 			Y, T, Y, T, next_Y, next_T,
 			cv, rho, value_1, dt);
 	}
@@ -441,10 +442,10 @@ Iterative solver:
 	/**
 	 * TODO
 	 */
-	template<class func_rate, class func_BE, class func_eos, typename Float=double>
+	template<class func_type, class func_eos, typename Float=double>
 	void inline prepare_system_NR(const int dimension, Float *Mp, Float *RHS,
 		Float *rates, Float *drates_dT,
-		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
 		const Float *Y, Float T, Float *final_Y, Float final_T, 
 		const Float rho, const Float drho_dt,
 		Float &dt,  const int i)
@@ -462,12 +463,12 @@ Iterative solver:
 		for (int j = 0; j < dimension; ++j)
 			Y_theta[j] = (1 - constants::theta)*Y[j] + constants::theta*final_Y[j];
 
-		// compute rate
-		auto eos_struct         = eos            (Y_theta, T_theta, rho);
-			                      construct_rates(Y_theta, T_theta, rho, eos_struct, rates, drates_dT);
+		// compute eos
+		auto eos_struct = eos(Y_theta, T_theta, rho);
+
 		// generate system
 		prepare_system_from_guess(dimension, Mp, RHS,
-			reactions, rates, drates_dT, construct_BE,
+			reactions, rates, drates_dT, construct_BE_rate,
 			Y, T, Y_theta, T_theta,
 			rho, drho_dt, eos_struct, dt);
 	}
@@ -546,9 +547,9 @@ Iterative solver:
 	 * iterative solver.
 	 * ...TODO
 	 */
-	template<class func_rate, class func_BE, class func_eos, typename Float=double>
+	template<class func_type, class func_eos, typename Float=double>
 	Float inline solve_system_NR(const int dimension,
-		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
 		const Float *Y, Float T, Float *final_Y, Float &final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
@@ -568,7 +569,7 @@ Iterative solver:
 			// generate system
 			prepare_system_NR(dimension, Mp.data(), RHS.data(),
 				rates.data(), drates_dT.data(),
-				reactions, construct_rates, construct_BE, eos,
+				reactions, construct_BE_rate, eos,
 				Y, T, final_Y, final_T, 
 				rho, drho_dt, dt, i);
 
@@ -599,11 +600,11 @@ Substeping solver
 	/**
 	 * TODO
 	 */
-	template<class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
+	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline prepare_system_substep(const int dimension,
 		Float *Mp, Float *RHS,
 		Float *rates, Float *drates_dT,
-		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
 		const Float *final_Y, Float final_T, Float *next_Y, Float &next_T, 
 		const Float final_rho, const Float drho_dt,
 		const Float dt_tot, Float &elapsed_time, Float &dt, const int i,
@@ -618,7 +619,7 @@ Substeping solver
 			dt = constants::max_dt;
 			elapsed_time = dt_tot;
 
-			(*jumpToNse)(reactions, construct_rates, construct_BE, eos,
+			(*jumpToNse)(reactions, construct_BE_rate, eos,
 				final_Y, final_T, rho, drho_dt);
 		}
 		
@@ -630,7 +631,7 @@ Substeping solver
 		// prepare system
 		prepare_system_NR(dimension, Mp, RHS,
 			rates, drates_dT,
-			reactions, construct_rates, construct_BE, eos,
+			reactions, construct_BE_rate, eos,
 			final_Y, final_T, next_Y, next_T, 
 			rho, drho_dt, used_dt, i);
 	}
@@ -687,11 +688,11 @@ Substeping solver
 	 * Superstepping using solve_system_NR, might move it to SPH-EXA
 	 * ...TODO
 	 */
-	template<class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
+	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline solve_system_substep(const int dimension,
 		Float *Mp, Float *RHS,
 		Float *rates, Float *drates_dT,
-		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
 		Float *final_Y, Float &final_T, Float *Y_buffer,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
@@ -707,7 +708,7 @@ Substeping solver
 			// generate system
 			prepare_system_substep(dimension,
 				Mp, RHS, rates, drates_dT,
-				reactions, construct_rates, construct_BE, eos,
+				reactions, construct_BE_rate, eos,
 				final_Y, final_T, Y_buffer, T_buffer,
 				final_rho, drho_dt,
 				dt_tot, elapsed_time, dt, i,
@@ -737,9 +738,9 @@ Substeping solver
 	 * Superstepping using solve_system_NR, might move it to SPH-EXA
 	 * ...TODO
 	 */
-	template<class func_rate, class func_BE, class func_eos, typename Float=double, class nseFunction=void*>
+	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline solve_system_substep(const int dimension,
-		const std::vector<reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos,
+		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
 		Float *final_Y, Float &final_T, Float *Y_buffer,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
@@ -751,7 +752,7 @@ Substeping solver
 		solve_system_substep(dimension,
 			Mp.data(), RHS.data(),
 			rates.data(), drates_dT.data(),
-			reactions, construct_rates, construct_BE, eos,
+			reactions, construct_BE_rate, eos,
 			final_Y, final_T, Y_buffer,
 			final_rho, drho_dt, dt_tot, dt,
 			jumpToNse);

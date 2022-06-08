@@ -99,54 +99,6 @@ namespace nnet::net86 {
 		506.460*constants::Mev_to_cJ
 	};
 
-	/// function to compute the corrected BE
-	const auto compute_BE = [](const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE) {
-		using Float = typename std::remove_const<decltype(T)>::type;
-
-		// ideal gaz correction
-		Float kbt = constants::Kb*T;
-		Float nakbt = constants::Na*kbt;
-		Float correction = -1.5*nakbt;
-
-		for (int i = 0; i < 86; ++i)
-			corrected_BE[i] = BE[i] + correction;
-
-		// function for coulombian correction
-		static auto ggt1 = [&](Float x) {
-			Float a1 = -.898004;
-			Float b1 = .96786;
-			Float c1 = .220703;
-			Float d1 = -.86097;
-
-			Float sqroot2x = std::sqrt(std::sqrt(x));
-			return a1*x + b1*sqroot2x + c1/sqroot2x + d1;
-		};
-		static auto glt1 = [&](Float x) {
-			Float a1 = -.5*std::sqrt(3.);
-			Float b1 = .29561;
-			Float c1 = 1.9885;
-
-			return a1*x*std::sqrt(x) + b1*std::pow(x, c1);
-		};
-
-		// coulombian correctio
-		if (!skip_coulombian_correction) {
-			Float ne = rho*constants::Na/2.;
-		    Float ae = std::pow((3./4.)/(constants::pi*ne), 1./3.);
-		    Float gam = constants::e2/(kbt*ae);
-		    for (int i = 0; i < 86; ++i) {
-		    	Float gamma = gam*std::pow(constants::Z[i], 5./3.);
-		    	Float funcion = gamma > 1 ? ggt1(gamma) : glt1(gamma);
-
-		    	//  if (debug) std::cout << "funcion[" << i << "]=" << funcion << (i == 13 ? "\n\n" : "\n");
-
-			    corrected_BE[i] -= nakbt*funcion;
-			}
-		}
-
-		//return corrected_BE;
-	};
-
 	/// constant list of ordered reaction
 	const std::vector<nnet::reaction> reaction_list = []() {
 		std::vector<nnet::reaction> reactions;
@@ -216,8 +168,59 @@ namespace nnet::net86 {
 
 
 	/// compute a list of rates for net86
-	const auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *rates, auto *drates) {
+	const auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
+
+		/*********************************************/
+		/* start computing the binding energy vector */
+		/*********************************************/
+
+		// ideal gaz correction
+		Float kbt = constants::Kb*T;
+		Float nakbt = constants::Na*kbt;
+		Float correction = -1.5*nakbt;
+
+		for (int i = 0; i < 86; ++i)
+			corrected_BE[i] = BE[i] + correction;
+
+		// function for coulombian correction
+		static auto ggt1 = [&](Float x) {
+			Float a1 = -.898004;
+			Float b1 = .96786;
+			Float c1 = .220703;
+			Float d1 = -.86097;
+
+			Float sqroot2x = std::sqrt(std::sqrt(x));
+			return a1*x + b1*sqroot2x + c1/sqroot2x + d1;
+		};
+		static auto glt1 = [&](Float x) {
+			Float a1 = -.5*std::sqrt(3.);
+			Float b1 = .29561;
+			Float c1 = 1.9885;
+
+			return a1*x*std::sqrt(x) + b1*std::pow(x, c1);
+		};
+
+		// coulombian correctio
+		if (!skip_coulombian_correction) {
+			Float ne = rho*constants::Na/2.;
+		    Float ae = std::pow((3./4.)/(constants::pi*ne), 1./3.);
+		    Float gam = constants::e2/(kbt*ae);
+		    for (int i = 0; i < 86; ++i) {
+		    	Float gamma = gam*std::pow(constants::Z[i], 5./3.);
+		    	Float funcion = gamma > 1 ? ggt1(gamma) : glt1(gamma);
+
+		    	//  if (debug) std::cout << "funcion[" << i << "]=" << funcion << (i == 13 ? "\n\n" : "\n");
+
+			    corrected_BE[i] -= nakbt*funcion;
+			}
+		}
+
+
+		/******************************************************/
+		/* start computing reaction rate and their derivative */ 
+		/******************************************************/
+
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		fusions and fissions reactions from fits
@@ -243,17 +246,6 @@ namespace nnet::net86 {
 			const Float t9i23=t9i13*t9i13;
 			const Float t9i43=t9i23*t9i23;
 			const Float lt9=std::log(t9);
-
-			// debuging :
-			if (debug) std::cout << "t9=" << t9
-				<< ", t913=" << t913
-				<< ", t923=" << t923
-				<< ", t953=" << t953
-				<< ", t9i=" << t9i
-				<< ", t9i2=" << t9i2
-				<< ", t9i13=" << t9i13
-				<< ", t9i23=" << t9i23
-				<< ", lt9=" << lt9 << "\n\n";
 
 
 			/* fusion rates computed:
@@ -287,8 +279,8 @@ namespace nnet::net86 {
 				deff[i] = eff[i]*dcoefs[i - 7];
 
 				// debuging :
-				if (debug) std::cout << "dir(" << i << ")=" << eff[i] << ", coef(" << i << ")=" << coefs[i - 7];
-				if (debug) std::cout << "\tddir(" << i << ")=" << deff[i] << ", dcoef(" << i << ")=" << dcoefs[i - 7] << "\n";
+				// if (debug) std::cout << "dir(" << i << ")=" << eff[i] << ", coef(" << i << ")=" << coefs[i - 7];
+				// if (debug) std::cout << "\tddir(" << i << ")=" << deff[i] << ", dcoef(" << i << ")=" << dcoefs[i - 7] << "\n";
 			}
 		}
 
@@ -344,7 +336,7 @@ namespace nnet::net86 {
 
 
 		      	// debuging :
-				if (debug) std::cout << "\nr3a=" << eff[4] << ", rg3a=" << l[4] << "\n";
+				// if (debug) std::cout << "\nr3a=" << eff[4] << ", rg3a=" << l[4] << "\n";
 		    }
 
 		    
@@ -360,7 +352,7 @@ namespace nnet::net86 {
 
 
 	      		// debuging :
-				if (debug) std::cout << "r24=" << eff[0];
+				// if (debug) std::cout << "r24=" << eff[0];
 			}
 
 
@@ -381,7 +373,7 @@ namespace nnet::net86 {
 
 
 		        // debuging :
-				if (debug) std::cout << ", r1216=" << eff[1] << "\n";
+				// if (debug) std::cout << ", r1216=" << eff[1] << "\n";
 			}
 
 
@@ -393,7 +385,7 @@ namespace nnet::net86 {
 
 
 				// debuging :
-				if (debug) std::cout << "r32=" << eff[2] << "\n";
+				// if (debug) std::cout << "r32=" << eff[2] << "\n";
 			}
 
 
@@ -415,7 +407,7 @@ namespace nnet::net86 {
 
 
 				// debuging :
-				if (debug) std::cout << "rcag=" << eff[5] << ", roga=" << l[5] << "\n";
+				// if (debug) std::cout << "rcag=" << eff[5] << ", roga=" << l[5] << "\n";
 			}
 
 
@@ -434,7 +426,7 @@ namespace nnet::net86 {
 
 
 				// debuging :
-				if (debug) std::cout << "roag=" << eff[6] << ", rnega=" << l[6] << "\n\n";
+				// if (debug) std::cout << "roag=" << eff[6] << ", rnega=" << l[6] << "\n\n";
 			}
 		}
 
@@ -493,7 +485,7 @@ namespace nnet::net86 {
 			    deff[4] =(2.90e-16*(dr2abe*rbeac + r2abe*drbeac) + 1.35e-8*std::exp(vA)*(-1.5*t9i52 + t9i32*dvA))*1.e-9;
 
 		      	// debuging :
-				if (debug) std::cout << "\ndr3a=" << deff[4] << "\n";
+				// if (debug) std::cout << "\ndr3a=" << deff[4] << "\n";
 	      	}
 
 
@@ -518,7 +510,7 @@ namespace nnet::net86 {
 	      		dl[4] = 2.00e20*std::exp(vA)*t93*(dvA*eff[4] + 3.*t9i*eff[4] + deff[4])*1.e-9;
 
 		      	// debuging :
-				if (debug) std::cout << "drg3a=" << dl[4] << "\n";
+				// if (debug) std::cout << "drg3a=" << dl[4] << "\n";
 			}
 
 		    
@@ -536,7 +528,7 @@ namespace nnet::net86 {
 			    deff[0] = 4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
 
 	      		// debuging :
-				if (debug) std::cout << "dr24=" << deff[0] << "\n";
+				// if (debug) std::cout << "dr24=" << deff[0] << "\n";
 			}
 
 
@@ -563,7 +555,7 @@ namespace nnet::net86 {
 			    }
 
 		        // debuging :
-				if (debug) std::cout << "dr1216=" << deff[1] << "\n";
+				// if (debug) std::cout << "dr1216=" << deff[1] << "\n";
 			}
 
 
@@ -576,7 +568,7 @@ namespace nnet::net86 {
 				deff[2]=7.10e36*std::exp(vA)*t9i23*(-t9i*2./3. + dvA)*1.e-9;
 
 				// debuging :
-				if (debug) std::cout << "dr32=" << deff[2] << "\n";
+				// if (debug) std::cout << "dr32=" << deff[2] << "\n";
 			}
 
 
@@ -605,7 +597,7 @@ namespace nnet::net86 {
        				+ 1.43e-2*std::exp(vG)*(5.*t94 + dvG*t95))*1.e-9;
 
 	      		// debuging :
-				if (debug) std::cout << "drcag=" << deff[5] << "\n";
+				// if (debug) std::cout << "drcag=" << deff[5] << "\n";
 	      	}
 
 			
@@ -626,7 +618,7 @@ namespace nnet::net86 {
 				dl[5]=5.13e10*std::exp(vA)*(deff[5]*t932 + eff[5]*1.5*t912 + eff[5]*t932*dvA)*1.e-9;
 
 				// debuging :
-				if (debug) std::cout << "droga=" << dl[5] << "\n";
+				// if (debug) std::cout << "droga=" << dl[5] << "\n";
 
 
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -637,7 +629,7 @@ namespace nnet::net86 {
        				+ 13.*std::exp(vE)*(2.*t9 + t92*dvE))*1.e-9;
 
 	      		// debuging :
-				if (debug) std::cout << "droag=" << deff[6] << "\n";
+				// if (debug) std::cout << "droag=" << deff[6] << "\n";
 			}
 
 
@@ -650,7 +642,7 @@ namespace nnet::net86 {
   				dl[6] = 5.65e10*std::exp(vA)*(deff[6]*t932 + 1.5*eff[6]*t912 + eff[6]*t932*dvA)*1.e-9;
 
 				// debuging :
-				if (debug) std::cout << "drnega=" << dl[6] << "\n\n";
+				// if (debug) std::cout << "drnega=" << dl[6] << "\n\n";
 			}
 		}
 
@@ -761,7 +753,7 @@ namespace nnet::net86 {
 		        deff[i] = deff[i]*EF - 2.*eff[i]*deltamukbt[i]/T;
 
 		        // debuging :
-				if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 156 ? "\n\n" : "\n");
+				// if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 156 ? "\n\n" : "\n");
 			}
 
 			/* correction for inverse rate for coulumbian correction
@@ -772,7 +764,7 @@ namespace nnet::net86 {
 		        dl[i] = dl[i]*EF - 2.*l[i]*deltamukbt[i]/T;
 
 		        // debuging :
-				if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 156 ? "\n\n" : "\n");
+				// if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 156 ? "\n\n" : "\n");
 			}
 		}
 		

@@ -127,10 +127,10 @@ public:
 void printHelp(char* name, int rank);
 
 // mockup of the step function 
-template<class func_rate, class func_BE, class func_eos, size_t n_species>
+template<class func_type, class func_eos, size_t n_species>
 void step(size_t firstIndex, size_t lastIndex,
 	ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<n_species, double>  &n, const double dt,
-	const std::vector<nnet::reaction> &reactions, const func_rate construct_rates, const func_BE construct_BE, const func_eos eos) {
+	const std::vector<nnet::reaction> &reactions, const func_type construct_rates_BE, const func_eos eos) {
 
 	// domain redecomposition
 
@@ -145,7 +145,7 @@ void step(size_t firstIndex, size_t lastIndex,
 	sphexa::sphnnet::computeHelmEOS(n, nnet::net14::constants::Z);
 
 	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
-		reactions, construct_rates, construct_BE, eos);
+		reactions, construct_rates_BE, eos);
 	
 	sphexa::sphnnet::nuclearToHydroUpdate(d, n, {"temp"});
 	
@@ -312,20 +312,20 @@ int main(int argc, char* argv[]) {
 			if (isotherm) {
 				step(first, last,
 					particle_data, nuclear_data_86, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, nnet::net86::compute_BE, isotherm_eos);
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos);
 			} else
 				step(first, last,
 					particle_data, nuclear_data_86, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, nnet::net86::compute_BE, helm_eos_86);
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86);
 		} else
 			if (isotherm) {
 				step(first, last,
 					particle_data, nuclear_data_14, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, nnet::net14::compute_BE, isotherm_eos);
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos);
 			} else
 				step(first, last,
 					particle_data, nuclear_data_14, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, nnet::net14::compute_BE, helm_eos_14);
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14);
 		
 		t += hydro_dt;
 

@@ -23,26 +23,6 @@ namespace nnet::net87 {
 		return BE_;
 	}();
 
-	/// function to compute the corrected BE
-	const auto compute_BE = [](const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE) {
-		using Float = typename std::remove_const<decltype(T)>::type;
-
-		// ideal gaz correction
-		Float kbt = constants::Kb*T;
-		Float nakbt = constants::Na*kbt;
-		Float correction = -1.5*nakbt;
-
-		// adding electrons to net86
-		nnet::net86::compute_BE(T, rho, eos_struct, corrected_BE);
-		corrected_BE[86] = BE.back() + correction;
-
-		// electron energy corrections
-		// BE_[constants::proton]  += Eneutr;
-		// BE_[constants::neutron] += Eaneutr;
-
-		//return corrected_BE;
-	};
-
 	/// constant list of ordered reaction
 	const std::vector<nnet::reaction> reaction_list = []() {
 		std::vector<nnet::reaction> reactions = nnet::net86::reaction_list;
@@ -55,10 +35,8 @@ namespace nnet::net87 {
 	}();
 
 	/// compute a list of rates for net87
-	const auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *rates, auto *drates) {
+	const auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
-
-		nnet::net86::compute_reaction_rates(Y, T, rho, eos_struct, rates, drates);
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		electron value
@@ -84,6 +62,29 @@ namespace nnet::net87 {
 		Float dEaneutrdYe = electron_values[11];//*rho;
 
 		Float dUedYe = eos_struct.dU_dYe;
+
+
+		nnet::net86::compute_reaction_rates(Y, T, rho, eos_struct, corrected_BE, rates, drates);
+
+		/*********************************************/
+		/* start computing the binding energy vector */
+		/*********************************************/
+
+		// ideal gaz correction
+		Float kbt = constants::Kb*T;
+		Float nakbt = constants::Na*kbt;
+		Float correction = -1.5*nakbt;
+
+		// adding electrons to net86
+		corrected_BE[86] = BE.back() + correction;
+
+		// electron energy corrections
+		corrected_BE[constants::proton]  += Eneutr;
+		corrected_BE[constants::neutron] += Eaneutr;
+
+		/******************************************************/
+		/* start computing reaction rate and their derivative */ 
+		/******************************************************/
 
 		int idx = 157-1 + 157-4 -1, jdx = 157-1 + 157-4 -1;
 		// electron capture rates

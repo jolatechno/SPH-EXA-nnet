@@ -26,8 +26,7 @@ int main() {
 
     std::vector<double> rate(nnet::net87::reaction_list.size()), drates(nnet::net87::reaction_list.size()), BE(87);
 	auto eos_struct = helm(                               Y.data(), 3e9, 1e9);
-	                  nnet::net87::compute_reaction_rates(Y.data(), 3e9, 1e9, eos_struct, rate.data(), drates.data());
-				      nnet::net87::compute_BE(                      3e9, 1e9, eos_struct, BE.data());
+	                  nnet::net87::compute_reaction_rates(Y.data(), 3e9, 1e9, eos_struct, BE.data(), rate.data(), drates.data());
 
 	"net14 <-> net87:\t";
 	for (int i = 0; i < 14; ++i)
