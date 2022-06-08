@@ -233,23 +233,28 @@ namespace sphexa::sphnnet {
 		// to
 		Float *previous_rho_ = n.previous_rho.data(), *rho_ = n.rho.data();
 		// tofrom
-		Float  *dt_ = n.dt.data(), *temp_ = n.temp.data(), *Y_ = n.Y[0].data();
+		Float *dt_ = n.dt.data(), *temp_ = n.temp.data(), *Y_ = n.Y[0].data();
 
 
 		const int num_reactions = reactions.size();
-		#pragma omp target data \
-			map(to:     rho_ [0:n_particles], previous_rho_[0:n_particles]) \
-			map(tofrom: temp_[0:n_particles], dt_          [0:n_particles], Y_[0:dimension*n_particles])
-	    #pragma omp target teams 
+		#pragma omp target data map(to:     rho_ [0:n_particles], previous_rho_[0:n_particles]) \
+								map(tofrom: temp_[0:n_particles], dt_          [0:n_particles], Y_[0:dimension*n_particles])
+	    #pragma omp target teams
 	    {
-	    	// buffers
+	    	/*// buffers
 			Float drho_dt;
 			std::vector<Float>   rates(num_reactions), drates_dT(num_reactions);
 			eigen::Vector<Float> RHS(dimension + 1), DY_T(dimension + 1), Y_buffer(dimension);
-			eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
+			eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);*/
 
-		    #pragma omp distribute parallel for private(drho_dt) // ,temp_buffer,elapsed_time)
+		    #pragma omp distribute parallel for // private(rates, drates_dT, RHS, DY_T, Y_buffer, drho_dt)
 			for (size_t i = 0; i < n_particles; ++i) {
+				// buffers
+				Float drho_dt;
+				std::vector<Float>   rates(num_reactions), drates_dT(num_reactions);
+				eigen::Vector<Float> RHS(dimension + 1), DY_T(dimension + 1), Y_buffer(dimension);
+				eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
+
 				// compute drho/dt
 				drho_dt = previous_rho_[i] <= 0 ? 0. : (rho_[i] - previous_rho_[i])/previous_dt;
 

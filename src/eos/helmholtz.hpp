@@ -26,6 +26,7 @@
 #include <math.h>
 
 namespace nnet::eos {
+#pragma omp declare target
 	/* !!!!!!!!!!!!
 	debuging :
 	!!!!!!!!!!!! */
@@ -42,11 +43,6 @@ namespace nnet::eos {
 		typedef std::array<double, imax - 1> imvector; // double[imax]
 		typedef std::array<double, jmax - 1> jmvector; // double[jmax]
 		typedef eigen::fixed_size_matrix<double, imax, jmax> ijmatrix; // double[imax][jmax]
-
-		// read table
-		const std::string helmolt_table = { 
-			#include HELM_TABLE_PATH
-		};
 
 		// table limits
 		const double tlo   = 3.;
@@ -94,6 +90,7 @@ namespace nnet::eos {
         const double b2    =  1.9885;
         const double c2    =  0.288675;
         const double esqu  =  qe*qe;
+#pragma omp end declare target
 
 		// read helmholtz constants table
 		std::tuple<
@@ -112,12 +109,17 @@ namespace nnet::eos {
 
 				ijmatrix, ijmatrix, ijmatrix, ijmatrix,
 				ijmatrix, ijmatrix, ijmatrix, ijmatrix
-			> read_table(){
+			> read_table()
+		{
+			// read table
+			const std::string helmolt_table = { 
+				#include HELM_TABLE_PATH
+			};
+
 	   		// read file
 	   		std::stringstream helm_table;
 	   		helm_table << helmolt_table;
 
-#pragma omp declare target
 	   		// define tables
 	   		ivector d;
 	   		imvector dd_sav, dd2_sav, ddi_sav, dd2i_sav, dd3i_sav ;
@@ -133,7 +135,6 @@ namespace nnet::eos {
 	   			ef, efd, eft, efdt,
 
 	   			xf, xfd, xft, xfdt;
-#pragma omp end declare target
 
 			// read the helmholtz free energy and its derivatives
 			for (int i = 0; i < imax; ++i) {
@@ -218,19 +219,55 @@ namespace nnet::eos {
 
 		// tables
 		auto const [
-			d, dd_sav, dd2_sav, ddi_sav, dd2i_sav, dd3i_sav,
-			t, dt_sav, dt2_sav, dti_sav, dt2i_sav, dt3i_sav,
+			d_, dd_sav_, dd2_sav_, ddi_sav_, dd2i_sav_, dd3i_sav_,
+			t_, dt_sav_, dt2_sav_, dti_sav_, dt2i_sav_, dt3i_sav_,
 			
-			f,
-   			fd, ft,
-   			fdd, ftt, fdt,
-   			fddt, fdtt, fddtt,
+			f_,
+   			fd_, ft_,
+   			fdd_, ftt_, fdt_,
+   			fddt_, fdtt_, fddtt_,
 
-   			dpdf, dpdfd, dpdft, dpdfdt,
+   			dpdf_, dpdfd_, dpdft_, dpdfdt_,
 
-   			ef, efd, eft, efdt,
-   			xf, xfd, xft, xfdt
+   			ef_, efd_, eft_, efdt_,
+   			xf_, xfd_, xft_, xfdt_
 	   	] = read_table();
+
+
+#pragma omp declare target
+		const auto d        = d_;
+		const auto dd_sav   = dd_sav_;
+		const auto dd2_sav  = dd2_sav_;
+		const auto ddi_sav  = ddi_sav_;
+		const auto dd2i_sav = dd2i_sav_;
+		const auto dd3i_sav = dd3i_sav_;
+		const auto t        = t_;
+		const auto dt_sav   = dt_sav_;
+		const auto dt2_sav  = dt2_sav_;
+		const auto dti_sav  = dti_sav_;
+		const auto dt2i_sav = dt2i_sav_;
+		const auto dt3i_sav = dt3i_sav_;
+		const auto f        = f_;
+		const auto fd       = fd_;
+		const auto ft       = ft_;
+		const auto fdd      = fdd_;
+		const auto ftt      = ftt_;
+		const auto fdt      = fdt_;
+		const auto fddt     = fddt_;
+		const auto fdtt     = fdtt_;
+		const auto fddtt    = fddtt_;
+		const auto dpdf     = dpdf_;
+		const auto dpdfd    = dpdfd_;
+		const auto dpdft    = dpdft_;
+		const auto dpdfdt   = dpdfdt_;
+		const auto ef       = ef_;
+		const auto efd      = efd_;
+		const auto eft      = eft_;
+		const auto efdt     = efdt_;
+		const auto xf       = xf_;
+		const auto xfd      = xfd_;
+		const auto xft      = xft_;
+		const auto xfdt     = xfdt_;
 
 
 		// quintic hermite polynomial statement functions
@@ -336,6 +373,7 @@ namespace nnet::eos {
 
 			return {jat, iat};
 		}
+#pragma omp end declare target
 	}
 
 

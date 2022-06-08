@@ -7,6 +7,7 @@
 #include "net86-constants.hpp"
 
 namespace nnet::net86 {
+#pragma omp declare target
 	/// if true ignore coulombian corrections
 	bool skip_coulombian_correction = false;
 
@@ -796,4 +797,5 @@ namespace nnet::net86 {
 
 		// return std::tuple<std::vector<Float>, std::vector<Float>>{rates, drates};
 	};
+#pragma omp end declare target
 }

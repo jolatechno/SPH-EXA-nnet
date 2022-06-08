@@ -15,6 +15,7 @@ namespace nnet {
 constants :
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
+#pragma omp declare target
 	/* debuging: */
 	bool debug = false;
 
@@ -74,6 +75,7 @@ constants :
 			double dt_nse_tol = 0; //1e-8; // !!!! useless for now
 		}
 	}
+#pragma omp end declare target
 
 
 

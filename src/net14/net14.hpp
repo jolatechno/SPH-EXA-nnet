@@ -7,6 +7,7 @@
 
 
 namespace nnet::net14 {
+#pragma omp declare target
 	/// if true ignore coulombian corrections
 	bool skip_coulombian_correction = false;
 
@@ -715,4 +716,5 @@ namespace nnet::net14 {
 			}
 		}
 	};
+#pragma omp end declare target
 }
