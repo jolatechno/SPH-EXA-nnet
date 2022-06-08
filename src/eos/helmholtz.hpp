@@ -241,44 +241,44 @@ namespace nnet::eos {
 #ifdef OMP_TARGET_SOLVER
 	#pragma omp declare target
 #endif
-		static const inline auto d        = d_;
-		static const inline auto dd_sav   = dd_sav_;
-		static const inline auto dd2_sav  = dd2_sav_;
-		static const inline auto ddi_sav  = ddi_sav_;
-		static const inline auto dd2i_sav = dd2i_sav_;
-		static const inline auto dd3i_sav = dd3i_sav_;
+		static const inline ivector  d        = d_;
+		static const inline imvector dd_sav   = dd_sav_;
+		static const inline imvector dd2_sav  = dd2_sav_;
+		static const inline imvector ddi_sav  = ddi_sav_;
+		static const inline imvector dd2i_sav = dd2i_sav_;
+		static const inline imvector dd3i_sav = dd3i_sav_;
 
-		static const inline auto t        = t_;
-		static const inline auto dt_sav   = dt_sav_;
-		static const inline auto dt2_sav  = dt2_sav_;
-		static const inline auto dti_sav  = dti_sav_;
-		static const inline auto dt2i_sav = dt2i_sav_;
-		static const inline auto dt3i_sav = dt3i_sav_;
+		static const inline jvector  t        = t_;
+		static const inline jmvector dt_sav   = dt_sav_;
+		static const inline jmvector dt2_sav  = dt2_sav_;
+		static const inline jmvector dti_sav  = dti_sav_;
+		static const inline jmvector dt2i_sav = dt2i_sav_;
+		static const inline jmvector dt3i_sav = dt3i_sav_;
 
-		static const inline auto f        = f_;
-		static const inline auto fd       = fd_;
-		static const inline auto ft       = ft_;
-		static const inline auto fdd      = fdd_;
-		static const inline auto ftt      = ftt_;
-		static const inline auto fdt      = fdt_;
-		static const inline auto fddt     = fddt_;
-		static const inline auto fdtt     = fdtt_;
-		static const inline auto fddtt    = fddtt_;
+		static const inline ijmatrix f        = f_;
+		static const inline ijmatrix fd       = fd_;
+		static const inline ijmatrix ft       = ft_;
+		static const inline ijmatrix fdd      = fdd_;
+		static const inline ijmatrix ftt      = ftt_;
+		static const inline ijmatrix fdt      = fdt_;
+		static const inline ijmatrix fddt     = fddt_;
+		static const inline ijmatrix fdtt     = fdtt_;
+		static const inline ijmatrix fddtt    = fddtt_;
 
-		static const inline auto dpdf     = dpdf_;
-		static const inline auto dpdfd    = dpdfd_;
-		static const inline auto dpdft    = dpdft_;
-		static const inline auto dpdfdt   = dpdfdt_;
+		static const inline ijmatrix dpdf     = dpdf_;
+		static const inline ijmatrix dpdfd    = dpdfd_;
+		static const inline ijmatrix dpdft    = dpdft_;
+		static const inline ijmatrix dpdfdt   = dpdfdt_;
 
-		static const inline auto ef       = ef_;
-		static const inline auto efd      = efd_;
-		static const inline auto eft      = eft_;
-		static const inline auto efdt     = efdt_;
+		static const inline ijmatrix ef       = ef_;
+		static const inline ijmatrix efd      = efd_;
+		static const inline ijmatrix eft      = eft_;
+		static const inline ijmatrix efdt     = efdt_;
 
-		static const inline auto xf       = xf_;
-		static const inline auto xfd      = xfd_;
-		static const inline auto xft      = xft_;
-		static const inline auto xfdt     = xfdt_;
+		static const inline ijmatrix xf       = xf_;
+		static const inline ijmatrix xfd      = xfd_;
+		static const inline ijmatrix xft      = xft_;
+		static const inline ijmatrix xfdt     = xfdt_;
 
 
 		// quintic hermite polynomial statement functions
@@ -1104,6 +1104,8 @@ namespace nnet::eos {
 
 	public:
 		helmholtz_functor(const std::vector<Float> &Z_) : Z(Z_) {}
+		template<size_t N>
+		helmholtz_functor(const std::array<Float, N> &Z_) : Z(Z_.begin(), Z_.end()) {}
 
 		template<class Vector2=std::vector<Float>>
 		auto operator()(const Vector2 &Y, const Float T, const Float rho) const {

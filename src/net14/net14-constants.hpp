@@ -15,10 +15,10 @@ namespace nnet::net14::constants {
 	const double Mev_to_cJ = 9.648529392e17;
 
 	/// constant atomic number values
-	static const inline std::vector<double> Z{2, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30};
+	inline static constexpr std::array<double, 14> Z{2, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30};
 
 	/// constant number of masses values
-	static const inline std::vector<double> A{4, 12, 16, 20, 24, 28, 32,  36, 40, 44, 48, 52, 56, 60};
+	inline static constexpr std::array<double, 14> A{4, 12, 16, 20, 24, 28, 32,  36, 40, 44, 48, 52, 56, 60};
 #ifdef OMP_TARGET_SOLVER
 	#pragma omp end declare target
 #endif
