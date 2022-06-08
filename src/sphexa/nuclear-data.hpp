@@ -29,7 +29,7 @@ namespace sphexa::sphnnet {
 		using RealType = Float;
     	using KeyType  = size_t;
 
-    	size_t iteration{1};
+    	size_t iteration{0};
 	    size_t numParticlesGlobal;
 	    Float ttot{0.0};
 	    //! current and previous (global) time-steps
