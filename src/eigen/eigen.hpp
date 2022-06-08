@@ -84,9 +84,7 @@ namespace eigen {
 #pragma omp declare target
 	/// custom analytical solver
 	template<typename Float=double>
-	Vector<Float> solve(Float *M, Float *RHS, const int n, Float epsilon=0) {
-		Vector<Float> X(n);
-
+	void solve(Float *M, Float *RHS, Float *X, const int n, Float epsilon=0) {
 		// reduce into upper triangular
 		for (int i = 0; i < n; ++i) {
 			for (int j = 0; j < i; ++j) {
@@ -124,8 +122,6 @@ namespace eigen {
 
 			X[i] = res;
 		}
-
-		return X;
 	}
 #pragma omp end declare target
 }

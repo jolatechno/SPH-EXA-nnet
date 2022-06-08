@@ -260,8 +260,8 @@ First simple direct solver:
 	 * TODO
 	 */
 	template<class eos_type, class func_type, typename Float=double>
-	void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS,
-		const std::vector<reaction> &reactions, Float *rates, Float *drates_dT, const func_type construct_BE_rate, 
+	void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS, Float *rates, Float *drates_dT, 
+		const std::vector<reaction> &reactions, const func_type construct_BE_rate, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
@@ -376,9 +376,9 @@ First simple direct solver:
 	 * ...TODO
 	 */
 	template<class func_type, class eos_type, typename Float>
-	void inline solve_system_from_guess(
-		const int dimension,
-		const std::vector<reaction> &reactions, Float *rates, Float *drates_dT, const func_type construct_BE_rate, 
+	void inline solve_system_from_guess(const int dimension,
+		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT, 
+		const std::vector<reaction> &reactions, const func_type construct_BE_rate, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess, Float *next_Y, Float &next_T,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
@@ -388,20 +388,18 @@ First simple direct solver:
 				next_Y[i] = Y[i];
 			next_T = T;
 		} else {
-			eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
-			eigen::Vector<Float> RHS(dimension + 1);
-
 			// generate system
-			prepare_system_from_guess(dimension, Mp.data(), RHS.data(),
-				reactions, rates, drates_dT, construct_BE_rate,
-				Y.data(), T, Y_guess.data(), T_guess,
+			prepare_system_from_guess(dimension,
+				Mp, RHS, DY_T, rates, drates_dT, 
+				reactions, construct_BE_rate,
+				Y, T, Y_guess, T_guess,
 				rho, drho_dt, eos_struct, dt);
 
 			// solve M*D{T, Y} = RHS
-			auto DY_T = eigen::solve(Mp, RHS, dimension + 1, constants::epsilon_system);
+			eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilon_system);
 
 			// finalize
-			return finalize_system(dimension, Y.data(), T, next_Y.daat(), next_T, DY_T.data());
+			return finalize_system(dimension, Y, T, next_Y, next_T, DY_T);
 		}
 	}
 
@@ -421,10 +419,15 @@ First simple direct solver:
 		const Float *Y, const Float T, Float *next_Y, Float &next_T,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
+
+		eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
+		eigen::Vector<Float> RHS(dimension + 1);
+		eigen::Vector<Float> DY_T(dimension + 1);
 		std::vector<Float> rates(dimension*dimension), drates_dT(dimension*dimension);
-		solve_system_from_guess(
-			dimension,
-			reactions, rates.data(), drates_dT.data(), construct_BE_rate,
+
+		solve_system_from_guess(dimension,
+			Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(), 
+			reactions, construct_BE_rate,
 			Y, T, Y, T, next_Y, next_T,
 			cv, rho, value_1, dt);
 	}
@@ -444,8 +447,8 @@ Iterative solver:
 	 * TODO
 	 */
 	template<class func_type, class func_eos, typename Float=double>
-	void inline prepare_system_NR(const int dimension, Float *Mp, Float *RHS,
-		Float *rates, Float *drates_dT,
+	void inline prepare_system_NR(const int dimension, 
+		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
 		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
 		const Float *Y, Float T, Float *final_Y, Float final_T, 
 		const Float rho, const Float drho_dt,
@@ -468,8 +471,9 @@ Iterative solver:
 		auto eos_struct = eos(Y_theta, T_theta, rho);
 
 		// generate system
-		prepare_system_from_guess(dimension, Mp, RHS,
-			reactions, rates, drates_dT, construct_BE_rate,
+		prepare_system_from_guess(dimension,
+			Mp, RHS, rates, drates_dT, 
+			reactions, construct_BE_rate,
 			Y, T, Y_theta, T_theta,
 			rho, drho_dt, eos_struct, dt);
 	}
@@ -543,6 +547,52 @@ Iterative solver:
 
 
 
+
+	/* actual solver: */
+	/// solve with  newton raphson
+	/**
+	 * iterative solver.
+	 * ...TODO
+	 */
+	template<class func_type, class func_eos, typename Float=double>
+	Float inline solve_system_NR(const int dimension,
+		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
+		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
+		const Float *Y, Float T, Float *final_Y, Float &final_T, 
+		const Float rho, const Float drho_dt, Float &dt)
+	{
+		// check for non-burning particles
+		if (rho < constants::min_rho || T < constants::min_temp) {
+			dt = constants::max_dt;
+			return dt;
+		}
+
+		// actual solving
+		Float timestep = 0;
+		for (int i = 1;; ++i) {
+			// generate system
+			prepare_system_NR(dimension, 
+				Mp, RHS, rates, drates_dT,
+				reactions, construct_BE_rate, eos,
+				Y, T, final_Y, final_T, 
+				rho, drho_dt, dt, i);
+
+			// solve M*D{T, Y} = RHS
+			eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilon_system);
+
+			// finalize
+			auto [timestep, exit] = finalize_system_NR(
+				dimension,
+				Y, T,
+				final_Y, final_T,
+				DY_T, dt, i);
+			if (exit)
+				return timestep;
+		}
+	}
+
+
+
 	/* actual solver: */
 	/// solve with  newton raphson
 	/**
@@ -555,38 +605,16 @@ Iterative solver:
 		const Float *Y, Float T, Float *final_Y, Float &final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
-		// check for non-burning particles
-		if (rho < constants::min_rho || T < constants::min_temp) {
-			dt = constants::max_dt;
-			return dt;
-		}
-
 		std::vector<Float> rates(reactions.size()), drates_dT(reactions.size());
 		eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 		eigen::Vector<Float> RHS(dimension + 1);
+		eigen::Vector<Float> DY_T(dimension + 1);
 
-		// actual solving
-		Float timestep = 0;
-		for (int i = 1;; ++i) {
-			// generate system
-			prepare_system_NR(dimension, Mp.data(), RHS.data(),
-				rates.data(), drates_dT.data(),
-				reactions, construct_BE_rate, eos,
-				Y, T, final_Y, final_T, 
-				rho, drho_dt, dt, i);
-
-			// solve M*D{T, Y} = RHS
-			auto DY_T = eigen::solve(Mp.data(), RHS.data(), dimension + 1, constants::epsilon_system);
-
-			// finalize
-			auto [timestep, exit] = finalize_system_NR(
-				dimension,
-				Y, T,
-				final_Y, final_T,
-				DY_T.data(), dt, i);
-			if (exit)
-				return timestep;
-		}
+		return solve_system_NR(dimension,
+			Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
+			reactions, construct_BE_rate,eos,
+			Y, T, final_Y, final_T, 
+			rho, drho_dt, dt);
 	}
 
 
@@ -605,8 +633,7 @@ Substeping solver
 	 */
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline prepare_system_substep(const int dimension,
-		Float *Mp, Float *RHS,
-		Float *rates, Float *drates_dT,
+		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
 		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
 		const Float *final_Y, Float final_T, Float *next_Y, Float &next_T, 
 		const Float final_rho, const Float drho_dt,
@@ -632,8 +659,8 @@ Substeping solver
 			used_dt = dt_tot - elapsed_time;
 
 		// prepare system
-		prepare_system_NR(dimension, Mp, RHS,
-			rates, drates_dT,
+		prepare_system_NR(dimension, 
+			Mp, RHS, rates, drates_dT,
 			reactions, construct_BE_rate, eos,
 			final_Y, final_T, next_Y, next_T, 
 			rho, drho_dt, used_dt, i);
@@ -694,8 +721,7 @@ Substeping solver
 	 */
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline solve_system_substep(const int dimension,
-		Float *Mp, Float *RHS,
-		Float *rates, Float *drates_dT,
+		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
 		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
 		Float *final_Y, Float &final_T, Float *Y_buffer,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
@@ -719,13 +745,13 @@ Substeping solver
 				jumpToNse);
 
 			// solve M*D{T, Y} = RHS
-			auto DY_T = eigen::solve(Mp, RHS, dimension + 1, constants::epsilon_system);
+			eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilon_system);
 
 			// finalize
 			if(finalize_system_substep(dimension,
 				final_Y, final_T,
 				Y_buffer, T_buffer,
-				DY_T.data(), dt_tot, elapsed_time,
+				DY_T, dt_tot, elapsed_time,
 				dt, i))
 			{
 				break;
@@ -752,10 +778,10 @@ Substeping solver
 		std::vector<Float> rates(reactions.size()), drates_dT(reactions.size());
 		eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 		eigen::Vector<Float> RHS(dimension + 1);
+		eigen::Vector<Float> DY_T(dimension + 1);
 
 		solve_system_substep(dimension,
-			Mp.data(), RHS.data(),
-			rates.data(), drates_dT.data(),
+			Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
 			reactions, construct_BE_rate, eos,
 			final_Y, final_T, Y_buffer,
 			final_rho, drho_dt, dt_tot, dt,

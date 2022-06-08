@@ -586,7 +586,7 @@ namespace eigen::batchSolver {
 
 			#pragma omp parallel
 			{
-				eigen::Vector<Float> RHS(dimension);
+				eigen::Vector<Float> RHS(dimension), res(dimension);
 				eigen::Matrix<Float> Mp(dimension, dimension);
 
 				#pragma omp for schedule(dynamic)
@@ -600,7 +600,7 @@ namespace eigen::batchSolver {
 					}
 
 					// solve
-					auto res = eigen::solve(Mp.data(), RHS.data(), dimension);
+					eigen::solve(Mp.data(), RHS.data(), res.data(), dimension);
 
 					// save back to buffer
 					Float *res_ref = get_res(i);

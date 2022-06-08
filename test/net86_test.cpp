@@ -85,6 +85,17 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < 86; ++i) last_Y[i] = X[i]/nnet::net86::constants::A[i];
 
 
+
+
+    // buffers
+	std::vector<double> rates(nnet::net86::reaction_list.size()), drates_dT(nnet::net86::reaction_list.size());
+	eigen::Matrix<double> Mp(86 + 1, 86 + 1);
+	eigen::Vector<double> RHS(86 + 1);
+	eigen::Vector<double> DY_T(86 + 1);
+
+
+
+
 	// double E_in = eigen::dot(last_Y.begin(), last_Y.end(), nnet::net86::BE.begin()) + cv*last_T ;
 	double m_in = eigen::dot(last_Y.begin(), last_Y.end(), nnet::net86::constants::A.begin());
 
@@ -120,10 +131,14 @@ int main(int argc, char* argv[]) {
 
 		// solve the system
 		double current_dt = isotherm ? 
-			nnet::solve_system_NR(86, nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos,
+			nnet::solve_system_NR(86,
+				Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos,
 				last_Y.data(), last_T, Y.data(), T,
 				rho, 0., dt) :
-			nnet::solve_system_NR(86, nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos,
+			nnet::solve_system_NR(86,
+				Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos,
 				last_Y.data(), last_T, Y.data(), T,
 				rho, 0., dt);
 		t += current_dt;
