@@ -25,6 +25,10 @@ namespace sphexa::sphnnet {
 	template<size_t n_species, typename Float=double>
 	struct NuclearDataType {
 	public:
+		// types
+		using RealType = Float;
+    	using KeyType  = size_t;
+
 		/// hydro data
 		std::vector<Float> c, p, cv, rho, temp, previous_rho; // drho_dt
 
