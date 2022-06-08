@@ -224,6 +224,8 @@ namespace sphexa::sphnnet {
 		}
 #endif
 #else
+		std::cout << "starting GPU solver\n";
+
 		/* !!!!!!!!!!!!!!!!!!!!
 		Openmp teams GPU solver
 		!!!!!!!!!!!!!!!!!!!! */
@@ -250,7 +252,7 @@ namespace sphexa::sphnnet {
 			for (int j = 1;; ++j) {
 				// generate system
 				nnet::prepare_system_substep(dimension,
-					Mp, RHS, rates, drates_dT,
+					&Mp[(dimension + 1)*(dimension + 1)*i], &RHS[(dimension + 1)*i], &rates[num_reactions*i], &drates_dT[num_reactions*i],
 					reactions, construct_rates_BE, eos,
 					&Y_[dimension*i], temp_[i],
 					&Y_buffer[dimension*i], temp_buffer,
@@ -259,19 +261,21 @@ namespace sphexa::sphnnet {
 					jumpToNse);
 
 				// solve M*D{T, Y} = RHS
-				eigen::solve(Mp, RHS, DY_T, dimension + 1, nnet::constants::epsilon_system);
+				eigen::solve(&Mp[(dimension + 1)*(dimension + 1)*i], &RHS[(dimension + 1)*i], &DY_T[(dimension + 1)*i], dimension + 1, nnet::constants::epsilon_system);
 
 				// finalize
 				if(nnet::finalize_system_substep(dimension,
 					&Y_[dimension*i], temp_[i],
 					&Y_buffer[dimension*i], temp_buffer,
-					&DY_T[dimension*i], hydro_dt, elapsed_time,
+					&DY_T[(dimension + 1)*i], hydro_dt, elapsed_time,
 					dt_[i], j))
 				{
 					break;
 				}
 			}
 		}
+
+		std::cout << "ended GPU solver\n";
 #endif
 	}
 
