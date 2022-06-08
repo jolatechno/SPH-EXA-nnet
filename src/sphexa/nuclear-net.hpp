@@ -30,6 +30,11 @@ namespace sphexa::sphnnet {
 		const std::vector<nnet::reaction> &reactions, const func_type construct_rates_BE, const func_eos eos,
 		const nseFunction jumpToNse=NULL)
 	{
+		n.minDt_m1 = n.minDt;
+		n.minDt    = hydro_dt;
+		n.ttot    += n.minDt;
+		++n.iteration;
+
 		const size_t n_particles = n.temp.size();
 		const int dimension = n.Y[0].size();
 		
@@ -250,6 +255,9 @@ namespace sphexa::sphnnet {
 	template<class ParticlesDataType,class nuclearDataType, typename Float=double>
 	void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, nuclearDataType &n) {
 		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
+
+		size_t n_particles = lastIndex - firstIndex;
+		MPI_Allreduce(&n_particles, &n.numParticlesGlobal, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, n.comm);
 	}
 
 

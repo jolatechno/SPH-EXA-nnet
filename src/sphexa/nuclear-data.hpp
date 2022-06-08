@@ -29,6 +29,14 @@ namespace sphexa::sphnnet {
 		using RealType = Float;
     	using KeyType  = size_t;
 
+    	size_t iteration{1};
+	    size_t numParticlesGlobal;
+	    Float ttot{0.0};
+	    //! current and previous (global) time-steps
+	    Float minDt, minDt_m1;
+	    //! @brief gravitational constant
+	    Float g{0.0};
+
 		/// hydro data
 		std::vector<Float> c, p, cv, rho, temp, previous_rho; // drho_dt
 
