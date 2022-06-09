@@ -56,9 +56,9 @@ namespace sphexa::sphnnet {
 		const int num_reactions = reactions.size();
 		
 		#pragma omp target data map(to: rho_[0:n_particles], previous_rho_[0:n_particles]) map(tofrom: temp_[0:n_particles], dt_[0:n_particles], Y_[0:dimension*n_particles])
-	    #pragma omp target teams distribute parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer)
+	    #pragma omp target teams distribute parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions)
 	#else
-		#pragma omp parallel for schedule(dynamic) firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer)
+		#pragma omp parallel for schedule(dynamic) firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions)
 	#endif	
 		for (size_t i = 0; i < n_particles; ++i) 
 			if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp) {
@@ -115,7 +115,7 @@ namespace sphexa::sphnnet {
 			// or if no devices are available
 				numDevice == 0)
 			{
-				#pragma omp parallel for schedule(dynamic) firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer)
+				#pragma omp parallel for schedule(dynamic) firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions)
 				for (size_t i = 0; i < n_particles; ++i)
 					if (burning[i]) {
 						// compute drho/dt
@@ -160,7 +160,7 @@ namespace sphexa::sphnnet {
 
 
 			// prepare system
-			#pragma omp parallel for schedule(dynamic) private(Mp, RHS, /*DY_T,*/ rates, drates_dT /*, Y_buffer*/)
+			#pragma omp parallel for schedule(dynamic) firstprivate(Mp, RHS, /*DY_T,*/ rates, drates_dT /*, Y_buffer*/, reactions)
 			for (size_t batchID = 0; batchID < batch_size; ++batchID) {
 				size_t i = particle_ids[batchID];
 

@@ -17,11 +17,13 @@ namespace nnet::net87 {
 	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
-	static const inline std::vector<double> BE = [](){
-		std::vector<double> BE_ = nnet::net86::BE;
+	static const inline std::array<double, 87> BE = [](){
+		std::array<double, 87> BE_;
+		for (int i = 0; i < 86; ++i)
+			BE_[i] = nnet::net86::BE[i];
 
 		// electron energy
-		BE_.push_back(0.782*constants::Mev_to_cJ);
+		BE_[86] = 0.782*constants::Mev_to_cJ;
 
 		return BE_;
 	}();
