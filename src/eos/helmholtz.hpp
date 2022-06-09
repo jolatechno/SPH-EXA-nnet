@@ -1101,11 +1101,14 @@ namespace nnet::eos {
 	class helmholtz_functor {
 	private:
 		std::vector<Float> Z;
+		int dimension;
 
 	public:
-		helmholtz_functor(const std::vector<Float> &Z_) : Z(Z_) {}
+		helmholtz_functor(const std::vector<Float> &Z_) : Z(Z_), dimension(Z_.size()) {}
 		template<size_t N>
-		helmholtz_functor(const std::array<Float, N> &Z_) : Z(Z_.begin(), Z_.end()) {}
+		helmholtz_functor(const std::array<Float, N> &Z_) : Z(Z_.begin(), Z_.end()), dimension(Z_.size()) {}
+		template<class Vector>
+		helmholtz_functor(const Vector &Z_, int dimension_) : Z(Z_.begin(), Z_.begin() + dimension_), dimension(dimension_) {}
 
 		template<class Vector2=std::vector<Float>>
 		auto operator()(const Vector2 &Y, const Float T, const Float rho) const {

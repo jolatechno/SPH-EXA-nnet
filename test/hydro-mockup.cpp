@@ -261,7 +261,7 @@ int main(int argc, char* argv[]) {
 
 
 
-	const nnet::eos::helmholtz_functor helm_eos_86 = nnet::eos::helmholtz_functor(nnet::net86::constants::Z);
+	const nnet::eos::helmholtz_functor helm_eos_86 = nnet::eos::helmholtz_functor(nnet::net86::constants::Z, 86);
 	const nnet::eos::helmholtz_functor helm_eos_14 = nnet::eos::helmholtz_functor(nnet::net14::constants::Z);
 	const struct eos_output {
 		double cv, dP_dT, dU_dYe;
