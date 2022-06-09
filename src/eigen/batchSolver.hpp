@@ -62,7 +62,7 @@ namespace eigen::batchSolver {
 /**************************************************************************************************************************************/
 /* mostly gotten from https://github.com/OrangeOwlSolutions/CUDA-Utilities/blob/70343897abbf7a5608a6739759437f44933a5fc6/Utilities.cu */
 /*              and https://stackoverflow.com/questions/28794010/solving-dense-linear-systems-ax-b-with-cuda                          */
-/* compile:  nvcc -Xcompiler "-fopenmp -I/cm/shared/modules/generic/mpi/openmpi/4.0.1/include -pthread -L/cm/shared/modules/generic/mpi/openmpi/4.0.1/lib -lmpi -std=c++17" -lcublas -lcuda -lcudart -DUSE_MPI -DNOT_FROM_SPHEXA -DCUDA_DEBUG_ -DCPU_BATCH_SOLVER_ -DUSE_CUDA hydro-mockup.cpp -o hydro-mockup.out
+/* compile:  nvcc -Xcompiler "-fopenmp -I/cm/shared/modules/generic/mpi/openmpi/4.0.1/include -pthread -L/cm/shared/modules/generic/mpi/openmpi/4.0.1/lib -lmpi -std=c++17" -lcublas -lcuda -lcudart -DUSE_MPI -DNOT_FROM_SPHEXA -DCUDA_DEBUG_ -DOMP_TARGET_SOLVER_ -DCPU_BATCH_SOLVER_ -DUSE_CUDA hydro-mockup.cpp -o hydro-mockup.out
 /* launch:   mpirun --oversubscribe --map-by node:PE=10:span -x OMP_NUM_THREADS=10 -n 2 hydro-mockup.out --test-case C-O-burning -n 10 --n-particle 50000 > res.out 2> err.out &
 /**************************************************************************************************************************************/
 

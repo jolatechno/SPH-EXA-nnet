@@ -56,9 +56,9 @@ namespace sphexa::sphnnet {
 		const int num_reactions = reactions.size();
 		
 		#pragma omp target data map(to: rho_[0:n_particles], previous_rho_[0:n_particles]) map(tofrom: temp_[0:n_particles], dt_[0:n_particles], Y_[0:dimension*n_particles])
-	    #pragma omp target teams distribute parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions)
+	    #pragma omp target teams distribute parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions) dist_schedule(static, 1024) schedule(dynamic)
 	#else
-		#pragma omp parallel for schedule(dynamic) firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions)
+		#pragma omp                         parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions)                             schedule(dynamic) 
 	#endif	
 		for (size_t i = 0; i < n_particles; ++i) 
 			if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp) {
