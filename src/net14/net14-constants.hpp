@@ -16,10 +16,10 @@ namespace nnet::net14::constants {
 	static const double Mev_to_cJ = 9.648529392e17;
 
 	/// constant atomic number values
-	static const inline std::array<double, 14> Z{2, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30};
+	inline static constexpr std::array<double, 14> Z{2, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30};
 
 	/// constant number of masses values
-	static const inline std::array<double, 14> A{4, 12, 16, 20, 24, 28, 32,  36, 40, 44, 48, 52, 56, 60};
+	inline static constexpr std::array<double, 14> A{4, 12, 16, 20, 24, 28, 32,  36, 40, 44, 48, 52, 56, 60};
 #ifdef OMP_TARGET_SOLVER
 	#pragma omp end declare target
 #endif
@@ -48,6 +48,9 @@ namespace nnet::net14::constants {
 
 
 
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	/// function for coulombian correction
 	template<typename Float>
 	Float inline ggt1(const Float x) {
@@ -71,9 +74,6 @@ namespace nnet::net14::constants {
 
 
 	namespace fits {
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
 		int inline get_temperature_range(double T) {
 			if (T < 1.5e8) return 0;
 

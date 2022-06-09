@@ -14,7 +14,7 @@ namespace nnet::net86 {
 	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
-	static const inline std::array<double, 86> BE{
+	inline static constexpr std::array<double, 86> BE{
 		0, 0,
 		28.296 *constants::Mev_to_cJ,
 		92.163 *constants::Mev_to_cJ,
@@ -103,7 +103,7 @@ namespace nnet::net86 {
 	};
 
 	/// constant list of ordered reaction
-	static const inline std::vector<nnet::reaction> reaction_list = []() {
+	inline static const std::vector<nnet::reaction> reaction_list = []() {
 		std::vector<nnet::reaction> reactions;
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!

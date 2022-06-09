@@ -17,7 +17,7 @@ namespace nnet::net87 {
 	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
-	static const inline std::array<double, 87> BE = [](){
+	inline static const std::array<double, 87> BE = [](){
 		std::array<double, 87> BE_;
 		for (int i = 0; i < 86; ++i)
 			BE_[i] = nnet::net86::BE[i];
@@ -29,7 +29,7 @@ namespace nnet::net87 {
 	}();
 
 	/// constant list of ordered reaction
-	static const inline std::vector<nnet::reaction> reaction_list = []() {
+	inline static const std::vector<nnet::reaction> reaction_list = []() {
 		std::vector<nnet::reaction> reactions = nnet::net86::reaction_list;
 
 		// electron captures
