@@ -14,8 +14,9 @@ namespace nnet {
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 constants :
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-
-#pragma omp declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	/* debuging: */
 	bool debug = false;
 
@@ -244,7 +245,9 @@ utils functions :
 			}
 		}
 	}
-#pragma omp end declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 
 
 
@@ -254,7 +257,9 @@ First simple direct solver:
 
 
 
-#pragma omp declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	/// generate the system to be solve (with rates computed at a specific "guess") 
 	/**
 	 * TODO
@@ -365,7 +370,9 @@ First simple direct solver:
 		// update temperature
 		next_T = T + DY_T[0];
 	}
-#pragma omp end declare target
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 
 
 

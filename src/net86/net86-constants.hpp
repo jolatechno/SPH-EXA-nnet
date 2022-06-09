@@ -8,7 +8,7 @@
 
 namespace nnet::net86::constants {
 #ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
+	//#pragma omp declare target
 #endif
 	static const int proton = 0;
 	static const int neutron = 1;
@@ -57,7 +57,8 @@ namespace nnet::net86::constants {
 		58, 58, /*A=0 for electrons*/0
 	};
 #ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
+	#pragma omp declare target to(proton, neutron, alpha, electron, pi, Kb, Na, e2, Mev_to_cJ, Z, A)
+	//#pragma omp end declare target
 #endif
 
 	/// order of nuclear species
