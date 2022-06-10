@@ -32,7 +32,7 @@ namespace nnet::net87::electrons {
 	#pragma omp declare target
 #endif
 		// table size
-		const int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
+		static constexpr int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
 
 		// table type
 		typedef eigen::fixed_size_matrix<std::array<double, nC>, nTemp, nRho> rateMatrix; // double[nRho][nTemp][nC]

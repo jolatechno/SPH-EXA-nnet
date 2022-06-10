@@ -37,7 +37,7 @@ namespace nnet::eos {
 	
 	namespace helmholtz_constants {
 		// table size
-		const int imax = IMAX, jmax = JMAX;
+		static constexpr int imax = IMAX, jmax = JMAX;
 
 		// table type
 		typedef std::array<double, imax> ivector; // double[imax]
@@ -47,51 +47,51 @@ namespace nnet::eos {
 		typedef eigen::fixed_size_matrix<double, imax, jmax> ijmatrix; // double[imax][jmax]
 
 		// table limits
-		const double tlo   = 3.;
-		const double thi   = 13.;
-		const double tstp  = (thi - tlo)/(double)(jmax - 1);
-		const double tstpi = 1./tstp;
-		const double dlo   = -12.;
-		const double dhi   = 15.;
-		const double dstp  = (dhi - dlo)/(double)(imax - 1);
-		const double dstpi = 1./dstp;
+		static constexpr double tlo   = 3.;
+		static constexpr double thi   = 13.;
+		static constexpr double tstp  = (thi - tlo)/(double)(jmax - 1);
+		static constexpr double tstpi = 1./tstp;
+		static constexpr double dlo   = -12.;
+		static constexpr double dhi   = 15.;
+		static constexpr double dstp  = (dhi - dlo)/(double)(imax - 1);
+		static constexpr double dstpi = 1./dstp;
 
 		// physical constants
-		const double pi = 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132000568127145263560827785771342757789609173637178721468440901224953430146549585371050792279689258923542019956112129021960864034418159813629774771309960518707211349999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420198938095257201065485863278865936153381827968230301952035301852968995773622599413891249721775283479131515574857242454150695950829533116861727855889075098381754637464939319;
-		const double g       = 6.6742867e-8;
-        const double h       = 6.6260689633e-27;
-        const double hbar    = 0.5*h/pi;
-        const double qe      = 4.8032042712e-10;
-        const double avo     = 6.0221417930e23;
-        const double clight  = 2.99792458e10;
-        const double kerg    = 1.380650424e-16;
-        const double ev2erg  = 1.60217648740e-12;
-        const double kev     = kerg/ev2erg;
-        const double amu     = 1.66053878283e-24;
-        const double mn      = 1.67492721184e-24;
-        const double mp      = 1.67262163783e-24;
-        const double me      = 9.1093821545e-28;
-        const double rbohr   = hbar*hbar/(me*qe*qe);
-        const double fine    = qe*qe/(hbar*clight);
-        const double hion    = 13.605698140;
-        const double ssol    = 5.6704e-5;
-        const double asol    = 4.0*ssol / clight;
-        const double weinlam = h*clight/(kerg*4.965114232);
-        const double weinfre = 2.821439372*kerg/h;
-        const double rhonuc  = 2.342e14;
-        const double kergavo = kerg*avo;
-		const double sioncon = (2.0*pi*amu*kerg)/(h*h);
+		static constexpr double pi = 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132000568127145263560827785771342757789609173637178721468440901224953430146549585371050792279689258923542019956112129021960864034418159813629774771309960518707211349999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420198938095257201065485863278865936153381827968230301952035301852968995773622599413891249721775283479131515574857242454150695950829533116861727855889075098381754637464939319;
+		static constexpr double g       = 6.6742867e-8;
+        static constexpr double h       = 6.6260689633e-27;
+        static constexpr double hbar    = 0.5*h/pi;
+        static constexpr double qe      = 4.8032042712e-10;
+        static constexpr double avo     = 6.0221417930e23;
+        static constexpr double clight  = 2.99792458e10;
+        static constexpr double kerg    = 1.380650424e-16;
+        static constexpr double ev2erg  = 1.60217648740e-12;
+        static constexpr double kev     = kerg/ev2erg;
+        static constexpr double amu     = 1.66053878283e-24;
+        static constexpr double mn      = 1.67492721184e-24;
+        static constexpr double mp      = 1.67262163783e-24;
+        static constexpr double me      = 9.1093821545e-28;
+        static constexpr double rbohr   = hbar*hbar/(me*qe*qe);
+        static constexpr double fine    = qe*qe/(hbar*clight);
+        static constexpr double hion    = 13.605698140;
+        static constexpr double ssol    = 5.6704e-5;
+        static constexpr double asol    = 4.0*ssol / clight;
+        static constexpr double weinlam = h*clight/(kerg*4.965114232);
+        static constexpr double weinfre = 2.821439372*kerg/h;
+        static constexpr double rhonuc  = 2.342e14;
+        static constexpr double kergavo = kerg*avo;
+		static constexpr double sioncon = (2.0*pi*amu*kerg)/(h*h);
 
 		// parameters
-		const double a1    = -0.898004;
-        const double b1    =  0.96786;
-        const double c1    =  0.220703;
-        const double d1    = -0.86097;
-        const double e1    =  2.5269;
-        const double a2    =  0.29561;
-        const double b2    =  1.9885;
-        const double c2    =  0.288675;
-        const double esqu  =  qe*qe;
+		static constexpr double a1    = -0.898004;
+        static constexpr double b1    =  0.96786;
+        static constexpr double c1    =  0.220703;
+        static constexpr double d1    = -0.86097;
+        static constexpr double e1    =  2.5269;
+        static constexpr double a2    =  0.29561;
+        static constexpr double b2    =  1.9885;
+        static constexpr double c2    =  0.288675;
+        static constexpr double esqu  =  qe*qe;
 #ifdef OMP_TARGET_SOLVER
 	#pragma omp end declare target
 #endif
@@ -142,11 +142,11 @@ namespace nnet::eos {
 
 			// read the helmholtz free energy and its derivatives
 			for (int i = 0; i < imax; ++i) {
-				const double dsav = dlo + i*dstp;
+				double dsav = dlo + i*dstp;
 				d[i] = std::pow(10., dsav);
 			}
 			for (int j = 0; j < jmax; ++j) {
-				const double tsav = tlo + j*tstp;
+				double tsav = tlo + j*tstp;
 				t[j] = std::pow(10., tsav);
 
 				for (int i = 0; i < imax; ++i) {
