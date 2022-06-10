@@ -181,7 +181,7 @@ int main(int argc, char* argv[]) {
     const bool use_net86                    = parser.exists("--use-net86");
 
     const double hydro_dt                   = parser.get("--dt", 1e-1);
-    const int n_max                         = parser.get("-n", 100);
+    const int n_max                         = parser.get("-n", 10);
     const int n_print                       = parser.get("--n-particle-print", 5);
     const size_t total_n_particles          = parser.get("--n-particle", 1000);
 
