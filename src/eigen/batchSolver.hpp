@@ -589,7 +589,7 @@ namespace eigen::batchSolver {
 				eigen::Vector<Float> RHS(dimension), res(dimension);
 				eigen::Matrix<Float> Mp(dimension, dimension);
 
-				#pragma omp for schedule(dynamic)
+				#pragma omp for schedule(dynamic, 32)
 				for (size_t i = 0; i < n_solve; ++i) {
 					// copy system to buffer
 					auto [Mp_ref, RHS_ref] = get_system_reference(i);
