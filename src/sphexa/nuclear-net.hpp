@@ -61,9 +61,9 @@ namespace sphexa::sphnnet {
 		#pragma omp                         parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions)                             schedule(dynamic) 
 	#endif	
 		for (size_t i = 0; i < n_particles; ++i) 
-			if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp) {
+			if (rho_[i] > nnet::constants::min_rho && temp_[i] > nnet::constants::min_temp) {
 				// compute drho/dt
-				Float drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
+				Float drho_dt = previous_rho_[i] <= 0 ? 0. : (rho_[i] - previous_rho_[i])/previous_dt;
 
 				// solve
 				nnet::solve_system_substep(dimension,

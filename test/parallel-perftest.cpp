@@ -20,6 +20,15 @@
 
 
 
+/************************************************************************/
+/* non-MPI test to test GPU implementation, mostly using OMP offloading */
+/* compile:  clang++ -std=c++17 -fopenmp -DNOT_FROM_SPHEXA -DCUDA_DEBUG_ -DOMP_TARGET_SOLVER -DCPU_BATCH_SOLVER_ -DUSE_CUDA_ -omptargets=nvptx-none parallel-perftest.cpp -o parallel-perftest.out
+/* launch:   ./parallel-perftest.out --test-case C-O-burning
+/************************************************************************/
+
+
+
+
 /*
 function stolen from SPH-EXA and retrofited for testing
 */
@@ -63,7 +72,8 @@ void printHelp(char* name);
 template<class func_type, class func_eos, size_t n_species>
 void step(
 	sphexa::sphnnet::NuclearDataType<n_species, double>  &n, const double dt,
-	const std::vector<nnet::reaction> &reactions, const func_type construct_rates_BE, const func_eos eos) {
+	const std::vector<nnet::reaction> &reactions, const func_type construct_rates_BE, const func_eos eos)
+{
 	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
 		reactions, construct_rates_BE, eos);
 }

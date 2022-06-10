@@ -130,7 +130,8 @@ void printHelp(char* name, int rank);
 template<class func_type, class func_eos, size_t n_species>
 void step(size_t firstIndex, size_t lastIndex,
 	ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<n_species, double>  &n, const double dt,
-	const std::vector<nnet::reaction> &reactions, const func_type construct_rates_BE, const func_eos eos) {
+	const std::vector<nnet::reaction> &reactions, const func_type construct_rates_BE, const func_eos eos)
+{
 
 	// domain redecomposition
 

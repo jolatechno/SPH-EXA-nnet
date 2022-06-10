@@ -26,16 +26,17 @@
 #include <math.h>
 
 namespace nnet::eos {
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
 	/* !!!!!!!!!!!!
 	debuging :
 	!!!!!!!!!!!! */
 	bool debug = false;
 
-	
+
 	namespace helmholtz_constants {
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target to(debug)
+	#pragma omp declare target
+#endif
 		// table size
 		static constexpr int imax = IMAX, jmax = JMAX;
 

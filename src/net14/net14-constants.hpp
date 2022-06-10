@@ -157,8 +157,8 @@ namespace nnet::net14::constants {
 				1.014763, 1.047604, 1.104672, 1.185526, 1.288184, 1.411048, 1.553941, 1.909907, 2.405751, 3.157500, 4.395655, 6.561123
 			}
         };
+	}
 #ifdef OMP_TARGET_SOLVER
 	#pragma omp end declare target
 #endif
-	}
 }
