@@ -34,8 +34,8 @@ namespace nnet::eos {
 
 	namespace helmholtz_constants {
 #ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target to(debug)
-	#pragma omp declare target
+		#pragma omp declare target to(debug)
+		#pragma omp declare target
 #endif
 		// table size
 		static constexpr int imax = IMAX, jmax = JMAX;
@@ -94,7 +94,7 @@ namespace nnet::eos {
         static constexpr double c2    =  0.288675;
         static constexpr double esqu  =  qe*qe;
 #ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
+		#pragma omp end declare target
 #endif
 
 		// read helmholtz constants table
@@ -240,7 +240,7 @@ namespace nnet::eos {
 
 
 #ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
+		#pragma omp declare target
 #endif
 		static const inline ivector  d        = d_;
 		static const inline imvector dd_sav   = dd_sav_;
@@ -388,7 +388,7 @@ namespace nnet::eos {
 			return {jat, iat};
 		}
 #ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
+		#pragma omp end declare target
 #endif
 	}
 
