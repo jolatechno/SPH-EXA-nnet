@@ -9,6 +9,7 @@
 
 #include "../eigen/eigen.hpp"
 #include "../eigen/batchSolver.hpp"
+#include "util/algorithm.hpp"
 
 #ifdef USE_MPI
 	#include "mpi/mpi-wrapper.hpp"
@@ -54,11 +55,24 @@ namespace sphexa::sphnnet {
 
 	#ifdef OMP_TARGET_SOLVER
 		const int num_reactions = reactions.size();
+
+		int num_threads;
+		#pragma omp target teams
+		#pragma omp master
+		num_threads = omp_get_num_threads();
+		int team_batch_size = 1024;
+		int omp_batch_size = util::dynamic_batch_size(team_batch_size, num_threads);
 		
 		#pragma omp target data map(to: rho_[0:n_particles], previous_rho_[0:n_particles]) map(tofrom: temp_[0:n_particles], dt_[0:n_particles], Y_[0:dimension*n_particles])
-	    #pragma omp target teams distribute parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions, eos) dist_schedule(static, 1024) schedule(dynamic, 8)
+	    #pragma omp target teams distribute parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, construct_rates_BE, reactions, eos) dist_schedule(static, team_batch_size) schedule(dynamic, omp_batch_size)
 	#else
-		#pragma omp                         parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions, construct_rates_BE, eos)                             schedule(dynamic, 32) 
+		int num_threads;
+		#pragma omp parallel
+		#pragma omp master
+		num_threads = omp_get_num_threads();
+		int omp_batch_size = util::dynamic_batch_size(n_particles, num_threads);
+
+		#pragma omp                         parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions, construct_rates_BE, eos) schedule(dynamic, omp_batch_size) 
 	#endif	
 		for (size_t i = 0; i < n_particles; ++i) 
 			if (rho_[i] > nnet::constants::min_rho && temp_[i] > nnet::constants::min_temp) {
@@ -115,7 +129,13 @@ namespace sphexa::sphnnet {
 			// or if no devices are available
 				numDevice == 0)
 			{
-				#pragma omp parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions, construct_rates_BE, eos) schedule(dynamic, 16)
+				int num_threads;
+				#pragma omp parallel
+				#pragma omp master
+				num_threads = omp_get_num_threads();
+				int omp_batch_size = util::dynamic_batch_size(batch_size, num_threads);
+
+				#pragma omp parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions, construct_rates_BE, eos) schedule(dynamic, omp_batch_size)
 				for (size_t i = 0; i < n_particles; ++i)
 					if (burning[i]) {
 						// compute drho/dt
@@ -156,6 +176,7 @@ namespace sphexa::sphnnet {
 				// leaving
 				break;
 			}
+
 
 
 
