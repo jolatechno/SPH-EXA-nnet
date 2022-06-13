@@ -96,7 +96,7 @@ namespace sphexa::sphnnet {
 		/* !!!!!!!!!!!!!
 		GPU non-batch solver
 		!!!!!!!!!!!!! */
-
+		/* TODO */
 #endif
 
 		/* !!!!!!!!!!!!!

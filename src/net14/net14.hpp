@@ -5,6 +5,9 @@
 #include "../nuclear-net.hpp"
 #include "net14-constants.hpp"
 
+#ifdef USE_CUDA
+	#include "cuda_runtime.h"
+#endif
 
 namespace nnet::net14 {
 #ifdef OMP_TARGET_SOLVER
@@ -115,6 +118,9 @@ namespace nnet::net14 {
 	});
 
 	/// compute a list of reactions for net14
+#ifdef USE_CUDA
+	__host__ __device__ 
+#endif
 	static const inline auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 

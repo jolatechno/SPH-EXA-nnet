@@ -4,6 +4,10 @@
 #include <cmath>
 #include <tuple>
 
+#ifdef USE_CUDA
+	#include "cuda_runtime.h"
+#endif
+
 // base implementations
 namespace eigen {
 #ifdef OMP_TARGET_SOLVER
@@ -30,24 +34,9 @@ namespace eigen {
 	};
 
 
-
-	/// dot product function
-	template<class it1, class it2>
-	double dot(it1 const X_begin, it1 const X_end, it2 const Y_begin) {
-		double res = 0;
-		const int n = std::distance(X_begin, X_end);
-
-		for (int i = 0; i < n; ++i)
-			res += X_begin[i]*Y_begin[i];
-
-		return res;
-	}
-
-
 	/// vector type
 	template<typename Type>
 	using Vector = std::vector<Type>;
-
 
 
 	/// custom matrix type
@@ -84,9 +73,27 @@ namespace eigen {
 	};
 
 
+	/// dot product function
+	template<class it1, class it2>
+#ifdef USE_CUDA
+	__host__ __device__ 
+#endif
+	double dot(it1 const X_begin, it1 const X_end, it2 const Y_begin) {
+		double res = 0;
+		const int n = std::distance(X_begin, X_end);
+
+		for (int i = 0; i < n; ++i)
+			res += X_begin[i]*Y_begin[i];
+
+		return res;
+	}
+
 
 	/// custom analytical solver
 	template<typename Float=double>
+#ifdef USE_CUDA
+	__host__ __device__ 
+#endif
 	void solve(Float *M, Float *RHS, Float *X, const int n, Float epsilon=0) {
 		// reduce into upper triangular
 		for (int i = 0; i < n; ++i) {

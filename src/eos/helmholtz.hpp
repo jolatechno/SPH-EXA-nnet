@@ -25,6 +25,10 @@
 #include <tuple>
 #include <math.h>
 
+#ifdef USE_CUDA
+	#include "cuda_runtime.h"
+#endif
+
 namespace nnet::eos {
 	/* !!!!!!!!!!!!
 	debuging :
@@ -405,6 +409,9 @@ namespace nnet::eos {
 	*...TODO
 	 */
 	template<typename Float>
+#ifdef USE_CUDA
+	__host__ __device__ 
+#endif
 	auto inline helmholtz(double abar, double zbar, Float T, Float rho) {
 		// coefs
 		double fi[36];
@@ -1122,6 +1129,9 @@ namespace nnet::eos {
 		}
 
 		template<class Vector2=std::vector<Float>>
+#ifdef USE_CUDA
+		__host__ __device__ 
+#endif
 		auto operator()(const Vector2 &Y, const Float T, const Float rho) const {
 			const int dimension = Z.size();
 
