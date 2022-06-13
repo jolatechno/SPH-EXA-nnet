@@ -387,7 +387,7 @@ First simple direct solver:
 	 */
 	template<class eos_type, class func_type, typename Float=double>
 	void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS, Float *rates, Float *drates_dT, 
-		const reaction_list &reactions, const func_type construct_BE_rate, 
+		const reaction_list &reactions, const func_type &construct_BE_rate, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
@@ -508,7 +508,7 @@ First simple direct solver:
 	template<class func_type, class eos_type, typename Float>
 	void inline solve_system_from_guess(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT, 
-		const reaction_list &reactions, const func_type construct_BE_rate, 
+		const reaction_list &reactions, const func_type &construct_BE_rate, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess, Float *next_Y, Float &next_T,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
@@ -545,7 +545,7 @@ First simple direct solver:
 	template<class func_type, typename Float>
 	void inline solve_system(
 		const int dimension,
-		const reaction_list &reactions, const func_type construct_BE_rate,
+		const reaction_list &reactions, const func_type &construct_BE_rate,
 		const Float *Y, const Float T, Float *next_Y, Float &next_T,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
@@ -580,7 +580,7 @@ Iterative solver:
 	template<class func_type, class func_eos, typename Float=double>
 	void inline prepare_system_NR(const int dimension, 
 		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
-		const reaction_list &reactions, const func_type construct_BE_rate, const func_eos eos,
+		const reaction_list &reactions, const func_type &construct_BE_rate, const func_eos &eos,
 		const Float *Y, Float T, Float *final_Y, Float final_T, 
 		const Float rho, const Float drho_dt,
 		Float &dt,  const int i)
@@ -690,7 +690,7 @@ Iterative solver:
 	template<class func_type, class func_eos, typename Float=double>
 	Float inline solve_system_NR(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
-		const reaction_list &reactions, const func_type construct_BE_rate, const func_eos eos,
+		const reaction_list &reactions, const func_type &construct_BE_rate, const func_eos &eos,
 		const Float *Y, Float T, Float *final_Y, Float &final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
@@ -734,7 +734,7 @@ Iterative solver:
 	 */
 	template<class func_type, class func_eos, typename Float=double>
 	Float inline solve_system_NR(const int dimension,
-		const reaction_list &reactions, const func_type construct_BE_rate, const func_eos eos,
+		const reaction_list &reactions, const func_type &construct_BE_rate, const func_eos &eos,
 		const Float *Y, Float T, Float *final_Y, Float &final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
@@ -769,7 +769,7 @@ Substeping solver
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline prepare_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
-		const reaction_list &reactions, const func_type construct_BE_rate, const func_eos eos,
+		const reaction_list &reactions, const func_type &construct_BE_rate, const func_eos &eos,
 		const Float *final_Y, Float final_T, Float *next_Y, Float &next_T, 
 		const Float final_rho, const Float drho_dt,
 		const Float dt_tot, Float &elapsed_time, Float &dt, const int i,
@@ -863,7 +863,7 @@ Substeping solver
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline solve_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
-		const reaction_list &reactions, const func_type construct_BE_rate, const func_eos eos,
+		const reaction_list &reactions, const func_type &construct_BE_rate, const func_eos &eos,
 		Float *final_Y, Float &final_T, Float *Y_buffer,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
@@ -911,7 +911,7 @@ Substeping solver
 	 */
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline solve_system_substep(const int dimension,
-		const reaction_list &reactions, const func_type construct_BE_rate, const func_eos eos,
+		const reaction_list &reactions, const func_type &construct_BE_rate, const func_eos &eos,
 		Float *final_Y, Float &final_T,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
