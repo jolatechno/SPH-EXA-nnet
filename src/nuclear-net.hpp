@@ -404,6 +404,7 @@ First simple direct solver:
 	<=> DT*cv = value_1*(T + theta*DT) + DY.BE
 	<=> DT*(cv - theta*value_1) - DY.BE = value_1*T
 		------------------- */
+#ifndef OMP_TARGET_SOLVER
 		if (dt == 0) {
 			std::string error = "Zero timestep in nuclear network\n";
 			error += "\tT=" + std::to_string(T) + ",\tTguess=" + std::to_string(T_guess) + "\n";
@@ -418,6 +419,7 @@ First simple direct solver:
 			
 			throw std::runtime_error(error);
 		}
+#endif
 
 
 		// fill system with zeros
@@ -776,6 +778,7 @@ Substeping solver
 		// compute rho
 		Float rho = final_rho - drho_dt*(dt_tot - elapsed_time);
 
+#ifndef OMP_TARGET_SOLVER
 		// timejump if needed
 		if constexpr (std::is_invocable<std::remove_pointer<nseFunction>>())
 		if (dt < dt_tot*constants::substep::dt_nse_tol) {
@@ -785,6 +788,7 @@ Substeping solver
 			(*jumpToNse)(reactions, construct_BE_rate, eos,
 				final_Y, final_T, rho, drho_dt);
 		}
+#endif
 		
 		// insure convergence to the right time
 		Float used_dt = dt;

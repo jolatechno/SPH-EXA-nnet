@@ -14,14 +14,20 @@ namespace nnet::net14::constants {
 	static constexpr double Na = 6.022137e23;
 	static constexpr double e2 = 2.306022645e-19;
 	static constexpr double Mev_to_cJ = 9.648529392e17;
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+	//#pragma omp declare target
+#endif
 
 	/// constant atomic number values
 	inline static constexpr std::array<double, 14> Z{2, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30};
 
 	/// constant number of masses values
 	inline static constexpr std::array<double, 14> A{4, 12, 16, 20, 24, 28, 32,  36, 40, 44, 48, 52, 56, 60};
+
 #ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
+	// #pragma omp end declare target
+	#pragma omp declare target to(Z, A)
 #endif
 
 	/// order of nuclear species

@@ -8,7 +8,7 @@
 
 namespace nnet::net86 {
 #ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
+	//#pragma omp declare target
 #endif
 	/// if true ignore coulombian corrections
 	bool skip_coulombian_correction = false;
@@ -101,6 +101,11 @@ namespace nnet::net86 {
 		497.115*constants::Mev_to_cJ,
 		506.460*constants::Mev_to_cJ
 	};
+
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target to(skip_coulombian_correction, BE)
+	#pragma omp declare target
+#endif
 	
 
 	/// constant list of ordered reaction

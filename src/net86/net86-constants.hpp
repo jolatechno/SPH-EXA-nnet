@@ -22,6 +22,10 @@ namespace nnet::net86::constants {
 	static constexpr double Na = 6.022137e23;
 	static constexpr double e2 = 2.306022645e-19;
 	static constexpr double Mev_to_cJ = 9.648529392e17;
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+	//#pragma omp declare target
+#endif
 
 	/// constant atomic number values
 	inline static constexpr std::array<double, 87> Z{
@@ -57,7 +61,8 @@ namespace nnet::net86::constants {
 		58, 58, /*A=0 for electrons*/0
 	};
 #ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
+	// #pragma omp end declare target
+	#pragma omp declare target to(Z, A)
 #endif
 
 	/// order of nuclear species

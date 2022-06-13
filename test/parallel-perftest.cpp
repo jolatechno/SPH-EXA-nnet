@@ -191,13 +191,18 @@ int main(int argc, char* argv[]) {
 
 	const nnet::eos::helmholtz_functor helm_eos_86 = nnet::eos::helmholtz_functor(nnet::net86::constants::Z, 86);
 	const nnet::eos::helmholtz_functor helm_eos_14 = nnet::eos::helmholtz_functor(nnet::net14::constants::Z);
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	const struct eos_output {
 		double cv, dP_dT, dU_dYe;
 	} isotherm_res{1e20, 0, 0};
 	const auto isotherm_eos = [&](const auto &Y_, const double T, const double rho_) {
 		return isotherm_res;
 	};
-
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
 
 
 
