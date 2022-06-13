@@ -72,7 +72,7 @@ void printHelp(char* name);
 template<class func_type, class func_eos, size_t n_species>
 void step(
 	sphexa::sphnnet::NuclearDataType<n_species, double>  &n, const double dt,
-	const nnet::reaction_list &reactions, const func_type construct_rates_BE, const func_eos eos)
+	const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
 {
 	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
 		reactions, construct_rates_BE, eos);

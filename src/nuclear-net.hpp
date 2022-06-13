@@ -94,27 +94,28 @@ constants :
 	 * ...TODO
 	 */
 	struct reaction {
+#ifdef OMP_TARGET_SOLVER
+		#pragma omp declare target
+#endif
 		/// class representing a product or reactant
 		struct reactant_product {
+#ifdef OMP_TARGET_SOLVER
+			#pragma omp declare target
+#endif
 			int species_id, n_consumed = 1;
+#ifdef OMP_TARGET_SOLVER
+			#pragma omp end declare target
+#endif
 		};
 
 		std::vector<reactant_product> reactants, products;
+#ifdef OMP_TARGET_SOLVER
+		#pragma omp end declare target
+#endif
 
 
 		/// reaction class print operator
-		friend std::ostream& operator<<(std::ostream& os, const reaction& r) {
-			// print reactant
-			for (auto [reactant_id, n_reactant_consumed] : r.reactants)
-				os << n_reactant_consumed << "*[" << reactant_id << "] ";
-
-			os << " ->  ";
-
-			// print products
-			for (auto [product_id, n_product_produced] : r.products)
-				os << n_product_produced << "*[" << product_id << "] ";
-		    return os;
-		}
+		friend std::ostream& operator<<(std::ostream& os, const reaction& r);
 	};
 
 
@@ -130,9 +131,17 @@ constants :
 
 	/// class referencing a reaction
 	struct reaction_reference {
+#ifdef OMP_TARGET_SOLVER
+		#pragma omp declare target
+#endif
+		reaction_reference() {}
+
 		/// class simulating a vector from a pointer
 		template<class T>
 		class vector_reference {
+#ifdef OMP_TARGET_SOLVER
+			#pragma omp declare target
+#endif
 		private:
 			const T *ptr = nullptr;
 			size_t size_ = 0;
@@ -150,28 +159,20 @@ constants :
 			}
 			const T &operator[](int i) {
 				return ptr[i];
-			}	
+			}
+#ifdef OMP_TARGET_SOLVER
+			#pragma omp end declare target
+#endif
 		};
 
 		vector_reference<reaction::reactant_product> reactants, products;
 
-		reaction_reference() {}
-
-
+#ifdef OMP_TARGET_SOLVER
+		#pragma omp end declare target
+#endif
 
 		/// reaction class print operator
-		friend std::ostream& operator<<(std::ostream& os, const reaction_reference& r) {
-			// print reactant
-			for (auto [reactant_id, n_reactant_consumed] : r.reactants)
-				os << n_reactant_consumed << "*[" << reactant_id << "] ";
-
-			os << " ->  ";
-
-			// print products
-			for (auto [product_id, n_product_produced] : r.products)
-				os << n_product_produced << "*[" << product_id << "] ";
-		    return os;
-		}
+		friend std::ostream& operator<<(std::ostream& os, const reaction_reference& r);
 	};
 
 
@@ -189,8 +190,10 @@ constants :
 	 * ...TODO
 	 */
 	class reaction_list {
+#ifdef OMP_TARGET_SOLVER
+		#pragma omp declare target
+#endif
 	private:
-
 		// pointer to each reaction
 		std::vector<int> reactant_begin = {0};
 		std::vector<int> product_begin  = {};
@@ -203,6 +206,14 @@ constants :
 		reaction_list(std::vector<reaction> const &reactions) {
 			for (auto &Reaction : reactions)
 				push_back(Reaction);
+		}
+
+		reaction_list &operator=(reaction_list const &other) {
+			reactant_begin   = other.reactant_begin;
+			product_begin    = other.product_begin;
+			reactant_product = other.reactant_product;
+			
+			return *this;
 		}
 
 		void inline push_back(reaction const &Reaction) {
@@ -235,15 +246,60 @@ constants :
 		size_t inline size() const {
 			return product_begin.size();
 		}
+#ifdef OMP_TARGET_SOLVER
+		#pragma omp end declare target
+#endif
 	};
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
+
 
 
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-utils functions :
+print functions:
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 
+
+	std::ostream& operator<<(std::ostream& os, const reaction_reference& r) {
+		// print reactant
+		for (auto [reactant_id, n_reactant_consumed] : r.reactants)
+			os << n_reactant_consumed << "*[" << reactant_id << "] ";
+
+		os << " ->  ";
+
+		// print products
+		for (auto [product_id, n_product_produced] : r.products)
+			os << n_product_produced << "*[" << product_id << "] ";
+	    return os;
+	}
+
+
+	std::ostream& operator<<(std::ostream& os, const reaction& r) {
+		// print reactant
+		for (auto [reactant_id, n_reactant_consumed] : r.reactants)
+			os << n_reactant_consumed << "*[" << reactant_id << "] ";
+
+		os << " ->  ";
+
+		// print products
+		for (auto [product_id, n_product_produced] : r.products)
+			os << n_product_produced << "*[" << product_id << "] ";
+	    return os;
+	}
+
+
+
+
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+utils functions:
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
 	namespace util {
 		/// clip the values in a Vector
 		/**
@@ -251,7 +307,7 @@ utils functions :
 		 * ...TODO
 		 */
 		template<typename Float>
-		void inline  clip(Float *X, const int dimension, const Float epsilon) {
+		void inline clip(Float *X, const int dimension, const Float epsilon) {
 			for (int i = 0; i < dimension; ++i)
 				if (X[i] <= epsilon) //if (std::abs(X(i)) <= epsilon)
 					X[i] = 0;
@@ -387,7 +443,7 @@ First simple direct solver:
 	 */
 	template<class eos_type, class func_type, typename Float=double>
 	void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS, Float *rates, Float *drates_dT, 
-		const reaction_list &reactions, const func_type &construct_BE_rate, 
+		const reaction_list &reactions, const func_type &construct_rates_BE, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
@@ -427,7 +483,7 @@ First simple direct solver:
 		std::fill(Mp,  Mp + (dimension + 1)*(dimension + 1), 0.);
 
 		// construct BE in plance
-		construct_BE_rate(Y_guess, T_guess, rho, eos_struct, &Mp[1], rates, drates_dT);
+		construct_rates_BE(Y_guess, T_guess, rho, eos_struct, &Mp[1], rates, drates_dT);
 		// swap
 		for (int i = 0; i < dimension; ++i)
 			Mp[0 + (dimension + 1)*(i + 1)] = -Mp[i + 1]/eos_struct.cv;
@@ -508,7 +564,7 @@ First simple direct solver:
 	template<class func_type, class eos_type, typename Float>
 	void inline solve_system_from_guess(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT, 
-		const reaction_list &reactions, const func_type &construct_BE_rate, 
+		const reaction_list &reactions, const func_type &construct_rates_BE, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess, Float *next_Y, Float &next_T,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
@@ -521,7 +577,7 @@ First simple direct solver:
 			// generate system
 			prepare_system_from_guess(dimension,
 				Mp, RHS, DY_T, rates, drates_dT, 
-				reactions, construct_BE_rate,
+				reactions, construct_rates_BE,
 				Y, T, Y_guess, T_guess,
 				rho, drho_dt, eos_struct, dt);
 
@@ -545,7 +601,7 @@ First simple direct solver:
 	template<class func_type, typename Float>
 	void inline solve_system(
 		const int dimension,
-		const reaction_list &reactions, const func_type &construct_BE_rate,
+		const reaction_list &reactions, const func_type &construct_rates_BE,
 		const Float *Y, const Float T, Float *next_Y, Float &next_T,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
@@ -557,7 +613,7 @@ First simple direct solver:
 
 		solve_system_from_guess(dimension,
 			Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(), 
-			reactions, construct_BE_rate,
+			reactions, construct_rates_BE,
 			Y, T, Y, T, next_Y, next_T,
 			cv, rho, value_1, dt);
 	}
@@ -580,7 +636,7 @@ Iterative solver:
 	template<class func_type, class func_eos, typename Float=double>
 	void inline prepare_system_NR(const int dimension, 
 		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
-		const reaction_list &reactions, const func_type &construct_BE_rate, const func_eos &eos,
+		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		const Float *Y, Float T, Float *final_Y, Float final_T, 
 		const Float rho, const Float drho_dt,
 		Float &dt,  const int i)
@@ -604,7 +660,7 @@ Iterative solver:
 		// generate system
 		prepare_system_from_guess(dimension,
 			Mp, RHS, rates, drates_dT, 
-			reactions, construct_BE_rate,
+			reactions, construct_rates_BE,
 			Y, T, Y_theta, T_theta,
 			rho, drho_dt, eos_struct, dt);
 	}
@@ -690,7 +746,7 @@ Iterative solver:
 	template<class func_type, class func_eos, typename Float=double>
 	Float inline solve_system_NR(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
-		const reaction_list &reactions, const func_type &construct_BE_rate, const func_eos &eos,
+		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		const Float *Y, Float T, Float *final_Y, Float &final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
@@ -706,7 +762,7 @@ Iterative solver:
 			// generate system
 			prepare_system_NR(dimension, 
 				Mp, RHS, rates, drates_dT,
-				reactions, construct_BE_rate, eos,
+				reactions, construct_rates_BE, eos,
 				Y, T, final_Y, final_T, 
 				rho, drho_dt, dt, i);
 
@@ -734,7 +790,7 @@ Iterative solver:
 	 */
 	template<class func_type, class func_eos, typename Float=double>
 	Float inline solve_system_NR(const int dimension,
-		const reaction_list &reactions, const func_type &construct_BE_rate, const func_eos &eos,
+		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		const Float *Y, Float T, Float *final_Y, Float &final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
@@ -745,7 +801,7 @@ Iterative solver:
 
 		return solve_system_NR(dimension,
 			Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
-			reactions, construct_BE_rate,eos,
+			reactions, construct_rates_BE,eos,
 			Y, T, final_Y, final_T, 
 			rho, drho_dt, dt);
 	}
@@ -769,7 +825,7 @@ Substeping solver
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline prepare_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
-		const reaction_list &reactions, const func_type &construct_BE_rate, const func_eos &eos,
+		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		const Float *final_Y, Float final_T, Float *next_Y, Float &next_T, 
 		const Float final_rho, const Float drho_dt,
 		const Float dt_tot, Float &elapsed_time, Float &dt, const int i,
@@ -785,7 +841,7 @@ Substeping solver
 			dt = constants::max_dt;
 			elapsed_time = dt_tot;
 
-			(*jumpToNse)(reactions, construct_BE_rate, eos,
+			(*jumpToNse)(reactions, construct_rates_BE, eos,
 				final_Y, final_T, rho, drho_dt);
 		}
 #endif
@@ -798,7 +854,7 @@ Substeping solver
 		// prepare system
 		prepare_system_NR(dimension, 
 			Mp, RHS, rates, drates_dT,
-			reactions, construct_BE_rate, eos,
+			reactions, construct_rates_BE, eos,
 			final_Y, final_T, next_Y, next_T, 
 			rho, drho_dt, used_dt, i);
 	}
@@ -863,7 +919,7 @@ Substeping solver
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline solve_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
-		const reaction_list &reactions, const func_type &construct_BE_rate, const func_eos &eos,
+		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		Float *final_Y, Float &final_T, Float *Y_buffer,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
@@ -879,7 +935,7 @@ Substeping solver
 			// generate system
 			prepare_system_substep(dimension,
 				Mp, RHS, rates, drates_dT,
-				reactions, construct_BE_rate, eos,
+				reactions, construct_rates_BE, eos,
 				final_Y, final_T, Y_buffer, T_buffer,
 				final_rho, drho_dt,
 				dt_tot, elapsed_time, dt, i,
@@ -911,7 +967,7 @@ Substeping solver
 	 */
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline solve_system_substep(const int dimension,
-		const reaction_list &reactions, const func_type &construct_BE_rate, const func_eos &eos,
+		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		Float *final_Y, Float &final_T,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
@@ -922,7 +978,7 @@ Substeping solver
 
 		solve_system_substep(dimension,
 			Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
-			reactions, construct_BE_rate, eos,
+			reactions, construct_rates_BE, eos,
 			final_Y, final_T, Y_buffer.data(),
 			final_rho, drho_dt, dt_tot, dt,
 			jumpToNse);

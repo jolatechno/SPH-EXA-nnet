@@ -1100,6 +1100,9 @@ namespace nnet::eos {
 	 */
 	template<typename Float=double>
 	class helmholtz_functor {
+#ifdef OMP_TARGET_SOLVER
+		#pragma omp declare target
+#endif
 	private:
 		std::vector<Float> Z;
 		int dimension;
@@ -1111,16 +1114,28 @@ namespace nnet::eos {
 		template<class Vector>
 		helmholtz_functor(const Vector &Z_, int dimension_) : Z(Z_.begin(), Z_.begin() + dimension_), dimension(dimension_) {}
 
+		helmholtz_functor &operator=(helmholtz_functor<Float> const &other) {
+			Z         = other.Z;
+			dimension = other.dimension;
+
+			return *this;
+		}
+
 		template<class Vector2=std::vector<Float>>
 		auto operator()(const Vector2 &Y, const Float T, const Float rho) const {
 			const int dimension = Z.size();
 
 			// compute abar and zbar
-			auto abar = std::accumulate(Y, Y + dimension, 0.f);
-			auto zbar = eigen::dot(Z.begin(), Z.end(), Y);
+			Float abar = std::accumulate(Y, Y + dimension, 0.f);
+			Float zbar = eigen::dot(Z.begin(), Z.end(), Y);
 
 			return helmholtz(abar, zbar, T, rho);
 		}
+
+
+#ifdef OMP_TARGET_SOLVER
+		#pragma omp end declare target
+#endif
 	};
 #ifdef OMP_TARGET_SOLVER
 	#pragma omp end declare target
