@@ -85,19 +85,21 @@ constants :
 
 
 
+
+	
+
+
 	/// reaction class
 	/**
 	 * ...TODO
 	 */
 	struct reaction {
-		struct reactant {
-			int reactant_id, n_reactant_consumed = 1;
+		/// class representing a product or reactant
+		struct reactant_product {
+			int species_id, n_consumed = 1;
 		};
-		struct product {
-			int product_id, n_product_produced = 1;
-		};
-		std::vector<reactant> reactants;
-		std::vector<product> products;
+
+		std::vector<reactant_product> reactants, products;
 
 
 		/// reaction class print operator
@@ -115,6 +117,125 @@ constants :
 		}
 	};
 
+
+
+
+
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+(nuclear) reaction reference class (referenced from a bigger vector):
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+
+
+
+	/// class referencing a reaction
+	struct reaction_reference {
+		/// class simulating a vector from a pointer
+		template<class T>
+		class vector_reference {
+		private:
+			const T *ptr = nullptr;
+			size_t size_ = 0;
+		public:
+			vector_reference() {}
+			vector_reference(const T *ptr_, size_t size) : ptr(ptr_), size_(size) {}
+			size_t inline size() const {
+				return size_;
+			}
+			const T *begin() const {
+				return ptr;
+			}
+			const T *end() const {
+				return ptr + size_;
+			}
+			const T &operator[](int i) {
+				return ptr[i];
+			}	
+		};
+
+		vector_reference<reaction::reactant_product> reactants, products;
+
+		reaction_reference() {}
+
+
+
+		/// reaction class print operator
+		friend std::ostream& operator<<(std::ostream& os, const reaction_reference& r) {
+			// print reactant
+			for (auto [reactant_id, n_reactant_consumed] : r.reactants)
+				os << n_reactant_consumed << "*[" << reactant_id << "] ";
+
+			os << " ->  ";
+
+			// print products
+			for (auto [product_id, n_product_produced] : r.products)
+				os << n_product_produced << "*[" << product_id << "] ";
+		    return os;
+		}
+	};
+
+
+
+
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+(nuclear) reaction list class:
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+
+
+
+	/// reaction class (contigous rather then a vector of reaction)
+	/**
+	 * ...TODO
+	 */
+	class reaction_list {
+	private:
+
+		// pointer to each reaction
+		std::vector<int> reactant_begin = {0};
+		std::vector<int> product_begin  = {};
+
+		// actual vectors
+		std::vector<reaction::reactant_product> reactant_product = {};
+
+	public:
+		reaction_list() {}
+		reaction_list(std::vector<reaction> const &reactions) {
+			for (auto &Reaction : reactions)
+				push_back(Reaction);
+		}
+
+		void inline push_back(reaction const &Reaction) {
+			reactant_product.insert(reactant_product.end(), Reaction.reactants.begin(), Reaction.reactants.end());
+			reactant_product.insert(reactant_product.end(), Reaction.products.begin(),  Reaction.products.end());
+
+			product_begin .push_back(reactant_begin.back() + Reaction.reactants.size());
+			reactant_begin.push_back(product_begin.back()  + Reaction.products.size());
+
+		}
+
+		/*reaction inline operator[](int i) const {
+			reaction Reaction;
+
+			Reaction.reactants.assign(reactant_product.begin() + reactant_begin[i], reactant_product.begin() + product_begin[i]);
+			Reaction.products .assign(reactant_product.begin() + product_begin[i],  reactant_product.begin() + reactant_begin[i + 1]);
+
+			return Reaction;
+		}*/
+
+		reaction_reference inline operator[](int i) const {
+			reaction_reference Reaction;
+
+			Reaction.reactants = reaction_reference::vector_reference(&reactant_product[reactant_begin[i]], product_begin [i    ] - reactant_begin[i]);
+			Reaction.products  = reaction_reference::vector_reference(&reactant_product[product_begin [i]], reactant_begin[i + 1] - product_begin[i]);
+
+			return Reaction;
+		}
+
+		size_t inline size() const {
+			return product_begin.size();
+		}
+	};
 
 
 
@@ -164,13 +285,13 @@ utils functions :
 		 * ...TODO
 		 */
 		template<typename Float>
-		void inline derivatives_from_reactions(const std::vector<reaction> &reactions, const Float *rates, const Float rho, const Float *Y, Float *dY, const int dimension) {
+		void inline derivatives_from_reactions(const reaction_list &reactions, const Float *rates, const Float rho, const Float *Y, Float *dY, const int dimension) {
 			for (int i = 0; i < dimension; ++i)
 				dY[i] = 0.;
 
 			const int num_reactions = reactions.size();
 			for (int i = 0; i < num_reactions; ++i) {
-				const reaction &Reaction = reactions[i];
+				const auto &Reaction = reactions[i];
 				Float rate = rates[i];
 
 				// compute rate and order
@@ -205,12 +326,12 @@ utils functions :
 		 * ...TODO
 		 */
 		template<typename Float>
-		void inline order_1_dY_from_reactions(const std::vector<reaction> &reactions, const Float *rates, const Float rho,
+		void inline order_1_dY_from_reactions(const reaction_list &reactions, const Float *rates, const Float rho,
 			Float const *Y, Float *M, const int dimension)
 		{
 			const int num_reactions = reactions.size();
 			for (int i = 0; i < num_reactions; ++i) {
-				const reaction &Reaction = reactions[i];
+				const auto &Reaction = reactions[i];
 				Float rate = rates[i];
 
 				// compute rate and order
@@ -266,7 +387,7 @@ First simple direct solver:
 	 */
 	template<class eos_type, class func_type, typename Float=double>
 	void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS, Float *rates, Float *drates_dT, 
-		const std::vector<reaction> &reactions, const func_type construct_BE_rate, 
+		const reaction_list &reactions, const func_type construct_BE_rate, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
@@ -385,7 +506,7 @@ First simple direct solver:
 	template<class func_type, class eos_type, typename Float>
 	void inline solve_system_from_guess(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT, 
-		const std::vector<reaction> &reactions, const func_type construct_BE_rate, 
+		const reaction_list &reactions, const func_type construct_BE_rate, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess, Float *next_Y, Float &next_T,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
@@ -422,7 +543,7 @@ First simple direct solver:
 	template<class func_type, typename Float>
 	void inline solve_system(
 		const int dimension,
-		const std::vector<reaction> &reactions, const func_type construct_BE_rate,
+		const reaction_list &reactions, const func_type construct_BE_rate,
 		const Float *Y, const Float T, Float *next_Y, Float &next_T,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
@@ -457,7 +578,7 @@ Iterative solver:
 	template<class func_type, class func_eos, typename Float=double>
 	void inline prepare_system_NR(const int dimension, 
 		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
-		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
+		const reaction_list &reactions, const func_type construct_BE_rate, const func_eos eos,
 		const Float *Y, Float T, Float *final_Y, Float final_T, 
 		const Float rho, const Float drho_dt,
 		Float &dt,  const int i)
@@ -567,7 +688,7 @@ Iterative solver:
 	template<class func_type, class func_eos, typename Float=double>
 	Float inline solve_system_NR(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
-		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
+		const reaction_list &reactions, const func_type construct_BE_rate, const func_eos eos,
 		const Float *Y, Float T, Float *final_Y, Float &final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
@@ -611,7 +732,7 @@ Iterative solver:
 	 */
 	template<class func_type, class func_eos, typename Float=double>
 	Float inline solve_system_NR(const int dimension,
-		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
+		const reaction_list &reactions, const func_type construct_BE_rate, const func_eos eos,
 		const Float *Y, Float T, Float *final_Y, Float &final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
@@ -646,7 +767,7 @@ Substeping solver
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline prepare_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
-		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
+		const reaction_list &reactions, const func_type construct_BE_rate, const func_eos eos,
 		const Float *final_Y, Float final_T, Float *next_Y, Float &next_T, 
 		const Float final_rho, const Float drho_dt,
 		const Float dt_tot, Float &elapsed_time, Float &dt, const int i,
@@ -738,7 +859,7 @@ Substeping solver
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline solve_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
-		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
+		const reaction_list &reactions, const func_type construct_BE_rate, const func_eos eos,
 		Float *final_Y, Float &final_T, Float *Y_buffer,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
@@ -786,7 +907,7 @@ Substeping solver
 	 */
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
 	void inline solve_system_substep(const int dimension,
-		const std::vector<reaction> &reactions, const func_type construct_BE_rate, const func_eos eos,
+		const reaction_list &reactions, const func_type construct_BE_rate, const func_eos eos,
 		Float *final_Y, Float &final_T,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)

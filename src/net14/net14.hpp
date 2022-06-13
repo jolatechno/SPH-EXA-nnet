@@ -32,7 +32,7 @@ namespace nnet::net14 {
 	};
 
 	// constant list of ordered reaction
-	inline static const std::vector<nnet::reaction> reaction_list = {
+	inline static const nnet::reaction_list reaction_list(std::vector<nnet::reaction>{
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		   3He -> C fusion */
 		{{{0, 3}}, {{1}}},
@@ -107,7 +107,7 @@ namespace nnet::net14 {
 		{{{11}}, {{0}, {10}}}, // Cr + He <- Fe
 		{{{12}}, {{0}, {11}}}, // Fe + He <- Ni
 		{{{13}}, {{0}, {12}}}  // Ni + He <- Zn
-	};
+	});
 
 	/// compute a list of reactions for net14
 	static const inline auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {

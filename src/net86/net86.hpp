@@ -104,8 +104,8 @@ namespace nnet::net86 {
 	
 
 	/// constant list of ordered reaction
-	inline static const std::vector<nnet::reaction> reaction_list = []() {
-		std::vector<nnet::reaction> reactions;
+	inline static const nnet::reaction_list reaction_list = []() {
+		nnet::reaction_list reactions;
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		2C fusion,

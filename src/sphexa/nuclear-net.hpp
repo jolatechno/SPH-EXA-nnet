@@ -27,7 +27,7 @@ namespace sphexa::sphnnet {
 	 */
 	template<class Data, class func_type, class func_eos, typename Float, class nseFunction=void*>
 	void computeNuclearReactions(Data &n, const Float hydro_dt, const Float previous_dt,
-		const std::vector<nnet::reaction> &reactions, const func_type construct_rates_BE, const func_eos eos,
+		const nnet::reaction_list &reactions, const func_type construct_rates_BE, const func_eos eos,
 		const nseFunction jumpToNse=NULL)
 	{
 		n.minDt_m1 = n.minDt;

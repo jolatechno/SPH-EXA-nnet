@@ -29,8 +29,8 @@ namespace nnet::net87 {
 	}();
 
 	/// constant list of ordered reaction
-	inline static const std::vector<nnet::reaction> reaction_list = []() {
-		std::vector<nnet::reaction> reactions = nnet::net86::reaction_list;
+	inline static const nnet::reaction_list reaction_list = []() {
+		nnet::reaction_list reactions = nnet::net86::reaction_list;
 
 		// electron captures
 		reactions.push_back(nnet::reaction{{{constants::proton},  {constants::electron}}, {{constants::neutron}}});
