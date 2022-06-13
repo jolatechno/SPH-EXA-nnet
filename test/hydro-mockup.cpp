@@ -153,6 +153,21 @@ void step(size_t firstIndex, size_t lastIndex,
 	// do hydro stuff
 }
 
+
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp declare target
+#endif
+inline static constexpr struct eos_output {
+	double cv, dP_dT, dU_dYe;
+} isotherm_res{1e20, 0, 0};
+inline static constexpr auto isotherm_eos = [](const auto &Y_, const double T, const double rho_) {
+	return isotherm_res;
+};
+#ifdef OMP_TARGET_SOLVER
+	#pragma omp end declare target
+#endif
+
+
 int main(int argc, char* argv[]) {
 	/* initial hydro data */
 	const double rho_left = 1.1e9, rho_right = 0.8e9;
