@@ -22,7 +22,7 @@ constants :
 
 	namespace constants {
 		/// initial nuclear timestep
-		double initial_dt = 1e-8;
+		double initial_dt = 1e-5;
 
 		/// theta for the implicit method
 		double theta = 0.8;

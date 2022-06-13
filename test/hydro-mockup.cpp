@@ -307,6 +307,33 @@ int main(int argc, char* argv[]) {
 
 
 
+
+	// "warm-up" (first allocation etc...)
+	if (use_net86) {
+		if (isotherm) {
+			step(first, last,
+				particle_data, nuclear_data_86, 1e-10,
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos);
+		} else
+			step(first, last,
+				particle_data, nuclear_data_86, 1e-10,
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86);
+	} else
+		if (isotherm) {
+			step(first, last,
+				particle_data, nuclear_data_14, 1e-10,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos);
+		} else
+			step(first, last,
+				particle_data, nuclear_data_14, 1e-10,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14);
+
+
+
+
+
+
+	MPI_Barrier(MPI_COMM_WORLD);
 	auto start = std::chrono::high_resolution_clock::now();
 	double min_time = 3600, max_time = 0;
 
