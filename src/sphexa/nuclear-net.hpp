@@ -19,6 +19,10 @@
 	#include "sph/data_util.hpp"
 #endif
 
+#ifdef USE_CUDA
+	#include "CUDA/nuclear-net.cuh"
+#endif
+
 #include "../nuclear-net.hpp"
 
 namespace sphexa::sphnnet {
@@ -64,7 +68,7 @@ namespace sphexa::sphnnet {
 		int omp_batch_size = util::dynamic_batch_size(team_batch_size, num_threads);
 		
 		#pragma omp target data map(to: rho_[0:n_particles], previous_rho_[0:n_particles]) map(tofrom: temp_[0:n_particles], dt_[0:n_particles], Y_[0:dimension*n_particles])
-	    #pragma omp target teams distribute parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, construct_rates_BE, reactions, eos) dist_schedule(static, team_batch_size) schedule(dynamic, omp_batch_size)
+	    #pragma omp target teams distribute parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions, construct_rates_BE, eos) dist_schedule(static, team_batch_size) schedule(dynamic, omp_batch_size)
 	#else
 		int num_threads;
 		#pragma omp parallel
@@ -88,6 +92,13 @@ namespace sphexa::sphnnet {
 					jumpToNse);
 			}
 #else
+#ifdef USE_CUDA_SOLVER
+		/* !!!!!!!!!!!!!
+		GPU non-batch solver
+		!!!!!!!!!!!!! */
+
+#endif
+
 		/* !!!!!!!!!!!!!
 		GPU batch solver
 		!!!!!!!!!!!!! */

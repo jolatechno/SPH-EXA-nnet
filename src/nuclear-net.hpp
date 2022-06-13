@@ -9,6 +9,9 @@
 #include <vector>
 #include <tuple>
 
+#ifdef USE_CUDA
+	#include <cuda_runtime.h>
+#endif
 
 namespace nnet {
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -212,7 +215,7 @@ constants :
 			reactant_begin   = other.reactant_begin;
 			product_begin    = other.product_begin;
 			reactant_product = other.reactant_product;
-			
+
 			return *this;
 		}
 
@@ -307,6 +310,9 @@ utils functions:
 		 * ...TODO
 		 */
 		template<typename Float>
+#ifdef USE_CUDA
+		__host__ __device__ 
+#endif
 		void inline clip(Float *X, const int dimension, const Float epsilon) {
 			for (int i = 0; i < dimension; ++i)
 				if (X[i] <= epsilon) //if (std::abs(X(i)) <= epsilon)
@@ -321,6 +327,9 @@ utils functions:
 		 * ...TODO
 		 */
 		template<typename Float>
+#ifdef USE_CUDA
+		__host__ __device__ 
+#endif
 		bool inline contain_nan(const Float T, const Float *Y, const int dimension) {
 			if (std::isnan(T))
 				return true;
@@ -341,6 +350,9 @@ utils functions:
 		 * ...TODO
 		 */
 		template<typename Float>
+#ifdef USE_CUDA
+		__host__ __device__ 
+#endif
 		void inline derivatives_from_reactions(const reaction_list &reactions, const Float *rates, const Float rho, const Float *Y, Float *dY, const int dimension) {
 			for (int i = 0; i < dimension; ++i)
 				dY[i] = 0.;
@@ -382,6 +394,9 @@ utils functions:
 		 * ...TODO
 		 */
 		template<typename Float>
+#ifdef USE_CUDA
+		__host__ __device__ 
+#endif
 		void inline order_1_dY_from_reactions(const reaction_list &reactions, const Float *rates, const Float rho,
 			Float const *Y, Float *M, const int dimension)
 		{
@@ -442,6 +457,9 @@ First simple direct solver:
 	 * TODO
 	 */
 	template<class eos_type, class func_type, typename Float=double>
+#ifdef USE_CUDA
+	__host__ __device__ 
+#endif
 	void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS, Float *rates, Float *drates_dT, 
 		const reaction_list &reactions, const func_type &construct_rates_BE, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess,
@@ -460,7 +478,7 @@ First simple direct solver:
 	<=> DT*cv = value_1*(T + theta*DT) + DY.BE
 	<=> DT*(cv - theta*value_1) - DY.BE = value_1*T
 		------------------- */
-#ifndef OMP_TARGET_SOLVER
+#if !defined(OMP_TARGET_SOLVER) && !defined(USE_CUDA)
 		if (dt == 0) {
 			std::string error = "Zero timestep in nuclear network\n";
 			error += "\tT=" + std::to_string(T) + ",\tTguess=" + std::to_string(T_guess) + "\n";
@@ -541,6 +559,9 @@ First simple direct solver:
 	 * TODO
 	 */
 	template<typename Float>
+#ifdef USE_CUDA
+	__host__ __device__ 
+#endif
 	void inline finalize_system(const int dimension, const Float *Y, const Float T, Float *next_Y, Float &next_T, const Float *DY_T) {
 		// increment values
 		for (int i = 0; i < dimension; ++i)
@@ -634,6 +655,9 @@ Iterative solver:
 	 * TODO
 	 */
 	template<class func_type, class func_eos, typename Float=double>
+#ifdef USE_CUDA
+	__host__ __device__ 
+#endif
 	void inline prepare_system_NR(const int dimension, 
 		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
 		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
@@ -673,6 +697,9 @@ Iterative solver:
 	 * TODO
 	 */
 	template<typename Float>
+#ifdef USE_CUDA
+	__host__ __device__ 
+#endif
 	std::tuple<Float, bool> inline finalize_system_NR(const int dimension,
 		const Float *Y, const Float T,
 		Float *final_Y, Float &final_T,
@@ -823,6 +850,9 @@ Substeping solver
 	 * TODO
 	 */
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
+#ifdef USE_CUDA
+	__host__ __device__ 
+#endif
 	void inline prepare_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
 		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
@@ -834,7 +864,7 @@ Substeping solver
 		// compute rho
 		Float rho = final_rho - drho_dt*(dt_tot - elapsed_time);
 
-#ifndef OMP_TARGET_SOLVER
+#if !defined(OMP_TARGET_SOLVER) && !defined(USE_CUDA)
 		// timejump if needed
 		if constexpr (std::is_invocable<std::remove_pointer<nseFunction>>())
 		if (dt < dt_tot*constants::substep::dt_nse_tol) {
@@ -867,6 +897,9 @@ Substeping solver
 	 * TODO
 	 */
 	template<typename Float=double>
+#ifdef USE_CUDA
+	__host__ __device__ 
+#endif
 	bool inline finalize_system_substep(const int dimension,
 		Float *final_Y, Float &final_T,
 		Float *next_Y, Float &next_T,
@@ -917,6 +950,9 @@ Substeping solver
 	 * ...TODO
 	 */
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
+#ifdef USE_CUDA
+	__host__ __device__ 
+#endif
 	void inline solve_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
 		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
@@ -966,6 +1002,9 @@ Substeping solver
 	 * ...TODO
 	 */
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
+#ifdef USE_CUDA
+	__host__ __device__ 
+#endif
 	void inline solve_system_substep(const int dimension,
 		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		Float *final_Y, Float &final_T,
