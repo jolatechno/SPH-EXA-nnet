@@ -116,7 +116,7 @@ constants :
 
 	/// class referencing a reaction
 	struct reaction_reference {
-		reaction_reference() {}
+		CUDA_FUNCTION_DECORATOR reaction_reference() {}
 
 		/// class simulating a vector from a pointer
 		template<class T>

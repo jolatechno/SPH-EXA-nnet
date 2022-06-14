@@ -708,7 +708,7 @@ namespace nnet::net86 {
 			            mukbt[i] = a1*gamp + 4.*(b1*sqroot2gamp - c1/sqroot2gamp) + d1*std::log(gamp) - e1;
 				}
 
-				/*// mu for neutrons must be zero
+				// mu for neutrons must be zero
 				mukbt[1] = 0;
 
 				// compute deltamukbt
@@ -716,10 +716,10 @@ namespace nnet::net86 {
 					deltamukbt[i] = mukbt[constants::main_reactant[i]] + mukbt[constants::secondary_reactant[i]] - mukbt[constants::main_product[i]];// - mukbt[constants::secondary_product[i]];
 
 				// Triple alpha correction
-				deltamukbt[4] += mukbt[constants::main_reactant[4]];*/
+				deltamukbt[4] += mukbt[constants::main_reactant[4]];
 
 				// compute deltamukbt
-				for (int i = 0; i < 157; ++i) {
+				/*for (int i = 0; i < 157; ++i) {
 					const auto &Reaction = reaction_list[i];
 
 					Float deltamukbt_ = 0;
@@ -728,7 +728,7 @@ namespace nnet::net86 {
 					for (auto const [product_id, n_product_produced] : Reaction.products)
 						deltamukbt_ -= mukbt[product_id]*n_product_produced;
 					deltamukbt[i] = deltamukbt_ + mukbt[constants::alpha];
-				}
+				}*/
 			}
 
 
