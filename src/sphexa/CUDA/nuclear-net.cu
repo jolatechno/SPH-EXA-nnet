@@ -19,7 +19,7 @@ namespace sphnnet {
 	const Float hydro_dt, const Float previous_dt,
 		const nnet::ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
 	{
-	    const int i = blockIdx.x*blockDim.x + threadIdx.x;
+	    int i = blockIdx.x*blockDim.x + threadIdx.x;
 	    if (i < n_particles) {
 	    	Float *Mp        = (Float*)malloc((dimension + 1)*(dimension + 1)*sizeof(Float));
 			Float *RHS       = (Float*)malloc(                (dimension + 1)*sizeof(Float));
@@ -36,7 +36,7 @@ namespace sphnnet {
 				nnet::solve_system_substep(dimension,
 					Mp, RHS, DY_T, rates, drates_dT,
 					reactions, construct_rates_BE, eos,
-					&Y_[dimension*i], temp_[i], Y_buffer,
+					Y_ + dimension*i, temp_[i], Y_buffer,
 					rho_[i], drho_dt, hydro_dt, dt_[i]);
 			}
 

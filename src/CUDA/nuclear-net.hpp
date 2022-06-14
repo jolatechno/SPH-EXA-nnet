@@ -14,7 +14,7 @@ namespace cuda_util {
 		T *dev_ptr;
 		
 		cudaMalloc((void**)&dev_ptr, dimension*sizeof(T));
-		cudaMemcpy(dev_ptr, ptr, dimension*sizeof(T), cudaMemcpyHostToDevice);
+		cudaMemcpy(dev_ptr,     ptr, dimension*sizeof(T), cudaMemcpyHostToDevice);
 
 		return dev_ptr;
 	}
@@ -38,7 +38,7 @@ namespace nnet {
 		}
 	};
 
-	
+
 	/// function to move reactions to the GPU
 	/**
 	 * TODO
@@ -47,9 +47,9 @@ namespace nnet {
 		gpu_reaction_list dev_reactions;
 		dev_reactions.num_reactions = reactions.num_reactions;
 
-		dev_reactions.reactant_product = cuda_util::move_to_gpu(reactions.reactant_product, reactions.reactant_begin[reactions.num_reactions]);
-		dev_reactions.reactant_begin   = cuda_util::move_to_gpu(reactions.reactant_begin,   reactions.num_reactions + 1);
-		dev_reactions.product_begin    = cuda_util::move_to_gpu(reactions.product_begin,    reactions.num_reactions);
+		dev_reactions.reactant_product = cuda_util::move_to_gpu<reaction::reactant_product>(reactions.reactant_product, reactions.reactant_begin[reactions.num_reactions]);
+		dev_reactions.reactant_begin   = cuda_util::move_to_gpu<int>(reactions.reactant_begin, reactions.num_reactions + 1);
+		dev_reactions.product_begin    = cuda_util::move_to_gpu<int>(reactions.product_begin,  reactions.num_reactions);
 
 		return dev_reactions;
 	} 

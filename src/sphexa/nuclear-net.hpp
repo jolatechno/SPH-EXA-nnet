@@ -80,12 +80,12 @@ namespace sphexa::sphnnet {
 			}
 #else
 		// to
-		Float *previous_rho_ = cuda_util::move_to_gpu(n.previous_rho.data(), n_particles);
-		Float *rho_          = cuda_util::move_to_gpu(n.rho.data(),          n_particles);
+		Float *previous_rho_ = cuda_util::move_to_gpu<Float>(n.previous_rho.data(), n_particles);
+		Float *rho_          = cuda_util::move_to_gpu<Float>(n.rho.data(),          n_particles);
 		// tofrom
-		Float *dt_           = cuda_util::move_to_gpu(n.dt.data(),           n_particles);
-		Float *temp_         = cuda_util::move_to_gpu(n.temp.data(),         n_particles);
-		Float *Y_            = cuda_util::move_to_gpu(n.Y[0].data(),         n_particles*dimension);
+		Float *dt_           = cuda_util::move_to_gpu<Float>(n.dt.data(),           n_particles);
+		Float *temp_         = cuda_util::move_to_gpu<Float>(n.temp.data(),         n_particles);
+		Float *Y_            = cuda_util::move_to_gpu<Float>(n.Y[0].data(),         n_particles*dimension);
 
 		// reactions
 		nnet::gpu_reaction_list dev_reactions = nnet::move_to_gpu(reactions);
@@ -97,6 +97,16 @@ namespace sphexa::sphnnet {
 			rho_, previous_rho_, Y_, temp_, dt_,
 			hydro_dt, previous_dt,
 			dev_reactions, construct_rates_BE, eos);
+
+
+		/* debuging: check for error */
+		auto code = cudaPeekAtLastError();
+		if (code != cudaSuccess)
+			std::cerr << "\tCUDA error ! \"" << cudaGetErrorString(code) << "\"\n";
+		code = cudaDeviceSynchronize();
+		if (code != cudaSuccess)
+			std::cerr << "\tCUDA synchronize error ! \"" << cudaGetErrorString(code) << "\"\n";
+
 
 		// copy back to cpu
 		cudaMemcpy(n.dt.data(),   dt_,             n_particles*sizeof(Float), cudaMemcpyDeviceToHost);
