@@ -859,8 +859,8 @@ Substeping solver
 
 		if (converged) {
 			// update state
-			for (int i = 0; i < dimension; ++i)
-				final_Y[i] = next_Y[i];
+			for (int j = 0; j < dimension; ++j)
+				final_Y[j] = next_Y[j];
 			final_T = next_T;
 
 			// jump back, increment time
