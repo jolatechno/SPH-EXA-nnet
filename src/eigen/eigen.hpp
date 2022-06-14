@@ -22,13 +22,20 @@ namespace eigen {
 			weights.resize(n*m);
 		}
 
-		Type inline &operator()(int i, int j) {
-			return weights[i + j*n];
+		Type inline *operator[](int i) {
+			return data() + i*m;
+		}
+		const Type inline *operator[](int i) const {
+			return data() + i*m;
 		}
 
-		Type inline operator()(int i, int j) const {
-			return weights[i + j*n];
+		Type inline &operator()(int i, int j) {
+			return weights[i*m + j];
 		}
+		Type inline operator()(int i, int j) const {
+			return weights[i*m + j];
+		}
+
 		const Type *data() const {
 			return weights.data();
 		}

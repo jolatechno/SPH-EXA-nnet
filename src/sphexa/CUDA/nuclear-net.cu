@@ -55,10 +55,10 @@ namespace sphnnet {
 	const Float hydro_dt, const Float previous_dt,
 		const nnet::ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
 	{
-		int n_blocks                = CUDA_BLOCK_SIZE;
-		int cuda_n_thread_per_block = (n_particles + n_blocks - 1) / n_blocks;
+		int cuda_n_thread_per_block = CUDA_BLOCK_SIZE;
+		int cuda_n_blocks           = (n_particles + cuda_n_thread_per_block - 1) / cuda_n_thread_per_block;
 
-	    cudaKernelComputeNuclearReactions<<<n_blocks, cuda_n_thread_per_block>>>(n_particles, dimension,
+	    cudaKernelComputeNuclearReactions<<<cuda_n_blocks, cuda_n_thread_per_block>>>(n_particles, dimension,
 			rho_, previous_rho_, Y_, temp_, dt_,
 			hydro_dt, previous_dt,
 			reactions, construct_rates_BE, eos);
