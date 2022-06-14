@@ -402,6 +402,20 @@ namespace nnet::eos {
 
 
 
+	/// helmholtz eos structure
+	/**
+	 * TODO
+	 */
+	template<typename Float>
+	struct helm_eos_output {
+		Float cv, dP_dT, p;
+		Float cp, c, u;
+
+		Float dse, dpe, dsp;
+		Float cv_gaz, cp_gaz, c_gaz; 
+
+		Float dU_dYe;
+	};
 
 
 
@@ -1037,15 +1051,7 @@ namespace nnet::eos {
 		// the specific heat at constant pressure (c&g 9.98)
 		// and relativistic formula for the sound speed (c&g 14.29)
 
-		struct eos_output {
-			Float cv, dP_dT, p;
-			Float cp, c, u;
-
-			Float dse, dpe, dsp;
-			Float cv_gaz, cp_gaz, c_gaz; 
-
-			Float dU_dYe;
-		} res;
+		helm_eos_output<double> res;
 
 
 		Float zz            = pgas*rhoi;
@@ -1112,7 +1118,7 @@ namespace nnet::eos {
 		Float *Z_dev;
 #endif
 
-		CUDA_FUNCTION_DECORATOR auto inline compute(const Float *Z_, const Float *Y, const Float T, const Float rho) const {
+		CUDA_FUNCTION_DECORATOR helm_eos_output<Float> inline compute(const Float *Z_, const Float *Y, const Float T, const Float rho) const {
 			// compute abar and zbar
 			double abar = std::accumulate(Y, Y + dimension, (Float)0);
 			double zbar = eigen::dot(Y, Y + dimension, Z);
@@ -1121,6 +1127,8 @@ namespace nnet::eos {
 		}
 
 	public:
+		using eos_type = helm_eos_output<Float>;
+
 		helmholtz_functor(const Float  *Z_, int dimension_) : Z(Z_), dimension(dimension_) {
 #ifdef USE_CUDA
 			cudaMalloc(&Z_dev, dimension*sizeof(Float));
@@ -1138,7 +1146,7 @@ namespace nnet::eos {
 #endif
 		}
 
-		CUDA_FUNCTION_DECORATOR auto inline operator()(const Float *Y, const Float T, const Float rho) const {
+		CUDA_FUNCTION_DECORATOR helm_eos_output<Float> inline operator()(const Float *Y, const Float T, const Float rho) const {
 #ifdef  __CUDA_ARCH__
 			return compute(Z_dev, Y, T, rho);
 #else

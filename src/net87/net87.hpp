@@ -42,9 +42,8 @@ namespace nnet::net87 {
 	}();
 
 	/// compute a list of rates for net87
-	static const auto compute_reaction_rates = [] CUDA_FUNCTION_DECORATOR (const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
-		using Float = typename std::remove_const<decltype(T)>::type;
-
+	template<typename Float, class eos>
+	CUDA_FUNCTION_DECORATOR void inline compute_reaction_rates(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) {
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		electron value
 		!!!!!!!!!!!!!!!!!!!!!!!! */

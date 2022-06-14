@@ -267,12 +267,6 @@ int main(int argc, char* argv[]) {
 
 	const nnet::eos::helmholtz_functor helm_eos_86 = nnet::eos::helmholtz_functor(nnet::net86::constants::Z, 86);
 	const nnet::eos::helmholtz_functor helm_eos_14 = nnet::eos::helmholtz_functor(nnet::net14::constants::Z);
-	const struct eos_output {
-		double cv, dP_dT, dU_dYe;
-	} isotherm_res{1e20, 0, 0};
-	const auto isotherm_eos = [&](const auto &Y_, const double T, const double rho_) {
-		return isotherm_res;
-	};
 
 
 	sphexa::sphnnet::NuclearDataType<86, double> nuclear_data_86;
@@ -316,20 +310,20 @@ int main(int argc, char* argv[]) {
 		if (isotherm) {
 			step(first, last,
 				particle_data, nuclear_data_86, 1e-10,
-				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos);
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double, eos_output>, isotherm_eos);
 		} else
 			step(first, last,
 				particle_data, nuclear_data_86, 1e-10,
-				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86);
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double, nnet::eos::helm_eos_output<double>>, helm_eos_86);
 	} else
 		if (isotherm) {
 			step(first, last,
 				particle_data, nuclear_data_14, 1e-10,
-				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos);
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double, eos_output>, isotherm_eos);
 		} else
 			step(first, last,
 				particle_data, nuclear_data_14, 1e-10,
-				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14);
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double, nnet::eos::helm_eos_output<double>>, helm_eos_14);
 
 
 
@@ -352,24 +346,24 @@ int main(int argc, char* argv[]) {
 		auto start_it = std::chrono::high_resolution_clock::now();
 
 		if (use_net86) {
-			if (isotherm) {
-				step(first, last,
-					particle_data, nuclear_data_86, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos);
-			} else
-				step(first, last,
-					particle_data, nuclear_data_86, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86);
+		if (isotherm) {
+			step(first, last,
+				particle_data, nuclear_data_86, hydro_dt,
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double, eos_output>, isotherm_eos);
 		} else
-			if (isotherm) {
-				step(first, last,
-					particle_data, nuclear_data_14, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos);
-			} else
-				step(first, last,
-					particle_data, nuclear_data_14, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14);
-		
+			step(first, last,
+				particle_data, nuclear_data_86, hydro_dt,
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double, nnet::eos::helm_eos_output<double>>, helm_eos_86);
+	} else
+		if (isotherm) {
+			step(first, last,
+				particle_data, nuclear_data_14, hydro_dt,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double, eos_output>, isotherm_eos);
+		} else
+			step(first, last,
+				particle_data, nuclear_data_14, hydro_dt,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double, nnet::eos::helm_eos_output<double>>, helm_eos_14);
+			
 		t += hydro_dt;
 
 		MPI_Barrier(MPI_COMM_WORLD);

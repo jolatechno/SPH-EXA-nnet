@@ -34,6 +34,13 @@ void printHelp(char* name) {
 	std::cout << "\t'--debug-net86': if exists output debuging prints for net86 species\n\n";
 }
 
+inline static constexpr struct eos_output {
+	double cv, dP_dT, dU_dYe;
+} isotherm_res{1e20, 0, 0};
+inline static constexpr auto isotherm_eos = [](const auto &Y_, const double T, const double rho_) {
+	return isotherm_res;
+};
+
 int main(int argc, char* argv[]) {
 	const ArgParser parser(argc, argv);
     if (parser.exists("-h") || parser.exists("--h") || parser.exists("-help") || parser.exists("--help")) {
@@ -113,13 +120,6 @@ int main(int argc, char* argv[]) {
 
 
 	const nnet::eos::helmholtz_functor helm_eos(nnet::net86::constants::Z, 86);
-	const auto isotherm_eos = [&](const auto &Y_, const double T, const double rho_) {
-		const double cv = 1e30;
-		struct eos_output {
-			double cv, dP_dT, dU_dYe;
-		} res{cv, 0, 0};
-		return res;
-	};
 
 
 	auto start = std::chrono::high_resolution_clock::now();
@@ -133,12 +133,12 @@ int main(int argc, char* argv[]) {
 		double current_dt = isotherm ? 
 			nnet::solve_system_NR(86,
 				Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
-				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos,
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double, eos_output>, isotherm_eos,
 				last_Y.data(), last_T, Y.data(), T,
 				rho, 0., dt) :
 			nnet::solve_system_NR(86,
 				Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
-				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos,
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double, nnet::eos::helm_eos_output<double>>, helm_eos,
 				last_Y.data(), last_T, Y.data(), T,
 				rho, 0., dt);
 		t += current_dt;

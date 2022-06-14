@@ -126,10 +126,10 @@ namespace nnet::net86::constants {
 	/// function for coulombian correction
 	template<typename Float>
 	CUDA_FUNCTION_DECORATOR Float inline ggt1(const Float x) {
-		static const Float a1 = -.898004;
-		static const Float b1 = .96786;
-		static const Float c1 = .220703;
-		static const Float d1 = -.86097;
+		const Float a1 = -.898004;
+		const Float b1 = .96786;
+		const Float c1 = .220703;
+		const Float d1 = -.86097;
 
 		Float sqroot2x = std::sqrt(std::sqrt(x));
 		return a1*x + b1*sqroot2x + c1/sqroot2x + d1;
@@ -137,9 +137,9 @@ namespace nnet::net86::constants {
 	/// function for coulombian correction
 	template<typename Float>
 	CUDA_FUNCTION_DECORATOR Float inline glt1(const Float x) {
-		static const Float a1 = -.5*std::sqrt(3.);
-		static const Float b1 = .29561;
-		static const Float c1 = 1.9885;
+		const Float a1 = -.5*std::sqrt(3.);
+		const Float b1 = .29561;
+		const Float c1 = 1.9885;
 
 		return a1*x*std::sqrt(x) + b1*std::pow(x, c1);
 	}

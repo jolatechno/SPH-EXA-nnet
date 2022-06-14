@@ -111,9 +111,8 @@ namespace nnet::net14 {
 	});
 
 	/// compute a list of reactions for net14
-	static const inline auto compute_reaction_rates = [] CUDA_FUNCTION_DECORATOR (const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
-		using Float = typename std::remove_const<decltype(T)>::type;
-
+	template<typename Float, class eos>
+	CUDA_FUNCTION_DECORATOR void inline compute_reaction_rates(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) {
 		/*********************************************/
 		/* start computing the binding energy vector */
 		/*********************************************/

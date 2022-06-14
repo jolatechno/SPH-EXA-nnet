@@ -64,7 +64,7 @@ namespace sphexa::sphnnet {
 		num_threads = omp_get_num_threads();
 		int omp_batch_size = util::dynamic_batch_size(n_particles, num_threads);
 
-		#pragma omp parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions, construct_rates_BE, eos) schedule(dynamic, omp_batch_size)
+		#pragma omp parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions/*, construct_rates_BE, eos*/) schedule(dynamic, omp_batch_size)
 		for (size_t i = 0; i < n_particles; ++i) 
 			if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp) {
 				// compute drho/dt

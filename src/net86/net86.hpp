@@ -174,9 +174,8 @@ namespace nnet::net86 {
 
 
 	/// compute a list of rates for net86
-	static const inline auto compute_reaction_rates = [] CUDA_FUNCTION_DECORATOR (const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
-		using Float = typename std::remove_const<decltype(T)>::type;
-
+	template<typename Float, class eos>
+	CUDA_FUNCTION_DECORATOR void inline compute_reaction_rates(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) {
 		/*********************************************/
 		/* start computing the binding energy vector */
 		/*********************************************/
@@ -648,7 +647,7 @@ namespace nnet::net86 {
 			const Float val3 = val1*t9i*1e-9;
 			const Float val4 = 1.5e-9*t9i;
 
-			const int k = constants::fits::CUDA_ACCESS(get_temperature_range)(T);
+			const int k = constants::fits::get_temperature_range(T);
 
 			for (int i = 7; i < 137; ++i) {
 				const Float part = constants::fits::CUDA_ACCESS(choose)[constants::main_reactant[i] - 5][k]/constants::fits::CUDA_ACCESS(choose)[constants::main_product[i] - 5][k];

@@ -11,25 +11,9 @@
 	#define CUDA_BLOCK_SIZE 256
 #endif
 
-namespace nnet {
-namespace constants {
-	extern __device__ double dev_min_rho, dev_min_temp;
-}
-
-extern "C" {
-	// forward definition
-	// template<class func_type /*, class func_eos*/ /*, typename Float*/>
-	__host__ __device__ void solve_system_substep(const int dimension,
-		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
-		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
-		Float *final_Y, Float &final_T, Float *Y_buffer,
-		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt);
-}
-}
-
 namespace sphexa {
 namespace sphnnet {
-	// template<class func_type /*, class func_eos*/ /*, typename Float*/>
+	template<class func_type, class func_eos, typename Float>
 	__global__ void cudaKernelComputeNuclearReactions(const int n_particles, const int dimension,
 	Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
 	const Float hydro_dt, const Float previous_dt,
@@ -44,7 +28,7 @@ namespace sphnnet {
 			Float *rates     = (Float*)malloc(reactions.num_reactions*sizeof(Float));
 			Float *drates_dT = (Float*)malloc(reactions.num_reactions*sizeof(Float));
 
-		    if (rho_[i] > nnet::constants::dev_min_rho && temp_[i] > nnet::constants::dev_min_temp) {
+		    if (rho_[i] > nnet::constants::min_rho && temp_[i] > nnet::constants::min_temp) {
 				// compute drho/dt
 				Float drho_dt = previous_rho_[i] <= 0 ? 0. : (rho_[i] - previous_rho_[i])/previous_dt;
 
@@ -65,7 +49,7 @@ namespace sphnnet {
 		}
 	}
 
-	// template<class func_type /*, class func_eos*/ /*, typename Float*/>
+	template<class func_type, class func_eos, typename Float>
 	__host__ void cudaComputeNuclearReactions(const int n_particles, const int dimension,
 	Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
 	const Float hydro_dt, const Float previous_dt,

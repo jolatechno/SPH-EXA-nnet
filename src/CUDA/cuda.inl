@@ -4,7 +4,7 @@
 	#define CUDA_FUNCTION_DECORATOR __host__ __device__
 
 	#define CUDA_DEFINE(type, symbol, definition) \
-		__host__   type     symbol definition      \
+		           type     symbol definition      \
 		__device__ type dev_##symbol definition
 #else
 	#define CUDA_FUNCTION_DECORATOR
