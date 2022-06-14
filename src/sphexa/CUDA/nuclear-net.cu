@@ -12,6 +12,8 @@ namespace sphnnet {
 		const nnet::ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
 	{
 	    int i = threadIdx.x;
+
+		Float Mp[(dimension + 1)*(dimension + 1)], RHS[dimension + 1], DY_T[dimension + 1], rates[reactions.num_reactions], drates_dT[reactions.num_reactions], Y_buffer[dimension];
 	    
 	    if (rho_[i] > nnet::constants::min_rho && temp_[i] > nnet::constants::min_temp) {
 			// compute drho/dt
@@ -19,8 +21,9 @@ namespace sphnnet {
 
 			// solve
 			nnet::solve_system_substep(dimension,
+				Mp, RHS, DY_T, rates, drates_dT,
 				reactions, construct_rates_BE, eos,
-				&Y_[dimension*i], temp_[i],
+				&Y_[dimension*i], temp_[i], Y_buffer,
 				rho_[i], drho_dt, hydro_dt, dt_[i]);
 		}
 	}
