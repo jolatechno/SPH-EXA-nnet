@@ -195,7 +195,7 @@ namespace nnet::net86 {
 		    Float ae = std::pow((3./4.)/(constants::pi*ne), 1./3.);
 		    Float gam = constants::e2/(kbt*ae);
 		    for (int i = 0; i < 86; ++i) {
-		    	Float gamma = gam*std::pow(constants::Z[i], 5./3.);
+		    	Float gamma = gam*std::pow(constants::CUDA_ACCESS(Z)[i], 5./3.);
 		    	Float funcion = gamma > 1 ? constants::ggt1(gamma) : constants::glt1(gamma);
 
 		    	//  if (debug) std::cout << "funcion[" << i << "]=" << funcion << (i == 13 ? "\n\n" : "\n");
@@ -249,21 +249,21 @@ namespace nnet::net86 {
 				- Ni + He -> Zn */
 			for (int i = 7; i < 157; ++i) {
 				coefs[i - 7] = 
-					  constants::fits::fit[i - 7][1]*t9i
-					+ constants::fits::fit[i - 7][2]*t9i13
-					+ constants::fits::fit[i - 7][3]*t913
-					+ constants::fits::fit[i - 7][4]*t9
-					+ constants::fits::fit[i - 7][5]*t953
-					+ constants::fits::fit[i - 7][6]*lt9;
+					  constants::fits::CUDA_ACCESS(fit)[i - 7][1]*t9i
+					+ constants::fits::CUDA_ACCESS(fit)[i - 7][2]*t9i13
+					+ constants::fits::CUDA_ACCESS(fit)[i - 7][3]*t913
+					+ constants::fits::CUDA_ACCESS(fit)[i - 7][4]*t9
+					+ constants::fits::CUDA_ACCESS(fit)[i - 7][5]*t953
+					+ constants::fits::CUDA_ACCESS(fit)[i - 7][6]*lt9;
 
-				dcoefs[i - 7] = (- constants::fits::fit     [i - 7][1]*t9i2 
-					             + (-   constants::fits::fit[i - 7][2]*t9i43
-					                +   constants::fits::fit[i - 7][3]*t9i23
-					                + 5*constants::fits::fit[i - 7][5]*t923)*(1./3.)
-					             + constants::fits::fit     [i - 7][4]
-					             + constants::fits::fit     [i - 7][6]*t9i)*1e-9;
+				dcoefs[i - 7] = (- constants::fits::CUDA_ACCESS(fit)     [i - 7][1]*t9i2 
+					             + (-   constants::fits::CUDA_ACCESS(fit)[i - 7][2]*t9i43
+					                +   constants::fits::CUDA_ACCESS(fit)[i - 7][3]*t9i23
+					                + 5*constants::fits::CUDA_ACCESS(fit)[i - 7][5]*t923)*(1./3.)
+					             + constants::fits::CUDA_ACCESS(fit)     [i - 7][4]
+					             + constants::fits::CUDA_ACCESS(fit)     [i - 7][6]*t9i)*1e-9;
 
-				eff[i] = std::exp(constants::fits::fit[i - 7][0] + coefs[i - 7]);
+				eff[i] = std::exp(constants::fits::CUDA_ACCESS(fit)[i - 7][0] + coefs[i - 7]);
 				deff[i] = eff[i]*dcoefs[i - 7];
 
 				// debuging :
@@ -648,18 +648,18 @@ namespace nnet::net86 {
 			const Float val3 = val1*t9i*1e-9;
 			const Float val4 = 1.5e-9*t9i;
 
-			const int k = constants::fits::get_temperature_range(T);
+			const int k = constants::fits::CUDA_ACCESS(get_temperature_range)(T);
 
 			for (int i = 7; i < 137; ++i) {
-				const Float part = constants::fits::choose[constants::main_reactant[i] - 5][k]/constants::fits::choose[constants::main_product[i] - 5][k];
-				l[i]  = part*std::exp(constants::fits::fit[i - 7][7] + coefs[i - 7] - val1*constants::fits::q[i - 7] + val2);
-		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::q[i - 7] + val4);
+				const Float part = constants::fits::CUDA_ACCESS(choose)[constants::main_reactant[i] - 5][k]/constants::fits::CUDA_ACCESS(choose)[constants::main_product[i] - 5][k];
+				l[i]  = part*std::exp(constants::fits::CUDA_ACCESS(fit)[i - 7][7] + coefs[i - 7] - val1*constants::fits::CUDA_ACCESS(q)[i - 7] + val2);
+		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::CUDA_ACCESS(q)[i - 7] + val4);
 			}
 			// These are not photodesintegrations so they don't have val2
 			for (int i = 137; i < 157; ++i) {
-				const Float part = constants::fits::choose[constants::main_reactant[i] - 5][k]/constants::fits::choose[constants::main_product[i] - 5][k];
-				l[i]  = part*std::exp(constants::fits::fit[i - 7][7] + coefs[i - 7] - val1*constants::fits::q[i - 7]);
-		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::q[i - 7]);
+				const Float part = constants::fits::CUDA_ACCESS(choose)[constants::main_reactant[i] - 5][k]/constants::fits::CUDA_ACCESS(choose)[constants::main_product[i] - 5][k];
+				l[i]  = part*std::exp(constants::fits::CUDA_ACCESS(fit)[i - 7][7] + coefs[i - 7] - val1*constants::fits::CUDA_ACCESS(q)[i - 7]);
+		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::CUDA_ACCESS(q)[i - 7]);
 			}
 		}
 
@@ -700,7 +700,7 @@ namespace nnet::net86 {
 
 		    	// compute mukbt
 				for (int i = 0; i < 86; ++i) {
-					const double gamp = gam*std::pow(constants::Z[i], 5./3.);
+					const double gamp = gam*std::pow(constants::CUDA_ACCESS(Z)[i], 5./3.);
 			        const double sqrootgamp = std::sqrt(gamp);
 			        const double sqroot2gamp = std::sqrt(sqrootgamp);
 			        if(gamp <= 1) {

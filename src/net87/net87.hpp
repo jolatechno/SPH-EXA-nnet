@@ -19,16 +19,16 @@ namespace nnet::net87 {
 	static bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
-	inline static const std::array<double, 87> BE = [](){
-		std::array<double, 87> BE_;
+	CUDA_DEFINE(inline static const std::array<double COMMA 87>, BE, = [](){
+		std::array<double COMMA 87> BE_;
 		for (int i = 0; i < 86; ++i)
-			BE_[i] = nnet::net86::BE[i];
+			BE_[i] = nnet::net86::CUDA_ACCESS(BE)[i];
 
 		// electron energy
 		BE_[86] = 0.782*constants::Mev_to_cJ;
 
 		return BE_;
-	}();
+	}();)
 
 	/// constant list of ordered reaction
 	inline static const nnet::reaction_list reaction_list = []() {
@@ -83,7 +83,7 @@ namespace nnet::net87 {
 		Float correction = -1.5*nakbt;
 
 		// adding electrons to net86
-		corrected_BE[86] = BE.back() + correction;
+		corrected_BE[86] = CUDA_ACCESS(BE).back() + correction;
 
 		// electron energy corrections
 		corrected_BE[constants::proton]  += Eneutr;
