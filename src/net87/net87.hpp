@@ -8,7 +8,7 @@
 #include "electrons.hpp"
 
 #ifdef USE_CUDA
-	#include "cuda_runtime.h"
+	#include <cuda_runtime.h>
 #endif
 #include "../CUDA/cuda.inl"
 

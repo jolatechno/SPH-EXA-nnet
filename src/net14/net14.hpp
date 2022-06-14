@@ -2,13 +2,11 @@
 
 #include <vector>
 
-#include "../CUDA/cuda.inl"
-
 #include "../nuclear-net.hpp"
 #include "net14-constants.hpp"
 
 #ifdef USE_CUDA
-	#include "cuda_runtime.h"
+	#include <cuda_runtime.h>
 #endif
 #include "../CUDA/cuda.inl"
 

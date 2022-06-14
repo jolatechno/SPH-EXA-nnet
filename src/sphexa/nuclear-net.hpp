@@ -93,7 +93,7 @@ namespace sphexa::sphnnet {
 		/* !!!!!!!!!!!!!
 		GPU non-batch solver
 		!!!!!!!!!!!!! */
-		cudaComputeNuclearReactions(n_particles, dimension,
+		cudaComputeNuclearReactions<func_type, func_eos, Float>(n_particles, dimension,
 			rho_, previous_rho_, Y_, temp_, dt_,
 			hydro_dt, previous_dt,
 			*dev_reactions, construct_rates_BE, eos);

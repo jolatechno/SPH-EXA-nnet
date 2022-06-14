@@ -18,8 +18,6 @@
 	#define ELECTRON_TABLE_PATH "./electron_rate.dat"
 #endif
 
-#include "../CUDA/cuda.inl"
-
 #include <iostream>
 
 #include <sstream>
@@ -27,6 +25,8 @@
 #include <array>
 
 #include <cmath>
+
+#include "../CUDA/cuda.inl"
 
 namespace nnet::net87::electrons {
 	namespace constants {

@@ -3,8 +3,6 @@
 #define STRINGIFY(...) #__VA_ARGS__
 #define STR(...) STRINGIFY(__VA_ARGS__)
 
-#include "../CUDA/cuda.inl"
-
 #include "../eigen/eigen.hpp"
 
 #ifndef IMAX
@@ -28,8 +26,9 @@
 #include <math.h>
 
 #ifdef USE_CUDA
-	#include "cuda_runtime.h"
+	#include <cuda_runtime.h>
 #endif
+#include "../CUDA/cuda.inl"
 
 namespace nnet::eos {
 	/* !!!!!!!!!!!!
