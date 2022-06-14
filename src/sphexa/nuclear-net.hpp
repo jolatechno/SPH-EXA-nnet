@@ -100,25 +100,21 @@ namespace sphexa::sphnnet {
 
 
 		/* debuging: check for error */
-		auto code = cudaPeekAtLastError();
-		if (code != cudaSuccess)
-			std::cerr << "\tCUDA error ! \"" << cudaGetErrorString(code) << "\"\n";
-		code = cudaDeviceSynchronize();
-		if (code != cudaSuccess)
-			std::cerr << "\tCUDA synchronize error ! \"" << cudaGetErrorString(code) << "\"\n";
+		gpuErrchk(cudaPeekAtLastError());
+		gpuErrchk(cudaDeviceSynchronize());
 
 
 		// copy back to cpu
-		cudaMemcpy(n.dt.data(),   dt_,             n_particles*sizeof(Float), cudaMemcpyDeviceToHost);
-		cudaMemcpy(n.dt.data(),   temp_,           n_particles*sizeof(Float), cudaMemcpyDeviceToHost);
-		cudaMemcpy(n.Y[0].data(), Y_,    dimension*n_particles*sizeof(Float), cudaMemcpyDeviceToHost);
+		gpuErrchk(cudaMemcpy(n.dt.data(),   dt_,             n_particles*sizeof(Float), cudaMemcpyDeviceToHost));
+		gpuErrchk(cudaMemcpy(n.dt.data(),   temp_,           n_particles*sizeof(Float), cudaMemcpyDeviceToHost));
+		gpuErrchk(cudaMemcpy(n.Y[0].data(), Y_,    dimension*n_particles*sizeof(Float), cudaMemcpyDeviceToHost));
 
 		// cuda free
-		cudaFree(previous_rho_);
-		cudaFree(rho_);
-		cudaFree(dt_);
-		cudaFree(temp_);
-		cudaFree(Y_);
+		gpuErrchk(cudaFree(previous_rho_));
+		gpuErrchk(cudaFree(rho_));
+		gpuErrchk(cudaFree(dt_));
+		gpuErrchk(cudaFree(temp_));
+		gpuErrchk(cudaFree(Y_));
 #endif
 	}
 
