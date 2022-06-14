@@ -40,7 +40,7 @@ namespace nnet::eos {
 
 	namespace helmholtz_constants {
 		// table size
-		static constexpr int imax = IMAX, jmax = JMAX;
+		static const int imax = IMAX, jmax = JMAX;
 
 		// table type
 		typedef std::array<double, imax> ivector; // double[imax]
@@ -50,51 +50,51 @@ namespace nnet::eos {
 		typedef eigen::fixed_size_matrix<double, imax, jmax> ijmatrix; // double[imax][jmax]
 
 		// table limits
-		static constexpr double tlo   = 3.;
-		static constexpr double thi   = 13.;
-		static constexpr double tstp  = (thi - tlo)/(double)(jmax - 1);
-		static constexpr double tstpi = 1./tstp;
-		static constexpr double dlo   = -12.;
-		static constexpr double dhi   = 15.;
-		static constexpr double dstp  = (dhi - dlo)/(double)(imax - 1);
-		static constexpr double dstpi = 1./dstp;
+		static const double tlo   = 3.;
+		static const double thi   = 13.;
+		static const double tstp  = (thi - tlo)/(double)(jmax - 1);
+		static const double tstpi = 1./tstp;
+		static const double dlo   = -12.;
+		static const double dhi   = 15.;
+		static const double dstp  = (dhi - dlo)/(double)(imax - 1);
+		static const double dstpi = 1./dstp;
 
 		// physical constants
-		static constexpr double pi = 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132000568127145263560827785771342757789609173637178721468440901224953430146549585371050792279689258923542019956112129021960864034418159813629774771309960518707211349999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420198938095257201065485863278865936153381827968230301952035301852968995773622599413891249721775283479131515574857242454150695950829533116861727855889075098381754637464939319;
-		static constexpr double g       = 6.6742867e-8;
-        static constexpr double h       = 6.6260689633e-27;
-        static constexpr double hbar    = 0.5*h/pi;
-        static constexpr double qe      = 4.8032042712e-10;
-        static constexpr double avo     = 6.0221417930e23;
-        static constexpr double clight  = 2.99792458e10;
-        static constexpr double kerg    = 1.380650424e-16;
-        static constexpr double ev2erg  = 1.60217648740e-12;
-        static constexpr double kev     = kerg/ev2erg;
-        static constexpr double amu     = 1.66053878283e-24;
-        static constexpr double mn      = 1.67492721184e-24;
-        static constexpr double mp      = 1.67262163783e-24;
-        static constexpr double me      = 9.1093821545e-28;
-        static constexpr double rbohr   = hbar*hbar/(me*qe*qe);
-        static constexpr double fine    = qe*qe/(hbar*clight);
-        static constexpr double hion    = 13.605698140;
-        static constexpr double ssol    = 5.6704e-5;
-        static constexpr double asol    = 4.0*ssol / clight;
-        static constexpr double weinlam = h*clight/(kerg*4.965114232);
-        static constexpr double weinfre = 2.821439372*kerg/h;
-        static constexpr double rhonuc  = 2.342e14;
-        static constexpr double kergavo = kerg*avo;
-		static constexpr double sioncon = (2.0*pi*amu*kerg)/(h*h);
+		static const double pi = 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132000568127145263560827785771342757789609173637178721468440901224953430146549585371050792279689258923542019956112129021960864034418159813629774771309960518707211349999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420198938095257201065485863278865936153381827968230301952035301852968995773622599413891249721775283479131515574857242454150695950829533116861727855889075098381754637464939319;
+		static const double g       = 6.6742867e-8;
+        static const double h       = 6.6260689633e-27;
+        static const double hbar    = 0.5*h/pi;
+        static const double qe      = 4.8032042712e-10;
+        static const double avo     = 6.0221417930e23;
+        static const double clight  = 2.99792458e10;
+        static const double kerg    = 1.380650424e-16;
+        static const double ev2erg  = 1.60217648740e-12;
+        static const double kev     = kerg/ev2erg;
+        static const double amu     = 1.66053878283e-24;
+        static const double mn      = 1.67492721184e-24;
+        static const double mp      = 1.67262163783e-24;
+        static const double me      = 9.1093821545e-28;
+        static const double rbohr   = hbar*hbar/(me*qe*qe);
+        static const double fine    = qe*qe/(hbar*clight);
+        static const double hion    = 13.605698140;
+        static const double ssol    = 5.6704e-5;
+        static const double asol    = 4.0*ssol / clight;
+        static const double weinlam = h*clight/(kerg*4.965114232);
+        static const double weinfre = 2.821439372*kerg/h;
+        static const double rhonuc  = 2.342e14;
+        static const double kergavo = kerg*avo;
+		static const double sioncon = (2.0*pi*amu*kerg)/(h*h);
 
 		// parameters
-		static constexpr double a1    = -0.898004;
-        static constexpr double b1    =  0.96786;
-        static constexpr double c1    =  0.220703;
-        static constexpr double d1    = -0.86097;
-        static constexpr double e1    =  2.5269;
-        static constexpr double a2    =  0.29561;
-        static constexpr double b2    =  1.9885;
-        static constexpr double c2    =  0.288675;
-        static constexpr double esqu  =  qe*qe;
+		static const double a1    = -0.898004;
+        static const double b1    =  0.96786;
+        static const double c1    =  0.220703;
+        static const double d1    = -0.86097;
+        static const double e1    =  2.5269;
+        static const double a2    =  0.29561;
+        static const double b2    =  1.9885;
+        static const double c2    =  0.288675;
+        static const double esqu  =  qe*qe;
 
 		// read helmholtz constants table
 		std::tuple<
@@ -238,44 +238,44 @@ namespace nnet::eos {
 	   	] = read_table();
 
 
-		static const inline ivector  d        = d_;
-		static const inline imvector dd_sav   = dd_sav_;
-		static const inline imvector dd2_sav  = dd2_sav_;
-		static const inline imvector ddi_sav  = ddi_sav_;
-		static const inline imvector dd2i_sav = dd2i_sav_;
-		static const inline imvector dd3i_sav = dd3i_sav_;
+		CUDA_DEFINE(static const inline ivector,  d,        = d_;)
+		CUDA_DEFINE(static const inline imvector, dd_sav,   = dd_sav_;)
+		CUDA_DEFINE(static const inline imvector, dd2_sav,  = dd2_sav_;)
+		CUDA_DEFINE(static const inline imvector, ddi_sav,  = ddi_sav_;)
+		CUDA_DEFINE(static const inline imvector, dd2i_sav, = dd2i_sav_;)
+		CUDA_DEFINE(static const inline imvector, dd3i_sav, = dd3i_sav_;)
 
-		static const inline jvector  t        = t_;
-		static const inline jmvector dt_sav   = dt_sav_;
-		static const inline jmvector dt2_sav  = dt2_sav_;
-		static const inline jmvector dti_sav  = dti_sav_;
-		static const inline jmvector dt2i_sav = dt2i_sav_;
-		static const inline jmvector dt3i_sav = dt3i_sav_;
+		CUDA_DEFINE(static const inline jvector,  t,        = t_;)
+		CUDA_DEFINE(static const inline jmvector, dt_sav,   = dt_sav_;)
+		CUDA_DEFINE(static const inline jmvector, dt2_sav,  = dt2_sav_;)
+		CUDA_DEFINE(static const inline jmvector, dti_sav,  = dti_sav_;)
+		CUDA_DEFINE(static const inline jmvector, dt2i_sav, = dt2i_sav_;)
+		CUDA_DEFINE(static const inline jmvector, dt3i_sav, = dt3i_sav_;)
 
-		static const inline ijmatrix f        = f_;
-		static const inline ijmatrix fd       = fd_;
-		static const inline ijmatrix ft       = ft_;
-		static const inline ijmatrix fdd      = fdd_;
-		static const inline ijmatrix ftt      = ftt_;
-		static const inline ijmatrix fdt      = fdt_;
-		static const inline ijmatrix fddt     = fddt_;
-		static const inline ijmatrix fdtt     = fdtt_;
-		static const inline ijmatrix fddtt    = fddtt_;
+		CUDA_DEFINE(static const inline ijmatrix, f,        = f_;)
+		CUDA_DEFINE(static const inline ijmatrix, fd,       = fd_;)
+		CUDA_DEFINE(static const inline ijmatrix, ft,       = ft_;)
+		CUDA_DEFINE(static const inline ijmatrix, fdd,      = fdd_;)
+		CUDA_DEFINE(static const inline ijmatrix, ftt,      = ftt_;)
+		CUDA_DEFINE(static const inline ijmatrix, fdt,      = fdt_;)
+		CUDA_DEFINE(static const inline ijmatrix, fddt,     = fddt_;)
+		CUDA_DEFINE(static const inline ijmatrix, fdtt,     = fdtt_;)
+		CUDA_DEFINE(static const inline ijmatrix, fddtt,    = fddtt_;)
 
-		static const inline ijmatrix dpdf     = dpdf_;
-		static const inline ijmatrix dpdfd    = dpdfd_;
-		static const inline ijmatrix dpdft    = dpdft_;
-		static const inline ijmatrix dpdfdt   = dpdfdt_;
+		CUDA_DEFINE(static const inline ijmatrix, dpdf,     = dpdf_;)
+		CUDA_DEFINE(static const inline ijmatrix, dpdfd,    = dpdfd_;)
+		CUDA_DEFINE(static const inline ijmatrix, dpdft,    = dpdft_;)
+		CUDA_DEFINE(static const inline ijmatrix, dpdfdt,   = dpdfdt_;)
 
-		static const inline ijmatrix ef       = ef_;
-		static const inline ijmatrix efd      = efd_;
-		static const inline ijmatrix eft      = eft_;
-		static const inline ijmatrix efdt     = efdt_;
+		CUDA_DEFINE(static const inline ijmatrix, ef,       = ef_;)
+		CUDA_DEFINE(static const inline ijmatrix, efd,      = efd_;)
+		CUDA_DEFINE(static const inline ijmatrix, eft,      = eft_;)
+		CUDA_DEFINE(static const inline ijmatrix, efdt,     = efdt_;)
 
-		static const inline ijmatrix xf       = xf_;
-		static const inline ijmatrix xfd      = xfd_;
-		static const inline ijmatrix xft      = xft_;
-		static const inline ijmatrix xfdt     = xfdt_;
+		CUDA_DEFINE(static const inline ijmatrix, xf,       = xf_;)
+		CUDA_DEFINE(static const inline ijmatrix, xfd,      = xfd_;)
+		CUDA_DEFINE(static const inline ijmatrix, xft,      = xft_;)
+		CUDA_DEFINE(static const inline ijmatrix, xfdt,     = xfdt_;)
 
 
 		// quintic hermite polynomial statement functions
@@ -512,60 +512,60 @@ namespace nnet::eos {
 
 
 		// move table values into coefficient table
-		fi[0]  = helmholtz_constants::f(iat + 0, jat + 0);
-		fi[1]  = helmholtz_constants::f(iat + 1, jat + 0);
-		fi[2]  = helmholtz_constants::f(iat + 0, jat + 1);
-		fi[3]  = helmholtz_constants::f(iat + 1, jat + 1);
-		fi[4]  = helmholtz_constants::ft(iat + 0, jat + 0);
-		fi[5]  = helmholtz_constants::ft(iat + 1, jat + 0);
-		fi[6]  = helmholtz_constants::ft(iat + 0, jat + 1);
-		fi[7]  = helmholtz_constants::ft(iat + 1, jat + 1);
-		fi[8]  = helmholtz_constants::ftt(iat + 0, jat + 0);
-		fi[9]  = helmholtz_constants::ftt(iat + 1, jat + 0);
-		fi[10] = helmholtz_constants::ftt(iat + 0, jat + 1);
-		fi[11] = helmholtz_constants::ftt(iat + 1, jat + 1);
-		fi[12] = helmholtz_constants::fd(iat + 0, jat + 0);
-		fi[13] = helmholtz_constants::fd(iat + 1, jat + 0);
-		fi[14] = helmholtz_constants::fd(iat + 0, jat + 1);
-		fi[15] = helmholtz_constants::fd(iat + 1, jat + 1);
-		fi[16] = helmholtz_constants::fdd(iat + 0, jat + 0);
-		fi[17] = helmholtz_constants::fdd(iat + 1, jat + 0);
-		fi[18] = helmholtz_constants::fdd(iat + 0, jat + 1);
-		fi[19] = helmholtz_constants::fdd(iat + 1, jat + 1);
-		fi[20] = helmholtz_constants::fdt(iat + 0, jat + 0);
-		fi[21] = helmholtz_constants::fdt(iat + 1, jat + 0);
-		fi[22] = helmholtz_constants::fdt(iat + 0, jat + 1);
-		fi[23] = helmholtz_constants::fdt(iat + 1, jat + 1);
-		fi[24] = helmholtz_constants::fddt(iat + 0, jat + 0);
-		fi[25] = helmholtz_constants::fddt(iat + 1, jat + 0);
-		fi[26] = helmholtz_constants::fddt(iat + 0, jat + 1);
-		fi[27] = helmholtz_constants::fddt(iat + 1, jat + 1);
-		fi[28] = helmholtz_constants::fdtt(iat + 0, jat + 0);
-		fi[29] = helmholtz_constants::fdtt(iat + 1, jat + 0);
-		fi[30] = helmholtz_constants::fdtt(iat + 0, jat + 1);
-		fi[31] = helmholtz_constants::fdtt(iat + 1, jat + 1);
-		fi[32] = helmholtz_constants::fddtt(iat + 0, jat + 0);
-		fi[33] = helmholtz_constants::fddtt(iat + 1, jat + 0);
-		fi[34] = helmholtz_constants::fddtt(iat + 0, jat + 1);
-		fi[35] = helmholtz_constants::fddtt(iat + 1, jat + 1);
+		fi[0]  = CUDA_ACCESS(helmholtz_constants::f)(iat + 0, jat + 0);
+		fi[1]  = CUDA_ACCESS(helmholtz_constants::f)(iat + 1, jat + 0);
+		fi[2]  = CUDA_ACCESS(helmholtz_constants::f)(iat + 0, jat + 1);
+		fi[3]  = CUDA_ACCESS(helmholtz_constants::f)(iat + 1, jat + 1);
+		fi[4]  = CUDA_ACCESS(helmholtz_constants::ft)(iat + 0, jat + 0);
+		fi[5]  = CUDA_ACCESS(helmholtz_constants::ft)(iat + 1, jat + 0);
+		fi[6]  = CUDA_ACCESS(helmholtz_constants::ft)(iat + 0, jat + 1);
+		fi[7]  = CUDA_ACCESS(helmholtz_constants::ft)(iat + 1, jat + 1);
+		fi[8]  = CUDA_ACCESS(helmholtz_constants::ftt)(iat + 0, jat + 0);
+		fi[9]  = CUDA_ACCESS(helmholtz_constants::ftt)(iat + 1, jat + 0);
+		fi[10] = CUDA_ACCESS(helmholtz_constants::ftt)(iat + 0, jat + 1);
+		fi[11] = CUDA_ACCESS(helmholtz_constants::ftt)(iat + 1, jat + 1);
+		fi[12] = CUDA_ACCESS(helmholtz_constants::fd)(iat + 0, jat + 0);
+		fi[13] = CUDA_ACCESS(helmholtz_constants::fd)(iat + 1, jat + 0);
+		fi[14] = CUDA_ACCESS(helmholtz_constants::fd)(iat + 0, jat + 1);
+		fi[15] = CUDA_ACCESS(helmholtz_constants::fd)(iat + 1, jat + 1);
+		fi[16] = CUDA_ACCESS(helmholtz_constants::fdd)(iat + 0, jat + 0);
+		fi[17] = CUDA_ACCESS(helmholtz_constants::fdd)(iat + 1, jat + 0);
+		fi[18] = CUDA_ACCESS(helmholtz_constants::fdd)(iat + 0, jat + 1);
+		fi[19] = CUDA_ACCESS(helmholtz_constants::fdd)(iat + 1, jat + 1);
+		fi[20] = CUDA_ACCESS(helmholtz_constants::fdt)(iat + 0, jat + 0);
+		fi[21] = CUDA_ACCESS(helmholtz_constants::fdt)(iat + 1, jat + 0);
+		fi[22] = CUDA_ACCESS(helmholtz_constants::fdt)(iat + 0, jat + 1);
+		fi[23] = CUDA_ACCESS(helmholtz_constants::fdt)(iat + 1, jat + 1);
+		fi[24] = CUDA_ACCESS(helmholtz_constants::fddt)(iat + 0, jat + 0);
+		fi[25] = CUDA_ACCESS(helmholtz_constants::fddt)(iat + 1, jat + 0);
+		fi[26] = CUDA_ACCESS(helmholtz_constants::fddt)(iat + 0, jat + 1);
+		fi[27] = CUDA_ACCESS(helmholtz_constants::fddt)(iat + 1, jat + 1);
+		fi[28] = CUDA_ACCESS(helmholtz_constants::fdtt)(iat + 0, jat + 0);
+		fi[29] = CUDA_ACCESS(helmholtz_constants::fdtt)(iat + 1, jat + 0);
+		fi[30] = CUDA_ACCESS(helmholtz_constants::fdtt)(iat + 0, jat + 1);
+		fi[31] = CUDA_ACCESS(helmholtz_constants::fdtt)(iat + 1, jat + 1);
+		fi[32] = CUDA_ACCESS(helmholtz_constants::fddtt)(iat + 0, jat + 0);
+		fi[33] = CUDA_ACCESS(helmholtz_constants::fddtt)(iat + 1, jat + 0);
+		fi[34] = CUDA_ACCESS(helmholtz_constants::fddtt)(iat + 0, jat + 1);
+		fi[35] = CUDA_ACCESS(helmholtz_constants::fddtt)(iat + 1, jat + 1);
 
 
 
 		// various differences
-		Float xt  = std::max( (T - helmholtz_constants::t[jat])*helmholtz_constants::dti_sav[jat], 0.);
-		Float xd  = std::max( (din - helmholtz_constants::d[iat])*helmholtz_constants::ddi_sav[iat], 0.);
+		Float xt  = std::max( (T - CUDA_ACCESS(helmholtz_constants::t)[jat])*CUDA_ACCESS(helmholtz_constants::dti_sav)[jat], 0.);
+		Float xd  = std::max( (din - CUDA_ACCESS(helmholtz_constants::d)[iat])*CUDA_ACCESS(helmholtz_constants::ddi_sav)[iat], 0.);
 		Float mxt = 1. - xt;
 		Float mxd = 1. - xd;
 
 
 		/* debug: */
-		// if (debug) std::cout << "xt=" << xt << " = (T - t[" << jat << "]=" << helmholtz_constants::t[jat] << ")* dti_sav[" << jat << "]=" << helmholtz_constants::dti_sav[jat] << "\n";
+		// if (debug) std::cout << "xt=" << xt << " = (T - t[" << jat << "]=" << CUDA_ACCESS(helmholtz_constants::t)[jat] << ")* dti_sav[" << jat << "]=" << CUDA_ACCESS(helmholtz_constants::dti_sav)[jat] << "\n";
 
 
 		// the six rhosity and six temperature basis functions;
 		Float si0t =   helmholtz_constants::psi0(xt);
-		Float si1t =   helmholtz_constants::psi1(xt)*helmholtz_constants::dt_sav[jat];
-		Float si2t =   helmholtz_constants::psi2(xt)*helmholtz_constants::dt2_sav[jat];
+		Float si1t =   helmholtz_constants::psi1(xt)*CUDA_ACCESS(helmholtz_constants::dt_sav)[jat];
+		Float si2t =   helmholtz_constants::psi2(xt)*CUDA_ACCESS(helmholtz_constants::dt2_sav)[jat];
 
 
 		/* debug: */
@@ -573,41 +573,41 @@ namespace nnet::eos {
 
 
 		Float si0mt =  helmholtz_constants::psi0(mxt);
-		Float si1mt = -helmholtz_constants::psi1(mxt)*helmholtz_constants::dt_sav[jat];
-		Float si2mt =  helmholtz_constants::psi2(mxt)*helmholtz_constants::dt2_sav[jat];
+		Float si1mt = -helmholtz_constants::psi1(mxt)*CUDA_ACCESS(helmholtz_constants::dt_sav)[jat];
+		Float si2mt =  helmholtz_constants::psi2(mxt)*CUDA_ACCESS(helmholtz_constants::dt2_sav)[jat];
 
 		Float si0d =   helmholtz_constants::psi0(xd);
-		Float si1d =   helmholtz_constants::psi1(xd)*helmholtz_constants::dd_sav[iat];
-		Float si2d =   helmholtz_constants::psi2(xd)*helmholtz_constants::dd2_sav[iat];
+		Float si1d =   helmholtz_constants::psi1(xd)*CUDA_ACCESS(helmholtz_constants::dd_sav)[iat];
+		Float si2d =   helmholtz_constants::psi2(xd)*CUDA_ACCESS(helmholtz_constants::dd2_sav)[iat];
 
 		Float si0md =  helmholtz_constants::psi0(mxd);
-		Float si1md = -helmholtz_constants::psi1(mxd)*helmholtz_constants::dd_sav[iat];
-		Float si2md =  helmholtz_constants::psi2(mxd)*helmholtz_constants::dd2_sav[iat];
+		Float si1md = -helmholtz_constants::psi1(mxd)*CUDA_ACCESS(helmholtz_constants::dd_sav)[iat];
+		Float si2md =  helmholtz_constants::psi2(mxd)*CUDA_ACCESS(helmholtz_constants::dd2_sav)[iat];
 
 		// derivatives of the weight functions
-		Float dsi0t =   helmholtz_constants::dpsi0(xt)*helmholtz_constants::dti_sav[jat];
+		Float dsi0t =   helmholtz_constants::dpsi0(xt)*CUDA_ACCESS(helmholtz_constants::dti_sav)[jat];
 		Float dsi1t =   helmholtz_constants::dpsi1(xt);
-		Float dsi2t =   helmholtz_constants::dpsi2(xt)*helmholtz_constants::dt_sav[jat];
+		Float dsi2t =   helmholtz_constants::dpsi2(xt)*CUDA_ACCESS(helmholtz_constants::dt_sav)[jat];
 
-		Float dsi0mt = -helmholtz_constants::dpsi0(mxt)*helmholtz_constants::dti_sav[jat];
+		Float dsi0mt = -helmholtz_constants::dpsi0(mxt)*CUDA_ACCESS(helmholtz_constants::dti_sav)[jat];
 		Float dsi1mt =  helmholtz_constants::dpsi1(mxt);
-		Float dsi2mt = -helmholtz_constants::dpsi2(mxt)*helmholtz_constants::dt_sav[jat];
+		Float dsi2mt = -helmholtz_constants::dpsi2(mxt)*CUDA_ACCESS(helmholtz_constants::dt_sav)[jat];
 
-		Float dsi0d =   helmholtz_constants::dpsi0(xd)*helmholtz_constants::ddi_sav[iat];
+		Float dsi0d =   helmholtz_constants::dpsi0(xd)*CUDA_ACCESS(helmholtz_constants::ddi_sav)[iat];
 		Float dsi1d =   helmholtz_constants::dpsi1(xd);
-		Float dsi2d =   helmholtz_constants::dpsi2(xd)*helmholtz_constants::dd_sav[iat];
+		Float dsi2d =   helmholtz_constants::dpsi2(xd)*CUDA_ACCESS(helmholtz_constants::dd_sav)[iat];
 
-		Float dsi0md = -helmholtz_constants::dpsi0(mxd)*helmholtz_constants::ddi_sav[iat];
+		Float dsi0md = -helmholtz_constants::dpsi0(mxd)*CUDA_ACCESS(helmholtz_constants::ddi_sav)[iat];
 		Float dsi1md =  helmholtz_constants::dpsi1(mxd);
-		Float dsi2md = -helmholtz_constants::dpsi2(mxd)*helmholtz_constants::dd_sav[iat];
+		Float dsi2md = -helmholtz_constants::dpsi2(mxd)*CUDA_ACCESS(helmholtz_constants::dd_sav)[iat];
 
 		// second derivatives of the weight functions
-		Float ddsi0t =   helmholtz_constants::ddpsi0(xt)*helmholtz_constants::dt2i_sav[jat];
-		Float ddsi1t =   helmholtz_constants::ddpsi1(xt)*helmholtz_constants::dti_sav[jat];
+		Float ddsi0t =   helmholtz_constants::ddpsi0(xt)*CUDA_ACCESS(helmholtz_constants::dt2i_sav)[jat];
+		Float ddsi1t =   helmholtz_constants::ddpsi1(xt)*CUDA_ACCESS(helmholtz_constants::dti_sav)[jat];
 		Float ddsi2t =   helmholtz_constants::ddpsi2(xt);
 
-		Float ddsi0mt =  helmholtz_constants::ddpsi0(mxt)*helmholtz_constants::dt2i_sav[jat];
-		Float ddsi1mt = -helmholtz_constants::ddpsi1(mxt)*helmholtz_constants::dti_sav[jat];
+		Float ddsi0mt =  helmholtz_constants::ddpsi0(mxt)*CUDA_ACCESS(helmholtz_constants::dt2i_sav)[jat];
+		Float ddsi1mt = -helmholtz_constants::ddpsi1(mxt)*CUDA_ACCESS(helmholtz_constants::dti_sav)[jat];
 		Float ddsi2mt =  helmholtz_constants::ddpsi2(mxt);
 
 		// ddsi0d =   ddpsi0(xd)*dd2i_sav[iat];
@@ -658,29 +658,29 @@ namespace nnet::eos {
 		// electron positron number rhosities
 		// get the interpolation weight functions
 		si0t   =  helmholtz_constants::xpsi0(xt);
-		si1t   =  helmholtz_constants::xpsi1(xt)*helmholtz_constants::dt_sav[jat];
+		si1t   =  helmholtz_constants::xpsi1(xt)*CUDA_ACCESS(helmholtz_constants::dt_sav)[jat];
 
 		si0mt  =  helmholtz_constants::xpsi0(mxt);
-		si1mt  =  -helmholtz_constants::xpsi1(mxt)*helmholtz_constants::dt_sav[jat];
+		si1mt  =  -helmholtz_constants::xpsi1(mxt)*CUDA_ACCESS(helmholtz_constants::dt_sav)[jat];
 
 		si0d   =  helmholtz_constants::xpsi0(xd);
-		si1d   =  helmholtz_constants::xpsi1(xd)*helmholtz_constants::dd_sav[iat];
+		si1d   =  helmholtz_constants::xpsi1(xd)*CUDA_ACCESS(helmholtz_constants::dd_sav)[iat];
 
 		si0md  =  helmholtz_constants::xpsi0(mxd);
-		si1md  =  -helmholtz_constants::xpsi1(mxd)*helmholtz_constants::dd_sav[iat];
+		si1md  =  -helmholtz_constants::xpsi1(mxd)*CUDA_ACCESS(helmholtz_constants::dd_sav)[iat];
 
 
 		// derivatives of weight functions
-		dsi0t  = helmholtz_constants::xdpsi0(xt)*helmholtz_constants::dti_sav[jat];
+		dsi0t  = helmholtz_constants::xdpsi0(xt)*CUDA_ACCESS(helmholtz_constants::dti_sav)[jat];
 		dsi1t  = helmholtz_constants::xdpsi1(xt);
 
-		dsi0mt = -helmholtz_constants::xdpsi0(mxt)*helmholtz_constants::dti_sav[jat];
+		dsi0mt = -helmholtz_constants::xdpsi0(mxt)*CUDA_ACCESS(helmholtz_constants::dti_sav)[jat];
 		dsi1mt = helmholtz_constants::xdpsi1(mxt);
 
-		dsi0d  = helmholtz_constants::xdpsi0(xd)*helmholtz_constants::ddi_sav[iat];
+		dsi0d  = helmholtz_constants::xdpsi0(xd)*CUDA_ACCESS(helmholtz_constants::ddi_sav)[iat];
 		dsi1d  = helmholtz_constants::xdpsi1(xd);
 
-		dsi0md = -helmholtz_constants::xdpsi0(mxd)*helmholtz_constants::ddi_sav[iat];
+		dsi0md = -helmholtz_constants::xdpsi0(mxd)*CUDA_ACCESS(helmholtz_constants::ddi_sav)[iat];
 		dsi1md = helmholtz_constants::xdpsi1(mxd);
 
 
@@ -688,22 +688,22 @@ namespace nnet::eos {
 
 
 		// move table values into coefficient table
-		fi[0]  = helmholtz_constants::dpdf(iat + 0, jat + 0);
-		fi[1]  = helmholtz_constants::dpdf(iat + 1, jat + 0);
-		fi[2]  = helmholtz_constants::dpdf(iat + 0, jat + 1);
-		fi[3]  = helmholtz_constants::dpdf(iat + 1, jat + 1);
-		fi[4]  = helmholtz_constants::dpdft(iat + 0, jat + 0);
-		fi[5]  = helmholtz_constants::dpdft(iat + 1, jat + 0);
-		fi[6]  = helmholtz_constants::dpdft(iat + 0, jat + 1);
-		fi[7]  = helmholtz_constants::dpdft(iat + 1, jat + 1);
-		fi[8]  = helmholtz_constants::dpdfd(iat + 0, jat + 0);
-		fi[9]  = helmholtz_constants::dpdfd(iat + 1, jat + 0);
-		fi[10] = helmholtz_constants::dpdfd(iat + 0, jat + 1);
-		fi[11] = helmholtz_constants::dpdfd(iat + 1, jat + 1);
-		fi[12] = helmholtz_constants::dpdfdt(iat + 0, jat + 0);
-		fi[13] = helmholtz_constants::dpdfdt(iat + 1, jat + 0);
-		fi[14] = helmholtz_constants::dpdfdt(iat + 0, jat + 1);
-		fi[15] = helmholtz_constants::dpdfdt(iat + 1, jat + 1);
+		fi[0]  = CUDA_ACCESS(helmholtz_constants::dpdf)(iat + 0, jat + 0);
+		fi[1]  = CUDA_ACCESS(helmholtz_constants::dpdf)(iat + 1, jat + 0);
+		fi[2]  = CUDA_ACCESS(helmholtz_constants::dpdf)(iat + 0, jat + 1);
+		fi[3]  = CUDA_ACCESS(helmholtz_constants::dpdf)(iat + 1, jat + 1);
+		fi[4]  = CUDA_ACCESS(helmholtz_constants::dpdft)(iat + 0, jat + 0);
+		fi[5]  = CUDA_ACCESS(helmholtz_constants::dpdft)(iat + 1, jat + 0);
+		fi[6]  = CUDA_ACCESS(helmholtz_constants::dpdft)(iat + 0, jat + 1);
+		fi[7]  = CUDA_ACCESS(helmholtz_constants::dpdft)(iat + 1, jat + 1);
+		fi[8]  = CUDA_ACCESS(helmholtz_constants::dpdfd)(iat + 0, jat + 0);
+		fi[9]  = CUDA_ACCESS(helmholtz_constants::dpdfd)(iat + 1, jat + 0);
+		fi[10] = CUDA_ACCESS(helmholtz_constants::dpdfd)(iat + 0, jat + 1);
+		fi[11] = CUDA_ACCESS(helmholtz_constants::dpdfd)(iat + 1, jat + 1);
+		fi[12] = CUDA_ACCESS(helmholtz_constants::dpdfdt)(iat + 0, jat + 0);
+		fi[13] = CUDA_ACCESS(helmholtz_constants::dpdfdt)(iat + 1, jat + 0);
+		fi[14] = CUDA_ACCESS(helmholtz_constants::dpdfdt)(iat + 0, jat + 1);
+		fi[15] = CUDA_ACCESS(helmholtz_constants::dpdfdt)(iat + 1, jat + 1);
 
 
 
@@ -718,22 +718,22 @@ namespace nnet::eos {
 
 
 		// move table values into coefficient table
-		fi[0]  = helmholtz_constants::ef(iat + 0, jat + 0);
-		fi[1]  = helmholtz_constants::ef(iat + 1, jat + 0);
-		fi[2]  = helmholtz_constants::ef(iat + 0, jat + 1);
-		fi[3]  = helmholtz_constants::ef(iat + 1, jat + 1);
-		fi[4]  = helmholtz_constants::eft(iat + 0, jat + 0);
-		fi[5]  = helmholtz_constants::eft(iat + 1, jat + 0);
-		fi[6]  = helmholtz_constants::eft(iat + 0, jat + 1);
-		fi[7]  = helmholtz_constants::eft(iat + 1, jat + 1);
-		fi[8]  = helmholtz_constants::efd(iat + 0, jat + 0);
-		fi[9]  = helmholtz_constants::efd(iat + 1, jat + 0);
-		fi[10] = helmholtz_constants::efd(iat + 0, jat + 1);
-		fi[11] = helmholtz_constants::efd(iat + 1, jat + 1);
-		fi[12] = helmholtz_constants::efdt(iat + 0, jat + 0);
-		fi[13] = helmholtz_constants::efdt(iat + 1, jat + 0);
-		fi[14] = helmholtz_constants::efdt(iat + 0, jat + 1);
-		fi[15] = helmholtz_constants::efdt(iat + 1, jat + 1);
+		fi[0]  = CUDA_ACCESS(helmholtz_constants::ef)(iat + 0, jat + 0);
+		fi[1]  = CUDA_ACCESS(helmholtz_constants::ef)(iat + 1, jat + 0);
+		fi[2]  = CUDA_ACCESS(helmholtz_constants::ef)(iat + 0, jat + 1);
+		fi[3]  = CUDA_ACCESS(helmholtz_constants::ef)(iat + 1, jat + 1);
+		fi[4]  = CUDA_ACCESS(helmholtz_constants::eft)(iat + 0, jat + 0);
+		fi[5]  = CUDA_ACCESS(helmholtz_constants::eft)(iat + 1, jat + 0);
+		fi[6]  = CUDA_ACCESS(helmholtz_constants::eft)(iat + 0, jat + 1);
+		fi[7]  = CUDA_ACCESS(helmholtz_constants::eft)(iat + 1, jat + 1);
+		fi[8]  = CUDA_ACCESS(helmholtz_constants::efd)(iat + 0, jat + 0);
+		fi[9]  = CUDA_ACCESS(helmholtz_constants::efd)(iat + 1, jat + 0);
+		fi[10] = CUDA_ACCESS(helmholtz_constants::efd)(iat + 0, jat + 1);
+		fi[11] = CUDA_ACCESS(helmholtz_constants::efd)(iat + 1, jat + 1);
+		fi[12] = CUDA_ACCESS(helmholtz_constants::efdt)(iat + 0, jat + 0);
+		fi[13] = CUDA_ACCESS(helmholtz_constants::efdt)(iat + 1, jat + 0);
+		fi[14] = CUDA_ACCESS(helmholtz_constants::efdt)(iat + 0, jat + 1);
+		fi[15] = CUDA_ACCESS(helmholtz_constants::efdt)(iat + 1, jat + 1);
 
 
 
@@ -766,22 +766,22 @@ namespace nnet::eos {
 
 
 		// move table values into coefficient table
-		fi[0]  = helmholtz_constants::xf(iat + 0, jat + 0);
-		fi[1]  = helmholtz_constants::xf(iat + 1, jat + 0);
-		fi[2]  = helmholtz_constants::xf(iat + 0, jat + 1);
-		fi[3]  = helmholtz_constants::xf(iat + 1, jat + 1);
-		fi[4]  = helmholtz_constants::xft(iat + 0, jat + 0);
-		fi[5]  = helmholtz_constants::xft(iat + 1, jat + 0);
-		fi[6]  = helmholtz_constants::xft(iat + 0, jat + 1);
-		fi[7]  = helmholtz_constants::xft(iat + 1, jat + 1);
-		fi[8]  = helmholtz_constants::xfd(iat + 0, jat + 0);
-		fi[9]  = helmholtz_constants::xfd(iat + 1, jat + 0);
-		fi[10] = helmholtz_constants::xfd(iat + 0, jat + 1);
-		fi[11] = helmholtz_constants::xfd(iat + 1, jat + 1);
-		fi[12] = helmholtz_constants::xfdt(iat + 0, jat + 0);
-		fi[13] = helmholtz_constants::xfdt(iat + 1, jat + 0);
-		fi[14] = helmholtz_constants::xfdt(iat + 0, jat + 1);
-		fi[15] = helmholtz_constants::xfdt(iat + 1, jat + 1);
+		fi[0]  = CUDA_ACCESS(helmholtz_constants::xf)(iat + 0, jat + 0);
+		fi[1]  = CUDA_ACCESS(helmholtz_constants::xf)(iat + 1, jat + 0);
+		fi[2]  = CUDA_ACCESS(helmholtz_constants::xf)(iat + 0, jat + 1);
+		fi[3]  = CUDA_ACCESS(helmholtz_constants::xf)(iat + 1, jat + 1);
+		fi[4]  = CUDA_ACCESS(helmholtz_constants::xft)(iat + 0, jat + 0);
+		fi[5]  = CUDA_ACCESS(helmholtz_constants::xft)(iat + 1, jat + 0);
+		fi[6]  = CUDA_ACCESS(helmholtz_constants::xft)(iat + 0, jat + 1);
+		fi[7]  = CUDA_ACCESS(helmholtz_constants::xft)(iat + 1, jat + 1);
+		fi[8]  = CUDA_ACCESS(helmholtz_constants::xfd)(iat + 0, jat + 0);
+		fi[9]  = CUDA_ACCESS(helmholtz_constants::xfd)(iat + 1, jat + 0);
+		fi[10] = CUDA_ACCESS(helmholtz_constants::xfd)(iat + 0, jat + 1);
+		fi[11] = CUDA_ACCESS(helmholtz_constants::xfd)(iat + 1, jat + 1);
+		fi[12] = CUDA_ACCESS(helmholtz_constants::xfdt)(iat + 0, jat + 0);
+		fi[13] = CUDA_ACCESS(helmholtz_constants::xfdt)(iat + 1, jat + 0);
+		fi[14] = CUDA_ACCESS(helmholtz_constants::xfdt)(iat + 0, jat + 1);
+		fi[15] = CUDA_ACCESS(helmholtz_constants::xfdt)(iat + 1, jat + 1);
 
 
 
