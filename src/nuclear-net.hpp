@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <tuple>
+#include <memory>
 
 #ifdef USE_CUDA
 	#include <cuda_runtime.h>
@@ -222,6 +223,7 @@ constants :
 		const reaction::reactant_product *reactant_product;
 		int num_reactions;
 
+		friend std::shared_ptr<ptr_reaction_list> move_to_gpu(const ptr_reaction_list &reactions);
 	public:
 		ptr_reaction_list() {}
 		ptr_reaction_list(reaction_list const &other) {

@@ -22,6 +22,7 @@
 	#include <cuda.h>
 	#include <cuda_runtime.h>
 	#include "CUDA/nuclear-net.cu"
+	#include "../CUDA/nuclear-net.hpp"
 #endif
 
 #include "../nuclear-net.hpp"
@@ -79,6 +80,9 @@ namespace sphexa::sphnnet {
 		Float *previous_rho_ = n.previous_rho.data(), *rho_ = n.rho.data();
 		// tofrom
 		Float *dt_ = n.dt.data(), *temp_ = n.temp.data(), *Y_ = n.Y[0].data();
+
+		// reactions
+		std::shared_ptr<nnet::ptr_reaction_list> dev_reactions = nnet::move_to_gpu(reactions);
 
 		/* !!!!!!!!!!!!!
 		GPU non-batch solver
