@@ -14,7 +14,7 @@
 
 namespace nnet::net14 {
 	/// if true ignore coulombian corrections
-	bool skip_coulombian_correction = false;
+	static bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
 	CUDA_DEFINE(inline static constexpr std::array<double COMMA 14>, BE, = {

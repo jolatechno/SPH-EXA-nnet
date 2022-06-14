@@ -16,7 +16,7 @@ namespace nnet::net87 {
 	namespace constants = nnet::net86::constants;
 
 	/// if true ignore coulombian corrections
-	bool skip_coulombian_correction = false;
+	static bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
 	inline static const std::array<double, 87> BE = [](){

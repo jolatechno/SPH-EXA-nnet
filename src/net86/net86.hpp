@@ -13,7 +13,7 @@
 
 namespace nnet::net86 {
 	/// if true ignore coulombian corrections
-	bool skip_coulombian_correction = false;
+	static bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
 	inline static constexpr std::array<double, 86> BE = {

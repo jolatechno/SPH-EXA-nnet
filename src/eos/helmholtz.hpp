@@ -35,7 +35,7 @@ namespace nnet::eos {
 	/* !!!!!!!!!!!!
 	debuging :
 	!!!!!!!!!!!! */
-	bool debug = false;
+	static bool debug = false;
 
 
 	namespace helmholtz_constants {

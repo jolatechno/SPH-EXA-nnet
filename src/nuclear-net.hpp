@@ -19,62 +19,62 @@ namespace nnet {
 constants :
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 	/* debuging: */
-	bool debug = false;
+	static bool debug = false;
 
 	namespace constants {
 		/// initial nuclear timestep
-		double initial_dt = 1e-5;
+		static double initial_dt = 1e-5;
 
 		/// theta for the implicit method
-		double theta = 0.8;
+		static double theta = 0.8;
 
 		/// minimum temperature at which we compute the nuclear network
-		double min_temp = 1e8;
+		static double min_temp = 1e8;
 		/// minimum density at which we compute the nuclear network
-		double min_rho = 1e5;
+		static double min_rho = 1e5;
 
 		/// maximum timestep
-		double max_dt = 1e-2;
+		static double max_dt = 1e-2;
 		/// maximum timestep evolution
-		double max_dt_step = 2;
+		static double max_dt_step = 2;
 		/// maximum negative timestep evolution
-		double min_dt_step = 1e-2;
+		static double min_dt_step = 1e-2;
 		/// timestep jump when a nan is in the solution
-		double nan_dt_step = 2e-1;
+		static double nan_dt_step = 2e-1;
 
 		/// relative temperature variation target of the implicit solver
-		double dT_T_target = 4e-3;
+		static double dT_T_target = 4e-3;
 		/// relative temperature variation tolerance of the implicit solver
-		double dT_T_tol = 4;
+		static double dT_T_tol = 4;
 
 		/// the value that is considered null inside a system
-		double epsilon_system = 1e-100;
+		static double epsilon_system = 1e-100;
 		/// the value that is considered null inside a state
-		double epsilon_vector = 1e-16;
+		static double epsilon_vector = 1e-16;
 
 		namespace NR {
 			/// maximum timestep
-			double max_dt = 1e-2;
+			static double max_dt = 1e-2;
 
 			/// relative temperature variation target of the implicit solver
-			double dT_T_target = 1e-2;
+			static double dT_T_target = 1e-2;
 			/// relative temperature variation tolerance of the implicit solver
-			double dT_T_tol = 4;
+			static double dT_T_tol = 4;
 
 			/// minimum number of newton raphson iterations
-			int min_it = 1;
+			static int min_it = 1;
 			/// maximum number of newton raphson iterations
-			int max_it = 11;
+			static int max_it = 11;
 			/// tolerance for the correction to break out of the newton raphson loop
-			double it_tol = 1e-7;
+			static double it_tol = 1e-7;
 		}
 
 		namespace substep {
 			/// timestep tolerance for substepping
-			double dt_tol = 1e-6;
+			static double dt_tol = 1e-6;
 
 			/// ratio of the nuclear timestep and "super timestep" to jump to NSE
-			double dt_nse_tol = 0; //1e-8; // !!!! useless for now
+			static double dt_nse_tol = 0; //1e-8; // !!!! useless for now
 		}
 	}
 
