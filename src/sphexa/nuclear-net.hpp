@@ -88,7 +88,7 @@ namespace sphexa::sphnnet {
 		Float *Y_            = cuda_util::move_to_gpu(n.Y[0].data(),         n_particles*dimension);
 
 		// reactions
-		std::shared_ptr<nnet::ptr_reaction_list> dev_reactions = nnet::move_to_gpu(reactions);
+		nnet::gpu_reaction_list dev_reactions = nnet::move_to_gpu(reactions);
 
 		/* !!!!!!!!!!!!!
 		GPU non-batch solver
@@ -96,7 +96,7 @@ namespace sphexa::sphnnet {
 		cudaComputeNuclearReactions<func_type, func_eos, Float>(n_particles, dimension,
 			rho_, previous_rho_, Y_, temp_, dt_,
 			hydro_dt, previous_dt,
-			*dev_reactions, construct_rates_BE, eos);
+			dev_reactions, construct_rates_BE, eos);
 
 		// copy back to cpu
 		cudaMemcpy(n.dt.data(),   dt_,             n_particles*sizeof(Float), cudaMemcpyDeviceToHost);

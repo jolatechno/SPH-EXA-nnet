@@ -113,30 +113,30 @@ namespace nnet::eos {
 		__device__ double dev_dt2i_sav[JMAX - 1];
 		__device__ double dev_dt3i_sav[JMAX - 1];
 
-		__device__ double dev_f[IMAX][JMAX];
-		__device__ double dev_fd[IMAX][JMAX];
-		__device__ double dev_ft[IMAX][JMAX];
-		__device__ double dev_fdd[IMAX][JMAX];
-		__device__ double dev_ftt[IMAX][JMAX];
-		__device__ double dev_fdt[IMAX][JMAX];
-		__device__ double dev_fddt[IMAX][JMAX];
-		__device__ double dev_fdtt[IMAX][JMAX];
-		__device__ double dev_fddtt[IMAX][JMAX];
+		__device__ double dev_f[JMAX][IMAX];
+		__device__ double dev_fd[JMAX][IMAX];
+		__device__ double dev_ft[JMAX][IMAX];
+		__device__ double dev_fdd[JMAX][IMAX];
+		__device__ double dev_ftt[JMAX][IMAX];
+		__device__ double dev_fdt[JMAX][IMAX];
+		__device__ double dev_fddt[JMAX][IMAX];
+		__device__ double dev_fdtt[JMAX][IMAX];
+		__device__ double dev_fddtt[JMAX][IMAX];
 
-		__device__ double dev_dpdf[IMAX][JMAX];
-		__device__ double dev_dpdfd[IMAX][JMAX];
-		__device__ double dev_dpdft[IMAX][JMAX];
-		__device__ double dev_dpdfdt[IMAX][JMAX];
+		__device__ double dev_dpdf[JMAX][IMAX];
+		__device__ double dev_dpdfd[JMAX][IMAX];
+		__device__ double dev_dpdft[JMAX][IMAX];
+		__device__ double dev_dpdfdt[JMAX][IMAX];
 
-		__device__ double dev_ef[IMAX][JMAX];
-		__device__ double dev_efd[IMAX][JMAX];
-		__device__ double dev_eft[IMAX][JMAX];
-		__device__ double dev_efdt[IMAX][JMAX];
+		__device__ double dev_ef[JMAX][IMAX];
+		__device__ double dev_efd[JMAX][IMAX];
+		__device__ double dev_eft[JMAX][IMAX];
+		__device__ double dev_efdt[JMAX][IMAX];
 
-		__device__ double dev_xf[IMAX][JMAX];
-		__device__ double dev_xfd[IMAX][JMAX];
-		__device__ double dev_xft[IMAX][JMAX];
-		__device__ double dev_xfdt[IMAX][JMAX];
+		__device__ double dev_xf[JMAX][IMAX];
+		__device__ double dev_xfd[JMAX][IMAX];
+		__device__ double dev_xft[JMAX][IMAX];
+		__device__ double dev_xfdt[JMAX][IMAX];
 #endif
 
 		// read helmholtz constants table
@@ -248,44 +248,44 @@ namespace nnet::eos {
 			}
 
 #ifdef USE_CUDA
-				cudaMemcpy(dev_d, d.data(), IMAX*sizeof(double), cudaMemcpyHostToDevice);
-				/*dev_dd_sav.copy(dd_sav);
-				dev_dd2_sav.copy(dd2_sav);
-				dev_ddi_sav.copy(ddi_sav);
-				dev_dd2i_sav.copy(dd2i_sav);
-				dev_dd3i_sav.copy(dd3i_sav);*/
+				cudaMemcpy(dev_d,        d.data(),              IMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_dd_sav,   dd_sav.data(),   (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_dd2_sav,  dd2_sav.data(),  (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_ddi_sav,  ddi_sav.data(),  (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_dd2i_sav, dd2i_sav.data(), (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_dd3i_sav, dd3i_sav.data(), (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
 
 				cudaMemcpy(dev_t, t.data(), JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				/*dev_dt_sav.copy(dt_sav);
-				dev_dt2_sav.copy(dt2_sav);
-				dev_dti_sav.copy(dti_sav);
-				dev_dt2i_sav.copy(dt2i_sav);
-				dev_dt3i_sav.copy(dt3i_sav);
+				cudaMemcpy(dev_dt_sav,   dt_sav.data(),   (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_dt2_sav,  dt2_sav.data(),  (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_dti_sav,  dti_sav.data(),  (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_dt2i_sav, dt2i_sav.data(), (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_dt3i_sav, dt3i_sav.data(), (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
 
-				dev_f.copy(f);
-				dev_fd.copy(fd);
-				dev_ft.copy(ft);
-				dev_fdd.copy(fdd);
-				dev_ftt.copy(ftt);
-				dev_fdt.copy(fdt);
-				dev_fddt.copy(fddt);
-				dev_fdtt.copy(fdtt);
-				dev_fddtt.copy(fddtt);
+				cudaMemcpy(dev_f,     f.data(),     IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_fd,    fd.data(),    IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_ft,    ft.data(),    IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_fdd,   fdd.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_ftt,   ftt.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_fdt,   fdt.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_fddt,  fddt.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_fdtt,  fdtt.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_fddtt, fddtt.data(), IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
 
-				dev_dpdf.copy(dpdf);
-				dev_dpdfd.copy(dpdfd);
-				dev_dpdft.copy(dpdft);
-				dev_dpdfdt.copy(dpdfdt);
+				cudaMemcpy(dev_dpdf,   dpdf.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_dpdfd,  dpdfd.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_dpdft,  dpdft.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_dpdfdt, dpdfdt.data(), IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				
+				cudaMemcpy(dev_ef,   ef.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_efd,  efd.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_eft,  eft.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_efdt, efdt.data(), IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
 
-				dev_ef.copy(ef);
-				dev_efd.copy(efd);
-				dev_eft.copy(eft);
-				dev_efdt.copy(efdt);
-
-				dev_xf.copy(xf);
-				dev_xfd.copy(xfd);
-				dev_xft.copy(xft);
-				dev_xfdt.copy(xfdt);*/
+				cudaMemcpy(dev_xf,   xf.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_xfd,  xfd.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_xft,  xft.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				cudaMemcpy(dev_xfdt, xfdt.data(), IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
 #endif
 
 			return {

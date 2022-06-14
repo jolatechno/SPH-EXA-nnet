@@ -13,7 +13,7 @@ namespace cuda_util {
 	T *move_to_gpu(const T* const ptr, int dimension) {
 		T *dev_ptr;
 		
-		cudaMalloc(&dev_ptr, dimension*sizeof(T));
+		cudaMalloc((void**)&dev_ptr, dimension*sizeof(T));
 		cudaMemcpy(dev_ptr, ptr, dimension*sizeof(T), cudaMemcpyHostToDevice);
 
 		return dev_ptr;
@@ -22,27 +22,35 @@ namespace cuda_util {
 
 
 namespace nnet {
+	/// class for reactions on gpu
+	/**
+	 * TODO
+	 */
+	class gpu_reaction_list : public ptr_reaction_list {
+		friend gpu_reaction_list move_to_gpu(const ptr_reaction_list &reactions);
+
+	public:
+		gpu_reaction_list() {}
+		~gpu_reaction_list() {
+			cudaFree((void*)ptr_reaction_list::reactant_product);
+			cudaFree((void*)ptr_reaction_list::reactant_begin);
+			cudaFree((void*)ptr_reaction_list::product_begin);
+		}
+	};
+
+	
 	/// function to move reactions to the GPU
 	/**
 	 * TODO
 	 */
-	std::shared_ptr<ptr_reaction_list> move_to_gpu(const ptr_reaction_list &reactions) {
-		ptr_reaction_list dev_reactions;
+	gpu_reaction_list move_to_gpu(const ptr_reaction_list &reactions) {
+		gpu_reaction_list dev_reactions;
 		dev_reactions.num_reactions = reactions.num_reactions;
 
 		dev_reactions.reactant_product = cuda_util::move_to_gpu(reactions.reactant_product, reactions.reactant_begin[reactions.num_reactions]);
-		dev_reactions.reactant_begin   = cuda_util::move_to_gpu(reactions.reactant_begin,   reactions.num_reactions);
-		dev_reactions.product_begin    = cuda_util::move_to_gpu(reactions.product_begin,    reactions.num_reactions + 1);
+		dev_reactions.reactant_begin   = cuda_util::move_to_gpu(reactions.reactant_begin,   reactions.num_reactions + 1);
+		dev_reactions.product_begin    = cuda_util::move_to_gpu(reactions.product_begin,    reactions.num_reactions);
 
-		std::shared_ptr<ptr_reaction_list> ptr = std::make_shared<ptr_reaction_list>(dev_reactions);
-
-		auto del_ptr = std::get_deleter<void(*)(ptr_reaction_list*)>(ptr);
-		*del_ptr = [](ptr_reaction_list *ptr_) {
-			cudaFree((void*)ptr_->reactant_product);
-			cudaFree((void*)ptr_->reactant_begin);
-			cudaFree((void*)ptr_->product_begin);
-		};
-
-		return ptr;
+		return dev_reactions;
 	} 
 }
