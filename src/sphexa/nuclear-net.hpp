@@ -93,7 +93,7 @@ namespace sphexa::sphnnet {
 		cudaComputeNuclearReactions(n_particles, dimension,
 			rho_, previous_rho_, Y_, temp_, dt_,
 			hydro_dt, previous_dt,
-			*dev_reactions, construct_rates_BE, func_eos);
+			*dev_reactions, construct_rates_BE, eos);
 
 		// copy back to cpu
 		cudaMemcpy(n.dt.data(),   dt_,             n_particles*sizeof(Float), cudaMemcpyDeviceToHost);

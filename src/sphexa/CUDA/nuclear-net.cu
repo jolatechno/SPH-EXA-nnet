@@ -3,6 +3,8 @@
 #include <cuda_runtime_api.h>
 #include <cuda_runtime.h>
 
+#include "../../nuclear-net.hpp"
+
 namespace sphexa {
 namespace sphnnet {
 	template<class func_type, class func_eos, typename Float>
@@ -37,7 +39,7 @@ namespace sphnnet {
 	    cudaKernelComputeNuclearReactions<<<1, n_particles>>>(dimension,
 			rho_, previous_rho_, Y_, temp_, dt_,
 			hydro_dt, previous_dt,
-			reactions, construct_rates_BE, func_eos);
+			reactions, construct_rates_BE, eos);
 	}
 }
 }
