@@ -654,13 +654,13 @@ namespace nnet::net86 {
 			const int k = constants::fits::get_temperature_range(T);
 
 			for (int i = 7; i < 137; ++i) {
-				const Float part = constants::fits::CUDA_ACCESS(choose)[constants::main_reactant[i] - 5][k]/constants::fits::CUDA_ACCESS(choose)[constants::main_product[i] - 5][k];
+				const Float part = constants::fits::CUDA_ACCESS(choose)[constants::CUDA_ACCESS(main_reactant)[i] - 5][k]/constants::fits::CUDA_ACCESS(choose)[constants::CUDA_ACCESS(main_product)[i] - 5][k];
 				l[i]  = part*std::exp(constants::fits::CUDA_ACCESS(fit)[i - 7][7] + coefs[i - 7] - val1*constants::fits::CUDA_ACCESS(q)[i - 7] + val2);
 		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::CUDA_ACCESS(q)[i - 7] + val4);
 			}
 			// These are not photodesintegrations so they don't have val2
 			for (int i = 137; i < 157; ++i) {
-				const Float part = constants::fits::CUDA_ACCESS(choose)[constants::main_reactant[i] - 5][k]/constants::fits::CUDA_ACCESS(choose)[constants::main_product[i] - 5][k];
+				const Float part = constants::fits::CUDA_ACCESS(choose)[constants::CUDA_ACCESS(main_reactant)[i] - 5][k]/constants::fits::CUDA_ACCESS(choose)[constants::CUDA_ACCESS(main_product)[i] - 5][k];
 				l[i]  = part*std::exp(constants::fits::CUDA_ACCESS(fit)[i - 7][7] + coefs[i - 7] - val1*constants::fits::CUDA_ACCESS(q)[i - 7]);
 		        dl[i] = l[i]*(dcoefs[i - 7] + val3*constants::fits::CUDA_ACCESS(q)[i - 7]);
 			}
@@ -734,10 +734,10 @@ namespace nnet::net86 {
 
 				// compute deltamukbt
 				for (int i = 0; i < 157; ++i)
-					deltamukbt[i] = mukbt[constants::main_reactant[i]] + mukbt[constants::secondary_reactant[i]] - mukbt[constants::main_product[i]];// - mukbt[constants::secondary_product[i]];
+					deltamukbt[i] = mukbt[constants::CUDA_ACCESS(main_reactant)[i]] + mukbt[constants::CUDA_ACCESS(secondary_reactant)[i]] - mukbt[constants::CUDA_ACCESS(main_product)[i]];// - mukbt[constants::CUDA_ACCESS(secondary_product)[i]];
 
 				// Triple alpha correction
-				deltamukbt[4] += mukbt[constants::main_reactant[4]];
+				deltamukbt[4] += mukbt[constants::CUDA_ACCESS(main_reactant)[4]];
 
 				// compute deltamukbt
 				/*for (int i = 0; i < 157; ++i) {
