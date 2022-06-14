@@ -28,9 +28,6 @@
 
 namespace nnet::net87::electrons {
 	namespace constants {
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
 		// table size
 		static constexpr int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
 
@@ -38,9 +35,6 @@ namespace nnet::net87::electrons {
 		typedef eigen::fixed_size_matrix<std::array<double, nC>, nTemp, nRho> rateMatrix; // double[nRho][nTemp][nC]
 		typedef std::array<double, nRho> rhoVector;
 		typedef std::array<double, nTemp> tempVector;
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-#endif
 
 		// read electron rate constants table
 		std::tuple<tempVector, rhoVector, rateMatrix> read_table() {
@@ -74,9 +68,6 @@ namespace nnet::net87::electrons {
 		// tables
 		auto const [log_temp_ref_, log_rho_ref_, electron_rate_] = read_table();
 
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
 		static const inline auto log_temp_ref  = log_temp_ref_;
 		static const inline auto log_rho_ref   = log_rho_ref_;
 		static const inline auto electron_rate = electron_rate_;
@@ -123,7 +114,4 @@ namespace nnet::net87::electrons {
 					+  constants::electron_rate(i_temp_inf, i_rho_sup)[i]*x2x*yy1
 					+  constants::electron_rate(i_temp_sup, i_rho_sup)[i]*xx1*yy1)/(x2x1*y2y1);
 	}
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-#endif
 }

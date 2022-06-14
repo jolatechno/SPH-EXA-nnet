@@ -14,9 +14,6 @@
 namespace nnet::net87 {
 	namespace constants = nnet::net86::constants;
 
-#ifdef OMP_TARGET_SOLVER
-	//#pragma omp declare target
-#endif
 	/// if true ignore coulombian corrections
 	bool skip_coulombian_correction = false;
 
@@ -31,10 +28,6 @@ namespace nnet::net87 {
 
 		return BE_;
 	}();
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target to(skip_coulombian_correction, BE)
-	#pragma omp declare target
-#endif
 
 	/// constant list of ordered reaction
 	inline static const nnet::reaction_list reaction_list = []() {
@@ -48,9 +41,6 @@ namespace nnet::net87 {
 	}();
 
 	/// compute a list of rates for net87
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
 	static const inline auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
@@ -110,7 +100,4 @@ namespace nnet::net87 {
 		rates [++idx] = deffpdYe; // = deffp/rhoElec
 		drates[++jdx] = rhoElec == 0 ? 0 : deffp/rhoElec; // deffp/Y[86]/rho, !!! hack !!!
 	};
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-#endif
 }

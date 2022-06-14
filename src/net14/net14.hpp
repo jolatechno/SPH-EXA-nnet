@@ -10,9 +10,6 @@
 #endif
 
 namespace nnet::net14 {
-#ifdef OMP_TARGET_SOLVER
-	//#pragma omp declare target
-#endif
 	/// if true ignore coulombian corrections
 	bool skip_coulombian_correction = false;
 
@@ -33,11 +30,6 @@ namespace nnet::net14 {
 		87.84680*constants::Mev_to_cJ,
 		90.55480*constants::Mev_to_cJ
 	};
-
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target to(skip_coulombian_correction, BE)
-	#pragma omp declare target
-#endif
 
 	// constant list of ordered reaction
 	inline static const nnet::reaction_list reaction_list(std::vector<nnet::reaction>{
@@ -711,7 +703,4 @@ namespace nnet::net14 {
 			}
 		}
 	};
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-#endif
 }

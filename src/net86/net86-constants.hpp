@@ -7,9 +7,6 @@
 #include "../net14/net14-constants.hpp"
 
 namespace nnet::net86::constants {
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
 	static constexpr int proton = 0;
 	static constexpr int neutron = 1;
 	static constexpr int alpha = 2;
@@ -22,10 +19,6 @@ namespace nnet::net86::constants {
 	static constexpr double Na = 6.022137e23;
 	static constexpr double e2 = 2.306022645e-19;
 	static constexpr double Mev_to_cJ = 9.648529392e17;
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-	//#pragma omp declare target
-#endif
 
 	/// constant atomic number values
 	inline static constexpr std::array<double, 87> Z{
@@ -60,10 +53,6 @@ namespace nnet::net86::constants {
 		54, 57, 60, 59, 57, 59, 58,
 		58, 58, /*A=0 for electrons*/0
 	};
-#ifdef OMP_TARGET_SOLVER
-	// #pragma omp end declare target
-	#pragma omp declare target to(Z, A)
-#endif
 
 	/// order of nuclear species
 	const std::vector<int> species_order = []() {
@@ -132,9 +121,6 @@ namespace nnet::net86::constants {
 		return net14_species_order_;
 	}();
 
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
 	/// function for coulombian correction
 	template<typename Float>
 	Float inline ggt1(const Float x) {
@@ -668,7 +654,4 @@ namespace nnet::net86::constants {
 			}
         };
 	}
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-#endif
 }

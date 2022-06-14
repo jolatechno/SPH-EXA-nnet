@@ -37,10 +37,6 @@ namespace nnet::eos {
 
 
 	namespace helmholtz_constants {
-#ifdef OMP_TARGET_SOLVER
-		#pragma omp declare target to(debug)
-		#pragma omp declare target
-#endif
 		// table size
 		static constexpr int imax = IMAX, jmax = JMAX;
 
@@ -97,9 +93,6 @@ namespace nnet::eos {
         static constexpr double b2    =  1.9885;
         static constexpr double c2    =  0.288675;
         static constexpr double esqu  =  qe*qe;
-#ifdef OMP_TARGET_SOLVER
-		#pragma omp end declare target
-#endif
 
 		// read helmholtz constants table
 		std::tuple<
@@ -243,9 +236,6 @@ namespace nnet::eos {
 	   	] = read_table();
 
 
-#ifdef OMP_TARGET_SOLVER
-		#pragma omp declare target
-#endif
 		static const inline ivector  d        = d_;
 		static const inline imvector dd_sav   = dd_sav_;
 		static const inline imvector dd2_sav  = dd2_sav_;
@@ -391,9 +381,6 @@ namespace nnet::eos {
 
 			return {jat, iat};
 		}
-#ifdef OMP_TARGET_SOLVER
-		#pragma omp end declare target
-#endif
 	}
 
 
@@ -401,17 +388,11 @@ namespace nnet::eos {
 
 
 
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
 	/// helmholtz eos
 	/**
 	*...TODO
 	 */
 	template<typename Float>
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
 	auto inline helmholtz(double abar, double zbar, Float T, Float rho) {
 		// coefs
 		double fi[36];
@@ -1107,9 +1088,6 @@ namespace nnet::eos {
 	 */
 	template<typename Float=double>
 	class helmholtz_functor {
-#ifdef OMP_TARGET_SOLVER
-		#pragma omp declare target
-#endif
 	private:
 		std::vector<Float> Z;
 		int dimension;
@@ -1128,11 +1106,7 @@ namespace nnet::eos {
 			return *this;
 		}
 
-		template<class Vector2=std::vector<Float>>
-#ifdef USE_CUDA
-		__host__ __device__ 
-#endif
-		auto operator()(const Vector2 &Y, const Float T, const Float rho) const {
+		auto operator()(const Float *Y, const Float T, const Float rho) const {
 			const int dimension = Z.size();
 
 			// compute abar and zbar
@@ -1141,14 +1115,6 @@ namespace nnet::eos {
 
 			return helmholtz(abar, zbar, T, rho);
 		}
-
-
-#ifdef OMP_TARGET_SOLVER
-		#pragma omp end declare target
-#endif
 	};
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-#endif
 }
 

@@ -17,9 +17,6 @@ namespace nnet {
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 constants :
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
 	/* debuging: */
 	bool debug = false;
 
@@ -93,25 +90,12 @@ constants :
 	 * ...TODO
 	 */
 	struct reaction {
-#ifdef OMP_TARGET_SOLVER
-		#pragma omp declare target
-#endif
 		/// class representing a product or reactant
 		struct reactant_product {
-#ifdef OMP_TARGET_SOLVER
-			#pragma omp declare target
-#endif
 			int species_id, n_consumed = 1;
-#ifdef OMP_TARGET_SOLVER
-			#pragma omp end declare target
-#endif
 		};
 
 		std::vector<reactant_product> reactants, products;
-#ifdef OMP_TARGET_SOLVER
-		#pragma omp end declare target
-#endif
-
 
 		/// reaction class print operator
 		friend std::ostream& operator<<(std::ostream& os, const reaction& r);
@@ -130,17 +114,11 @@ constants :
 
 	/// class referencing a reaction
 	struct reaction_reference {
-#ifdef OMP_TARGET_SOLVER
-		#pragma omp declare target
-#endif
 		reaction_reference() {}
 
 		/// class simulating a vector from a pointer
 		template<class T>
 		class vector_reference {
-#ifdef OMP_TARGET_SOLVER
-			#pragma omp declare target
-#endif
 		private:
 			const T *ptr = nullptr;
 			size_t size_ = 0;
@@ -159,16 +137,9 @@ constants :
 			const T &operator[](int i) {
 				return ptr[i];
 			}
-#ifdef OMP_TARGET_SOLVER
-			#pragma omp end declare target
-#endif
 		};
 
 		vector_reference<reaction::reactant_product> reactants, products;
-
-#ifdef OMP_TARGET_SOLVER
-		#pragma omp end declare target
-#endif
 
 		/// reaction class print operator
 		friend std::ostream& operator<<(std::ostream& os, const reaction_reference& r);
@@ -244,9 +215,6 @@ constants :
 	 * ...TODO
 	 */
 	class ptr_reaction_list {
-#ifdef OMP_TARGET_SOLVER
-		#pragma omp declare target
-#endif
 	private:
 		// pointer to each reaction
 		const int *reactant_begin, *product_begin;
@@ -275,13 +243,7 @@ constants :
 		size_t inline size() const {
 			return num_reactions;
 		}
-#ifdef OMP_TARGET_SOLVER
-		#pragma omp end declare target
-#endif
 	};
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-#endif
 
 
 
@@ -326,9 +288,6 @@ print functions:
 utils functions:
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
 	namespace util {
 		/// clip the values in a Vector
 		/**
@@ -336,9 +295,6 @@ utils functions:
 		 * ...TODO
 		 */
 		template<typename Float>
-#ifdef USE_CUDA
-		__host__ __device__ 
-#endif
 		void inline clip(Float *X, const int dimension, const Float epsilon) {
 			for (int i = 0; i < dimension; ++i)
 				if (X[i] <= epsilon) //if (std::abs(X(i)) <= epsilon)
@@ -353,9 +309,6 @@ utils functions:
 		 * ...TODO
 		 */
 		template<typename Float>
-#ifdef USE_CUDA
-		__host__ __device__ 
-#endif
 		bool inline contain_nan(const Float T, const Float *Y, const int dimension) {
 			if (std::isnan(T))
 				return true;
@@ -376,9 +329,6 @@ utils functions:
 		 * ...TODO
 		 */
 		template<typename Float>
-#ifdef USE_CUDA
-		__host__ __device__ 
-#endif
 		void inline derivatives_from_reactions(const ptr_reaction_list &reactions, const Float *rates, const Float rho, const Float *Y, Float *dY, const int dimension) {
 			for (int i = 0; i < dimension; ++i)
 				dY[i] = 0.;
@@ -420,9 +370,6 @@ utils functions:
 		 * ...TODO
 		 */
 		template<typename Float>
-#ifdef USE_CUDA
-		__host__ __device__ 
-#endif
 		void inline order_1_dY_from_reactions(const ptr_reaction_list &reactions, const Float *rates, const Float rho,
 			Float const *Y, Float *M, const int dimension)
 		{
@@ -463,9 +410,6 @@ utils functions:
 			}
 		}
 	}
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-#endif
 
 
 
@@ -475,17 +419,11 @@ First simple direct solver:
 
 
 
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
 	/// generate the system to be solve (with rates computed at a specific "guess") 
 	/**
 	 * TODO
 	 */
 	template<class eos_type, class func_type, typename Float=double>
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
 	void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS, Float *rates, Float *drates_dT, 
 		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess,
@@ -504,7 +442,7 @@ First simple direct solver:
 	<=> DT*cv = value_1*(T + theta*DT) + DY.BE
 	<=> DT*(cv - theta*value_1) - DY.BE = value_1*T
 		------------------- */
-#if !defined(OMP_TARGET_SOLVER) && !defined(USE_CUDA)
+#ifndef USE_CUDA
 		if (dt == 0) {
 			std::string error = "Zero timestep in nuclear network\n";
 			error += "\tT=" + std::to_string(T) + ",\tTguess=" + std::to_string(T_guess) + "\n";
@@ -585,9 +523,6 @@ First simple direct solver:
 	 * TODO
 	 */
 	template<typename Float>
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
 	void inline finalize_system(const int dimension, const Float *Y, const Float T, Float *next_Y, Float &next_T, const Float *DY_T) {
 		// increment values
 		for (int i = 0; i < dimension; ++i)
@@ -596,9 +531,6 @@ First simple direct solver:
 		// update temperature
 		next_T = T + DY_T[0];
 	}
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-#endif
 
 
 
@@ -673,17 +605,12 @@ Iterative solver:
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
+
 	/// generate the system to be solve for the iterative solver
 	/**
 	 * TODO
 	 */
 	template<class func_type, class func_eos, typename Float=double>
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
 	void inline prepare_system_NR(const int dimension, 
 		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
 		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
@@ -723,9 +650,6 @@ Iterative solver:
 	 * TODO
 	 */
 	template<typename Float>
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
 	std::tuple<Float, bool> inline finalize_system_NR(const int dimension,
 		const Float *Y, const Float T,
 		Float *final_Y, Float &final_T,
@@ -782,9 +706,6 @@ Iterative solver:
 		// continue the loop
 		return {0., false};
 	}
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-#endif
 
 
 
@@ -868,17 +789,11 @@ Substeping solver
 
 
 
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
 	/// generate the system to be solve for the substepping solver
 	/**
 	 * TODO
 	 */
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
 	void inline prepare_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
 		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
@@ -890,7 +805,7 @@ Substeping solver
 		// compute rho
 		Float rho = final_rho - drho_dt*(dt_tot - elapsed_time);
 
-#if !defined(OMP_TARGET_SOLVER) && !defined(USE_CUDA)
+#ifndef USE_CUDA
 		// timejump if needed
 		if constexpr (std::is_invocable<std::remove_pointer<nseFunction>>())
 		if (dt < dt_tot*constants::substep::dt_nse_tol) {
@@ -923,9 +838,6 @@ Substeping solver
 	 * TODO
 	 */
 	template<typename Float=double>
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
 	bool inline finalize_system_substep(const int dimension,
 		Float *final_Y, Float &final_T,
 		Float *next_Y, Float &next_T,
@@ -960,15 +872,9 @@ Substeping solver
 
 		return false;
 	}
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-#endif
 
 
 
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
 	/* actual substepping solver: */
 	/// function to supperstep (can include jumping to NSE)
 	/**
@@ -976,9 +882,6 @@ Substeping solver
 	 * ...TODO
 	 */
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
 	void inline solve_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
 		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
@@ -1028,9 +931,6 @@ Substeping solver
 	 * ...TODO
 	 */
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
 	void inline solve_system_substep(const int dimension,
 		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		Float *final_Y, Float &final_T,
@@ -1048,7 +948,4 @@ Substeping solver
 			final_rho, drho_dt, dt_tot, dt,
 			jumpToNse);
 	}
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-#endif
 }
