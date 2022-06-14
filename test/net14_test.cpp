@@ -57,12 +57,6 @@ int main(int argc, char* argv[]) {
     nnet::debug                             = parser.exists("--nnet-debug");
 
     nnet::net14::skip_coulombian_correction = parser.exists("--skip-coulomb-corr");
-    nnet::constants::NR::max_dt             = parser.get("--max_dt",      nnet::constants::NR::max_dt);
-    nnet::constants::NR::dT_T_target        = parser.get("--dT_T_target", nnet::constants::NR::dT_T_target);
-    nnet::constants::NR::dT_T_tol           = parser.get("--dT_T_tol",    nnet::constants::NR::dT_T_tol);
-    nnet::constants::NR::it_tol             = parser.get("--NR_tol",      nnet::constants::NR::it_tol);
-    nnet::constants::NR::min_it             = parser.get("--min_NR_it",   nnet::constants::NR::min_it);
-    nnet::constants::NR::max_it             = parser.get("--max_NR_it",   nnet::constants::NR::max_it);
 
     const bool expension                    = parser.exists("--expansion");
     const int start_expansion               = parser.get("--start-expansion", 600);

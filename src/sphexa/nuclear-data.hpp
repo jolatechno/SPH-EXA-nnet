@@ -159,11 +159,6 @@ namespace sphexa::sphnnet {
     	}
 
     	void setOutputFields(const std::vector<std::string>& outFields, const std::vector<std::string> &species_names) {
-	    	int rank = 0;
-#ifdef USE_MPI
-			MPI_Comm_rank(comm, &rank);
-#endif
-
     		outputFieldNames = outFields;
 
 			// separate nuclear fields from hydro fields

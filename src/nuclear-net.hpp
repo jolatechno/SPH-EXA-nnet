@@ -25,58 +25,58 @@ constants :
 
 	namespace constants {
 		/// initial nuclear timestep
-		double initial_dt = 1e-5;
+		const double initial_dt = 1e-5;
 
 		/// theta for the implicit method
-		double theta = 0.8;
+		const double theta = 0.8;
 
 		/// minimum temperature at which we compute the nuclear network
-		double min_temp = 1e8;
+		const double min_temp = 1e8;
 		/// minimum density at which we compute the nuclear network
-		double min_rho = 1e5;
+		const double min_rho = 1e5;
 
 		/// maximum timestep
-		double max_dt = 1e-2;
+		const double max_dt = 1e-2;
 		/// maximum timestep evolution
-		double max_dt_step = 2;
+		const double max_dt_step = 2;
 		/// maximum negative timestep evolution
-		double min_dt_step = 1e-2;
+		const double min_dt_step = 1e-2;
 		/// timestep jump when a nan is in the solution
-		double nan_dt_step = 2e-1;
+		const double nan_dt_step = 2e-1;
 
 		/// relative temperature variation target of the implicit solver
-		double dT_T_target = 4e-3;
+		const double dT_T_target = 4e-3;
 		/// relative temperature variation tolerance of the implicit solver
-		double dT_T_tol = 4;
+		const double dT_T_tol = 4;
 
 		/// the value that is considered null inside a system
-		double epsilon_system = 1e-100;
+		const double epsilon_system = 1e-100;
 		/// the value that is considered null inside a state
-		double epsilon_vector = 1e-16;
+		const double epsilon_vector = 1e-16;
 
 		namespace NR {
 			/// maximum timestep
-			double max_dt = 1e-2;
+			const double max_dt = 1e-2;
 
 			/// relative temperature variation target of the implicit solver
-			double dT_T_target = 1e-2;
+			const double dT_T_target = 1e-2;
 			/// relative temperature variation tolerance of the implicit solver
-			double dT_T_tol = 4;
+			const double dT_T_tol = 4;
 
 			/// minimum number of newton raphson iterations
-			static int min_it = 1;
+			const int min_it = 1;
 			/// maximum number of newton raphson iterations
-			static int max_it = 11;
+			const int max_it = 11;
 			/// tolerance for the correction to break out of the newton raphson loop
-			double it_tol = 1e-7;
+			const double it_tol = 1e-7;
 		}
 
 		namespace substep {
 			/// timestep tolerance for substepping
-			double dt_tol = 1e-6;
+			const double dt_tol = 1e-6;
 
 			/// ratio of the nuclear timestep and "super timestep" to jump to NSE
-			double dt_nse_tol = 0; //1e-8; // !!!! useless for now
+			const double dt_nse_tol = 0; //1e-8; // !!!! useless for now
 		}
 	}
 
@@ -382,8 +382,7 @@ utils functions:
 				const auto &Reaction = reactions[i];
 				Float rate = rates[i];
 
-				// compute rate and order
-				int order = 0;
+				// compute rate
 				for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants) {
 					// divide by factorial
 					if (n_reactant_consumed != 1)

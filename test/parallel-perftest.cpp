@@ -113,14 +113,6 @@ int main(int argc, char* argv[]) {
     const bool isotherm                     = parser.exists("--isotherm");
 
     nnet::net14::skip_coulombian_correction = parser.exists("--skip-coulomb-corr");
-    nnet::constants::NR::max_dt             = parser.get("--max_dt",      nnet::constants::NR::max_dt);
-    nnet::constants::NR::dT_T_target        = parser.get("--dT_T_target", nnet::constants::NR::dT_T_target);
-    nnet::constants::NR::dT_T_tol           = parser.get("--dT_T_tol",    nnet::constants::NR::dT_T_tol);
-    nnet::constants::NR::it_tol             = parser.get("--NR_tol",      nnet::constants::NR::it_tol);
-    nnet::constants::NR::min_it             = parser.get("--min_NR_it",   nnet::constants::NR::min_it);
-    nnet::constants::NR::max_it             = parser.get("--max_NR_it",   nnet::constants::NR::max_it);
-
-    nnet::constants::min_temp               = parser.get("--min-temp",    std::min(T_left, T_right)*0.9 + 0.1*std::max(T_left, T_right));
 
 	util::array<double, 86> Y0_86, X_86;
 	util::array<double, 14> Y0_14, X_14;
