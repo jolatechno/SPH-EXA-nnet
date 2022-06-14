@@ -19,9 +19,12 @@
 #endif
 
 #ifdef USE_CUDA
+	#include <device_launch_parameters.h>
 	#include <cuda.h>
+	#include <cuda_runtime_api.h>
 	#include <cuda_runtime.h>
-	#include "CUDA/nuclear-net.cu"
+
+	#include "CUDA/nuclear-net.cuh"
 	#include "../CUDA/nuclear-net.hpp"
 #endif
 
