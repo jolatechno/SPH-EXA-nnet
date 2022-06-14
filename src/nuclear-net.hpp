@@ -81,13 +81,9 @@ constants :
 	}
 
 
-
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 (nuclear) reaction class:
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-
-
-
 
 	
 
@@ -181,21 +177,18 @@ constants :
 
 
 
+
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 (nuclear) reaction list class:
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 
 
-
-	/// reaction class (contigous rather then a vector of reaction)
+	/// reaction pointer class (pointer to contigous buffers rather then a vector of reaction)
 	/**
 	 * ...TODO
 	 */
 	class reaction_list {
-#ifdef OMP_TARGET_SOLVER
-		#pragma omp declare target
-#endif
 	private:
 		// pointer to each reaction
 		std::vector<int> reactant_begin = {0};
@@ -204,19 +197,14 @@ constants :
 		// actual vectors
 		std::vector<reaction::reactant_product> reactant_product = {};
 
+		friend class ptr_reaction_list;
+
 	public:
-		reaction_list() {}
+
+		reaction_list () {}
 		reaction_list(std::vector<reaction> const &reactions) {
 			for (auto &Reaction : reactions)
 				push_back(Reaction);
-		}
-
-		reaction_list &operator=(reaction_list const &other) {
-			reactant_begin   = other.reactant_begin;
-			product_begin    = other.product_begin;
-			reactant_product = other.reactant_product;
-
-			return *this;
 		}
 
 		void inline push_back(reaction const &Reaction) {
@@ -225,29 +213,67 @@ constants :
 
 			product_begin .push_back(reactant_begin.back() + Reaction.reactants.size());
 			reactant_begin.push_back(product_begin.back()  + Reaction.products.size());
-
 		}
-
-		/*reaction inline operator[](int i) const {
-			reaction Reaction;
-
-			Reaction.reactants.assign(reactant_product.begin() + reactant_begin[i], reactant_product.begin() + product_begin[i]);
-			Reaction.products .assign(reactant_product.begin() + product_begin[i],  reactant_product.begin() + reactant_begin[i + 1]);
-
-			return Reaction;
-		}*/
 
 		reaction_reference inline operator[](int i) const {
 			reaction_reference Reaction;
 
-			Reaction.reactants = reaction_reference::vector_reference(&reactant_product[reactant_begin[i]], product_begin [i    ] - reactant_begin[i]);
-			Reaction.products  = reaction_reference::vector_reference(&reactant_product[product_begin [i]], reactant_begin[i + 1] - product_begin[i]);
+			Reaction.reactants = reaction_reference::vector_reference(reactant_product.data() + reactant_begin[i], product_begin [i    ] - reactant_begin[i]);
+			Reaction.products  = reaction_reference::vector_reference(reactant_product.data() + product_begin [i], reactant_begin[i + 1] - product_begin[i]);
 
 			return Reaction;
 		}
 
 		size_t inline size() const {
 			return product_begin.size();
+		}
+	};
+
+
+
+
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+(nuclear) offloadable reaction list class:
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+
+
+
+	/// reaction pointer class (pointer to contigous buffers rather then a vector of reaction)
+	/**
+	 * ...TODO
+	 */
+	class ptr_reaction_list {
+#ifdef OMP_TARGET_SOLVER
+		#pragma omp declare target
+#endif
+	private:
+		// pointer to each reaction
+		const int *reactant_begin, *product_begin;
+		const reaction::reactant_product *reactant_product;
+		int num_reactions;
+
+	public:
+		ptr_reaction_list() {}
+		ptr_reaction_list(reaction_list const &other) {
+			num_reactions    = other.size();
+
+			reactant_begin   = other.reactant_begin.data();
+			product_begin    = other.product_begin.data();
+			reactant_product = other.reactant_product.data();
+		}
+
+		reaction_reference inline operator[](int i) const {
+			reaction_reference Reaction;
+
+			Reaction.reactants = reaction_reference::vector_reference(reactant_product + reactant_begin[i], product_begin [i    ] - reactant_begin[i]);
+			Reaction.products  = reaction_reference::vector_reference(reactant_product + product_begin [i], reactant_begin[i + 1] - product_begin[i]);
+
+			return Reaction;
+		}
+
+		size_t inline size() const {
+			return num_reactions;
 		}
 #ifdef OMP_TARGET_SOLVER
 		#pragma omp end declare target
@@ -353,7 +379,7 @@ utils functions:
 #ifdef USE_CUDA
 		__host__ __device__ 
 #endif
-		void inline derivatives_from_reactions(const reaction_list &reactions, const Float *rates, const Float rho, const Float *Y, Float *dY, const int dimension) {
+		void inline derivatives_from_reactions(const ptr_reaction_list &reactions, const Float *rates, const Float rho, const Float *Y, Float *dY, const int dimension) {
 			for (int i = 0; i < dimension; ++i)
 				dY[i] = 0.;
 
@@ -397,7 +423,7 @@ utils functions:
 #ifdef USE_CUDA
 		__host__ __device__ 
 #endif
-		void inline order_1_dY_from_reactions(const reaction_list &reactions, const Float *rates, const Float rho,
+		void inline order_1_dY_from_reactions(const ptr_reaction_list &reactions, const Float *rates, const Float rho,
 			Float const *Y, Float *M, const int dimension)
 		{
 			const int num_reactions = reactions.size();
@@ -461,7 +487,7 @@ First simple direct solver:
 	__host__ __device__ 
 #endif
 	void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS, Float *rates, Float *drates_dT, 
-		const reaction_list &reactions, const func_type &construct_rates_BE, 
+		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
@@ -585,7 +611,7 @@ First simple direct solver:
 	template<class func_type, class eos_type, typename Float>
 	void inline solve_system_from_guess(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT, 
-		const reaction_list &reactions, const func_type &construct_rates_BE, 
+		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess, Float *next_Y, Float &next_T,
 		const Float rho, const Float drho_dt,
 		const eos_type &eos_struct, const Float dt)
@@ -622,7 +648,7 @@ First simple direct solver:
 	template<class func_type, typename Float>
 	void inline solve_system(
 		const int dimension,
-		const reaction_list &reactions, const func_type &construct_rates_BE,
+		const ptr_reaction_list &reactions, const func_type &construct_rates_BE,
 		const Float *Y, const Float T, Float *next_Y, Float &next_T,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
@@ -660,7 +686,7 @@ Iterative solver:
 #endif
 	void inline prepare_system_NR(const int dimension, 
 		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
-		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		const Float *Y, Float T, Float *final_Y, Float final_T, 
 		const Float rho, const Float drho_dt,
 		Float &dt,  const int i)
@@ -773,7 +799,7 @@ Iterative solver:
 	template<class func_type, class func_eos, typename Float=double>
 	Float inline solve_system_NR(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
-		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		const Float *Y, Float T, Float *final_Y, Float &final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
@@ -817,7 +843,7 @@ Iterative solver:
 	 */
 	template<class func_type, class func_eos, typename Float=double>
 	Float inline solve_system_NR(const int dimension,
-		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		const Float *Y, Float T, Float *final_Y, Float &final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
@@ -855,7 +881,7 @@ Substeping solver
 #endif
 	void inline prepare_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *rates, Float *drates_dT,
-		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		const Float *final_Y, Float final_T, Float *next_Y, Float &next_T, 
 		const Float final_rho, const Float drho_dt,
 		const Float dt_tot, Float &elapsed_time, Float &dt, const int i,
@@ -955,7 +981,7 @@ Substeping solver
 #endif
 	void inline solve_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
-		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		Float *final_Y, Float &final_T, Float *Y_buffer,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
@@ -1006,7 +1032,7 @@ Substeping solver
 	__host__ __device__ 
 #endif
 	void inline solve_system_substep(const int dimension,
-		const reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		Float *final_Y, Float &final_T,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
