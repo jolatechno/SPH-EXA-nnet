@@ -6,6 +6,8 @@
 #include "../nuclear-net.hpp"
 #include "net86-constants.hpp"
 
+#include "../sphexa/util/algorithm.hpp"
+
 #ifdef USE_CUDA
 	#include <cuda_runtime.h>
 #endif
@@ -13,7 +15,7 @@
 
 namespace nnet::net86 {
 	/// if true ignore coulombian corrections
-	static bool skip_coulombian_correction = false;
+	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
 	CUDA_DEFINE(inline static const std::array<double COMMA 86>, BE, = {
@@ -283,7 +285,7 @@ namespace nnet::net86 {
 		{
 			// constants:
 			const Float t9r=T*1.0e-09;
-      		const Float t9=std::min((Float)10., t9r);
+      		const Float t9=algorithm::min((Float)10., t9r);
       		const Float t92=t9*t9;
       		const Float t93=t92*t9;
       		const Float t95=t92*t93;
@@ -673,27 +675,12 @@ namespace nnet::net86 {
 		For that reason we use the inverse of the inverse as direct reaction.
 		So the direct reactions from the tables are the inverse of our network.
 		!!!!!!!!!!!!!!!!!!!!!!!! */
-		Float buffer;
 		for (int i = 137; i < 154; ++i) {
-			// std::swap( eff[i],  l[i]); :
-			buffer = eff[i];
-			eff[i] = l[i];
-			l[i]   = buffer;
-
-			// std::swap(deff[i], dl[i]); :
-			buffer  = deff[i];
-			deff[i] = dl[i];
-			dl[i]   = buffer;
+			algorithm::swap( eff[i],  l[i]);
+			algorithm::swap(deff[i], dl[i]);
 		}
-		// std::swap( eff[156],  l[156]); :
-		buffer   = eff[156];
-		eff[156] = l[156];
-		l[156]   = buffer;
-
-		// std::swap(deff[156], dl[156]); :
-		buffer    = deff[156];
-		deff[156] = dl[156];
-		dl[156]   = buffer;
+		algorithm::swap( eff[156],  l[156]);
+		algorithm::swap(deff[156], dl[156]);
 
 
 

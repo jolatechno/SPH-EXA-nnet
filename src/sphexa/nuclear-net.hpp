@@ -24,7 +24,7 @@
 	#include <cuda_runtime_api.h>
 	#include <cuda_runtime.h>
 
-	#include "CUDA/nuclear-net.cuh"
+	#include "CUDA/nuclear-net.cu"
 	#include "../CUDA/nuclear-net.hpp"
 #endif
 

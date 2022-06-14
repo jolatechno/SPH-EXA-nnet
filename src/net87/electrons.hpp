@@ -26,6 +26,9 @@
 
 #include <cmath>
 
+#ifdef USE_CUDA
+	#include <cuda_runtime.h>
+#endif
 #include "../CUDA/cuda.inl"
 
 namespace nnet::net87::electrons {

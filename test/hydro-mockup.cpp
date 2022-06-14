@@ -157,7 +157,7 @@ void step(size_t firstIndex, size_t lastIndex,
 inline static constexpr struct eos_output {
 	double cv, dP_dT, dU_dYe;
 } isotherm_res{1e20, 0, 0};
-inline static constexpr auto isotherm_eos = [](const auto &Y_, const double T, const double rho_) {
+CUDA_FUNCTION_DECORATOR eos_output inline isotherm_eos(const double *Y_, const double T, const double rho_) {
 	return isotherm_res;
 };
 
@@ -363,7 +363,7 @@ int main(int argc, char* argv[]) {
 			step(first, last,
 				particle_data, nuclear_data_14, hydro_dt,
 				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double, nnet::eos::helm_eos_output<double>>, helm_eos_14);
-			
+
 		t += hydro_dt;
 
 		MPI_Barrier(MPI_COMM_WORLD);

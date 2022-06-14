@@ -16,7 +16,7 @@ namespace nnet::net87 {
 	namespace constants = nnet::net86::constants;
 
 	/// if true ignore coulombian corrections
-	static bool skip_coulombian_correction = false;
+	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
 	CUDA_DEFINE(inline static const std::array<double COMMA 87>, BE, = [] CUDA_FUNCTION_DECORATOR (){

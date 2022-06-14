@@ -5,6 +5,8 @@
 #include "../nuclear-net.hpp"
 #include "net14-constants.hpp"
 
+#include "../sphexa/util/algorithm.hpp"
+
 #ifdef USE_CUDA
 	#include <cuda_runtime.h>
 #endif
@@ -12,7 +14,7 @@
 
 namespace nnet::net14 {
 	/// if true ignore coulombian corrections
-	static bool skip_coulombian_correction = false;
+	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
 	CUDA_DEFINE(inline static const std::array<double COMMA 14>, BE, = {
@@ -264,7 +266,7 @@ namespace nnet::net14 {
 		{
 			// constants:
 			const Float t9r=T*1.0e-09;
-      		const Float t9=std::min((Float)10., t9r);
+      		const Float t9=algorithm::min((Float)10., t9r);
       		const Float t92=t9*t9;
       		const Float t93=t92*t9;
       		const Float t95=t92*t93;

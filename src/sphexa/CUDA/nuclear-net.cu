@@ -25,8 +25,8 @@ namespace sphnnet {
 			Float *RHS       = (Float*)malloc(                (dimension + 1)*sizeof(Float));
 			Float *DY_T      = (Float*)malloc(                (dimension + 1)*sizeof(Float));
 			Float *Y_buffer  = (Float*)malloc(                      dimension*sizeof(Float));
-			Float *rates     = (Float*)malloc(reactions.num_reactions*sizeof(Float));
-			Float *drates_dT = (Float*)malloc(reactions.num_reactions*sizeof(Float));
+			Float *rates     = (Float*)malloc(reactions.size()*sizeof(Float));
+			Float *drates_dT = (Float*)malloc(reactions.size()*sizeof(Float));
 
 		    if (rho_[i] > nnet::constants::min_rho && temp_[i] > nnet::constants::min_temp) {
 				// compute drho/dt

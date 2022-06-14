@@ -82,7 +82,7 @@ void step(
 inline static constexpr struct eos_output {
 	double cv, dP_dT, dU_dYe;
 } isotherm_res{1e20, 0, 0};
-inline static constexpr auto isotherm_eos = [](const auto &Y_, const double T, const double rho_) {
+CUDA_FUNCTION_DECORATOR eos_output inline isotherm_eos(const double *Y_, const double T, const double rho_) {
 	return isotherm_res;
 };
 

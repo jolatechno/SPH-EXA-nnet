@@ -1,6 +1,7 @@
 #pragma once
 
 #include "eigen/eigen.hpp"
+#include "sphexa/util/algorithm.hpp"
 
 #include <iostream>
 
@@ -20,62 +21,62 @@ namespace nnet {
 constants :
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 	/* debuging: */
-	static bool debug = false;
+	bool debug = false;
 
 	namespace constants {
 		/// initial nuclear timestep
-		static double initial_dt = 1e-5;
+		double initial_dt = 1e-5;
 
 		/// theta for the implicit method
-		static double theta = 0.8;
+		double theta = 0.8;
 
 		/// minimum temperature at which we compute the nuclear network
-		static double min_temp = 1e8;
+		double min_temp = 1e8;
 		/// minimum density at which we compute the nuclear network
-		static double min_rho = 1e5;
+		double min_rho = 1e5;
 
 		/// maximum timestep
-		static double max_dt = 1e-2;
+		double max_dt = 1e-2;
 		/// maximum timestep evolution
-		static double max_dt_step = 2;
+		double max_dt_step = 2;
 		/// maximum negative timestep evolution
-		static double min_dt_step = 1e-2;
+		double min_dt_step = 1e-2;
 		/// timestep jump when a nan is in the solution
-		static double nan_dt_step = 2e-1;
+		double nan_dt_step = 2e-1;
 
 		/// relative temperature variation target of the implicit solver
-		static double dT_T_target = 4e-3;
+		double dT_T_target = 4e-3;
 		/// relative temperature variation tolerance of the implicit solver
-		static double dT_T_tol = 4;
+		double dT_T_tol = 4;
 
 		/// the value that is considered null inside a system
-		static double epsilon_system = 1e-100;
+		double epsilon_system = 1e-100;
 		/// the value that is considered null inside a state
-		static double epsilon_vector = 1e-16;
+		double epsilon_vector = 1e-16;
 
 		namespace NR {
 			/// maximum timestep
-			static double max_dt = 1e-2;
+			double max_dt = 1e-2;
 
 			/// relative temperature variation target of the implicit solver
-			static double dT_T_target = 1e-2;
+			double dT_T_target = 1e-2;
 			/// relative temperature variation tolerance of the implicit solver
-			static double dT_T_tol = 4;
+			double dT_T_tol = 4;
 
 			/// minimum number of newton raphson iterations
 			static int min_it = 1;
 			/// maximum number of newton raphson iterations
 			static int max_it = 11;
 			/// tolerance for the correction to break out of the newton raphson loop
-			static double it_tol = 1e-7;
+			double it_tol = 1e-7;
 		}
 
 		namespace substep {
 			/// timestep tolerance for substepping
-			static double dt_tol = 1e-6;
+			double dt_tol = 1e-6;
 
 			/// ratio of the nuclear timestep and "super timestep" to jump to NSE
-			static double dt_nse_tol = 0; //1e-8; // !!!! useless for now
+			double dt_nse_tol = 0; //1e-8; // !!!! useless for now
 		}
 	}
 
@@ -464,8 +465,8 @@ First simple direct solver:
 
 
 		// fill system with zeros
-      //std::fill(RHS, RHS + dimension + 1,                  0.);
-		std::fill(Mp,  Mp + (dimension + 1)*(dimension + 1), 0.);
+      //algorithm::fill(RHS, RHS + dimension + 1,                  0.);
+		algorithm::fill(Mp,  Mp + (dimension + 1)*(dimension + 1), 0.);
 
 		// construct BE in plance
 		construct_rates_BE(Y_guess, T_guess, rho, eos_struct, &Mp[1], rates, drates_dT);
@@ -698,9 +699,9 @@ Iterative solver:
 			// timestep tweeking
 			Float previous_dt = dt;
 			dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::NR::dT_T_target/dT_T)*previous_dt;
-			dt = std::min(dt, previous_dt*constants::max_dt_step);
-			dt = std::max(dt, previous_dt*constants::min_dt_step);
-			dt = std::min(dt,      (Float)constants::NR::max_dt);
+			dt = algorithm::min(dt, previous_dt*constants::max_dt_step);
+			dt = algorithm::max(dt, previous_dt*constants::min_dt_step);
+			dt = algorithm::min(dt,      (Float)constants::NR::max_dt);
 
 			return {previous_dt, true};
 		}
