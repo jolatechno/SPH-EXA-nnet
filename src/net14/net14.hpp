@@ -113,10 +113,7 @@ namespace nnet::net14 {
 	});
 
 	/// compute a list of reactions for net14
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
-	static const inline auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
+	CUDA_FUNCTION_DECORATOR static const inline auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		/*********************************************/
@@ -137,7 +134,7 @@ namespace nnet::net14 {
 		    const Float ae = std::pow((3./4.)/(constants::pi*ne), 1./3.);
 		    const Float gam = constants::e2/(kbt*ae);
 		    for (int i = 0; i < 14; ++i) {
-		    	const Float gamma = gam*std::pow(constants::Z[i], 5./3.);
+		    	const Float gamma = gam*std::pow(constants::CUDA_ACCESS(Z)[i], 5./3.);
 		    	const Float funcion = gamma > 1 ? constants::ggt1(gamma) : constants::glt1(gamma);
 
 		    	// if (debug) std::cout << "funcion[" << i << "]=" << funcion << (i == 13 ? "\n\n" : "\n");
@@ -189,21 +186,21 @@ namespace nnet::net14 {
 				- Ni + He -> Zn */
 			for (int i = 4; i < 14; ++i) {
 				coefs[i - 4] = 
-					  constants::fits::fit[i - 4][1]*t9i
-					+ constants::fits::fit[i - 4][2]*t9i13
-					+ constants::fits::fit[i - 4][3]*t913
-					+ constants::fits::fit[i - 4][4]*t9
-					+ constants::fits::fit[i - 4][5]*t953
-					+ constants::fits::fit[i - 4][6]*lt9;
+					  constants::fits::CUDA_ACCESS(fit)[i - 4][1]*t9i
+					+ constants::fits::CUDA_ACCESS(fit)[i - 4][2]*t9i13
+					+ constants::fits::CUDA_ACCESS(fit)[i - 4][3]*t913
+					+ constants::fits::CUDA_ACCESS(fit)[i - 4][4]*t9
+					+ constants::fits::CUDA_ACCESS(fit)[i - 4][5]*t953
+					+ constants::fits::CUDA_ACCESS(fit)[i - 4][6]*lt9;
 
-				dcoefs[i - 4] = (- constants::fits::fit     [i - 4][1]*t9i2 
-					             + (-   constants::fits::fit[i - 4][2]*t9i43
-					                +   constants::fits::fit[i - 4][3]*t9i23
-					                + 5*constants::fits::fit[i - 4][5]*t923)*(1./3.)
-					             + constants::fits::fit     [i - 4][4]
-					             + constants::fits::fit     [i - 4][6]*t9i)*1e-9;
+				dcoefs[i - 4] = (- constants::fits::CUDA_ACCESS(fit)     [i - 4][1]*t9i2 
+					             + (-   constants::fits::CUDA_ACCESS(fit)[i - 4][2]*t9i43
+					                +   constants::fits::CUDA_ACCESS(fit)[i - 4][3]*t9i23
+					                + 5*constants::fits::CUDA_ACCESS(fit)[i - 4][5]*t923)*(1./3.)
+					             + constants::fits::CUDA_ACCESS(fit)     [i - 4][4]
+					             + constants::fits::CUDA_ACCESS(fit)     [i - 4][6]*t9i)*1e-9;
 
-				eff[i - 1] = std::exp(constants::fits::fit[i - 4][0] + coefs[i - 4]);
+				eff[i - 1] = std::exp(constants::fits::CUDA_ACCESS(fit)[i - 4][0] + coefs[i - 4]);
 
 				deff[i - 1] = eff[i - 1]*dcoefs[i - 4];
 
@@ -241,17 +238,17 @@ namespace nnet::net14 {
 				- Ni + He <- Zn */
 			const int k = constants::fits::get_temperature_range(T);
 			for (int i = 4; i < 14; ++i) {
-				l[i - 1] = constants::fits::choose[i - 4][k]/constants::fits::choose[i + 1 - 4][k]*
+				l[i - 1] = constants::fits::CUDA_ACCESS(choose)[i - 4][k]/constants::fits::CUDA_ACCESS(choose)[i + 1 - 4][k]*
 					std::exp(
-						  coefs               [i - 4]
-						+ constants::fits::fit[i - 4][7]
-						- constants::fits::q  [i - 4]*val1
+						  coefs                            [i - 4]
+						+ constants::fits::CUDA_ACCESS(fit)[i - 4][7]
+						- constants::fits::CUDA_ACCESS(q)  [i - 4]*val1
 						+ val2
 					);
 
 				dl[i - 1] = l[i - 1]*(
-					  dcoefs            [i - 4]
-					+ constants::fits::q[i - 4]*val3
+					  dcoefs                         [i - 4]
+					+ constants::fits::CUDA_ACCESS(q)[i - 4]*val3
 					+ val4);
 
 				// debuging :
@@ -642,7 +639,7 @@ namespace nnet::net14 {
 
 		    	// compute mukbt
 				for (int i = 0; i < 14; ++i) {
-					const double gamp = gam*std::pow(constants::Z[i], 5./3.);
+					const double gamp = gam*std::pow(constants::CUDA_ACCESS(Z)[i], 5./3.);
 			        const double sqrootgamp = std::sqrt(gamp);
 			        const double sqroot2gamp = std::sqrt(sqrootgamp);
 			        if(gamp <= 1) {
