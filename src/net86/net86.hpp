@@ -16,93 +16,93 @@ namespace nnet::net86 {
 	static bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
-	inline static constexpr std::array<double, 86> BE = {
-		0, 0,
-		28.296 *constants::Mev_to_cJ,
-		92.163 *constants::Mev_to_cJ,
-		127.621*constants::Mev_to_cJ,
-		160.651*constants::Mev_to_cJ,
-		163.082*constants::Mev_to_cJ,
-		198.263*constants::Mev_to_cJ,
-		181.731*constants::Mev_to_cJ,
-		167.412*constants::Mev_to_cJ,
-		186.570*constants::Mev_to_cJ,
-		168.584*constants::Mev_to_cJ,
-		174.152*constants::Mev_to_cJ,
-		177.776*constants::Mev_to_cJ,
-		200.534*constants::Mev_to_cJ,
-		236.543*constants::Mev_to_cJ,
-		219.364*constants::Mev_to_cJ,
-		205.594*constants::Mev_to_cJ,
-		224.958*constants::Mev_to_cJ,
-		206.052*constants::Mev_to_cJ,
-		211.901*constants::Mev_to_cJ,
-		216.687*constants::Mev_to_cJ,
-		239.291*constants::Mev_to_cJ,
-		271.786*constants::Mev_to_cJ,
-		256.744*constants::Mev_to_cJ,
-		245.017*constants::Mev_to_cJ,
-		262.924*constants::Mev_to_cJ,
-		243.691*constants::Mev_to_cJ,
-		250.612*constants::Mev_to_cJ,
-		255.626*constants::Mev_to_cJ,
-		274.063*constants::Mev_to_cJ,
-		306.722*constants::Mev_to_cJ,
-		291.468*constants::Mev_to_cJ,
-		280.428*constants::Mev_to_cJ,
-		298.215*constants::Mev_to_cJ,
-		278.727*constants::Mev_to_cJ,
-		285.570*constants::Mev_to_cJ,
-		291.845*constants::Mev_to_cJ,
-		308.580*constants::Mev_to_cJ,
-		342.059*constants::Mev_to_cJ,
-		326.418*constants::Mev_to_cJ,
-		315.511*constants::Mev_to_cJ,
-		333.730*constants::Mev_to_cJ,
-		313.129*constants::Mev_to_cJ,
-		320.654*constants::Mev_to_cJ,
-		327.349*constants::Mev_to_cJ,
-		343.144*constants::Mev_to_cJ,
-		375.482*constants::Mev_to_cJ,
-		359.183*constants::Mev_to_cJ,
-		350.422*constants::Mev_to_cJ,
-		366.832*constants::Mev_to_cJ,
-		346.912*constants::Mev_to_cJ,
-		354.694*constants::Mev_to_cJ,
-		361.903*constants::Mev_to_cJ,
-		377.096*constants::Mev_to_cJ,
-		411.469*constants::Mev_to_cJ,
-		395.135*constants::Mev_to_cJ,
-		385.012*constants::Mev_to_cJ,
-		403.369*constants::Mev_to_cJ,
-		381.982*constants::Mev_to_cJ,
-		390.368*constants::Mev_to_cJ,
-		398.202*constants::Mev_to_cJ,
-		413.553*constants::Mev_to_cJ,
-		447.703*constants::Mev_to_cJ,
-		431.520*constants::Mev_to_cJ,
-		422.051*constants::Mev_to_cJ,
-		440.323*constants::Mev_to_cJ,
-		417.703*constants::Mev_to_cJ,
-		426.636*constants::Mev_to_cJ,
-		435.051*constants::Mev_to_cJ,
-		449.302*constants::Mev_to_cJ,
-		483.994*constants::Mev_to_cJ,
-		467.353*constants::Mev_to_cJ,
-		458.387*constants::Mev_to_cJ,
-		476.830*constants::Mev_to_cJ,
-		453.158*constants::Mev_to_cJ,
-		462.740*constants::Mev_to_cJ,
-		471.765*constants::Mev_to_cJ,
-		484.689*constants::Mev_to_cJ,
-		514.999*constants::Mev_to_cJ,
-		500.002*constants::Mev_to_cJ,
-		494.241*constants::Mev_to_cJ,
-		509.878*constants::Mev_to_cJ,
-		486.966*constants::Mev_to_cJ,
-		497.115*constants::Mev_to_cJ,
+	CUDA_DEFINE(inline static const std::array<double COMMA 86>, BE, = {
+		0 COMMA 0 COMMA
+		28.296 *constants::Mev_to_cJ COMMA
+		92.163 *constants::Mev_to_cJ COMMA
+		127.621*constants::Mev_to_cJ COMMA
+		160.651*constants::Mev_to_cJ COMMA
+		163.082*constants::Mev_to_cJ COMMA
+		198.263*constants::Mev_to_cJ COMMA
+		181.731*constants::Mev_to_cJ COMMA
+		167.412*constants::Mev_to_cJ COMMA
+		186.570*constants::Mev_to_cJ COMMA
+		168.584*constants::Mev_to_cJ COMMA
+		174.152*constants::Mev_to_cJ COMMA
+		177.776*constants::Mev_to_cJ COMMA
+		200.534*constants::Mev_to_cJ COMMA
+		236.543*constants::Mev_to_cJ COMMA
+		219.364*constants::Mev_to_cJ COMMA
+		205.594*constants::Mev_to_cJ COMMA
+		224.958*constants::Mev_to_cJ COMMA
+		206.052*constants::Mev_to_cJ COMMA
+		211.901*constants::Mev_to_cJ COMMA
+		216.687*constants::Mev_to_cJ COMMA
+		239.291*constants::Mev_to_cJ COMMA
+		271.786*constants::Mev_to_cJ COMMA
+		256.744*constants::Mev_to_cJ COMMA
+		245.017*constants::Mev_to_cJ COMMA
+		262.924*constants::Mev_to_cJ COMMA
+		243.691*constants::Mev_to_cJ COMMA
+		250.612*constants::Mev_to_cJ COMMA
+		255.626*constants::Mev_to_cJ COMMA
+		274.063*constants::Mev_to_cJ COMMA
+		306.722*constants::Mev_to_cJ COMMA
+		291.468*constants::Mev_to_cJ COMMA
+		280.428*constants::Mev_to_cJ COMMA
+		298.215*constants::Mev_to_cJ COMMA
+		278.727*constants::Mev_to_cJ COMMA
+		285.570*constants::Mev_to_cJ COMMA
+		291.845*constants::Mev_to_cJ COMMA
+		308.580*constants::Mev_to_cJ COMMA
+		342.059*constants::Mev_to_cJ COMMA
+		326.418*constants::Mev_to_cJ COMMA
+		315.511*constants::Mev_to_cJ COMMA
+		333.730*constants::Mev_to_cJ COMMA
+		313.129*constants::Mev_to_cJ COMMA
+		320.654*constants::Mev_to_cJ COMMA
+		327.349*constants::Mev_to_cJ COMMA
+		343.144*constants::Mev_to_cJ COMMA
+		375.482*constants::Mev_to_cJ COMMA
+		359.183*constants::Mev_to_cJ COMMA
+		350.422*constants::Mev_to_cJ COMMA
+		366.832*constants::Mev_to_cJ COMMA
+		346.912*constants::Mev_to_cJ COMMA
+		354.694*constants::Mev_to_cJ COMMA
+		361.903*constants::Mev_to_cJ COMMA
+		377.096*constants::Mev_to_cJ COMMA
+		411.469*constants::Mev_to_cJ COMMA
+		395.135*constants::Mev_to_cJ COMMA
+		385.012*constants::Mev_to_cJ COMMA
+		403.369*constants::Mev_to_cJ COMMA
+		381.982*constants::Mev_to_cJ COMMA
+		390.368*constants::Mev_to_cJ COMMA
+		398.202*constants::Mev_to_cJ COMMA
+		413.553*constants::Mev_to_cJ COMMA
+		447.703*constants::Mev_to_cJ COMMA
+		431.520*constants::Mev_to_cJ COMMA
+		422.051*constants::Mev_to_cJ COMMA
+		440.323*constants::Mev_to_cJ COMMA
+		417.703*constants::Mev_to_cJ COMMA
+		426.636*constants::Mev_to_cJ COMMA
+		435.051*constants::Mev_to_cJ COMMA
+		449.302*constants::Mev_to_cJ COMMA
+		483.994*constants::Mev_to_cJ COMMA
+		467.353*constants::Mev_to_cJ COMMA
+		458.387*constants::Mev_to_cJ COMMA
+		476.830*constants::Mev_to_cJ COMMA
+		453.158*constants::Mev_to_cJ COMMA
+		462.740*constants::Mev_to_cJ COMMA
+		471.765*constants::Mev_to_cJ COMMA
+		484.689*constants::Mev_to_cJ COMMA
+		514.999*constants::Mev_to_cJ COMMA
+		500.002*constants::Mev_to_cJ COMMA
+		494.241*constants::Mev_to_cJ COMMA
+		509.878*constants::Mev_to_cJ COMMA
+		486.966*constants::Mev_to_cJ COMMA
+		497.115*constants::Mev_to_cJ COMMA
 		506.460*constants::Mev_to_cJ
-	};
+	};)
 	
 
 	/// constant list of ordered reaction
@@ -186,7 +186,7 @@ namespace nnet::net86 {
 		Float correction = -1.5*nakbt;
 
 		for (int i = 0; i < 86; ++i)
-			corrected_BE[i] = BE[i] + correction;
+			corrected_BE[i] = CUDA_ACCESS(BE)[i] + correction;
 
 		// coulombian correctio
 		if (!skip_coulombian_correction) {
@@ -279,7 +279,7 @@ namespace nnet::net86 {
 		{
 			// constants:
 			const Float t9r=T*1.0e-09;
-      		const Float t9=std::min((Float)10., t9r);
+      		const Float t9=min((Float)10., t9r);
       		const Float t92=t9*t9;
       		const Float t93=t92*t9;
       		const Float t95=t92*t93;

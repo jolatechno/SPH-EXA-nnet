@@ -222,60 +222,61 @@ namespace nnet::eos {
 
 		// tables
 		auto const [
-			d_, dd_sav_, dd2_sav_, ddi_sav_, dd2i_sav_, dd3i_sav_,
-			t_, dt_sav_, dt2_sav_, dti_sav_, dt2i_sav_, dt3i_sav_,
+			d, dd_sav, dd2_sav, ddi_sav, dd2i_sav, dd3i_sav,
+			t, dt_sav, dt2_sav, dti_sav, dt2i_sav, dt3i_sav,
 			
-			f_,
-   			fd_, ft_,
-   			fdd_, ftt_, fdt_,
-   			fddt_, fdtt_, fddtt_,
+			f,
+   			fd, ft,
+   			fdd, ftt, fdt,
+   			fddt, fdtt, fddtt,
 
-   			dpdf_, dpdfd_, dpdft_, dpdfdt_,
+   			dpdf, dpdfd, dpdft, dpdfdt,
 
-   			ef_, efd_, eft_, efdt_,
-   			xf_, xfd_, xft_, xfdt_
+   			ef, efd, eft, efdt,
+   			xf, xfd, xft, xfdt
 	   	] = read_table();
 
 
-		CUDA_DEFINE(static const inline ivector,  d,        = d_;)
-		CUDA_DEFINE(static const inline imvector, dd_sav,   = dd_sav_;)
-		CUDA_DEFINE(static const inline imvector, dd2_sav,  = dd2_sav_;)
-		CUDA_DEFINE(static const inline imvector, ddi_sav,  = ddi_sav_;)
-		CUDA_DEFINE(static const inline imvector, dd2i_sav, = dd2i_sav_;)
-		CUDA_DEFINE(static const inline imvector, dd3i_sav, = dd3i_sav_;)
+#ifdef USE_CUDA
+		__device__ static const inline ivector  dev_d        = d;
+		__device__ static const inline imvector dev_dd_sav   = dd_sav;
+		__device__ static const inline imvector dev_dd2_sav  = dd2_sav;
+		__device__ static const inline imvector dev_ddi_sav  = ddi_sav;
+		__device__ static const inline imvector dev_dd2i_sav = dd2i_sav;
+		__device__ static const inline imvector dev_dd3i_sav = dd3i_sav;
 
-		CUDA_DEFINE(static const inline jvector,  t,        = t_;)
-		CUDA_DEFINE(static const inline jmvector, dt_sav,   = dt_sav_;)
-		CUDA_DEFINE(static const inline jmvector, dt2_sav,  = dt2_sav_;)
-		CUDA_DEFINE(static const inline jmvector, dti_sav,  = dti_sav_;)
-		CUDA_DEFINE(static const inline jmvector, dt2i_sav, = dt2i_sav_;)
-		CUDA_DEFINE(static const inline jmvector, dt3i_sav, = dt3i_sav_;)
+		__device__ static const inline jvector  dev_t        = t;
+		__device__ static const inline jmvector dev_dt_sav   = dt_sav;
+		__device__ static const inline jmvector dev_dt2_sav  = dt2_sav;
+		__device__ static const inline jmvector dev_dti_sav  = dti_sav;
+		__device__ static const inline jmvector dev_dt2i_sav = dt2i_sav;
+		__device__ static const inline jmvector dev_dt3i_sav = dt3i_sav;
 
-		CUDA_DEFINE(static const inline ijmatrix, f,        = f_;)
-		CUDA_DEFINE(static const inline ijmatrix, fd,       = fd_;)
-		CUDA_DEFINE(static const inline ijmatrix, ft,       = ft_;)
-		CUDA_DEFINE(static const inline ijmatrix, fdd,      = fdd_;)
-		CUDA_DEFINE(static const inline ijmatrix, ftt,      = ftt_;)
-		CUDA_DEFINE(static const inline ijmatrix, fdt,      = fdt_;)
-		CUDA_DEFINE(static const inline ijmatrix, fddt,     = fddt_;)
-		CUDA_DEFINE(static const inline ijmatrix, fdtt,     = fdtt_;)
-		CUDA_DEFINE(static const inline ijmatrix, fddtt,    = fddtt_;)
+		__device__ static const inline ijmatrix dev_f        = f;
+		__device__ static const inline ijmatrix dev_fd       = fd;
+		__device__ static const inline ijmatrix dev_ft       = ft;
+		__device__ static const inline ijmatrix dev_fdd      = fdd;
+		__device__ static const inline ijmatrix dev_ftt      = ftt;
+		__device__ static const inline ijmatrix dev_fdt      = fdt;
+		__device__ static const inline ijmatrix dev_fddt     = fddt;
+		__device__ static const inline ijmatrix dev_fdtt     = fdtt;
+		__device__ static const inline ijmatrix dev_fddtt    = fddtt;
 
-		CUDA_DEFINE(static const inline ijmatrix, dpdf,     = dpdf_;)
-		CUDA_DEFINE(static const inline ijmatrix, dpdfd,    = dpdfd_;)
-		CUDA_DEFINE(static const inline ijmatrix, dpdft,    = dpdft_;)
-		CUDA_DEFINE(static const inline ijmatrix, dpdfdt,   = dpdfdt_;)
+		__device__ static const inline ijmatrix dev_dpdf     = dpdf;
+		__device__ static const inline ijmatrix dev_dpdfd    = dpdfd;
+		__device__ static const inline ijmatrix dev_dpdft    = dpdft;
+		__device__ static const inline ijmatrix dev_dpdfdt   = dpdfdt;
 
-		CUDA_DEFINE(static const inline ijmatrix, ef,       = ef_;)
-		CUDA_DEFINE(static const inline ijmatrix, efd,      = efd_;)
-		CUDA_DEFINE(static const inline ijmatrix, eft,      = eft_;)
-		CUDA_DEFINE(static const inline ijmatrix, efdt,     = efdt_;)
+		__device__ static const inline ijmatrix dev_ef       = ef;
+		__device__ static const inline ijmatrix dev_efd      = efd;
+		__device__ static const inline ijmatrix dev_eft      = eft;
+		__device__ static const inline ijmatrix dev_efdt     = efdt;
 
-		CUDA_DEFINE(static const inline ijmatrix, xf,       = xf_;)
-		CUDA_DEFINE(static const inline ijmatrix, xfd,      = xfd_;)
-		CUDA_DEFINE(static const inline ijmatrix, xft,      = xft_;)
-		CUDA_DEFINE(static const inline ijmatrix, xfdt,     = xfdt_;)
-
+		__device__ static const inline ijmatrix dev_xf       = xf;
+		__device__ static const inline ijmatrix dev_xfd      = xfd;
+		__device__ static const inline ijmatrix dev_xft      = xft;
+		__device__ static const inline ijmatrix dev_xfdt     = xfdt;
+#endif
 
 		// quintic hermite polynomial statement functions
 		// psi0 and its derivatives

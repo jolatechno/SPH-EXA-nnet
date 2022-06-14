@@ -23,7 +23,7 @@ namespace nnet::net86::constants {
 	const static double Mev_to_cJ = 9.648529392e17;
 
 	/// constant atomic number values
-	CUDA_DEFINE(inline static constexpr std::array<double COMMA 87>, Z, = {
+	CUDA_DEFINE(inline static const std::array<double COMMA 87>, Z, = {
 		 1 COMMA  0 COMMA  2 COMMA  6 COMMA  8 COMMA 10 COMMA 11 COMMA
 		12 COMMA 12 COMMA 10 COMMA 11 COMMA 12 COMMA 11 COMMA 10 COMMA
 		13 COMMA 14 COMMA 14 COMMA 12 COMMA 13 COMMA 14 COMMA 13 COMMA
@@ -40,7 +40,7 @@ namespace nnet::net86::constants {
 	};)
 
 	/// constant number of masses values
-	CUDA_DEFINE(inline static constexpr std::array<double COMMA 87>, A, = {
+	CUDA_DEFINE(inline static const std::array<double COMMA 87>, A, = {
 		 1 COMMA  1 COMMA  4 COMMA 12 COMMA 16 COMMA 20 COMMA 21 COMMA
 		24 COMMA 23 COMMA 21 COMMA 23 COMMA 22 COMMA 22 COMMA 22 COMMA
 		25 COMMA 28 COMMA 27 COMMA 25 COMMA 27 COMMA 26 COMMA 26 COMMA

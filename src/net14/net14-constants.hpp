@@ -15,12 +15,12 @@ namespace nnet::net14::constants {
 	const static double Mev_to_cJ = 9.648529392e17;
 
 	/// constant atomic number values
-	CUDA_DEFINE(inline static constexpr std::array<double COMMA 14>, Z, = {
+	CUDA_DEFINE(inline static const std::array<double COMMA 14>, Z, = {
 		2 COMMA 6 COMMA 8 COMMA 10 COMMA 12 COMMA 14 COMMA 16 COMMA 18 COMMA 20 COMMA 22 COMMA 24 COMMA 26 COMMA 28 COMMA 30
 	};)
 
 	/// constant number of masses values
-	CUDA_DEFINE(inline static constexpr std::array<double COMMA 14>, A, ={
+	CUDA_DEFINE(inline static const std::array<double COMMA 14>, A, ={
 		4 COMMA 12 COMMA 16 COMMA 20 COMMA 24 COMMA 28 COMMA 32 COMMA 36 COMMA 40 COMMA 44 COMMA 48 COMMA 52 COMMA 56 COMMA 60
 	};)
 
