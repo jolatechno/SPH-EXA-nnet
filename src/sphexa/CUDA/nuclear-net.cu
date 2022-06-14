@@ -1,3 +1,5 @@
+ #include "device_launch_parameters.h"
+
 namespace sphexa {
 namespace sphnnet {
 	template<class func_type, class func_eos, typename Float>
