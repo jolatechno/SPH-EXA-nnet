@@ -12,7 +12,6 @@
 #ifdef USE_CUDA
 	#include <cuda_runtime.h>
 #endif
-
 #include "CUDA/cuda.inl"
 
 namespace nnet {

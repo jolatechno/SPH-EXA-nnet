@@ -19,7 +19,9 @@
 #endif
 
 #ifdef USE_CUDA
-	#include "CUDA/nuclear-net.cuh"
+	#include <cuda.h>
+	#include <cuda_runtime.h>
+	#include "CUDA/nuclear-net.cu"
 #endif
 
 #include "../nuclear-net.hpp"

@@ -1139,15 +1139,13 @@ namespace nnet::eos {
 #endif
 		}
 
-		auto inline operator()(const Float *Y, const Float T, const Float rho) const {
-			return compute(Z, Y, T, rho);
-		}
-
-#ifdef USE_CUDA
-		__device__ auto inline operator()(const Float *Y, const Float T, const Float rho) const {
+		CUDA_FUNCTION_DECORATOR auto inline operator()(const Float *Y, const Float T, const Float rho) const {
+#ifdef  __CUDA_ARCH__
 			return compute(Z_dev, Y, T, rho);
-		}
+#else
+			return compute(Z, Y, T, rho);
 #endif
+		}
 	};
 }
 
