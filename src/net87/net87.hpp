@@ -19,7 +19,7 @@ namespace nnet::net87 {
 	static bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
-	CUDA_DEFINE(inline static const std::array<double COMMA 87>, BE, = [](){
+	CUDA_DEFINE(inline static const std::array<double COMMA 87>, BE, = [] CUDA_FUNCTION_DECORATOR (){
 		std::array<double COMMA 87> BE_;
 		for (int i = 0; i < 86; ++i)
 			BE_[i] = nnet::net86::CUDA_ACCESS(BE)[i];
@@ -42,7 +42,7 @@ namespace nnet::net87 {
 	}();
 
 	/// compute a list of rates for net87
-	CUDA_FUNCTION_DECORATOR static const auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
+	static const auto compute_reaction_rates = [] CUDA_FUNCTION_DECORATOR (const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
