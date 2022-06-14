@@ -5,11 +5,26 @@
 #include <cuda_runtime_api.h>
 #include <cuda_runtime.h>
 
-#include "../../nuclear-net.hpp"
+#include "nuclear-net.cuh"
 
 #ifndef CUDA_BLOCK_SIZE
 	#define CUDA_BLOCK_SIZE 256
 #endif
+
+namespace nnet {
+namespace constants {
+	extern double min_rho, min_temp;
+}
+	
+	// forward definition
+	template<class func_type, class func_eos, typename Float, class nseFunction>
+	__host__ __device__ void solve_system_substep(const int dimension,
+		Float *Mp, Float *RHS, Float *DY_T, Float *rates, Float *drates_dT,
+		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		Float *final_Y, Float &final_T, Float *Y_buffer,
+		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
+		const nseFunction jumpToNse=NULL);
+}
 
 namespace sphexa {
 namespace sphnnet {
@@ -37,7 +52,7 @@ namespace sphnnet {
 	}
 
 	template<class func_type, class func_eos, typename Float>
-	void cudaComputeNuclearReactions(int n_particles, int dimension,
+	__host__ void cudaComputeNuclearReactions(int n_particles, int dimension,
 	Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
 	const Float hydro_dt, const Float previous_dt,
 		const nnet::ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
