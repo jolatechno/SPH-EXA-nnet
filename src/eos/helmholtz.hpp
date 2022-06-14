@@ -1089,29 +1089,20 @@ namespace nnet::eos {
 	template<typename Float=double>
 	class helmholtz_functor {
 	private:
-		std::vector<Float> Z;
+		const Float *Z;
 		int dimension;
 
 	public:
-		helmholtz_functor(const std::vector<Float> &Z_) : Z(Z_), dimension(Z_.size()) {}
-		template<size_t N>
-		helmholtz_functor(const std::array<Float, N> &Z_) : Z(Z_.begin(), Z_.end()), dimension(Z_.size()) {}
 		template<class Vector>
-		helmholtz_functor(const Vector &Z_, int dimension_) : Z(Z_.begin(), Z_.begin() + dimension_), dimension(dimension_) {}
-
-		helmholtz_functor &operator=(helmholtz_functor<Float> const &other) {
-			Z         = other.Z;
-			dimension = other.dimension;
-
-			return *this;
-		}
+		helmholtz_functor(const Vector &Z_) : Z(Z_.data()), dimension(Z_.size()) {}
+		template<class Vector>
+		helmholtz_functor(const Vector &Z_, int dimension_) : Z(Z_.data()), dimension(dimension_) {}
+		helmholtz_functor(const Float *Z_, int dimension_) : Z(Z_), dimension(dimension_) {}
 
 		auto operator()(const Float *Y, const Float T, const Float rho) const {
-			const int dimension = Z.size();
-
 			// compute abar and zbar
 			Float abar = std::accumulate(Y, Y + dimension, 0.f);
-			Float zbar = eigen::dot(Z.begin(), Z.end(), Y);
+			Float zbar = eigen::dot(Y, Y + dimension, Z);
 
 			return helmholtz(abar, zbar, T, rho);
 		}

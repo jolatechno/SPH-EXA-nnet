@@ -10,9 +10,6 @@
 
 // base implementations
 namespace eigen {
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp declare target
-#endif
 	/// custom fixed-size matrix type
 	template<typename Type, int n, int m>
 	class fixed_size_matrix {
@@ -75,9 +72,6 @@ namespace eigen {
 
 	/// dot product function
 	template<class it1, class it2>
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
 	double dot(it1 const X_begin, it1 const X_end, it2 const Y_begin) {
 		double res = 0;
 		const int n = std::distance(X_begin, X_end);
@@ -91,9 +85,6 @@ namespace eigen {
 
 	/// custom analytical solver
 	template<typename Float=double>
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
 	void solve(Float *M, Float *RHS, Float *X, const int n, Float epsilon=0) {
 		// reduce into upper triangular
 		for (int i = 0; i < n; ++i) {
@@ -133,7 +124,4 @@ namespace eigen {
 			X[i] = res;
 		}
 	}
-#ifdef OMP_TARGET_SOLVER
-	#pragma omp end declare target
-#endif
 }
