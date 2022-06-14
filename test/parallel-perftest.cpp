@@ -181,13 +181,13 @@ int main(int argc, char* argv[]) {
 	initialize the state
 	!!!!!!!!!!!! */
 	if (use_net86) {
-		for (int i = 0; i < n_particles; ++i) {
+		for (size_t i = 0; i < n_particles; ++i) {
 			nuclear_data_86.Y[i]    = Y0_86;
 			nuclear_data_86.temp[i] = T_left   + (T_right   - T_left  )*((float)i)/((float)(n_particles - 1));
 			nuclear_data_86.rho[i]  = rho_left + (rho_right - rho_left)*((float)i)/((float)(n_particles - 1));
 		}
 	} else {
-		for (int i = 0; i < n_particles; ++i) {
+		for (size_t i = 0; i < n_particles; ++i) {
 			nuclear_data_14.Y[i]    = Y0_14;
 			nuclear_data_14.temp[i] = T_left   + (T_right   - T_left  )*((float)i)/((float)(n_particles - 1));
 			nuclear_data_14.rho[i]  = rho_left + (rho_right - rho_left)*((float)i)/((float)(n_particles - 1));

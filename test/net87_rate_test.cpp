@@ -45,7 +45,7 @@ int main() {
 		std::cout << "(" << i-(157 - 5)+1 << ")\t" << nnet::net87::reaction_list[i] << "\t\tR=" << rate[i] << ",\tdR/dT=" << drates[i] << "\n";
 
 	std::cout << "\nelectron capture rates:\n";
-	for (int i = 157-1 + 157-4; i < nnet::net87::reaction_list.size(); ++i)
+	for (size_t i = 157-1 + 157-4; i < nnet::net87::reaction_list.size(); ++i)
 		std::cout << "(" << i-(157 - 5)+1 << ")\t" << nnet::net87::reaction_list[i] << "\t\tR=" << rate[i] << ",\tdR/dT=" << drates[i] << "\n";
 
 	std::cout << "\nBE: ";

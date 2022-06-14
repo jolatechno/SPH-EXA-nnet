@@ -62,9 +62,9 @@ constants :
 			double dT_T_tol = 4;
 
 			/// minimum number of newton raphson iterations
-			uint min_it = 1;
+			int min_it = 1;
 			/// maximum number of newton raphson iterations
-			uint max_it = 11;
+			int max_it = 11;
 			/// tolerance for the correction to break out of the newton raphson loop
 			double it_tol = 1e-7;
 		}

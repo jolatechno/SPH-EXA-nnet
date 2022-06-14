@@ -94,7 +94,7 @@ namespace nnet::net86::constants {
 
 		std::vector<std::string> species_names_(unsorted_species_names.size());
 
-		for (int i = 0; i < unsorted_species_names.size(); ++i)
+		for (size_t i = 0; i < unsorted_species_names.size(); ++i)
 			species_names_[i] = unsorted_species_names[species_order[i]];
 
 		return species_names_;

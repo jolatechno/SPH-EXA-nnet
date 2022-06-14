@@ -17,22 +17,22 @@ namespace nnet::net14 {
 	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
-	inline static constexpr std::array<double, 14> BE{
-		0, 
-		 7.27440*constants::Mev_to_cJ,
-		14.43580*constants::Mev_to_cJ,
-		19.16680*constants::Mev_to_cJ,
-		28.48280*constants::Mev_to_cJ,
-		38.46680*constants::Mev_to_cJ,
-		45.41480*constants::Mev_to_cJ,
-		52.05380*constants::Mev_to_cJ,
-		59.09380*constants::Mev_to_cJ,
-		64.22080*constants::Mev_to_cJ,
-		71.91280*constants::Mev_to_cJ,
-		79.85180*constants::Mev_to_cJ,
-		87.84680*constants::Mev_to_cJ,
-		90.55480*constants::Mev_to_cJ
-	};
+	CUDA_DEFINE(inline static constexpr std::array<double COMMA 14>, BE, = {
+		0                             COMMA
+		 7.27440*constants::Mev_to_cJ COMMA
+		14.43580*constants::Mev_to_cJ COMMA
+		19.16680*constants::Mev_to_cJ COMMA
+		28.48280*constants::Mev_to_cJ COMMA
+		38.46680*constants::Mev_to_cJ COMMA
+		45.41480*constants::Mev_to_cJ COMMA
+		52.05380*constants::Mev_to_cJ COMMA
+		59.09380*constants::Mev_to_cJ COMMA
+		64.22080*constants::Mev_to_cJ COMMA
+		71.91280*constants::Mev_to_cJ COMMA
+		79.85180*constants::Mev_to_cJ COMMA
+		87.84680*constants::Mev_to_cJ COMMA
+		90.55480*constants::Mev_to_cJ COMMA
+	};)
 
 	// constant list of ordered reaction
 	inline static const nnet::reaction_list reaction_list(std::vector<nnet::reaction>{
@@ -129,7 +129,7 @@ namespace nnet::net14 {
 		const Float correction = -1.5*nakbt;
 
 		for (int i = 0; i < 14; ++i)
-			corrected_BE[i] = BE[i] + correction;
+			corrected_BE[i] = CUDA_ACCESS(BE)[i] + correction;
 
 		// coulombian correction
 		if (!skip_coulombian_correction) {

@@ -31,7 +31,7 @@ namespace sphexa::sphnnet {
 
 		// intialize nuclear data
 		#pragma omp parallel for schedule(dynamic)
-		for (int i = 0; i < local_nuclear_n_particles; ++i)
+		for (size_t i = 0; i < local_nuclear_n_particles; ++i)
 			n.Y[i] = initializer(x[i], y[i], z[i]);
 	}
 
@@ -61,7 +61,7 @@ namespace sphexa::sphnnet {
 
 		// intialize nuclear data
 		#pragma omp parallel for schedule(dynamic)
-		for (int i = 0; i < local_nuclear_n_particles; ++i)
+		for (size_t i = 0; i < local_nuclear_n_particles; ++i)
 			n.Y[i] = initializer(r[i]);
 	}
 
@@ -84,7 +84,7 @@ namespace sphexa::sphnnet {
 
 		// intialize nuclear data
 		#pragma omp parallel for schedule(dynamic)
-		for (int i = 0; i < local_nuclear_n_particles; ++i)
+		for (size_t i = 0; i < local_nuclear_n_particles; ++i)
 			n.Y[i] = initializer(n.rho[i]);
 	}
 
@@ -107,7 +107,7 @@ namespace sphexa::sphnnet {
 
 		// intialize nuclear data
 		#pragma omp parallel for schedule(dynamic)
-		for (int i = 0; i < local_nuclear_n_particles; ++i)
+		for (size_t i = 0; i < local_nuclear_n_particles; ++i)
 			n.Y[i] = Y0;
 	}
 }

@@ -257,7 +257,7 @@ int main(int argc, char* argv[]) {
 	const size_t first = offset, last = n_particles + offset;
 
 	particle_data.resize(last);
-	for (int i = first; i < last; ++i) {
+	for (size_t i = first; i < last; ++i) {
 		particle_data.temp[i] = T_left   + (T_right   - T_left  )*((float)(total_n_particles*rank/size + i-first))/((float)(total_n_particles - 1));
 		particle_data.rho[i]  = rho_left + (rho_right - rho_left)*((float)(total_n_particles*rank/size + i-first))/((float)(total_n_particles - 1));
 	}

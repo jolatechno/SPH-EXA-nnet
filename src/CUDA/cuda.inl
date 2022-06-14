@@ -1,3 +1,5 @@
+#define COMMA ,
+
 #ifdef USE_CUDA
 	#define CUDA_FUNCTION_DECORATOR __host__ __device__
 

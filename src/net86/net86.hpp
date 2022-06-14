@@ -16,7 +16,7 @@ namespace nnet::net86 {
 	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
-	inline static constexpr std::array<double, 86> BE{
+	inline static constexpr std::array<double, 86> BE = {
 		0, 0,
 		28.296 *constants::Mev_to_cJ,
 		92.163 *constants::Mev_to_cJ,
