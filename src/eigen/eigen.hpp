@@ -29,6 +29,9 @@ namespace eigen {
 		Type inline operator()(int i, int j) const {
 			return weights[i + j*n];
 		}
+		const Type *data() const {
+			return weights.data();
+		}
 	};
 
 

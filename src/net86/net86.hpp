@@ -189,7 +189,9 @@ namespace nnet::net86 {
 			corrected_BE[i] = CUDA_ACCESS(BE)[i] + correction;
 
 		// coulombian correctio
+#ifndef __CUDA_ARCH__
 		if (!skip_coulombian_correction) {
+#endif
 			Float ne = rho*constants::Na/2.;
 		    Float ae = std::pow((3./4.)/(constants::pi*ne), 1./3.);
 		    Float gam = constants::e2/(kbt*ae);
@@ -201,7 +203,9 @@ namespace nnet::net86 {
 
 			    corrected_BE[i] -= nakbt*funcion;
 			}
+#ifndef __CUDA_ARCH__
 		}
+#endif
 
 
 		/******************************************************/
@@ -279,7 +283,7 @@ namespace nnet::net86 {
 		{
 			// constants:
 			const Float t9r=T*1.0e-09;
-      		const Float t9=min((Float)10., t9r);
+      		const Float t9=std::min((Float)10., t9r);
       		const Float t92=t9*t9;
       		const Float t93=t92*t9;
       		const Float t95=t92*t93;
@@ -669,19 +673,36 @@ namespace nnet::net86 {
 		For that reason we use the inverse of the inverse as direct reaction.
 		So the direct reactions from the tables are the inverse of our network.
 		!!!!!!!!!!!!!!!!!!!!!!!! */
+		Float buffer;
 		for (int i = 137; i < 154; ++i) {
-			std::swap( eff[i],  l[i]);
-			std::swap(deff[i], dl[i]);
+			// std::swap( eff[i],  l[i]); :
+			buffer = eff[i];
+			eff[i] = l[i];
+			l[i]   = buffer;
+
+			// std::swap(deff[i], dl[i]); :
+			buffer  = deff[i];
+			deff[i] = dl[i];
+			dl[i]   = buffer;
 		}
-		std::swap( eff[156],  l[156]);
-		std::swap(deff[156], dl[156]);
+		// std::swap( eff[156],  l[156]); :
+		buffer   = eff[156];
+		eff[156] = l[156];
+		l[156]   = buffer;
+
+		// std::swap(deff[156], dl[156]); :
+		buffer    = deff[156];
+		deff[156] = dl[156];
+		dl[156]   = buffer;
 
 
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		correction for direct rate for coulumbian correction
 		!!!!!!!!!!!!!!!!!!!!!!!! */
+#ifndef __CUDA_ARCH__
 		if (!skip_coulombian_correction) {
+#endif
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			compute deltamukbt */
@@ -753,7 +774,9 @@ namespace nnet::net86 {
 		        // debuging :
 				// if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 156 ? "\n\n" : "\n");
 			}
+#ifndef __CUDA_ARCH__
 		}
+#endif
 		
 
 

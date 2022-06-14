@@ -126,7 +126,9 @@ namespace nnet::net14 {
 			corrected_BE[i] = CUDA_ACCESS(BE)[i] + correction;
 
 		// coulombian correction
+#ifndef __CUDA_ARCH__
 		if (!skip_coulombian_correction) {
+#endif
 			const Float ne = rho*constants::Na/2.;
 		    const Float ae = std::pow((3./4.)/(constants::pi*ne), 1./3.);
 		    const Float gam = constants::e2/(kbt*ae);
@@ -138,7 +140,9 @@ namespace nnet::net14 {
 
 			    corrected_BE[i] -= nakbt*funcion;
 			}
+#ifndef __CUDA_ARCH__
 		}
+#endif
 
 		/******************************************************/
 		/* start computing reaction rate and their derivative */ 
@@ -618,7 +622,9 @@ namespace nnet::net14 {
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		correction for direct rate for coulumbian correction
 		!!!!!!!!!!!!!!!!!!!!!!!! */
+#ifndef __CUDA_ARCH__
 		if (!skip_coulombian_correction) {
+#endif
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			compute deltamukbt */
@@ -681,7 +687,9 @@ namespace nnet::net14 {
 		        // debuging :
 				// if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 15 ? "\n\n" : "\n");
 			}
+#ifndef __CUDA_ARCH__
 		}
+#endif
 
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!

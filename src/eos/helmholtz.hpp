@@ -27,6 +27,7 @@
 
 #ifdef USE_CUDA
 	#include <cuda_runtime.h>
+	#include "../eigen/CUDA/cuda-eigen.hpp"
 #endif
 #include "../CUDA/cuda.inl"
 
@@ -47,6 +48,13 @@ namespace nnet::eos {
 		typedef std::array<double, imax - 1> imvector; // double[imax]
 		typedef std::array<double, jmax - 1> jmvector; // double[jmax]
 		typedef eigen::fixed_size_matrix<double, imax, jmax> ijmatrix; // double[imax][jmax]
+#ifdef USE_CUDA
+		typedef eigen::cuda::array<double, imax> Civector; // double[imax]
+		typedef eigen::cuda::array<double, jmax> Cjvector; // double[jmax]
+		typedef eigen::cuda::array<double, imax - 1> Cimvector; // double[imax]
+		typedef eigen::cuda::array<double, jmax - 1> Cjmvector; // double[jmax]
+		typedef eigen::cuda::fixed_size_matrix<double, imax, jmax> Cijmatrix; // double[imax][jmax]
+#endif
 
 		// table limits
 		static const double tlo   = 3.;
@@ -238,44 +246,44 @@ namespace nnet::eos {
 
 
 #ifdef USE_CUDA
-		__device__ static const inline ivector  dev_d        = d;
-		__device__ static const inline imvector dev_dd_sav   = dd_sav;
-		__device__ static const inline imvector dev_dd2_sav  = dd2_sav;
-		__device__ static const inline imvector dev_ddi_sav  = ddi_sav;
-		__device__ static const inline imvector dev_dd2i_sav = dd2i_sav;
-		__device__ static const inline imvector dev_dd3i_sav = dd3i_sav;
+		const Civector  dev_d        = d;
+		const Cimvector dev_dd_sav   = dd_sav;
+		const Cimvector dev_dd2_sav  = dd2_sav;
+		const Cimvector dev_ddi_sav  = ddi_sav;
+		const Cimvector dev_dd2i_sav = dd2i_sav;
+		const Cimvector dev_dd3i_sav = dd3i_sav;
 
-		__device__ static const inline jvector  dev_t        = t;
-		__device__ static const inline jmvector dev_dt_sav   = dt_sav;
-		__device__ static const inline jmvector dev_dt2_sav  = dt2_sav;
-		__device__ static const inline jmvector dev_dti_sav  = dti_sav;
-		__device__ static const inline jmvector dev_dt2i_sav = dt2i_sav;
-		__device__ static const inline jmvector dev_dt3i_sav = dt3i_sav;
+		const Cjvector  dev_t        = t;
+		const Cjmvector dev_dt_sav   = dt_sav;
+		const Cjmvector dev_dt2_sav  = dt2_sav;
+		const Cjmvector dev_dti_sav  = dti_sav;
+		const Cjmvector dev_dt2i_sav = dt2i_sav;
+		const Cjmvector dev_dt3i_sav = dt3i_sav;
 
-		__device__ static const inline ijmatrix dev_f        = f;
-		__device__ static const inline ijmatrix dev_fd       = fd;
-		__device__ static const inline ijmatrix dev_ft       = ft;
-		__device__ static const inline ijmatrix dev_fdd      = fdd;
-		__device__ static const inline ijmatrix dev_ftt      = ftt;
-		__device__ static const inline ijmatrix dev_fdt      = fdt;
-		__device__ static const inline ijmatrix dev_fddt     = fddt;
-		__device__ static const inline ijmatrix dev_fdtt     = fdtt;
-		__device__ static const inline ijmatrix dev_fddtt    = fddtt;
+		const Cijmatrix dev_f        = f;
+		const Cijmatrix dev_fd       = fd;
+		const Cijmatrix dev_ft       = ft;
+		const Cijmatrix dev_fdd      = fdd;
+		const Cijmatrix dev_ftt      = ftt;
+		const Cijmatrix dev_fdt      = fdt;
+		const Cijmatrix dev_fddt     = fddt;
+		const Cijmatrix dev_fdtt     = fdtt;
+		const Cijmatrix dev_fddtt    = fddtt;
 
-		__device__ static const inline ijmatrix dev_dpdf     = dpdf;
-		__device__ static const inline ijmatrix dev_dpdfd    = dpdfd;
-		__device__ static const inline ijmatrix dev_dpdft    = dpdft;
-		__device__ static const inline ijmatrix dev_dpdfdt   = dpdfdt;
+		const Cijmatrix dev_dpdf     = dpdf;
+		const Cijmatrix dev_dpdfd    = dpdfd;
+		const Cijmatrix dev_dpdft    = dpdft;
+		const Cijmatrix dev_dpdfdt   = dpdfdt;
 
-		__device__ static const inline ijmatrix dev_ef       = ef;
-		__device__ static const inline ijmatrix dev_efd      = efd;
-		__device__ static const inline ijmatrix dev_eft      = eft;
-		__device__ static const inline ijmatrix dev_efdt     = efdt;
+		const Cijmatrix dev_ef       = ef;
+		const Cijmatrix dev_efd      = efd;
+		const Cijmatrix dev_eft      = eft;
+		const Cijmatrix dev_efdt     = efdt;
 
-		__device__ static const inline ijmatrix dev_xf       = xf;
-		__device__ static const inline ijmatrix dev_xfd      = xfd;
-		__device__ static const inline ijmatrix dev_xft      = xft;
-		__device__ static const inline ijmatrix dev_xfdt     = xfdt;
+		const Cijmatrix dev_xf       = xf;
+		const Cijmatrix dev_xfd      = xfd;
+		const Cijmatrix dev_xft      = xft;
+		const Cijmatrix dev_xfdt     = xfdt;
 #endif
 
 		// quintic hermite polynomial statement functions
