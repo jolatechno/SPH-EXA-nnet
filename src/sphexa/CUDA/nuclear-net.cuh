@@ -4,7 +4,7 @@ namespace sphnnet {
 	__global__ void computeNuclearReactions(int dimension,
 	Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
 	const Float hydro_dt, const Float previous_dt,
-		const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
+		const nnet::ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
 	{
 	    int i = threadIdx.x;
 	    

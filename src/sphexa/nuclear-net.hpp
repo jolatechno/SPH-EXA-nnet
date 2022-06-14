@@ -96,8 +96,8 @@ namespace sphexa::sphnnet {
 		#pragma omp parallel for schedule(static)
 		for (size_t i = 0; i < n_particles; ++i) {
 			// compute abar and zbar
-			auto abar = std::accumulate(n.Y[i].begin(), n.Y[i].end(), 0.f);
-			auto zbar = eigen::dot(n.Y[i].begin(), n.Y[i].end(), Z);
+			double abar = std::accumulate(n.Y[i].begin(), n.Y[i].end(), (double)0.);
+			double zbar = eigen::dot(n.Y[i].begin(), n.Y[i].end(), Z);
 
 			auto eos_struct = nnet::eos::helmholtz(abar, zbar, n.temp[i], n.rho[i]);
 

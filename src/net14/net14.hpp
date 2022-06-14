@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "../CUDA/cuda.inl"
+
 #include "../nuclear-net.hpp"
 #include "net14-constants.hpp"
 

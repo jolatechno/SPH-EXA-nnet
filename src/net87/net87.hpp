@@ -10,6 +10,7 @@
 #ifdef USE_CUDA
 	#include "cuda_runtime.h"
 #endif
+#include "../CUDA/cuda.inl"
 
 namespace nnet::net87 {
 	namespace constants = nnet::net86::constants;
@@ -41,7 +42,7 @@ namespace nnet::net87 {
 	}();
 
 	/// compute a list of rates for net87
-	static const inline auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
+	CUDA_FUNCTION_DECORATOR static const auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		/* !!!!!!!!!!!!!!!!!!!!!!!!

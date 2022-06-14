@@ -6,13 +6,10 @@
 
 #include <omp.h>
 
-/*
-definition of util::array
-*/
-
 #ifndef NOT_FROM_SPHEXA
 	#include "cstone/util/array.hpp"
 #endif
+
 
 /*
 Simple utilities
@@ -22,7 +19,7 @@ stolen from QuIDS (https://github.com/jolatechno/QuIDS)
 namespace util {
 	/// scheduling batch size
 	int inline dynamic_batch_size(size_t N, int P) {
-		static constexpr float phi = 1.61803398875; // golden ratio
+		static const float phi = 1.61803398875; // golden ratio
 
 		int f = (int)std::floor(std::log2((float)N/(float)P)/phi);
 		int pow2_f = 1 << f;

@@ -3,6 +3,8 @@
 #define STRINGIFY(...) #__VA_ARGS__
 #define STR(...) STRINGIFY(__VA_ARGS__)
 
+#include "../CUDA/cuda.inl"
+
 #include "../eigen/eigen.hpp"
 
 #ifndef IMAX
@@ -278,42 +280,52 @@ namespace nnet::eos {
 
 		// quintic hermite polynomial statement functions
 		// psi0 and its derivatives
-		double inline psi0(const double z) {
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline psi0(const Float z) {
 			return z*z*z*(z*(-6.*z + 15.) - 10.) + 1.;
 		}
-		double inline dpsi0(const double z) {
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline dpsi0(const Float z) {
 			return z*z*(z*(-30.*z + 60.) - 30.);
 		};
-		double inline  ddpsi0(const double z) {
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline  ddpsi0(const Float z) {
 			return z*(z*(-120.*z + 180.) -60.);
 		};
 
 		// psi1 and its derivatives
-		double inline psi1(const double z) {
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline psi1(const Float z) {
 			return z*(z*z*(z*(-3.*z + 8.) - 6.) + 1.);
 		};
-		double inline dpsi1(const double z) {
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline dpsi1(const Float z) {
 			return z*z*(z*(-15.*z + 32.) - 18.) + 1.;
 		};
-		double inline ddpsi1(const double z) {
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline ddpsi1(const Float z) {
 			return z*(z*(-60.*z + 96.) -36.);
 		};
 
 		// psi2  and its derivatives
-		double inline psi2(const double z) {
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline psi2(const Float z) {
 			return 0.5*z*z*(z*(z*(-z + 3.) - 3.) + 1.);
 		};
-		double inline dpsi2(const double z) {
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline dpsi2(const Float z) {
 			return  0.5*z*(z*(z*(-5.*z + 12.) - 9.) + 2.);
 		};
-		double inline ddpsi2(const double z) {
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline ddpsi2(const Float z) {
 			return 0.5*(z*(z*(-20.*z + 36.) - 18.) + 2.);
 		};
 
 		// biquintic hermite polynomial statement function
-		double inline h5(const double *fi,
-			const double w0t, const double w1t, const double w2t, const double w0mt, const double w1mt, const double w2mt,
-			const double w0d,const double w1d, const double w2d, const double w0md, const double w1md, const double w2md)
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline h5(const Float *fi,
+			const Float w0t, const Float w1t, const Float w2t, const Float w0mt, const Float w1mt, const Float w2mt,
+			const Float w0d,const Float w1d, const Float w2d, const Float w0md, const Float w1md, const Float w2md)
 		{
 		    return fi[0]*w0d*w0t  +  fi[1]*w0md*w0t
 		    	+  fi[2]*w0d*w0mt +  fi[3]*w0md*w0mt
@@ -338,24 +350,29 @@ namespace nnet::eos {
 
 		// cubic hermite polynomial statement functions
 		// psi0 and its derivatives
-		double inline xpsi0(const double z) {
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline xpsi0(const Float z) {
 			return z*z*(2.*z - 3.) + 1.;
 		};
-		double inline xdpsi0(const double z) {
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline xdpsi0(const Float z) {
 			return z*(6.*z - 6.);
 		};
 
 		// psi1 & derivatives
-		double inline xpsi1(const double z) {
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline xpsi1(const Float z) {
 			return z*(z*(z - 2.) + 1.);
 		};
-		double inline xdpsi1(const double z) {
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline xdpsi1(const Float z) {
 			return z*(3.*z - 4.) + 1.;
 		};
 
 		// bicubic hermite polynomial statement function
-		double inline h3(const double *fi,
-			const double w0t, const double w1t, const double w0mt, const double w1mt, const double w0d, const double w1d, const double w0md, const double w1md)
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR Float inline h3(const Float *fi,
+			const Float w0t, const Float w1t, const Float w0mt, const Float w1mt, const Float w0d, const Float w1d, const Float w0md, const Float w1md)
 		{
 		    return fi[0]*w0d*w0t  +  fi[1]*w0md*w0t
 		    	+  fi[2]*w0d*w0mt +  fi[3]*w0md*w0mt
@@ -369,9 +386,10 @@ namespace nnet::eos {
 
 
 		// get correspong table indices
-		std::pair<int, int> inline get_table_indices(const double T, const double rho, const double abar, const double zbar) {
-			const double ye = std::max(1e-16, zbar/abar);
-			const double din = ye*rho;
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR std::pair<int, int> inline get_table_indices(const Float T, const Float rho, const Float abar, const Float zbar) {
+			const Float ye = std::max(1e-16, zbar/abar);
+			const Float din = ye*rho;
 
 			int jat = int((std::log10(T) - tlo)*tstpi);
 			jat = std::max(0, std::min(jat, jmax - 2));
@@ -393,12 +411,12 @@ namespace nnet::eos {
 	*...TODO
 	 */
 	template<typename Float>
-	auto inline helmholtz(double abar, double zbar, Float T, Float rho) {
+	CUDA_FUNCTION_DECORATOR auto inline helmholtz(double abar_, double zbar_, Float T, Float rho) {
 		// coefs
-		double fi[36];
+		Float fi[36];
 
-		abar = 1/abar;
-		zbar = abar*zbar;
+		Float abar = 1/abar_;
+		Float zbar = zbar_/abar_;
 
 
 		/* debug: */
@@ -1091,21 +1109,45 @@ namespace nnet::eos {
 	private:
 		const Float *Z;
 		int dimension;
+#ifdef USE_CUDA
+		Float *Z_dev;
+#endif
 
-	public:
-		template<class Vector>
-		helmholtz_functor(const Vector &Z_) : Z(Z_.data()), dimension(Z_.size()) {}
-		template<class Vector>
-		helmholtz_functor(const Vector &Z_, int dimension_) : Z(Z_.data()), dimension(dimension_) {}
-		helmholtz_functor(const Float *Z_, int dimension_) : Z(Z_), dimension(dimension_) {}
-
-		auto operator()(const Float *Y, const Float T, const Float rho) const {
+		CUDA_FUNCTION_DECORATOR auto inline compute(const Float *Z_, const Float *Y, const Float T, const Float rho) const {
 			// compute abar and zbar
-			Float abar = std::accumulate(Y, Y + dimension, 0.f);
-			Float zbar = eigen::dot(Y, Y + dimension, Z);
+			double abar = std::accumulate(Y, Y + dimension, (Float)0);
+			double zbar = eigen::dot(Y, Y + dimension, Z);
 
 			return helmholtz(abar, zbar, T, rho);
 		}
+
+	public:
+		helmholtz_functor(const Float  *Z_, int dimension_) : Z(Z_), dimension(dimension_) {
+#ifdef USE_CUDA
+			cudaMalloc(&Z_dev, dimension*sizeof(Float));
+			cudaMemcpy(Z_dev, Z, dimension*sizeof(Float), cudaMemcpyHostToDevice);
+#endif
+		}
+		template<class Vector>
+		helmholtz_functor(const Vector &Z_, int dimension_) : helmholtz_functor(Z_.data(), dimension_) {}
+		template<class Vector>
+		helmholtz_functor(const Vector &Z_) : helmholtz_functor(Z_.data(), Z_.size()) {}
+
+		~helmholtz_functor() {
+#ifdef USE_CUDA
+			cudaFree(Z_dev);
+#endif
+		}
+
+		auto inline operator()(const Float *Y, const Float T, const Float rho) const {
+			return compute(Z, Y, T, rho);
+		}
+
+#ifdef USE_CUDA
+		__device__ auto inline operator()(const Float *Y, const Float T, const Float rho) const {
+			return compute(Z_dev, Y, T, rho);
+		}
+#endif
 	};
 }
 

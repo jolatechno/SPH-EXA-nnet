@@ -9,6 +9,7 @@
 #ifdef USE_CUDA
 	#include "cuda_runtime.h"
 #endif
+#include "../CUDA/cuda.inl"
 
 namespace nnet::net86 {
 	/// if true ignore coulombian corrections
@@ -173,10 +174,7 @@ namespace nnet::net86 {
 
 
 	/// compute a list of rates for net86
-#ifdef USE_CUDA
-	__host__ __device__ 
-#endif
-	static const inline auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
+	CUDA_FUNCTION_DECORATOR static const inline auto compute_reaction_rates = [](const auto *Y, const auto T, const auto rho, const auto &eos_struct, auto *corrected_BE, auto *rates, auto *drates) {
 		using Float = typename std::remove_const<decltype(T)>::type;
 
 		/*********************************************/

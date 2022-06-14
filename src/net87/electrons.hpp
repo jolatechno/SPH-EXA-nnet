@@ -18,6 +18,8 @@
 	#define ELECTRON_TABLE_PATH "./electron_rate.dat"
 #endif
 
+#include "../CUDA/cuda.inl"
+
 #include <iostream>
 
 #include <sstream>
@@ -29,7 +31,7 @@
 namespace nnet::net87::electrons {
 	namespace constants {
 		// table size
-		static constexpr int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
+		static const int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
 
 		// table type
 		typedef eigen::fixed_size_matrix<std::array<double, nC>, nTemp, nRho> rateMatrix; // double[nRho][nTemp][nC]
@@ -68,9 +70,9 @@ namespace nnet::net87::electrons {
 		// tables
 		auto const [log_temp_ref_, log_rho_ref_, electron_rate_] = read_table();
 
-		static const inline auto log_temp_ref  = log_temp_ref_;
-		static const inline auto log_rho_ref   = log_rho_ref_;
-		static const inline auto electron_rate = electron_rate_;
+		static const inline tempVector log_temp_ref  = log_temp_ref_;
+		static const inline rhoVector  log_rho_ref   = log_rho_ref_;
+		static const inline rateMatrix electron_rate = electron_rate_;
 	}
 
 	/// interpolate electron rate
@@ -78,7 +80,7 @@ namespace nnet::net87::electrons {
 	 * TODO
 	 */
 	template<typename Float>
-	void interpolate(Float temp, Float rhoElec, std::array<double, constants::nC> &rate) {
+	CUDA_FUNCTION_DECORATOR void interpolate(Float temp, Float rhoElec, std::array<double, constants::nC> &rate) {
 		// find temperature index
 		int i_temp_sup = 0;
 		Float log_temp = std::log10(temp);
