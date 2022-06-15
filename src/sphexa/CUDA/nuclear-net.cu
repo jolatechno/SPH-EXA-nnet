@@ -7,10 +7,6 @@
 
 #include "nuclear-net.cuh"
 
-#ifndef CUDA_BLOCK_SIZE
-	#define CUDA_BLOCK_SIZE 256
-#endif
-
 namespace sphexa {
 namespace sphnnet {
 	template<class func_type, class func_eos, typename Float>
@@ -19,15 +15,20 @@ namespace sphnnet {
 	const Float hydro_dt, const Float previous_dt,
 		const nnet::ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
 	{
-	    int i = blockIdx.x*blockDim.x + threadIdx.x;
-	    if (i < n_particles) {
-	    	Float *Mp        = (Float*)malloc((dimension + 1)*(dimension + 1)*sizeof(Float));
-			Float *RHS       = (Float*)malloc(                (dimension + 1)*sizeof(Float));
-			Float *DY_T      = (Float*)malloc(                (dimension + 1)*sizeof(Float));
-			Float *Y_buffer  = (Float*)malloc(                      dimension*sizeof(Float));
-			Float *rates     = (Float*)malloc(reactions.size()*sizeof(Float));
-			Float *drates_dT = (Float*)malloc(reactions.size()*sizeof(Float));
+	    size_t thread = blockIdx.x*blockDim.x + threadIdx.x;
+	    size_t begin  =       thread*constants::cuda_num_iteration_per_thread;
+	    size_t end    = (thread + 1)*constants::cuda_num_iteration_per_thread;
+	    if (end > n_particles)
+	    	end = n_particles;
 
+    	Float *Mp        = new Float[(dimension + 1)*(dimension + 1)];
+		Float *RHS       = new Float[                (dimension + 1)];
+		Float *DY_T      = new Float[                (dimension + 1)];
+		Float *Y_buffer  = new Float[                      dimension];
+		Float *rates     = new Float[reactions.size()];
+		Float *drates_dT = new Float[reactions.size()];
+
+		for (size_t i = begin; i < end; ++i)
 		    if (rho_[i] > nnet::constants::min_rho && temp_[i] > nnet::constants::min_temp) {
 				// compute drho/dt
 				Float drho_dt = previous_rho_[i] <= 0 ? 0. : (rho_[i] - previous_rho_[i])/previous_dt;
@@ -40,13 +41,12 @@ namespace sphnnet {
 					rho_[i], drho_dt, hydro_dt, dt_[i]);
 			}
 
-			free(Mp);
-			free(RHS);
-			free(DY_T);
-			free(Y_buffer);
-			free(rates);
-			free(drates_dT);
-		}
+		delete[] Mp;
+		delete[] RHS;
+		delete[] DY_T;
+		delete[] Y_buffer;
+		delete[] rates;
+		delete[] drates_dT;
 	}
 
 	template<class func_type, class func_eos, typename Float>
@@ -55,10 +55,10 @@ namespace sphnnet {
 	const Float hydro_dt, const Float previous_dt,
 		const nnet::ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
 	{
-		int cuda_n_thread_per_block = CUDA_BLOCK_SIZE;
-		int cuda_n_blocks           = (n_particles + cuda_n_thread_per_block - 1) / cuda_n_thread_per_block;
+		int num_threads     = (n_particles + constants::cuda_num_iteration_per_thread - 1)/constants::cuda_num_iteration_per_thread;
+		int cuda_num_blocks = (num_threads + constants::cuda_num_thread_per_block     - 1)/constants::cuda_num_thread_per_block;
 
-	    cudaKernelComputeNuclearReactions<<<cuda_n_blocks, cuda_n_thread_per_block>>>(n_particles, dimension,
+	    cudaKernelComputeNuclearReactions<<<cuda_num_blocks, constants::cuda_num_thread_per_block>>>(n_particles, dimension,
 			rho_, previous_rho_, Y_, temp_, dt_,
 			hydro_dt, previous_dt,
 			reactions, construct_rates_BE, eos);
