@@ -79,14 +79,6 @@ namespace sphexa::sphnnet {
 					jumpToNse);
 			}
 #else
-		// to
-		Float *previous_rho_ = cuda_util::move_to_gpu<Float>(n.previous_rho.data(), n_particles);
-		Float *rho_          = cuda_util::move_to_gpu<Float>(n.rho.data(),          n_particles);
-		// tofrom
-		Float *dt_           = cuda_util::move_to_gpu<Float>(n.dt.data(),           n_particles);
-		Float *temp_         = cuda_util::move_to_gpu<Float>(n.temp.data(),         n_particles);
-		Float *Y_            = cuda_util::move_to_gpu<Float>(n.Y[0].data(),         n_particles*dimension);
-
 		// reactions
 		nnet::gpu_reaction_list dev_reactions = nnet::move_to_gpu(reactions);
 
@@ -94,27 +86,13 @@ namespace sphexa::sphnnet {
 		GPU non-batch solver
 		!!!!!!!!!!!!! */
 		cudaComputeNuclearReactions<func_type, func_eos, Float>(n_particles, dimension,
-			rho_, previous_rho_, Y_, temp_, dt_,
+			d.rho.data(), d.previous_rho.data(), d.Y.data(), d.temp.data(), d.dt.data(),
 			hydro_dt, previous_dt,
 			dev_reactions, construct_rates_BE, eos);
-
 
 		/* debuging: check for error */
 		gpuErrchk(cudaPeekAtLastError());
 		gpuErrchk(cudaDeviceSynchronize());
-
-
-		// copy back to cpu
-		gpuErrchk(cudaMemcpy(n.dt.data(),   dt_,             n_particles*sizeof(Float), cudaMemcpyDeviceToHost));
-		gpuErrchk(cudaMemcpy(n.dt.data(),   temp_,           n_particles*sizeof(Float), cudaMemcpyDeviceToHost));
-		gpuErrchk(cudaMemcpy(n.Y[0].data(), Y_,    dimension*n_particles*sizeof(Float), cudaMemcpyDeviceToHost));
-
-		// cuda free
-		gpuErrchk(cudaFree(previous_rho_));
-		gpuErrchk(cudaFree(rho_));
-		gpuErrchk(cudaFree(dt_));
-		gpuErrchk(cudaFree(temp_));
-		gpuErrchk(cudaFree(Y_));
 #endif
 	}
 
