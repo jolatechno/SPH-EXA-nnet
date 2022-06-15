@@ -24,6 +24,8 @@
 	#include <cuda_runtime_api.h>
 	#include <cuda_runtime.h>
 
+	#include <thrust/device_vector.h>
+
 	#include "CUDA/nuclear-net.cu"
 	#include "../CUDA/nuclear-net.hpp"
 #endif
@@ -86,7 +88,11 @@ namespace sphexa::sphnnet {
 		GPU non-batch solver
 		!!!!!!!!!!!!! */
 		cudaComputeNuclearReactions<func_type, func_eos, Float>(n_particles, dimension,
-			d.rho.data(), d.previous_rho.data(), d.Y.data(), d.temp.data(), d.dt.data(),
+			thrust::raw_pointer_cast(n.rho.data()),
+			thrust::raw_pointer_cast(n.previous_rho.data()),
+	(Float*)thrust::raw_pointer_cast(n.Y.data()),
+			thrust::raw_pointer_cast(n.temp.data()),
+			thrust::raw_pointer_cast(n.dt.data()),
 			hydro_dt, previous_dt,
 			dev_reactions, construct_rates_BE, eos);
 
