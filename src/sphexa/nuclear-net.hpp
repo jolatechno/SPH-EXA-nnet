@@ -141,17 +141,18 @@ namespace sphexa::sphnnet {
 		}
 	}
 
-#ifdef USE_MPI
 	/// function initializing the partition of NuclearDataType from 
 	/**
 	 * TODO
 	 */
 	template<class ParticlesDataType,class nuclearDataType, typename Float=double>
 	void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, nuclearDataType &n) {
+#ifdef USE_MPI
 		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
 
 		size_t n_particles = lastIndex - firstIndex;
 		MPI_Allreduce(&n_particles, &n.numParticlesGlobal, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, n.comm);
+#endif
 	}
 
 
@@ -161,31 +162,28 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType, class nuclearDataType>
 	void hydroToNuclearUpdate(ParticlesDataType &d, nuclearDataType &n, const std::vector<std::string> &sync_fields) {
-		std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices, nuclearIOoutputFieldIndices = io::outputFieldIndices;
-		std::vector<std::string> outputFieldNamesNuclear   = n.outputFieldNames,   outputFieldNamesHydro   = d.outputFieldNames,   nuclearIOoutputFieldNames   = io::outputFieldNames;
+#ifdef USE_MPI
+		// get data
+		auto nuclearData  = n.data();
+		auto particleData = d.data();
 
-		// get particle data
-		n.setOutputFields(sync_fields);
-		auto nuclearData  = sphexa::getOutputArrays(n);
+		// send fields
+		for (auto field : sync_fields) {
+			// find field
+			int nuclearFieldIdx = std::distance(n.fieldNames.begin(), 
+				std::find(n.fieldNames.begin(), n.fieldNames.end(), field));
+			if (field == "previous_rho")
+				field = "rho";
+			int particleFieldIdx = std::distance(d.fieldNames.begin(), 
+				std::find(d.fieldNames.begin(), d.fieldNames.end(), field));
 
-		// get nuclear data
-		std::vector<std::string> particleDataFields = sync_fields;
-		std::replace(particleDataFields.begin(), particleDataFields.end(), std::string("previous_rho"), std::string("rho")); // replace "previous_rho" by "rho" for particle data
-		d.setOutputFields(particleDataFields);
-		auto particleData = sphexa::getOutputArrays(d);
-
-		const int n_fields = sync_fields.size();
-		if (particleData.size() != n_fields || nuclearData.size() != n_fields)
-			throw std::runtime_error("Not the right number of fields to synchronize in sendHydroData !\n");
-
-		for (int field = 0; field < n_fields; ++field)
+			// send
 			std::visit(
 				[&d, &n](auto&& send, auto &&recv){
-					sphexa::mpi::directSyncDataFromPartition(n.partition, send, recv, d.comm);
-				}, particleData[field], nuclearData[field]);
-
-		n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro; io::outputFieldIndices = nuclearIOoutputFieldIndices;
-		n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;   io::outputFieldNames   = nuclearIOoutputFieldNames;
+					sphexa::mpi::directSyncDataFromPartition(n.partition, send->data(), recv->data(), d.comm);
+				}, particleData[particleFieldIdx], nuclearData[nuclearFieldIdx]);
+		}
+#endif
 	}
 
 	/// sending back hydro data from NuclearDataType to ParticlesDataType
@@ -194,27 +192,23 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType, class nuclearDataType>
 	void nuclearToHydroUpdate(ParticlesDataType &d, nuclearDataType &n, const std::vector<std::string> &sync_fields) {
-		std::vector<int>         outputFieldIndicesNuclear = n.outputFieldIndices, outputFieldIndicesHydro = d.outputFieldIndices, nuclearIOoutputFieldIndices = io::outputFieldIndices;
-		std::vector<std::string> outputFieldNamesNuclear   = n.outputFieldNames,   outputFieldNamesHydro   = d.outputFieldNames,   nuclearIOoutputFieldNames   = io::outputFieldNames;
+#ifdef USE_MPI
+		auto nuclearData  = n.data();
+		auto particleData = d.data();
 
-		d.setOutputFields(sync_fields);
-		n.setOutputFields(sync_fields);
+		// send fields
+		for (auto field : sync_fields) {
+			// find field
+			int nuclearFieldIdx = std::distance(n.fieldNames.begin(), 
+				std::find(n.fieldNames.begin(), n.fieldNames.end(), field));
+			int particleFieldIdx = std::distance(d.fieldNames.begin(), 
+				std::find(d.fieldNames.begin(), d.fieldNames.end(), field));
 
-		auto particleData = sphexa::getOutputArrays(d);
-		auto nuclearData  = sphexa::getOutputArrays(n);
-
-		const int n_fields = sync_fields.size();
-		if (particleData.size() != n_fields || nuclearData.size() != n_fields)
-			throw std::runtime_error("Not the right number of fields to synchronize in recvHydroData !\n");
-
-		for (int field = 0; field < n_fields; ++field)
 			std::visit(
 				[&d, &n](auto&& send, auto &&recv){
-					sphexa::mpi::reversedSyncDataFromPartition(n.partition, send, recv, d.comm);
-				}, nuclearData[field], particleData[field]);
-
-		n.outputFieldIndices = outputFieldIndicesNuclear, d.outputFieldIndices = outputFieldIndicesHydro; io::outputFieldIndices = nuclearIOoutputFieldIndices;
-		n.outputFieldNames   = outputFieldNamesNuclear,   d.outputFieldNames   = outputFieldNamesHydro;   io::outputFieldNames   = nuclearIOoutputFieldNames;
-	}
+					sphexa::mpi::reversedSyncDataFromPartition(n.partition, send->data(), recv->data(), d.comm);
+				}, nuclearData[nuclearFieldIdx], particleData[particleFieldIdx]);
+		}
 #endif
+	}
 }
