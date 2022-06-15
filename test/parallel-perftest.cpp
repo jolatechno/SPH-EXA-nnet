@@ -161,11 +161,11 @@ int main(int argc, char* argv[]) {
 
 	if (use_net86) {
 		nuclear_data_86.setConserved(/*"nid", "pid",*/ "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_86.devData.setConserved("temp", "rho", "previous_rho", "Y");
+		nuclear_data_86.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt");
 		nuclear_data_86.resize(n_particles);
 	} else {
 		nuclear_data_14.setConserved(/*"nid", "pid",*/ "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_14.devData.setConserved("temp", "rho", "previous_rho", "Y");
+		nuclear_data_14.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt");
 		nuclear_data_14.resize(n_particles);
 	}
 

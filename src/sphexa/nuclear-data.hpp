@@ -67,6 +67,8 @@ namespace sphexa::sphnnet {
 	        double growthRate = 1;
 	        auto   data_      = data();
 
+	        devData.resize(size);
+
 	        for (size_t i = 0; i < data_.size(); ++i) {
 	            if (this->isAllocated(i)) {
 	            	// actually resize
@@ -103,8 +105,6 @@ namespace sphexa::sphnnet {
 	                }, data_[i]);
 	            }
 	        }
-
-	        // devPtrs.resize(size);
 	    }
 
 

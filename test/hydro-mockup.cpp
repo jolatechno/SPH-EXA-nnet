@@ -274,15 +274,17 @@ int main(int argc, char* argv[]) {
 	if (use_net86) {
 		nuclear_data_86.setConserved("nid", "pid", "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_86.devData.setConserved("temp", "rho", "previous_rho", "Y");
+		nuclear_data_86.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt");
+		
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_86, Y0_86);
 
 		n_nuclear_particles = nuclear_data_86.Y.size();
 		sphexa::sphnnet::transferToDevice(nuclear_data_86, {"Y", "dt"});
 	} else {
-		nuclear_data_14.setConserved("nid", "pid", "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_14.setConserved("nid", "pid", "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y", "dt");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
 		nuclear_data_14.devData.setConserved("temp", "rho", "previous_rho", "Y");
+
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_14, Y0_14);
 
 		n_nuclear_particles = nuclear_data_14.Y.size();
@@ -407,7 +409,7 @@ int main(int argc, char* argv[]) {
 		dump(nuclear_data_86, n_nuclear_particles - n_print, n_nuclear_particles, "/dev/stdout");
 	} else {
 		sphexa::sphnnet::transferToHost(nuclear_data_14, {"Y"});
-		
+
 		dump(nuclear_data_14, 0,                             n_print,             "/dev/stdout");
 		dump(nuclear_data_14, n_nuclear_particles - n_print, n_nuclear_particles, "/dev/stdout");
 	}

@@ -89,7 +89,7 @@ namespace sphexa::sphnnet {
 
 			return ret;
 #else
-			return util::array<void*, 1>{nullptr};
+			return util::array<std::variant<std::vector<int>*>, 0>{};
 #endif
 	    }
 	 };
@@ -112,7 +112,7 @@ namespace sphexa::sphnnet {
 			std::visit(
 				[&](auto&& dev, auto &&host) {
 					size_t n_copy = host->size();
-					using T = decltype((*host)[0]);
+					using T = decltype(*host->data());
 
 					gpuErrchk(cudaMemcpy((void*)thrust::raw_pointer_cast(dev->data()), (void*)host->data(), n_copy*sizeof(T), cudaMemcpyHostToDevice));
 				}, deviceData[devFieldIdx], hostData[hostFieldIdx]);
@@ -139,7 +139,7 @@ namespace sphexa::sphnnet {
 			std::visit(
 			[&](auto&& host, auto &&dev) {
 				size_t n_copy = host->size();
-				using T = decltype((*host)[0]);
+				using T = decltype(*host->data());
 
 				gpuErrchk(cudaMemcpy((void*)host->data(), (void*)thrust::raw_pointer_cast(dev->data()), n_copy*sizeof(T), cudaMemcpyDeviceToHost));
 			}, hostData[hostFieldIdx], deviceData[devFieldIdx]);
