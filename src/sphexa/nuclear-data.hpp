@@ -19,6 +19,8 @@
 	#include "cstone/util/util.hpp"
 #endif
 
+#include "CUDA/nuclear-data-gpu.hpp"
+
 namespace sphexa::sphnnet {
 	/// nuclear data class for n_species nuclear network
 	/**
@@ -30,6 +32,8 @@ namespace sphexa::sphnnet {
 		// types
 		using RealType = Float;
     	using KeyType  = size_t;
+
+    	DeviceNuclearDataType<n_species, Float> devData;
 
     	size_t iteration{0};
 	    size_t numParticlesGlobal;
