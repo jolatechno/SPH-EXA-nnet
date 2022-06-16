@@ -42,62 +42,64 @@ namespace nnet::net87 {
 	}();
 
 	/// compute a list of rates for net87
-	template<typename Float, class eos>
-	CUDA_FUNCTION_DECORATOR void inline compute_reaction_rates(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) {
-		/* !!!!!!!!!!!!!!!!!!!!!!!!
-		electron value
-		!!!!!!!!!!!!!!!!!!!!!!!! */
-		const Float Yelec   = Y[constants::electron];
-		const Float rhoElec = Yelec*rho;
-		std::array<Float, electrons::constants::nC> electron_values;
-		electrons::interpolate(T, rhoElec, electron_values);
+	struct compute_reaction_rates_function {
+		template<typename Float, class eos>
+		CUDA_FUNCTION_DECORATOR void inline operator()(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			electron value
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			const Float Yelec   = Y[constants::electron];
+			const Float rhoElec = Yelec*rho;
+			std::array<Float, electrons::constants::nC> electron_values;
+			electrons::interpolate(T, rhoElec, electron_values);
 
-		Float effe        = electron_values[0];
-		Float deffe       = electron_values[1]*1e-9;
-		Float deffedYe    = electron_values[2];//*rho;
-		Float Eneutr      = electron_values[3]*4.93e17;
+			Float effe        = electron_values[0];
+			Float deffe       = electron_values[1]*1e-9;
+			Float deffedYe    = electron_values[2];//*rho;
+			Float Eneutr      = electron_values[3]*4.93e17;
 
-		Float dEneutr     = electron_values[4]*4.93e17*1.e-9;
-		Float dEneutrdYe  = electron_values[5]*4.93e17;//*rho
+			Float dEneutr     = electron_values[4]*4.93e17*1.e-9;
+			Float dEneutrdYe  = electron_values[5]*4.93e17;//*rho
 
-		Float effp        = electron_values[6];
-		Float deffp       = electron_values[7];
-		Float deffpdYe    = electron_values[8];//*rho;
-		Float Eaneutr     = electron_values[9];
-		Float dEaneutr    = electron_values[10];
-		Float dEaneutrdYe = electron_values[11];//*rho;
+			Float effp        = electron_values[6];
+			Float deffp       = electron_values[7];
+			Float deffpdYe    = electron_values[8];//*rho;
+			Float Eaneutr     = electron_values[9];
+			Float dEaneutr    = electron_values[10];
+			Float dEaneutrdYe = electron_values[11];//*rho;
 
-		Float dUedYe = eos_struct.dU_dYe;
+			Float dUedYe = eos_struct.dU_dYe;
 
 
-		nnet::net86::compute_reaction_rates(Y, T, rho, eos_struct, corrected_BE, rates, drates);
+			nnet::net86::compute_reaction_rates(Y, T, rho, eos_struct, corrected_BE, rates, drates);
 
-		/*********************************************/
-		/* start computing the binding energy vector */
-		/*********************************************/
+			/*********************************************/
+			/* start computing the binding energy vector */
+			/*********************************************/
 
-		// ideal gaz correction
-		Float kbt = constants::Kb*T;
-		Float nakbt = constants::Na*kbt;
-		Float correction = -1.5*nakbt;
+			// ideal gaz correction
+			Float kbt = constants::Kb*T;
+			Float nakbt = constants::Na*kbt;
+			Float correction = -1.5*nakbt;
 
-		// adding electrons to net86
-		corrected_BE[86] = CUDA_ACCESS(BE).back() + correction;
+			// adding electrons to net86
+			corrected_BE[86] = CUDA_ACCESS(BE).back() + correction;
 
-		// electron energy corrections
-		corrected_BE[constants::proton]  += Eneutr;
-		corrected_BE[constants::neutron] += Eaneutr;
+			// electron energy corrections
+			corrected_BE[constants::proton]  += Eneutr;
+			corrected_BE[constants::neutron] += Eaneutr;
 
-		/******************************************************/
-		/* start computing reaction rate and their derivative */ 
-		/******************************************************/
+			/******************************************************/
+			/* start computing reaction rate and their derivative */ 
+			/******************************************************/
 
-		int idx = 157-1 + 157-4 -1, jdx = 157-1 + 157-4 -1;
-		// electron capture rates
-		rates [++idx] = deffedYe; // = effe/rhoElec
-		drates[++jdx] = rhoElec == 0 ? 0 : deffe/rhoElec;
+			int idx = 157-1 + 157-4 -1, jdx = 157-1 + 157-4 -1;
+			// electron capture rates
+			rates [++idx] = deffedYe; // = effe/rhoElec
+			drates[++jdx] = rhoElec == 0 ? 0 : deffe/rhoElec;
 
-		rates [++idx] = deffpdYe; // = deffp/rhoElec
-		drates[++jdx] = rhoElec == 0 ? 0 : deffp/rhoElec; // deffp/Y[86]/rho, !!! hack !!!
-	};
+			rates [++idx] = deffpdYe; // = deffp/rhoElec
+			drates[++jdx] = rhoElec == 0 ? 0 : deffp/rhoElec; // deffp/Y[86]/rho, !!! hack !!!
+		}
+	} compute_reaction_rates;
 }

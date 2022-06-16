@@ -17,11 +17,11 @@ namespace sphnnet {
 		/// number of thread per cuda thread block
 		const int cuda_num_thread_per_block = 128;
 	}
-	
+
 	template<class func_type, class func_eos, typename Float>
 	__global__ void cudaKernelComputeNuclearReactions(const int n_particles, const int dimension,
-	Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
-	const Float hydro_dt, const Float previous_dt,
+		Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
+		const Float hydro_dt, const Float previous_dt,
 		const nnet::ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
 	{
 	    size_t thread = blockIdx.x*blockDim.x + threadIdx.x;
@@ -60,8 +60,8 @@ namespace sphnnet {
 
 	template<class func_type, class func_eos, typename Float>
 	__host__ void cudaComputeNuclearReactions(const int n_particles, const int dimension,
-	Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
-	const Float hydro_dt, const Float previous_dt,
+		Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
+		const Float hydro_dt, const Float previous_dt,
 		const nnet::ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
 	{
 		int num_threads     = (n_particles + constants::cuda_num_iteration_per_thread - 1)/constants::cuda_num_iteration_per_thread;

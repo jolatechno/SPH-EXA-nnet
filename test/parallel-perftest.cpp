@@ -229,17 +229,17 @@ int main(int argc, char* argv[]) {
 	if (use_net86) {
 			if (isotherm) {
 				step(nuclear_data_86, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double, eos_output>, isotherm_eos);
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos);
 			} else
 				step(nuclear_data_86, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double, nnet::eos::helm_eos_output<double>>, helm_eos_86);
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86);
 		} else
 			if (isotherm) {
 				step(nuclear_data_14, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double, eos_output>, isotherm_eos);
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos);
 			} else
 				step(nuclear_data_14, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double, nnet::eos::helm_eos_output<double>>, helm_eos_14);
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14);
 
 
 
@@ -260,17 +260,17 @@ int main(int argc, char* argv[]) {
 		if (use_net86) {
 			if (isotherm) {
 				step(nuclear_data_86, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double, eos_output>, isotherm_eos);
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos);
 			} else
 				step(nuclear_data_86, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates<double, nnet::eos::helm_eos_output<double>>, helm_eos_86);
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86);
 		} else
 			if (isotherm) {
 				step(nuclear_data_14, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double, eos_output>, isotherm_eos);
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos);
 			} else
 				step(nuclear_data_14, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double, nnet::eos::helm_eos_output<double>>, helm_eos_14);
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14);
 		
 		t += hydro_dt;
 

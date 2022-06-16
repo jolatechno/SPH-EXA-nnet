@@ -111,12 +111,12 @@ int main(int argc, char* argv[]) {
 		double current_dt = isotherm ? 
 			nnet::solve_system_NR(14, 
 				Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
-				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double, eos_output>, isotherm_eos,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos,
 				last_Y.data(), last_T, Y.data(), T,
 				rho, 0., dt) :
 			nnet::solve_system_NR(14, 
 				Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
-				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates<double, nnet::eos::helm_eos_output<double>>, helm_eos,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos,
 				last_Y.data(), last_T, Y.data(), T,
 				rho, 0., dt);
 		t += current_dt;
