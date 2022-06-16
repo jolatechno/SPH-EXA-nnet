@@ -89,7 +89,12 @@ namespace eigen {
 			}
 
 			template<class Other>
-			fixed_size_matrix &operator=(Other const &other) {
+			__host__ fixed_size_matrix(Other const &other) : fixed_size_matrix() {
+				*this = other;
+			}
+
+			template<class Other>
+			__host__ fixed_size_matrix &operator=(Other const &other) {
 				/* TODO */
 			}
 
@@ -124,7 +129,12 @@ namespace eigen {
 			}
 
 			template<class Other>
-			fixed_size_array &operator=(Other const &other) {
+			__host__ fixed_size_array(Other const &other) : fixed_size_array() {
+				*this = other;
+			}
+
+			template<class Other>
+			__host__ fixed_size_array &operator=(Other const &other) {
 				/* TODO */
 			}
 
