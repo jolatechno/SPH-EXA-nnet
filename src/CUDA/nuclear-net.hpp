@@ -41,15 +41,13 @@ namespace nnet {
 	 * TODO
 	 */
 	class gpu_reaction_list : public ptr_reaction_list {
+	private:
 		friend gpu_reaction_list move_to_gpu(const ptr_reaction_list &reactions);
+		friend void inline free(gpu_reaction_list &reactions);
 
 	public:
 		gpu_reaction_list() {}
-		~gpu_reaction_list() {
-			gpuErrchk(cudaFree((void*)ptr_reaction_list::reactant_product));
-			gpuErrchk(cudaFree((void*)ptr_reaction_list::reactant_begin));
-			gpuErrchk(cudaFree((void*)ptr_reaction_list::product_begin));
-		}
+		~gpu_reaction_list() {};
 	};
 
 
@@ -58,6 +56,8 @@ namespace nnet {
 	 * TODO
 	 */
 	gpu_reaction_list move_to_gpu(const ptr_reaction_list &reactions) {
+		std::cout << "intiating gpu_reaction_list...\n";
+
 		gpu_reaction_list dev_reactions;
 		dev_reactions.num_reactions = reactions.num_reactions;
 
@@ -65,6 +65,23 @@ namespace nnet {
 		dev_reactions.reactant_begin   = cuda_util::move_to_gpu<int>(reactions.reactant_begin, reactions.num_reactions + 1);
 		dev_reactions.product_begin    = cuda_util::move_to_gpu<int>(reactions.product_begin,  reactions.num_reactions);
 
+		std::cout << "\t...Ok\n";
+
 		return dev_reactions;
 	} 
+
+
+	/// function to free reactions
+	/**
+	 * TODO
+	 */
+	void inline free(gpu_reaction_list &reactions) {
+		std::cout << "freeing gpu_reaction_list...\n";
+
+		gpuErrchk(cudaFree((void*)reactions.reactant_product));
+		gpuErrchk(cudaFree((void*)reactions.reactant_begin));
+		gpuErrchk(cudaFree((void*)reactions.product_begin));
+
+		std::cout << "\t...Ok\n";
+	}
 }

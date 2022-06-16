@@ -52,21 +52,31 @@ namespace sphexa::sphnnet {
 		
 #ifdef USE_CUDA
 		if constexpr (HaveGpu<typename Data::AcceleratorType>{}) {
+			std::cout << "kernel...\n"; 
+
 			/* !!!!!!!!!!!!!
 			GPU non-batch solver
 			!!!!!!!!!!!!! */
+			nnet::gpu_reaction_list dev_reactions = nnet::move_to_gpu(reactions);
+
+			std::cout << "calling kernel...\n"; 
 			cudaComputeNuclearReactions(n_particles, dimension,
-				thrust::raw_pointer_cast(n.rho.data()),
-				thrust::raw_pointer_cast(n.previous_rho.data()),
-		(Float*)thrust::raw_pointer_cast(n.Y.data()),
-				thrust::raw_pointer_cast(n.temp.data()),
-				thrust::raw_pointer_cast(n.dt.data()),
+		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()),
+		(Float*)thrust::raw_pointer_cast(n.devData.previous_rho.data()),
+		(Float*)thrust::raw_pointer_cast(n.devData.Y.data()),
+		(Float*)thrust::raw_pointer_cast(n.devData.temp.data()),
+		(Float*)thrust::raw_pointer_cast(n.devData.dt.data()),
 				hydro_dt, previous_dt,
-				nnet::move_to_gpu(reactions), construct_rates_BE, eos);
+				dev_reactions, construct_rates_BE, eos);
+			std::cout << "\t...Ok\n"; 
 
 			/* debuging: check for error */
 			gpuErrchk(cudaPeekAtLastError());
 			gpuErrchk(cudaDeviceSynchronize());
+
+			std::cout << "\t...Ok\n"; 
+
+			free(dev_reactions);
 
 			return;
 		}

@@ -43,6 +43,8 @@ namespace nnet::net87 {
 
 	/// compute a list of rates for net87
 	struct compute_reaction_rates_function {
+		CUDA_FUNCTION_DECORATOR compute_reaction_rates_function() {}
+		
 		template<typename Float, class eos>
 		CUDA_FUNCTION_DECORATOR void inline operator()(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!

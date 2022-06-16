@@ -93,9 +93,13 @@ void step(
 inline static constexpr struct eos_output {
 	double cv, dP_dT, dU_dYe;
 } isotherm_res{1e20, 0, 0};
-CUDA_FUNCTION_DECORATOR eos_output inline isotherm_eos(const double *Y_, const double T, const double rho_) {
-	return isotherm_res;
-};
+struct isotherm_eos_struct {
+	CUDA_FUNCTION_DECORATOR isotherm_eos_struct() {}
+	
+	CUDA_FUNCTION_DECORATOR eos_output inline operator()(const double *Y_, const double T, const double rho_) const {
+		return isotherm_res;
+	}
+} isotherm_eos;
 
 
 int main(int argc, char* argv[]) {

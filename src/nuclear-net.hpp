@@ -219,7 +219,7 @@ constants :
 	 * ...TODO
 	 */
 	class ptr_reaction_list {
-	private:
+	protected:
 		// pointer to each reaction
 		const int *reactant_begin, *product_begin;
 		const reaction::reactant_product *reactant_product;
@@ -228,6 +228,8 @@ constants :
 		// forward declaration
 		friend gpu_reaction_list;
 		friend gpu_reaction_list move_to_gpu(const ptr_reaction_list &reactions);
+		friend void inline free(gpu_reaction_list &reactions);
+		
 	public:
 		ptr_reaction_list() {}
 		ptr_reaction_list(reaction_list const &other) {

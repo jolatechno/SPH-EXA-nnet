@@ -1172,6 +1172,7 @@ namespace nnet::eos {
 	public:
 		using eos_type = helm_eos_output<Float>;
 
+		CUDA_FUNCTION_DECORATOR helmholtz_functor() {}
 		helmholtz_functor(const Float  *Z_, int dimension_) : Z(Z_), dimension(dimension_) {
 #ifdef USE_CUDA
 			cudaMalloc(&Z_dev, dimension*sizeof(Float));
@@ -1183,7 +1184,7 @@ namespace nnet::eos {
 		template<class Vector>
 		helmholtz_functor(const Vector &Z_) : helmholtz_functor(Z_.data(), Z_.size()) {}
 
-		~helmholtz_functor() {
+		CUDA_FUNCTION_DECORATOR ~helmholtz_functor() {
 #ifdef USE_CUDA
 			cudaFree(Z_dev);
 #endif
