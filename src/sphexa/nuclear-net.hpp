@@ -50,7 +50,27 @@ namespace sphexa::sphnnet {
 		const size_t n_particles = n.temp.size();
 		const int dimension = n.Y[0].size();
 		
-#ifndef USE_CUDA
+#ifdef USE_CUDA
+		if constexpr (HaveGpu<typename Data::AcceleratorType>{}) {
+			/* !!!!!!!!!!!!!
+			GPU non-batch solver
+			!!!!!!!!!!!!! */
+			cudaComputeNuclearReactions(n_particles, dimension,
+				thrust::raw_pointer_cast(n.rho.data()),
+				thrust::raw_pointer_cast(n.previous_rho.data()),
+		(Float*)thrust::raw_pointer_cast(n.Y.data()),
+				thrust::raw_pointer_cast(n.temp.data()),
+				thrust::raw_pointer_cast(n.dt.data()),
+				hydro_dt, previous_dt,
+				nnet::move_to_gpu(reactions), construct_rates_BE, eos);
+
+			/* debuging: check for error */
+			gpuErrchk(cudaPeekAtLastError());
+			gpuErrchk(cudaDeviceSynchronize());
+
+			return;
+		}
+#else
 		/* !!!!!!!!!!!!!!!!!!!!!!!
 		simple CPU parallel solver
 		!!!!!!!!!!!!!!!!!!!!!!! */
@@ -80,25 +100,6 @@ namespace sphexa::sphnnet {
 					n.rho[i], drho_dt, hydro_dt, n.dt[i],
 					jumpToNse);
 			}
-#else
-		// reactions
-		nnet::gpu_reaction_list dev_reactions = nnet::move_to_gpu(reactions);
-
-		/* !!!!!!!!!!!!!
-		GPU non-batch solver
-		!!!!!!!!!!!!! */
-		cudaComputeNuclearReactions<func_type, func_eos, Float>(n_particles, dimension,
-			thrust::raw_pointer_cast(n.rho.data()),
-			thrust::raw_pointer_cast(n.previous_rho.data()),
-	(Float*)thrust::raw_pointer_cast(n.Y.data()),
-			thrust::raw_pointer_cast(n.temp.data()),
-			thrust::raw_pointer_cast(n.dt.data()),
-			hydro_dt, previous_dt,
-			dev_reactions, construct_rates_BE, eos);
-
-		/* debuging: check for error */
-		gpuErrchk(cudaPeekAtLastError());
-		gpuErrchk(cudaDeviceSynchronize());
 #endif
 	}
 
