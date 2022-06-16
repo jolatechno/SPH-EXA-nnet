@@ -20,7 +20,7 @@
 
 
 
-#ifdef USE_CUDA
+#if defined(USE_CUDA) && !defined(CPU_CUDA_TEST)
 	using AccType = cstone::GpuTag;
 #else
 	using AccType = cstone::CpuTag;

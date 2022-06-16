@@ -70,7 +70,7 @@ namespace sphexa::sphnnet {
 
 			return;
 		}
-#else
+#endif
 		/* !!!!!!!!!!!!!!!!!!!!!!!
 		simple CPU parallel solver
 		!!!!!!!!!!!!!!!!!!!!!!! */
@@ -100,7 +100,6 @@ namespace sphexa::sphnnet {
 					n.rho[i], drho_dt, hydro_dt, n.dt[i],
 					jumpToNse);
 			}
-#endif
 	}
 
 	/// function to copute the helmholtz eos
