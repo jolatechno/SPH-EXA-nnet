@@ -46,10 +46,10 @@ namespace nnet::eos {
 		const int imax = IMAX, jmax = JMAX;
 
 		// table type
-		typedef std::array<double, imax> ivector; // double[imax]
-		typedef std::array<double, jmax> jvector; // double[jmax]
-		typedef std::array<double, imax - 1> imvector; // double[imax]
-		typedef std::array<double, jmax - 1> jmvector; // double[jmax]
+		typedef eigen::fixed_size_array<double, imax> ivector; // double[imax]
+		typedef eigen::fixed_size_array<double, jmax> jvector; // double[jmax]
+		typedef eigen::fixed_size_array<double, imax - 1> imvector; // double[imax]
+		typedef eigen::fixed_size_array<double, jmax - 1> jmvector; // double[jmax]
 		typedef eigen::fixed_size_matrix<double, imax, jmax> ijmatrix; // double[imax][jmax]
 
 		// table limits

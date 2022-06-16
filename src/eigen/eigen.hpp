@@ -11,6 +11,16 @@
 
 // base implementations
 namespace eigen {
+#ifdef USE_CUDA
+	// forward declarations
+	namespace cuda {
+		template<typename Type, int n, int m>
+		class fixed_size_matrix;
+		template<typename Type, int n>
+		class fixed_size_array;
+	}
+#endif
+
 	/// custom fixed-size matrix type
 	template<typename Type, int n, int m>
 	class fixed_size_matrix {
@@ -40,6 +50,97 @@ namespace eigen {
 			return weights.data();
 		}
 	};
+
+	/// custom fixed-size matrix type
+	template<typename Type, int n>
+	class fixed_size_array {
+	private:
+		std::vector<Type> weights;
+
+	public:
+		fixed_size_array() {
+			weights.resize(n);
+		}
+
+		Type inline &operator[](int i) {
+			return weights[i];
+		}
+		const Type inline operator[](int i) const {
+			return weights[i];
+		}
+
+		const Type *data() const {
+			return weights.data();
+		}
+	};
+
+
+#ifdef USE_CUDA
+	namespace cuda {
+		/// custom fixed-size matrix type
+		template<typename Type, int n, int m>
+		class fixed_size_matrix {
+		private:
+			Type *weights, *dev_weights;
+
+		public:
+			__host__ fixed_size_matrix() {
+				/* TODO */
+			}
+
+			template<class Other>
+			fixed_size_matrix &operator=(Other const &other) {
+				/* TODO */
+			}
+
+			CUDA_FUNCTION_DECORATOR Type inline *operator[](int i) {
+				return data() + i*m;
+			}
+			CUDA_FUNCTION_DECORATOR const Type inline *operator[](int i) const {
+				return data() + i*m;
+			}
+
+			CUDA_FUNCTION_DECORATOR Type inline &operator()(int i, int j) {
+				return CUDA_ACCESS(weights)[i*m + j];
+			}
+			CUDA_FUNCTION_DECORATOR Type inline operator()(int i, int j) const {
+				return CUDA_ACCESS(weights)[i*m + j];
+			}
+
+			CUDA_FUNCTION_DECORATOR const Type *data() const {
+				return CUDA_ACCESS(weights);
+			}
+		};
+
+		/// custom fixed-size matrix type
+		template<typename Type, int n>
+		class fixed_size_array {
+		private:
+			Type *weights, *dev_weights;
+
+		public:
+			__host__ fixed_size_array() {
+				/* TODO */
+			}
+
+			template<class Other>
+			fixed_size_array &operator=(Other const &other) {
+				/* TODO */
+			}
+
+			CUDA_FUNCTION_DECORATOR Type inline &operator[](int i) {
+				return CUDA_ACCESS(weights)[i];
+			}
+			CUDA_FUNCTION_DECORATOR Type inline operator[](int i) const {
+				return CUDA_ACCESS(weights)[i];
+			}
+
+			CUDA_FUNCTION_DECORATOR const Type *data() const {
+				return CUDA_ACCESS(weights);
+			}
+		};
+	}
+#endif
 
 
 	/// vector type

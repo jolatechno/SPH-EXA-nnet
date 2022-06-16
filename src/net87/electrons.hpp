@@ -38,8 +38,8 @@ namespace nnet::net87::electrons {
 
 		// table type
 		typedef eigen::fixed_size_matrix<std::array<double, nC>, nTemp, nRho> rateMatrix; // double[nRho][nTemp][nC]
-		typedef std::array<double, nRho> rhoVector;
-		typedef std::array<double, nTemp> tempVector;
+		typedef eigen::fixed_size_array<double, nRho> rhoVector;
+		typedef eigen::fixed_size_array<double, nTemp> tempVector;
 
 		// read electron rate constants table
 		std::tuple<tempVector, rhoVector, rateMatrix> read_table() {
