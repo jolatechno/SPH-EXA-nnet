@@ -34,16 +34,24 @@ void printHelp(char* name) {
 	std::cout << "\t'--debug-net86': if exists output debuging prints for net86 species\n\n";
 }
 
-inline static constexpr struct eos_output {
+
+struct eos_output {
+	CUDA_FUNCTION_DECORATOR eos_output(double cv_=0., double dP_dT_=0., double dU_dYe_=0.) :
+		cv(cv_),
+		dP_dT(dP_dT_),
+		dU_dYe(dU_dYe_) {}
+	CUDA_FUNCTION_DECORATOR ~eos_output() {}
+
 	double cv, dP_dT, dU_dYe;
-} isotherm_res{1e20, 0, 0};
+};
 struct isotherm_eos_struct {
 	CUDA_FUNCTION_DECORATOR isotherm_eos_struct() {}
-	
+
 	CUDA_FUNCTION_DECORATOR eos_output inline operator()(const double *Y_, const double T, const double rho_) const {
-		return isotherm_res;
+		return eos_output{1e20, 0, 0};;
 	}
 } isotherm_eos;
+
 
 int main(int argc, char* argv[]) {
 	const ArgParser parser(argc, argv);

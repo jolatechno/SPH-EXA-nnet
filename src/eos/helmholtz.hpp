@@ -29,6 +29,8 @@
 
 #ifdef USE_CUDA
 	#include <cuda_runtime.h>
+
+	#include "../CUDA/nuclear-net.hpp"
 #endif
 #include "../CUDA/cuda.inl"
 
@@ -248,44 +250,44 @@ namespace nnet::eos {
 			}
 
 #ifdef USE_CUDA
-				cudaMemcpy(dev_d,        d.data(),              IMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_dd_sav,   dd_sav.data(),   (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_dd2_sav,  dd2_sav.data(),  (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_ddi_sav,  ddi_sav.data(),  (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_dd2i_sav, dd2i_sav.data(), (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_dd3i_sav, dd3i_sav.data(), (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
+				gpuErrchk(cudaMemcpy(dev_d,        d.data(),              IMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_dd_sav,   dd_sav.data(),   (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_dd2_sav,  dd2_sav.data(),  (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_ddi_sav,  ddi_sav.data(),  (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_dd2i_sav, dd2i_sav.data(), (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_dd3i_sav, dd3i_sav.data(), (IMAX - 1)*sizeof(double), cudaMemcpyHostToDevice));
 
-				cudaMemcpy(dev_t, t.data(), JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_dt_sav,   dt_sav.data(),   (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_dt2_sav,  dt2_sav.data(),  (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_dti_sav,  dti_sav.data(),  (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_dt2i_sav, dt2i_sav.data(), (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_dt3i_sav, dt3i_sav.data(), (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice);
+				gpuErrchk(cudaMemcpy(dev_t, t.data(), JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_dt_sav,   dt_sav.data(),   (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_dt2_sav,  dt2_sav.data(),  (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_dti_sav,  dti_sav.data(),  (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_dt2i_sav, dt2i_sav.data(), (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_dt3i_sav, dt3i_sav.data(), (JMAX - 1)*sizeof(double), cudaMemcpyHostToDevice));
 
-				cudaMemcpy(dev_f,     f.data(),     IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_fd,    fd.data(),    IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_ft,    ft.data(),    IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_fdd,   fdd.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_ftt,   ftt.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_fdt,   fdt.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_fddt,  fddt.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_fdtt,  fdtt.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_fddtt, fddtt.data(), IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				gpuErrchk(cudaMemcpy(dev_f,     f.data(),     IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_fd,    fd.data(),    IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_ft,    ft.data(),    IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_fdd,   fdd.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_ftt,   ftt.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_fdt,   fdt.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_fddt,  fddt.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_fdtt,  fdtt.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_fddtt, fddtt.data(), IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
 
-				cudaMemcpy(dev_dpdf,   dpdf.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_dpdfd,  dpdfd.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_dpdft,  dpdft.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_dpdfdt, dpdfdt.data(), IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				gpuErrchk(cudaMemcpy(dev_dpdf,   dpdf.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_dpdfd,  dpdfd.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_dpdft,  dpdft.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_dpdfdt, dpdfdt.data(), IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
 				
-				cudaMemcpy(dev_ef,   ef.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_efd,  efd.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_eft,  eft.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_efdt, efdt.data(), IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				gpuErrchk(cudaMemcpy(dev_ef,   ef.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_efd,  efd.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_eft,  eft.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_efdt, efdt.data(), IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
 
-				cudaMemcpy(dev_xf,   xf.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_xfd,  xfd.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_xft,  xft.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
-				cudaMemcpy(dev_xfdt, xfdt.data(), IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice);
+				gpuErrchk(cudaMemcpy(dev_xf,   xf.data(),   IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_xfd,  xfd.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_xft,  xft.data(),  IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
+				gpuErrchk(cudaMemcpy(dev_xfdt, xfdt.data(), IMAX*JMAX*sizeof(double), cudaMemcpyHostToDevice));
 #endif
 
 			return {
@@ -451,6 +453,9 @@ namespace nnet::eos {
 	 */
 	template<typename Float>
 	struct helm_eos_output {
+		CUDA_FUNCTION_DECORATOR helm_eos_output() {}
+		CUDA_FUNCTION_DECORATOR ~helm_eos_output() {}
+
 		Float cv, dP_dT, p;
 		Float cp, c, u;
 
@@ -1175,8 +1180,8 @@ namespace nnet::eos {
 		CUDA_FUNCTION_DECORATOR helmholtz_functor() {}
 		helmholtz_functor(const Float  *Z_, int dimension_) : Z(Z_), dimension(dimension_) {
 #ifdef USE_CUDA
-			cudaMalloc(&Z_dev, dimension*sizeof(Float));
-			cudaMemcpy(Z_dev, Z, dimension*sizeof(Float), cudaMemcpyHostToDevice);
+			gpuErrchk(cudaMalloc(&Z_dev, dimension*sizeof(Float)));
+			gpuErrchk(cudaMemcpy(Z_dev, Z, dimension*sizeof(Float), cudaMemcpyHostToDevice));
 #endif
 		}
 		template<class Vector>

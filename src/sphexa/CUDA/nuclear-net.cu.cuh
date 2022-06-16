@@ -57,7 +57,7 @@ namespace sphnnet {
 
 		// only test "eos"
 		auto eos_struct = (*eos)(Y_buffer, (Float)1.e9, (Float)1e9);
-		temp_[1] = eos_struct.cv;
+		temp_[0] = eos_struct.cv;
 
 
 
