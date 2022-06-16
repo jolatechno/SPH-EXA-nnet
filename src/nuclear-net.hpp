@@ -655,11 +655,12 @@ Iterative solver:
 	 * TODO
 	 */
 	template<typename Float>
-	CUDA_FUNCTION_DECORATOR std::tuple<Float, bool> inline finalize_system_NR(const int dimension,
+	CUDA_FUNCTION_DECORATOR bool inline finalize_system_NR(const int dimension,
 		const Float *Y, const Float T,
 		Float *final_Y, Float &final_T,
-		const Float *DY_T, Float &dt, int &i)
+		const Float *DY_T, Float &dt, Float &used_dt, int &i)
 	{
+
 		Float last_T = final_T;
 		finalize_system(dimension, Y, T, final_Y, final_T, DY_T);
 
@@ -670,7 +671,8 @@ Iterative solver:
 
 			// jump back
 			i = 0;
-			return {0., false};
+			used_dt = 0.;
+			return false;
 		}
 
 		// break condition
@@ -681,10 +683,11 @@ Iterative solver:
 
 			// jump back
 			i = 0;
+			used_dt = 0.;
 			for (int j = 0; j < dimension; ++j)
 				final_Y[j] = Y[j];
 			final_T = T;
-			return {0., false};
+			return false;
 		}
 
 		// cleanup Vector
@@ -699,17 +702,18 @@ Iterative solver:
 			Float dT_T = std::abs((final_T - T)/final_T);
 
 			// timestep tweeking
-			Float previous_dt = dt;
-			dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::NR::dT_T_target/dT_T)*previous_dt;
-			dt = algorithm::min(dt, previous_dt*constants::max_dt_step);
-			dt = algorithm::max(dt, previous_dt*constants::min_dt_step);
-			dt = algorithm::min(dt,      (Float)constants::NR::max_dt);
+			used_dt = dt;
+			dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::NR::dT_T_target/dT_T)*used_dt;
+			dt = algorithm::min(dt, used_dt*constants::max_dt_step);
+			dt = algorithm::max(dt, used_dt*constants::min_dt_step);
+			dt = algorithm::min(dt,  (Float)constants::NR::max_dt);
 
-			return {previous_dt, true};
+			return true;
 		}
 
 		// continue the loop
-		return {0., false};
+		used_dt = 0.;
+		return false;
 	}
 
 
@@ -749,13 +753,14 @@ Iterative solver:
 			eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilon_system);
 
 			// finalize
-			auto [timestep, exit] = finalize_system_NR(
+			if(finalize_system_NR(
 				dimension,
 				Y, T,
 				final_Y, final_T,
-				DY_T, dt, i);
-			if (exit)
+				DY_T, dt, timestep, i))
+			{
 				return timestep;
+			}
 		}
 	}
 
@@ -850,11 +855,11 @@ Substeping solver
 		Float &dt, int &i)
 	{
 		// finalize system
-		Float used_dt = dt;
-		auto [timestep, converged] = finalize_system_NR(dimension,
+		Float used_dt = dt, timestep;
+		bool converged = finalize_system_NR(dimension,
 			final_Y, final_T,
 			next_Y, next_T,
-			DY_T, used_dt, i);
+			DY_T, used_dt, timestep, i);
 
 		// update timestep
 		if (used_dt < dt_tot - elapsed_time)
