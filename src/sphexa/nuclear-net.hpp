@@ -26,7 +26,7 @@
 
 	#include <thrust/device_vector.h>
 
-	#include "CUDA/nuclear-net.cu"
+	#include "CUDA/nuclear-net.cu.cuh"
 	#include "../CUDA/nuclear-net.hpp"
 #endif
 

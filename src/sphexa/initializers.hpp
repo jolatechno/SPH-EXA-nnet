@@ -10,8 +10,8 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<size_t n_species, typename Float=double, class initFunc, class ParticlesDataType>
-	void initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const initFunc initializer) {
+	template<size_t n_species, typename Float, class AccType, class initFunc, class ParticlesDataType>
+	void initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, AccType> &n, const initFunc initializer) {
 		int size;
 		MPI_Comm_size(d.comm, &size);
 
@@ -39,8 +39,8 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<size_t n_species, typename Float=double, class initFunc, class ParticlesDataType>
-	void initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const initFunc initializer) {
+	template<size_t n_species, typename Float, class AccType, class initFunc, class ParticlesDataType>
+	void initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, AccType> &n, const initFunc initializer) {
 		int size;
 		MPI_Comm_size(d.comm, &size);
 
@@ -69,8 +69,8 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<size_t n_species, typename Float=double, class initFunc, class ParticlesDataType>
-	void initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const initFunc initializer) {
+	template<size_t n_species, typename Float, class AccType, class initFunc, class ParticlesDataType>
+	void initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, AccType> &n, const initFunc initializer) {
 		int size;
 		MPI_Comm_size(d.comm, &size);
 
@@ -93,8 +93,8 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<size_t n_species, typename Float=double, class Vector, class ParticlesDataType>
-	void initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float> &n, const Vector &Y0) {
+	template<size_t n_species, typename Float, class AccType, class Vector, class ParticlesDataType>
+	void initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, AccType> &n, const Vector &Y0) {
 		int size;
 		MPI_Comm_size(d.comm, &size);
 

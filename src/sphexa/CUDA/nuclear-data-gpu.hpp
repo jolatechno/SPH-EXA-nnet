@@ -8,6 +8,8 @@
 #ifndef NOT_FROM_SPHEXA
 	#include "sph/data_util.hpp"
 	#include "sph/field_states.hpp"
+	#include "sph/traits.hpp"
+
 	#include "cstone/util/util.hpp"
 #endif
 
@@ -21,11 +23,12 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<size_t n_species, typename Float=double>
-	struct DeviceNuclearDataType : public FieldStates<DeviceNuclearDataType<n_species, Float>> {
+	template<class AccType, size_t n_species, typename Float=double>
+	struct DeviceNuclearDataType : public FieldStates<DeviceNuclearDataType<AccType, n_species, Float>> {
 	public:
 		// types
 		using RealType = Float;
+    	using AcceleratorType = AccType;
 
 #ifdef USE_CUDA
 		/// hydro data
@@ -40,20 +43,22 @@ namespace sphexa::sphnnet {
 
 		/// resize the number of particules
 		void resize(size_t size) {
-	        double growthRate = 1;
-	        auto   data_      = data();
+#ifdef USE_CUDA
+			if constexpr (HaveGpu<AcceleratorType>{}) {
+		        double growthRate = 1;
+		        auto   data_      = data();
 
-	        for (size_t i = 0; i < data_.size(); ++i) {
-	            if (this->isAllocated(i)) {
-	            	// actually resize
-	                std::visit([&](auto& arg) { 
-	                	size_t previous_size = arg->size();
-	                	reallocate(*arg, size, growthRate); 
-	                }, data_[i]);
-	            }
-	        }
-
-	        // devPtrs.resize(size);
+		        for (size_t i = 0; i < data_.size(); ++i) {
+		            if (this->isAllocated(i)) {
+		            	// actually resize
+		                std::visit([&](auto& arg) { 
+		                	size_t previous_size = arg->size();
+		                	reallocate(*arg, size, growthRate); 
+		                }, data_[i]);
+		            }
+		        }
+		    }
+#endif
 	    }
 
 
@@ -71,23 +76,25 @@ namespace sphexa::sphnnet {
 
 	    auto data() {
 #ifdef USE_CUDA
-
 	    	using FieldType = std::variant<
-	    		thrust::device_vector<util::array<Float, n_species>>*,
-	    		thrust::device_vector<Float>*>;
-	    	
-			util::array<FieldType, 8> ret;
+		    	thrust::device_vector<util::array<Float, n_species>>*,
+		    	thrust::device_vector<Float>*>;
 
-			ret[0] = &dt;
-			ret[1] = &c;
-			ret[2] = &p;
-			ret[3] = &cv;
-			ret[4] = &temp;
-			ret[5] = &rho;
-			ret[6] = &previous_rho;
-			ret[7] = &Y;
+		    if constexpr (HaveGpu<AcceleratorType>{}) {
+				util::array<FieldType, 8> ret;
 
-			return ret;
+				ret[0] = &dt;
+				ret[1] = &c;
+				ret[2] = &p;
+				ret[3] = &cv;
+				ret[4] = &temp;
+				ret[5] = &rho;
+				ret[6] = &previous_rho;
+				ret[7] = &Y;
+
+				return ret;
+			} else
+				return util::array<FieldType, 0>{};
 #else
 			return util::array<std::variant<std::vector<int>*>, 0>{};
 #endif
@@ -97,26 +104,28 @@ namespace sphexa::sphnnet {
     template<class DataType>
 	void transferToDevice(DataType& d, const std::vector<std::string>& fields) {
 #ifdef USE_CUDA
-		auto hostData   = d.data();
-		auto deviceData = d.devData.data();
+	    if constexpr (HaveGpu<typename DataType::AcceleratorType>{}) {
+			auto hostData   = d.data();
+			auto deviceData = d.devData.data();
 
-		// send fields
-		for (auto field : fields) {
-			// find field
-			int hostFieldIdx = std::distance(d.fieldNames.begin(), 
-				std::find(d.fieldNames.begin(), d.fieldNames.end(), field));
-			int devFieldIdx  = std::distance(d.devData.fieldNames.begin(), 
-				std::find(d.devData.fieldNames.begin(), d.devData.fieldNames.end(), field));
+			// send fields
+			for (auto field : fields) {
+				// find field
+				int hostFieldIdx = std::distance(d.fieldNames.begin(), 
+					std::find(d.fieldNames.begin(), d.fieldNames.end(), field));
+				int devFieldIdx  = std::distance(d.devData.fieldNames.begin(), 
+					std::find(d.devData.fieldNames.begin(), d.devData.fieldNames.end(), field));
 
-			// copy to device
-			std::visit(
-				[&](auto&& dev, auto &&host) {
-					size_t n_copy = host->size();
-					using T = decltype(*host->data());
+				// copy to device
+				std::visit(
+					[&](auto&& dev, auto &&host) {
+						size_t n_copy = host->size();
+						using T = decltype(*host->data());
 
-					gpuErrchk(cudaMemcpy((void*)thrust::raw_pointer_cast(dev->data()), (void*)host->data(), n_copy*sizeof(T), cudaMemcpyHostToDevice));
-				}, deviceData[devFieldIdx], hostData[hostFieldIdx]);
-			
+						gpuErrchk(cudaMemcpy((void*)thrust::raw_pointer_cast(dev->data()), (void*)host->data(), n_copy*sizeof(T), cudaMemcpyHostToDevice));
+					}, deviceData[devFieldIdx], hostData[hostFieldIdx]);
+				
+			}
 		}
 #endif
 	}
@@ -124,25 +133,27 @@ namespace sphexa::sphnnet {
 	template<class DataType>
 	void transferToHost(DataType& d, const std::vector<std::string>& fields) {
 #ifdef USE_CUDA
-		auto hostData   = d.data();
-		auto deviceData = d.devData.data();
+		if constexpr (HaveGpu<typename DataType::AcceleratorType>{}) {
+			auto hostData   = d.data();
+			auto deviceData = d.devData.data();
 
-		// send fields
-		for (auto field : fields) {
-			// find field
-			int hostFieldIdx = std::distance(d.fieldNames.begin(), 
-				std::find(d.fieldNames.begin(), d.fieldNames.end(), field));
-			int devFieldIdx  = std::distance(d.devData.fieldNames.begin(), 
-				std::find(d.devData.fieldNames.begin(), d.devData.fieldNames.end(), field));
+			// send fields
+			for (auto field : fields) {
+				// find field
+				int hostFieldIdx = std::distance(d.fieldNames.begin(), 
+					std::find(d.fieldNames.begin(), d.fieldNames.end(), field));
+				int devFieldIdx  = std::distance(d.devData.fieldNames.begin(), 
+					std::find(d.devData.fieldNames.begin(), d.devData.fieldNames.end(), field));
 
-			// copy to host
-			std::visit(
-			[&](auto&& host, auto &&dev) {
-				size_t n_copy = host->size();
-				using T = decltype(*host->data());
+				// copy to host
+				std::visit(
+				[&](auto&& host, auto &&dev) {
+					size_t n_copy = host->size();
+					using T = decltype(*host->data());
 
-				gpuErrchk(cudaMemcpy((void*)host->data(), (void*)thrust::raw_pointer_cast(dev->data()), n_copy*sizeof(T), cudaMemcpyDeviceToHost));
-			}, hostData[hostFieldIdx], deviceData[devFieldIdx]);
+					gpuErrchk(cudaMemcpy((void*)host->data(), (void*)thrust::raw_pointer_cast(dev->data()), n_copy*sizeof(T), cudaMemcpyDeviceToHost));
+				}, hostData[hostFieldIdx], deviceData[devFieldIdx]);
+			}
 		}
 #endif
 	}

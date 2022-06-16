@@ -21,6 +21,15 @@
 
 
 
+#ifdef USE_CUDA
+	using AccType = cstone::GpuTag;
+#else
+	using AccType = cstone::CpuTag;
+#endif
+
+
+
+
 /*
 function stolen from SPH-EXA and retrofited for testing
 */
@@ -127,9 +136,9 @@ public:
 void printHelp(char* name, int rank);
 
 // mockup of the step function 
-template<class func_type, class func_eos, size_t n_species>
+template<class func_type, class func_eos, size_t n_species, class AccType>
 void step(size_t firstIndex, size_t lastIndex,
-	ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<n_species, double>  &n, const double dt,
+	ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<n_species, double, AccType>  &n, const double dt,
 	const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
 {
 
@@ -263,8 +272,8 @@ int main(int argc, char* argv[]) {
 	const nnet::eos::helmholtz_functor helm_eos_14 = nnet::eos::helmholtz_functor(nnet::net14::constants::Z);
 
 
-	sphexa::sphnnet::NuclearDataType<86, double> nuclear_data_86;
-	sphexa::sphnnet::NuclearDataType<14, double> nuclear_data_14;
+	sphexa::sphnnet::NuclearDataType<86, double, AccType> nuclear_data_86;
+	sphexa::sphnnet::NuclearDataType<14, double, AccType> nuclear_data_14;
 
 	/* !!!!!!!!!!!!
 	initialize nuclear data
@@ -275,7 +284,7 @@ int main(int argc, char* argv[]) {
 		nuclear_data_86.setConserved("nid", "pid", "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
 		nuclear_data_86.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt");
-		
+
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_86, Y0_86);
 
 		n_nuclear_particles = nuclear_data_86.Y.size();

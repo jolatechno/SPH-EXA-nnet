@@ -5,6 +5,7 @@
 #include <variant>
 #include <type_traits>
 #include <array>
+#include <type_traits>
 
 #include <iostream>
 
@@ -16,7 +17,23 @@ namespace util {
 template<typename T, size_t n>
 std::ofstream& operator<<(std::ofstream& os, const util::array<T, n>& Y);
 
+namespace cstone {
+    struct CpuTag
+    {
+    };
+    struct GpuTag
+    {
+    };
+}
+
 namespace sphexa {
+
+    template<class AccType>
+    struct HaveGpu : 
+        public std::integral_constant<int, std::is_same_v<AccType, cstone::GpuTag>>
+    {
+    };
+
 	namespace fileutils {
 		/*! @brief write fields as columns to an ASCII file
 		 *

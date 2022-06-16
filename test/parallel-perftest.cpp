@@ -20,6 +20,15 @@
 
 
 
+#ifdef USE_CUDA
+	using AccType = cstone::GpuTag;
+#else
+	using AccType = cstone::CpuTag;
+#endif
+
+
+
+
 /************************************************************************/
 /* non-MPI test to test GPU implementation, mostly using OMP offloading */
 /* compile:  clang++ -std=c++17 -fopenmp -DNOT_FROM_SPHEXA -DCUDA_DEBUG_ -DOMP_TARGET_SOLVER -DCPU_BATCH_SOLVER_ -DUSE_CUDA_ -omptargets=nvptx-none parallel-perftest.cpp -o parallel-perftest.out
@@ -69,9 +78,9 @@ void dump(Dataset& d, size_t firstIndex, size_t lastIndex, /*const cstone::Box<t
 void printHelp(char* name);
 
 // mockup of the step function 
-template<class func_type, class func_eos, size_t n_species>
+template<class func_type, class func_eos, size_t n_species, class AccType>
 void step(
-	sphexa::sphnnet::NuclearDataType<n_species, double>  &n, const double dt,
+	sphexa::sphnnet::NuclearDataType<n_species, double, AccType>  &n, const double dt,
 	const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
 {
 	sphexa::sphnnet::transferToDevice(n, {"previous_rho", "rho", "temp"});
@@ -156,8 +165,8 @@ int main(int argc, char* argv[]) {
 
 
 
-	sphexa::sphnnet::NuclearDataType<86, double> nuclear_data_86;
-	sphexa::sphnnet::NuclearDataType<14, double> nuclear_data_14;
+	sphexa::sphnnet::NuclearDataType<86, double, AccType> nuclear_data_86;
+	sphexa::sphnnet::NuclearDataType<14, double, AccType> nuclear_data_14;
 
 	if (use_net86) {
 		nuclear_data_86.setConserved(/*"nid", "pid",*/ "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");

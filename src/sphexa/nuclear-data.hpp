@@ -16,6 +16,7 @@
 #ifndef NOT_FROM_SPHEXA
 	#include "sph/data_util.hpp"
 	#include "sph/field_states.hpp"
+
 	#include "cstone/util/util.hpp"
 #endif
 
@@ -26,14 +27,15 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<size_t n_species, typename Float=double>
-	struct NuclearDataType : public FieldStates<NuclearDataType<n_species, Float>> {
+	template<size_t n_species, typename Float, class AccType>
+	struct NuclearDataType : public FieldStates<NuclearDataType<n_species, Float, AccType>> {
 	public:
 		// types
 		using RealType = Float;
     	using KeyType  = size_t;
+    	using AcceleratorType = AccType;
 
-    	DeviceNuclearDataType<n_species, Float> devData;
+    	DeviceNuclearDataType<AccType, n_species, Float> devData;
 
     	size_t iteration{0};
 	    size_t numParticlesGlobal;
