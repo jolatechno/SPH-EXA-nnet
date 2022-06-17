@@ -28,6 +28,8 @@
 
 #ifdef USE_CUDA
 	#include <cuda_runtime.h>
+
+	#include "../CUDA/cuda-util.hpp"
 #endif
 #include "../CUDA/cuda.inl"
 
@@ -37,9 +39,31 @@ namespace nnet::net87::electrons {
 		static const int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
 
 		// table type
-		typedef eigen::fixed_size_matrix<std::array<double, nC>, nTemp, nRho> rateMatrix; // double[nRho][nTemp][nC]
 		typedef eigen::fixed_size_array<double, nRho> rhoVector;
 		typedef eigen::fixed_size_array<double, nTemp> tempVector;
+		typedef eigen::fixed_size_array<double, nTemp*nRho*nC> rateMatrix;
+		// typedef eigen::fixed_size_matrix<std::array<double, nC>, nTemp, nRho> rateMatrix; // double[nRho][nTemp][nC]
+
+#ifdef USE_CUDA
+		// cuda device array
+		__device__ double *dev_log_temp_ref;
+		__device__ double *dev_log_rho_ref;
+		__device__ double *dev_electron_rate;
+
+		// private destructor of global cuda pointers
+		class {
+			struct cudaDestructorClass {
+				~cudaDestructorClass() {
+					std::cout << "freeing electrons device buffers...\n";
+
+					cuda_util::free_from_gpu(dev_log_temp_ref);
+					cuda_util::free_from_gpu(dev_log_rho_ref);
+					cuda_util::free_from_gpu(dev_electron_rate);
+				}
+			} cudaDestructor;
+		} cudaDestructor;
+#endif
+
 
 		// read electron rate constants table
 		std::tuple<tempVector, rhoVector, rateMatrix> read_table() {
@@ -65,17 +89,21 @@ namespace nnet::net87::electrons {
 			for (int i = 0; i < nTemp; ++i)
 				for (int j = 0; j < nRho; ++j)
 					for (int k = 0; k < nC; ++k)
-						rate_table >> rates(i,j)[k];
+						rate_table >> rates[N_C*(N_RHO*i + j) + k];
+
+
+#ifdef USE_CUDA
+			// copy to device
+			cuda_util::move_to_gpu(dev_log_temp_ref,  log_temp_ref.data(),  nTemp);
+			cuda_util::move_to_gpu(dev_log_rho_ref,   log_rho_ref.data(),   nRho);
+			cuda_util::move_to_gpu(dev_electron_rate, electron_rate.data(), nTemp*nRho*nC);
+#endif
 
 			return {temp, rho, rates};
 		}
 
 		// tables
-		auto const [log_temp_ref_, log_rho_ref_, electron_rate_] = read_table();
-
-		CUDA_DEFINE(static const inline tempVector, log_temp_ref,  = log_temp_ref_;)
-		CUDA_DEFINE(static const inline rhoVector,  log_rho_ref,   = log_rho_ref_;)
-		CUDA_DEFINE(static const inline rateMatrix, electron_rate, = electron_rate_;)
+		auto const [log_temp_ref, log_rho_ref, electron_rate] = read_table();
 	}
 
 	/// interpolate electron rate
@@ -105,18 +133,18 @@ namespace nnet::net87::electrons {
 		// distance between limits
 		Float x2x  =  constants::CUDA_ACCESS(log_temp_ref)[i_temp_sup] - log_temp;
 		Float xx1  = -constants::CUDA_ACCESS(log_temp_ref)[i_temp_inf] + log_temp;
-		Float y2y  =  constants::CUDA_ACCESS(log_rho_ref)[i_rho_sup] - log_rho;
-		Float yy1  = -constants::CUDA_ACCESS(log_rho_ref)[i_rho_inf] + log_rho;
-		Float x2x1 = constants::CUDA_ACCESS(log_temp_ref)[i_temp_sup] - constants::CUDA_ACCESS(log_temp_ref)[i_temp_inf];
+		Float y2y  =  constants::CUDA_ACCESS(log_rho_ref )[i_rho_sup ] - log_rho;
+		Float yy1  = -constants::CUDA_ACCESS(log_rho_ref )[i_rho_inf ] + log_rho;
+		Float x2x1 =  constants::CUDA_ACCESS(log_temp_ref)[i_temp_sup] - constants::CUDA_ACCESS(log_temp_ref)[i_temp_inf];
 			  x2x1 = x2x1 == 0 ? 2 : x2x1;
-		Float y2y1 = constants::CUDA_ACCESS(log_rho_ref)[i_rho_sup]   - constants::CUDA_ACCESS(log_rho_ref)[i_rho_inf];
+		Float y2y1 =  constants::CUDA_ACCESS(log_rho_ref )[i_rho_sup ] - constants::CUDA_ACCESS(log_rho_ref )[i_rho_inf ];
 			  y2y1 = y2y1 == 0 ? 2 : y2y1;
 
 		// actual interpolation
 		for (int i = 0; i < constants::nC; ++i)
-			rate[i] = (constants::CUDA_ACCESS(electron_rate)(i_temp_inf, i_rho_inf)[i]*x2x*y2y
-					+  constants::CUDA_ACCESS(electron_rate)(i_temp_sup, i_rho_inf)[i]*xx1*y2y
-					+  constants::CUDA_ACCESS(electron_rate)(i_temp_inf, i_rho_sup)[i]*x2x*yy1
-					+  constants::CUDA_ACCESS(electron_rate)(i_temp_sup, i_rho_sup)[i]*xx1*yy1)/(x2x1*y2y1);
+			rate[i] = (constants::CUDA_ACCESS(electron_rate)[N_C*(N_RHO*i_temp_inf + i_rho_inf) + i]*x2x*y2y
+					+  constants::CUDA_ACCESS(electron_rate)[N_C*(N_RHO*i_temp_sup + i_rho_inf) + i]*xx1*y2y
+					+  constants::CUDA_ACCESS(electron_rate)[N_C*(N_RHO*i_temp_inf + i_rho_sup) + i]*x2x*yy1
+					+  constants::CUDA_ACCESS(electron_rate)[N_C*(N_RHO*i_temp_sup + i_rho_sup) + i]*xx1*yy1)/(x2x1*y2y1);
 	}
 }
