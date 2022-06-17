@@ -6,6 +6,8 @@
 
 #ifdef USE_CUDA
 	#include <cuda_runtime.h>
+	
+	#include "../CUDA/cuda-util.hpp"
 #endif
 #include "../CUDA/cuda.inl"
 
@@ -30,6 +32,16 @@ namespace eigen {
 	public:
 		fixed_size_matrix() {
 			weights.resize(n*m);
+		}
+		template<class Other>
+		fixed_size_matrix(Other const &other) : fixed_size_matrix() {
+			*this = other;
+		}
+		template<class Other>
+		fixed_size_matrix &operator=(Other const &other) {
+			for (int i = 0; i < n; ++i)
+				for (int j = 0; j < m; ++j)
+					operator()(i, j) = other[i][j];
 		}
 
 		Type inline *operator[](int i) {
@@ -61,6 +73,15 @@ namespace eigen {
 		fixed_size_array() {
 			weights.resize(n);
 		}
+		template<class Other>
+		fixed_size_array(Other const &other) : fixed_size_array() {
+			*this = other;
+		}
+		template<class Other>
+		fixed_size_array &operator=(Other const &other) {
+			for (int i = 0; i < n; ++i)
+				operator[](i) = other[i];
+		}
 
 		Type inline &operator[](int i) {
 			return weights[i];
@@ -73,85 +94,6 @@ namespace eigen {
 			return weights.data();
 		}
 	};
-
-
-#ifdef USE_CUDA
-	namespace cuda {
-		/// custom fixed-size matrix type
-		template<typename Type, int n, int m>
-		class fixed_size_matrix {
-		private:
-			Type *weights, *dev_weights;
-
-		public:
-			__host__ fixed_size_matrix() {
-				/* TODO */
-			}
-
-			template<class Other>
-			__host__ fixed_size_matrix(Other const &other) : fixed_size_matrix() {
-				*this = other;
-			}
-
-			template<class Other>
-			__host__ fixed_size_matrix &operator=(Other const &other) {
-				/* TODO */
-			}
-
-			CUDA_FUNCTION_DECORATOR Type inline *operator[](int i) {
-				return data() + i*m;
-			}
-			CUDA_FUNCTION_DECORATOR const Type inline *operator[](int i) const {
-				return data() + i*m;
-			}
-
-			CUDA_FUNCTION_DECORATOR Type inline &operator()(int i, int j) {
-				return CUDA_ACCESS(weights)[i*m + j];
-			}
-			CUDA_FUNCTION_DECORATOR Type inline operator()(int i, int j) const {
-				return CUDA_ACCESS(weights)[i*m + j];
-			}
-
-			CUDA_FUNCTION_DECORATOR const Type *data() const {
-				return CUDA_ACCESS(weights);
-			}
-		};
-
-		/// custom fixed-size matrix type
-		template<typename Type, int n>
-		class fixed_size_array {
-		private:
-			Type *weights, *dev_weights;
-
-		public:
-			__host__ fixed_size_array() {
-				/* TODO */
-			}
-
-			template<class Other>
-			__host__ fixed_size_array(Other const &other) : fixed_size_array() {
-				*this = other;
-			}
-
-			template<class Other>
-			__host__ fixed_size_array &operator=(Other const &other) {
-				/* TODO */
-			}
-
-			CUDA_FUNCTION_DECORATOR Type inline &operator[](int i) {
-				return CUDA_ACCESS(weights)[i];
-			}
-			CUDA_FUNCTION_DECORATOR Type inline operator[](int i) const {
-				return CUDA_ACCESS(weights)[i];
-			}
-
-			CUDA_FUNCTION_DECORATOR const Type *data() const {
-				return CUDA_ACCESS(weights);
-			}
-		};
-	}
-#endif
-
 
 	/// vector type
 	template<typename Type>
