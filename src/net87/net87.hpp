@@ -19,16 +19,94 @@ namespace nnet::net87 {
 	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
-	CUDA_DEFINE(inline static const std::array<double COMMA 87>, BE, = [] CUDA_FUNCTION_DECORATOR (){
-		std::array<double COMMA 87> BE_;
-		for (int i = 0; i < 86; ++i)
-			BE_[i] = nnet::net86::CUDA_ACCESS(BE)[i];
-
-		// electron energy
-		BE_[86] = 0.782*constants::Mev_to_cJ;
-
-		return BE_;
-	}();)
+	CUDA_DEFINE(inline static const std::array<double COMMA 87>, BE, = {
+		0 COMMA 0 COMMA
+		28.296 *constants::Mev_to_cJ COMMA
+		92.163 *constants::Mev_to_cJ COMMA
+		127.621*constants::Mev_to_cJ COMMA
+		160.651*constants::Mev_to_cJ COMMA
+		163.082*constants::Mev_to_cJ COMMA
+		198.263*constants::Mev_to_cJ COMMA
+		181.731*constants::Mev_to_cJ COMMA
+		167.412*constants::Mev_to_cJ COMMA
+		186.570*constants::Mev_to_cJ COMMA
+		168.584*constants::Mev_to_cJ COMMA
+		174.152*constants::Mev_to_cJ COMMA
+		177.776*constants::Mev_to_cJ COMMA
+		200.534*constants::Mev_to_cJ COMMA
+		236.543*constants::Mev_to_cJ COMMA
+		219.364*constants::Mev_to_cJ COMMA
+		205.594*constants::Mev_to_cJ COMMA
+		224.958*constants::Mev_to_cJ COMMA
+		206.052*constants::Mev_to_cJ COMMA
+		211.901*constants::Mev_to_cJ COMMA
+		216.687*constants::Mev_to_cJ COMMA
+		239.291*constants::Mev_to_cJ COMMA
+		271.786*constants::Mev_to_cJ COMMA
+		256.744*constants::Mev_to_cJ COMMA
+		245.017*constants::Mev_to_cJ COMMA
+		262.924*constants::Mev_to_cJ COMMA
+		243.691*constants::Mev_to_cJ COMMA
+		250.612*constants::Mev_to_cJ COMMA
+		255.626*constants::Mev_to_cJ COMMA
+		274.063*constants::Mev_to_cJ COMMA
+		306.722*constants::Mev_to_cJ COMMA
+		291.468*constants::Mev_to_cJ COMMA
+		280.428*constants::Mev_to_cJ COMMA
+		298.215*constants::Mev_to_cJ COMMA
+		278.727*constants::Mev_to_cJ COMMA
+		285.570*constants::Mev_to_cJ COMMA
+		291.845*constants::Mev_to_cJ COMMA
+		308.580*constants::Mev_to_cJ COMMA
+		342.059*constants::Mev_to_cJ COMMA
+		326.418*constants::Mev_to_cJ COMMA
+		315.511*constants::Mev_to_cJ COMMA
+		333.730*constants::Mev_to_cJ COMMA
+		313.129*constants::Mev_to_cJ COMMA
+		320.654*constants::Mev_to_cJ COMMA
+		327.349*constants::Mev_to_cJ COMMA
+		343.144*constants::Mev_to_cJ COMMA
+		375.482*constants::Mev_to_cJ COMMA
+		359.183*constants::Mev_to_cJ COMMA
+		350.422*constants::Mev_to_cJ COMMA
+		366.832*constants::Mev_to_cJ COMMA
+		346.912*constants::Mev_to_cJ COMMA
+		354.694*constants::Mev_to_cJ COMMA
+		361.903*constants::Mev_to_cJ COMMA
+		377.096*constants::Mev_to_cJ COMMA
+		411.469*constants::Mev_to_cJ COMMA
+		395.135*constants::Mev_to_cJ COMMA
+		385.012*constants::Mev_to_cJ COMMA
+		403.369*constants::Mev_to_cJ COMMA
+		381.982*constants::Mev_to_cJ COMMA
+		390.368*constants::Mev_to_cJ COMMA
+		398.202*constants::Mev_to_cJ COMMA
+		413.553*constants::Mev_to_cJ COMMA
+		447.703*constants::Mev_to_cJ COMMA
+		431.520*constants::Mev_to_cJ COMMA
+		422.051*constants::Mev_to_cJ COMMA
+		440.323*constants::Mev_to_cJ COMMA
+		417.703*constants::Mev_to_cJ COMMA
+		426.636*constants::Mev_to_cJ COMMA
+		435.051*constants::Mev_to_cJ COMMA
+		449.302*constants::Mev_to_cJ COMMA
+		483.994*constants::Mev_to_cJ COMMA
+		467.353*constants::Mev_to_cJ COMMA
+		458.387*constants::Mev_to_cJ COMMA
+		476.830*constants::Mev_to_cJ COMMA
+		453.158*constants::Mev_to_cJ COMMA
+		462.740*constants::Mev_to_cJ COMMA
+		471.765*constants::Mev_to_cJ COMMA
+		484.689*constants::Mev_to_cJ COMMA
+		514.999*constants::Mev_to_cJ COMMA
+		500.002*constants::Mev_to_cJ COMMA
+		494.241*constants::Mev_to_cJ COMMA
+		509.878*constants::Mev_to_cJ COMMA
+		486.966*constants::Mev_to_cJ COMMA
+		497.115*constants::Mev_to_cJ COMMA
+		506.460*constants::Mev_to_cJ COMMA
+		0.782*constants::Mev_to_cJ
+	};)
 
 	/// constant list of ordered reaction
 	inline static const nnet::reaction_list reaction_list = []() {
@@ -42,9 +120,13 @@ namespace nnet::net87 {
 	}();
 
 	/// compute a list of rates for net87
-	struct compute_reaction_rates_function {
-		CUDA_FUNCTION_DECORATOR compute_reaction_rates_function() {}
-		
+	class compute_reaction_rates_function {
+	private:
+		electrons::interpolate_function electron_interpolate;
+
+	public:
+		compute_reaction_rates_function() {}
+
 		template<typename Float, class eos>
 		CUDA_FUNCTION_DECORATOR void inline operator()(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -53,7 +135,7 @@ namespace nnet::net87 {
 			const Float Yelec   = Y[constants::electron];
 			const Float rhoElec = Yelec*rho;
 			std::array<Float, electrons::constants::nC> electron_values;
-			electrons::interpolate(T, rhoElec, electron_values);
+			electron_interpolate(T, rhoElec, electron_values);
 
 			Float effe        = electron_values[0];
 			Float deffe       = electron_values[1]*1e-9;

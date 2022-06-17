@@ -32,20 +32,12 @@ namespace cuda_util {
 		return dev_ptr;
 	}
 
-	/// function to move a cpu buffer to a gpu symbol
+	/// function to free a from GPU
+	/**
+	 * TODO
+	 */
 	template<class T>
-	void move_to_gpu(T *&dev_ptr, const T* host_values, size_t N) {
-		T *ptr;
-		gpuErrchk(cudaMalloc((void **)&ptr, N*sizeof(T)));
-		gpuErrchk(cudaMemcpy(ptr, host_values, N*sizeof(T), cudaMemcpyHostToDevice));
-		gpuErrchk(cudaMemcpy((void **)&dev_ptr, (void **)&ptr, sizeof(T*), cudaMemcpyHostToDevice));
-	}
-
-	/// function to free a buffer from a gpu symbol
-	template<class T>
-	void free_from_gpu(T *&dev_ptr) {
-		T *ptr;
-		gpuErrchk(cudaMemcpy((void **)&ptr, (void **)&dev_ptr, sizeof(T*), cudaMemcpyDeviceToHost));
-		gpuErrchk(cudaFree(ptr));
+	void free_from_gpu(const T *dev_ptr) {
+		gpuErrchk(cudaFree((void*)const_cast<T*>(dev_ptr)));
 	}
 }

@@ -30,16 +30,14 @@ namespace sphnnet {
 	    if (end > n_particles)
 	    	end = n_particles; 
 
-	    Y_[0] = (Float)reactions->size();
-
     	Float *Mp        = new Float[(dimension + 1)*(dimension + 1)];
 		Float *RHS       = new Float[                (dimension + 1)];
 		Float *DY_T      = new Float[                (dimension + 1)];
 		Float *Y_buffer  = new Float[                      dimension];
-		/*Float *rates     = new Float[reactions->size()];
-		Float *drates_dT = new Float[reactions->size()];*/
+		Float *rates     = new Float[reactions->size()];
+		Float *drates_dT = new Float[reactions->size()];
 
-		/*for (size_t i = begin; i < end; ++i)
+		for (size_t i = begin; i < end; ++i)
 		    if (rho_[i] > nnet::constants::min_rho && temp_[i] > nnet::constants::min_temp) {
 				// compute drho/dt
 				Float drho_dt = previous_rho_[i] <= 0 ? 0. : (rho_[i] - previous_rho_[i])/previous_dt;
@@ -50,32 +48,14 @@ namespace sphnnet {
 					*reactions, *construct_rates_BE, *eos,
 					Y_ + dimension*i, temp_[i], Y_buffer,
 					rho_[i], drho_dt, hydro_dt, dt_[i]);
-			}*/
-
-
-
-
-		// only test "eos"
-		auto eos_struct = (*eos)(Y_buffer, (Float)1.e9, (Float)1e9);
-		temp_[0] = eos_struct.cv;
-
-
-
-		// only test "construct_rates_BE"
-		/*(*construct_rates_BE)(Y_, (Float)1.e9, (Float)1e9, eos_struct, &Mp[1], rates, drates_dT);
-		temp_[2] = rates[0];
-		temp_[3] = drates_dT[0];*/
-
-
-
-
+			}
 
 		delete[] Mp;
 		delete[] RHS;
 		delete[] DY_T;
 		delete[] Y_buffer;
-		/*delete[] rates;
-		delete[] drates_dT;*/
+		delete[] rates;
+		delete[] drates_dT;
 	}
 
 	template<class func_type, class func_eos, typename Float>

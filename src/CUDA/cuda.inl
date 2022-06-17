@@ -9,8 +9,7 @@
 #else
 	#define CUDA_FUNCTION_DECORATOR
 
-	#define CUDA_DEFINE(type, symbol, definition) \
-		type symbol definition
+	#define CUDA_DEFINE(type, symbol, definition) type symbol definition
 #endif
 
 #ifdef __CUDA_ARCH__ 

@@ -101,97 +101,6 @@ namespace nnet::eos {
         const double esqu  =  qe*qe;
 
 
-#ifdef USE_CUDA
-		// cuda device array
-		__device__ double *dev_d;
-		__device__ double *dev_dd_sav;
-		__device__ double *dev_dd2_sav;
-		__device__ double *dev_ddi_sav;
-		__device__ double *dev_dd2i_sav;
-		__device__ double *dev_dd3i_sav;
-
-		__device__ double *dev_t;
-		__device__ double *dev_dt_sav;
-		__device__ double *dev_dt2_sav;
-		__device__ double *dev_dti_sav;
-		__device__ double *dev_dt2i_sav;
-		__device__ double *dev_dt3i_sav;
-
-		__device__ double *dev_f;
-		__device__ double *dev_fd;
-		__device__ double *dev_ft;
-		__device__ double *dev_fdd;
-		__device__ double *dev_ftt;
-		__device__ double *dev_fdt;
-		__device__ double *dev_fddt;
-		__device__ double *dev_fdtt;
-		__device__ double *dev_fddtt;
-
-		__device__ double *dev_dpdf;
-		__device__ double *dev_dpdfd;
-		__device__ double *dev_dpdft;
-		__device__ double *dev_dpdfdt;
-
-		__device__ double *dev_ef;
-		__device__ double *dev_efd;
-		__device__ double *dev_eft;
-		__device__ double *dev_efdt;
-
-		__device__ double *dev_xf;
-		__device__ double *dev_xfd;
-		__device__ double *dev_xft;
-		__device__ double *dev_xfdt;
-
-		// private destructor of global cuda pointers
-		class {
-			struct cudaDestructorClass {
-				~cudaDestructorClass() {
-					std::cout << "freeing helm device buffers...\n";
-
-					cuda_util::free_from_gpu(dev_d);
-					cuda_util::free_from_gpu(dev_dd_sav);
-					cuda_util::free_from_gpu(dev_dd2_sav);
-					cuda_util::free_from_gpu(dev_ddi_sav);
-					cuda_util::free_from_gpu(dev_dd2i_sav);
-					cuda_util::free_from_gpu(dev_dd3i_sav);
-
-					cuda_util::free_from_gpu(dev_t);
-					cuda_util::free_from_gpu(dev_dt_sav);
-					cuda_util::free_from_gpu(dev_dt2_sav);
-					cuda_util::free_from_gpu(dev_dti_sav);
-					cuda_util::free_from_gpu(dev_dt2i_sav);
-					cuda_util::free_from_gpu(dev_dt3i_sav);
-
-					cuda_util::free_from_gpu(dev_f);
-					cuda_util::free_from_gpu(dev_fd);
-					cuda_util::free_from_gpu(dev_ft);
-					cuda_util::free_from_gpu(dev_fdd);
-					cuda_util::free_from_gpu(dev_ftt);
-					cuda_util::free_from_gpu(dev_fdt);
-					cuda_util::free_from_gpu(dev_fddt);
-					cuda_util::free_from_gpu(dev_fdtt);
-					cuda_util::free_from_gpu(dev_fddtt);
-
-					cuda_util::free_from_gpu(dev_dpdf);
-					cuda_util::free_from_gpu(dev_dpdfd);
-					cuda_util::free_from_gpu(dev_dpdft);
-					cuda_util::free_from_gpu(dev_dpdfdt);
-
-					cuda_util::free_from_gpu(dev_ef);
-					cuda_util::free_from_gpu(dev_efd);
-					cuda_util::free_from_gpu(dev_eft);
-					cuda_util::free_from_gpu(dev_efdt);
-
-					cuda_util::free_from_gpu(dev_xf);
-					cuda_util::free_from_gpu(dev_xfd);
-					cuda_util::free_from_gpu(dev_xft);
-					cuda_util::free_from_gpu(dev_xfdt);
-				}
-			} cudaDestructor;
-		} cudaDestructor;
-#endif
-
-
 		// read helmholtz constants table
 		std::tuple<
 				ivector,
@@ -300,48 +209,6 @@ namespace nnet::eos {
 				dd3i_sav[i] = dd3i;
 			}
 
-#ifdef USE_CUDA
-			// copy to device
-			cuda_util::move_to_gpu(dev_d,        d.data(),        imax);
-			cuda_util::move_to_gpu(dev_dd_sav,   dd_sav.data(),   imax - 1);
-			cuda_util::move_to_gpu(dev_dd2_sav,  dd2_sav.data(),  imax - 1);
-			cuda_util::move_to_gpu(dev_ddi_sav,  ddi_sav.data(),  imax - 1);
-			cuda_util::move_to_gpu(dev_dd2i_sav, dd2i_sav.data(), imax - 1);
-			cuda_util::move_to_gpu(dev_dd3i_sav, dd3i_sav.data(), imax - 1);
-
-			cuda_util::move_to_gpu(dev_t,        t.data(),        jmax);
-			cuda_util::move_to_gpu(dev_dt_sav,   dt_sav.data(),   jmax - 1);
-			cuda_util::move_to_gpu(dev_dt2_sav,  dt2_sav.data(),  jmax - 1);
-			cuda_util::move_to_gpu(dev_dti_sav,  dti_sav.data(),  jmax - 1);
-			cuda_util::move_to_gpu(dev_dt2i_sav, dt2i_sav.data(), jmax - 1);
-			cuda_util::move_to_gpu(dev_dt3i_sav, dt3i_sav.data(), jmax - 1);
-
-			cuda_util::move_to_gpu(dev_f,     f.data(),     imax*jmax);
-			cuda_util::move_to_gpu(dev_fd,    fd.data(),    imax*jmax);
-			cuda_util::move_to_gpu(dev_ft,    ft.data(),    imax*jmax);
-			cuda_util::move_to_gpu(dev_fdd,   fdd.data(),   imax*jmax);
-			cuda_util::move_to_gpu(dev_ftt,   ftt.data(),   imax*jmax);
-			cuda_util::move_to_gpu(dev_fdt,   fdt.data(),   imax*jmax);
-			cuda_util::move_to_gpu(dev_fddt,  fddt.data(),  imax*jmax);
-			cuda_util::move_to_gpu(dev_fdtt,  fdtt.data(),  imax*jmax);
-			cuda_util::move_to_gpu(dev_fddtt, fddtt.data(), imax*jmax);
-
-			cuda_util::move_to_gpu(dev_dpdf,   dpdf.data(),   imax*jmax);
-			cuda_util::move_to_gpu(dev_dpdfd,  dpdfd.data(),  imax*jmax);
-			cuda_util::move_to_gpu(dev_dpdft,  dpdft.data(),  imax*jmax);
-			cuda_util::move_to_gpu(dev_dpdfdt, dpdfdt.data(), imax*jmax);
-
-			cuda_util::move_to_gpu(dev_ef,   ef.data(),   imax*jmax);
-			cuda_util::move_to_gpu(dev_efd,  efd.data(),  imax*jmax);
-			cuda_util::move_to_gpu(dev_eft,  eft.data(),  imax*jmax);
-			cuda_util::move_to_gpu(dev_efdt, efdt.data(), imax*jmax);
-
-			cuda_util::move_to_gpu(dev_xf,   xf.data(),   imax*jmax);
-			cuda_util::move_to_gpu(dev_xfd,  xfd.data(),  imax*jmax);
-			cuda_util::move_to_gpu(dev_xft,  xft.data(),  imax*jmax);
-			cuda_util::move_to_gpu(dev_xfdt, xfdt.data(), imax*jmax);
-#endif
-
 			return {
 				d, dd_sav, dd2_sav, ddi_sav, dd2i_sav, dd3i_sav,
 				t, dt_sav, dt2_sav, dti_sav, dt2i_sav, dt3i_sav,
@@ -373,6 +240,96 @@ namespace nnet::eos {
    			ef, efd, eft, efdt,
    			xf, xfd, xft, xfdt
 	   	] = read_table();
+
+
+
+#ifdef USE_CUDA
+		// cuda device array
+		const double *dev_d        = cuda_util::move_to_gpu(d.data(),        imax);
+		const double *dev_dd_sav   = cuda_util::move_to_gpu(dd_sav.data(),   imax - 1);
+		const double *dev_dd2_sav  = cuda_util::move_to_gpu(dd2_sav.data(),  imax - 1);
+		const double *dev_ddi_sav  = cuda_util::move_to_gpu(ddi_sav.data(),  imax - 1);
+		const double *dev_dd2i_sav = cuda_util::move_to_gpu(dd2i_sav.data(), imax - 1);
+		const double *dev_dd3i_sav = cuda_util::move_to_gpu(dd3i_sav.data(), imax - 1);
+
+		const double *dev_t        = cuda_util::move_to_gpu(t.data(),        jmax);
+		const double *dev_dt_sav   = cuda_util::move_to_gpu(dt_sav.data(),   jmax - 1);
+		const double *dev_dt2_sav  = cuda_util::move_to_gpu(dt2_sav.data(),  jmax - 1);
+		const double *dev_dti_sav  = cuda_util::move_to_gpu(dti_sav.data(),  jmax - 1);
+		const double *dev_dt2i_sav = cuda_util::move_to_gpu(dt2i_sav.data(), jmax - 1);
+		const double *dev_dt3i_sav = cuda_util::move_to_gpu(dt3i_sav.data(), jmax - 1);
+
+		const double *dev_f     = cuda_util::move_to_gpu(f.data(),     imax*jmax);
+		const double *dev_fd    = cuda_util::move_to_gpu(fd.data(),    imax*jmax);
+		const double *dev_ft    = cuda_util::move_to_gpu(ft.data(),    imax*jmax);
+		const double *dev_fdd   = cuda_util::move_to_gpu(fdd.data(),   imax*jmax);
+		const double *dev_ftt   = cuda_util::move_to_gpu(ftt.data(),   imax*jmax);
+		const double *dev_fdt   = cuda_util::move_to_gpu(fdt.data(),   imax*jmax);
+		const double *dev_fddt  = cuda_util::move_to_gpu(fddt.data(),  imax*jmax);
+		const double *dev_fdtt  = cuda_util::move_to_gpu(fdtt.data(),  imax*jmax);
+		const double *dev_fddtt = cuda_util::move_to_gpu(fddtt.data(), imax*jmax);
+
+		const double *dev_dpdf   = cuda_util::move_to_gpu(dpdf.data(),   imax*jmax);
+		const double *dev_dpdfd  = cuda_util::move_to_gpu(dpdfd.data(),  imax*jmax);
+		const double *dev_dpdft  = cuda_util::move_to_gpu(dpdft.data(),  imax*jmax);
+		const double *dev_dpdfdt = cuda_util::move_to_gpu(dpdfdt.data(), imax*jmax);
+
+		const double *dev_ef   = cuda_util::move_to_gpu(ef.data(),   imax*jmax);
+		const double *dev_efd  = cuda_util::move_to_gpu(efd.data(),  imax*jmax);
+		const double *dev_eft  = cuda_util::move_to_gpu(eft.data(),  imax*jmax);
+		const double *dev_efdt = cuda_util::move_to_gpu(efdt.data(), imax*jmax);
+
+		const double *dev_xf   = cuda_util::move_to_gpu(xf.data(),   imax*jmax);
+		const double *dev_xfd  = cuda_util::move_to_gpu(xfd.data(),  imax*jmax);
+		const double *dev_xft  = cuda_util::move_to_gpu(xft.data(),  imax*jmax);
+		const double *dev_xfdt = cuda_util::move_to_gpu(xfdt.data(), imax*jmax);
+
+		// private destructor of global cuda pointers
+		class {
+			struct cudaDestructorClass {
+				~cudaDestructorClass() {
+					cuda_util::free_from_gpu(dev_d);
+					cuda_util::free_from_gpu(dev_dd_sav);
+					cuda_util::free_from_gpu(dev_dd2_sav);
+					cuda_util::free_from_gpu(dev_ddi_sav);
+					cuda_util::free_from_gpu(dev_dd2i_sav);
+					cuda_util::free_from_gpu(dev_dd3i_sav);
+
+					cuda_util::free_from_gpu(dev_t);
+					cuda_util::free_from_gpu(dev_dt_sav);
+					cuda_util::free_from_gpu(dev_dt2_sav);
+					cuda_util::free_from_gpu(dev_dti_sav);
+					cuda_util::free_from_gpu(dev_dt2i_sav);
+					cuda_util::free_from_gpu(dev_dt3i_sav);
+
+					cuda_util::free_from_gpu(dev_f);
+					cuda_util::free_from_gpu(dev_fd);
+					cuda_util::free_from_gpu(dev_ft);
+					cuda_util::free_from_gpu(dev_fdd);
+					cuda_util::free_from_gpu(dev_ftt);
+					cuda_util::free_from_gpu(dev_fdt);
+					cuda_util::free_from_gpu(dev_fddt);
+					cuda_util::free_from_gpu(dev_fdtt);
+					cuda_util::free_from_gpu(dev_fddtt);
+
+					cuda_util::free_from_gpu(dev_dpdf);
+					cuda_util::free_from_gpu(dev_dpdfd);
+					cuda_util::free_from_gpu(dev_dpdft);
+					cuda_util::free_from_gpu(dev_dpdfdt);
+
+					cuda_util::free_from_gpu(dev_ef);
+					cuda_util::free_from_gpu(dev_efd);
+					cuda_util::free_from_gpu(dev_eft);
+					cuda_util::free_from_gpu(dev_efdt);
+
+					cuda_util::free_from_gpu(dev_xf);
+					cuda_util::free_from_gpu(dev_xfd);
+					cuda_util::free_from_gpu(dev_xft);
+					cuda_util::free_from_gpu(dev_xfdt);
+				}
+			} cudaDestructor;
+		} cudaDestructor;
+#endif
 
 		// quintic hermite polynomial statement functions
 		// psi0 and its derivatives
@@ -523,685 +480,769 @@ namespace nnet::eos {
 	/**
 	*...TODO
 	 */
-	template<typename Float>
-	CUDA_FUNCTION_DECORATOR auto inline helmholtz(double abar_, double zbar_, Float T, Float rho) {
-		// coefs
-		Float fi[36];
-
-		Float abar = 1/abar_;
-		Float zbar = zbar_/abar_;
-
-
-		/* debug: */
-		// if (debug) std::cout << "T=" << T << ", rho=" << rho << ", abar=" << abar << ", zbar=" << zbar << "\n";
-
-
-		// compute polynoms rates
-		auto const [jat, iat] = helmholtz_constants::get_table_indices(T, rho, abar, zbar);
-
-
-		Float ytot1 = 1/abar;
-		Float ye = std::max(1e-16, zbar/abar);
-		Float din = ye*rho;
-
-		// initialize
-		Float rhoi    = 1./rho;
-		Float tempi   = 1./T;
-		Float kt      = helmholtz_constants::kerg*T;
-		Float ktinv   = 1./kt;
-
-
-		// adiation section:
-		Float prad    = helmholtz_constants::asol*T*T*T*T/3;
-		Float dpraddd = 0.;
-		Float dpraddt = 4.*prad*tempi;
-		Float dpradda = 0.;
-		Float dpraddz = 0.;
-
-		Float erad    = 3.*prad*rhoi;
-		Float deraddd = -erad*rhoi;
-		Float deraddt = 3.*dpraddt*rhoi;
-		Float deradda = 0.;
-		Float deraddz = 0.;
-
-		
-
-		Float srad    = (prad*rhoi + erad)*tempi;
-		Float dsraddd = (dpraddd*rhoi - prad*rhoi*rhoi + deraddd)*tempi;
-		Float dsraddt = (dpraddt*rhoi + deraddt - srad)*tempi;
-		Float dsradda = 0.;
-		Float dsraddz = 0.;
-
-
-		// ion section:
-		Float xni     = helmholtz_constants::avo*ytot1*rho;
-		Float dxnidd  = helmholtz_constants::avo*ytot1;
-		Float dxnida  = -xni*ytot1;
-
-		Float pion    = xni*kt;
-		Float dpiondd = dxnidd*kt;
-		Float dpiondt = xni*helmholtz_constants::kerg;
-		Float dpionda = dxnida*kt;
-		Float dpiondz = 0.;
-
-		Float eion    = 1.5*pion*rhoi;
-		Float deiondd = (1.5*dpiondd - eion)*rhoi;
-		Float deiondt = 1.5*dpiondt*rhoi;
-		Float deionda = 1.5*dpionda*rhoi;
-		Float deiondz = 0.;
-
-
-		// sackur-tetrode equation for the ion entropy of
-		// a single ideal gas characterized by abar
-		      Float x = abar*abar*std::sqrt(abar)*rhoi/helmholtz_constants::avo;
-		Float s = helmholtz_constants::sioncon*T;
-		Float z = x*s*std::sqrt(s);
-		Float y = std::log(z);
-
-		// y       = 1./(abar*kt)
-		// yy      = y*sqrt(y)
-		// z       = xni*sifac*yy
-		// etaion  = log(z)
-
-
-		Float sion    = (pion*rhoi + eion)*tempi + helmholtz_constants::kergavo*ytot1*y;
-		Float dsiondd = (dpiondd*rhoi - pion*rhoi*rhoi + deiondd)*tempi - helmholtz_constants::kergavo*rhoi*ytot1;
-		Float dsiondt = (dpiondt*rhoi + deiondt)*tempi - (pion*rhoi + eion)*tempi*tempi + 1.5*helmholtz_constants::kergavo*tempi*ytot1;
-		            x       = helmholtz_constants::avo*helmholtz_constants::kerg/abar;
-		Float dsionda = (dpionda*rhoi + deionda)*tempi + helmholtz_constants::kergavo*ytot1*ytot1*(2.5 - y);
-		Float dsiondz = 0.;
-
-
-
-		// electron-positron section:
-
-
-		// assume complete ionization
-		Float xnem    = xni*zbar;
-
-
-
-
-
-
-		// move table values into coefficient table
-		fi[0]  = helmholtz_constants::CUDA_ACCESS(f)[JMAX*(iat + 0) + jat + 0];
-		fi[1]  = helmholtz_constants::CUDA_ACCESS(f)[JMAX*(iat + 1) + jat + 0];
-		fi[2]  = helmholtz_constants::CUDA_ACCESS(f)[JMAX*(iat + 0) + jat + 1];
-		fi[3]  = helmholtz_constants::CUDA_ACCESS(f)[JMAX*(iat + 1) + jat + 1];
-		fi[4]  = helmholtz_constants::CUDA_ACCESS(ft)[JMAX*(iat + 0) + jat + 0];
-		fi[5]  = helmholtz_constants::CUDA_ACCESS(ft)[JMAX*(iat + 1) + jat + 0];
-		fi[6]  = helmholtz_constants::CUDA_ACCESS(ft)[JMAX*(iat + 0) + jat + 1];
-		fi[7]  = helmholtz_constants::CUDA_ACCESS(ft)[JMAX*(iat + 1) + jat + 1];
-		fi[8]  = helmholtz_constants::CUDA_ACCESS(ftt)[JMAX*(iat + 0) + jat + 0];
-		fi[9]  = helmholtz_constants::CUDA_ACCESS(ftt)[JMAX*(iat + 1) + jat + 0];
-		fi[10] = helmholtz_constants::CUDA_ACCESS(ftt)[JMAX*(iat + 0) + jat + 1];
-		fi[11] = helmholtz_constants::CUDA_ACCESS(ftt)[JMAX*(iat + 1) + jat + 1];
-		fi[12] = helmholtz_constants::CUDA_ACCESS(fd)[JMAX*(iat + 0) + jat + 0];
-		fi[13] = helmholtz_constants::CUDA_ACCESS(fd)[JMAX*(iat + 1) + jat + 0];
-		fi[14] = helmholtz_constants::CUDA_ACCESS(fd)[JMAX*(iat + 0) + jat + 1];
-		fi[15] = helmholtz_constants::CUDA_ACCESS(fd)[JMAX*(iat + 1) + jat + 1];
-		fi[16] = helmholtz_constants::CUDA_ACCESS(fdd)[JMAX*(iat + 0) + jat + 0];
-		fi[17] = helmholtz_constants::CUDA_ACCESS(fdd)[JMAX*(iat + 1) + jat + 0];
-		fi[18] = helmholtz_constants::CUDA_ACCESS(fdd)[JMAX*(iat + 0) + jat + 1];
-		fi[19] = helmholtz_constants::CUDA_ACCESS(fdd)[JMAX*(iat + 1) + jat + 1];
-		fi[20] = helmholtz_constants::CUDA_ACCESS(fdt)[JMAX*(iat + 0) + jat + 0];
-		fi[21] = helmholtz_constants::CUDA_ACCESS(fdt)[JMAX*(iat + 1) + jat + 0];
-		fi[22] = helmholtz_constants::CUDA_ACCESS(fdt)[JMAX*(iat + 0) + jat + 1];
-		fi[23] = helmholtz_constants::CUDA_ACCESS(fdt)[JMAX*(iat + 1) + jat + 1];
-		fi[24] = helmholtz_constants::CUDA_ACCESS(fddt)[JMAX*(iat + 0) + jat + 0];
-		fi[25] = helmholtz_constants::CUDA_ACCESS(fddt)[JMAX*(iat + 1) + jat + 0];
-		fi[26] = helmholtz_constants::CUDA_ACCESS(fddt)[JMAX*(iat + 0) + jat + 1];
-		fi[27] = helmholtz_constants::CUDA_ACCESS(fddt)[JMAX*(iat + 1) + jat + 1];
-		fi[28] = helmholtz_constants::CUDA_ACCESS(fdtt)[JMAX*(iat + 0) + jat + 0];
-		fi[29] = helmholtz_constants::CUDA_ACCESS(fdtt)[JMAX*(iat + 1) + jat + 0];
-		fi[30] = helmholtz_constants::CUDA_ACCESS(fdtt)[JMAX*(iat + 0) + jat + 1];
-		fi[31] = helmholtz_constants::CUDA_ACCESS(fdtt)[JMAX*(iat + 1) + jat + 1];
-		fi[32] = helmholtz_constants::CUDA_ACCESS(fddtt)[JMAX*(iat + 0) + jat + 0];
-		fi[33] = helmholtz_constants::CUDA_ACCESS(fddtt)[JMAX*(iat + 1) + jat + 0];
-		fi[34] = helmholtz_constants::CUDA_ACCESS(fddtt)[JMAX*(iat + 0) + jat + 1];
-		fi[35] = helmholtz_constants::CUDA_ACCESS(fddtt)[JMAX*(iat + 1) + jat + 1];
-
-
-
-		// various differences
-		Float xt  = std::max( (T - helmholtz_constants::CUDA_ACCESS(t)[jat])*helmholtz_constants::CUDA_ACCESS(dti_sav)[jat], 0.);
-		Float xd  = std::max( (din - helmholtz_constants::CUDA_ACCESS(d)[iat])*helmholtz_constants::CUDA_ACCESS(ddi_sav)[iat], 0.);
-		Float mxt = 1. - xt;
-		Float mxd = 1. - xd;
-
-
-		/* debug: */
-		// if (debug) std::cout << "xt=" << xt << " = (T - t[" << jat << "]=" << helmholtz_constants::CUDA_ACCESS(t)[jat] << ")* dti_sav[" << jat << "]=" << helmholtz_constants::CUDA_ACCESS(dti_sav)[jat] << "\n";
-
-
-		// the six rhosity and six temperature basis functions;
-		Float si0t =   helmholtz_constants::psi0(xt);
-		Float si1t =   helmholtz_constants::psi1(xt)*helmholtz_constants::CUDA_ACCESS(dt_sav)[jat];
-		Float si2t =   helmholtz_constants::psi2(xt)*helmholtz_constants::CUDA_ACCESS(dt2_sav)[jat];
-
-
-		/* debug: */
-		// if (debug) std::cout << "si0t=" << si0t << " = psi0(xt=" << xt << ")\n";
-
-
-		Float si0mt =  helmholtz_constants::psi0(mxt);
-		Float si1mt = -helmholtz_constants::psi1(mxt)*helmholtz_constants::CUDA_ACCESS(dt_sav)[jat];
-		Float si2mt =  helmholtz_constants::psi2(mxt)*helmholtz_constants::CUDA_ACCESS(dt2_sav)[jat];
-
-		Float si0d =   helmholtz_constants::psi0(xd);
-		Float si1d =   helmholtz_constants::psi1(xd)*helmholtz_constants::CUDA_ACCESS(dd_sav)[iat];
-		Float si2d =   helmholtz_constants::psi2(xd)*helmholtz_constants::CUDA_ACCESS(dd2_sav)[iat];
-
-		Float si0md =  helmholtz_constants::psi0(mxd);
-		Float si1md = -helmholtz_constants::psi1(mxd)*helmholtz_constants::CUDA_ACCESS(dd_sav)[iat];
-		Float si2md =  helmholtz_constants::psi2(mxd)*helmholtz_constants::CUDA_ACCESS(dd2_sav)[iat];
-
-		// derivatives of the weight functions
-		Float dsi0t =   helmholtz_constants::dpsi0(xt)*helmholtz_constants::CUDA_ACCESS(dti_sav)[jat];
-		Float dsi1t =   helmholtz_constants::dpsi1(xt);
-		Float dsi2t =   helmholtz_constants::dpsi2(xt)*helmholtz_constants::CUDA_ACCESS(dt_sav)[jat];
-
-		Float dsi0mt = -helmholtz_constants::dpsi0(mxt)*helmholtz_constants::CUDA_ACCESS(dti_sav)[jat];
-		Float dsi1mt =  helmholtz_constants::dpsi1(mxt);
-		Float dsi2mt = -helmholtz_constants::dpsi2(mxt)*helmholtz_constants::CUDA_ACCESS(dt_sav)[jat];
-
-		Float dsi0d =   helmholtz_constants::dpsi0(xd)*helmholtz_constants::CUDA_ACCESS(ddi_sav)[iat];
-		Float dsi1d =   helmholtz_constants::dpsi1(xd);
-		Float dsi2d =   helmholtz_constants::dpsi2(xd)*helmholtz_constants::CUDA_ACCESS(dd_sav)[iat];
-
-		Float dsi0md = -helmholtz_constants::dpsi0(mxd)*helmholtz_constants::CUDA_ACCESS(ddi_sav)[iat];
-		Float dsi1md =  helmholtz_constants::dpsi1(mxd);
-		Float dsi2md = -helmholtz_constants::dpsi2(mxd)*helmholtz_constants::CUDA_ACCESS(dd_sav)[iat];
-
-		// second derivatives of the weight functions
-		Float ddsi0t =   helmholtz_constants::ddpsi0(xt)*helmholtz_constants::CUDA_ACCESS(dt2i_sav)[jat];
-		Float ddsi1t =   helmholtz_constants::ddpsi1(xt)*helmholtz_constants::CUDA_ACCESS(dti_sav)[jat];
-		Float ddsi2t =   helmholtz_constants::ddpsi2(xt);
-
-		Float ddsi0mt =  helmholtz_constants::ddpsi0(mxt)*helmholtz_constants::CUDA_ACCESS(dt2i_sav)[jat];
-		Float ddsi1mt = -helmholtz_constants::ddpsi1(mxt)*helmholtz_constants::CUDA_ACCESS(dti_sav)[jat];
-		Float ddsi2mt =  helmholtz_constants::ddpsi2(mxt);
-
-		// ddsi0d =   ddpsi0(xd)*dd2i_sav[iat];
-		// ddsi1d =   ddpsi1(xd)*ddi_sav[iat];
-		// ddsi2d =   ddpsi2(xd);
-
-		// ddsi0md =  ddpsi0(mxd)*dd2i_sav[iat];
-		// ddsi1md = -ddpsi1(mxd)*ddi_sav[iat];
-		// ddsi2md =  ddpsi2(mxd);
-
-
-		// the free energy
-		Float free  = helmholtz_constants::h5(fi,
-			si0t,   si1t,   si2t,   si0mt,   si1mt,   si2mt,
-			si0d,   si1d,   si2d,   si0md,   si1md,   si2md);
-
-		// derivative with respect to rhosity
-		Float df_d  = helmholtz_constants::h5(fi,
-			si0t,   si1t,   si2t,   si0mt,   si1mt,   si2mt,
-			dsi0d,  dsi1d,  dsi2d,  dsi0md,  dsi1md,  dsi2md);
-
-
-		// derivative with respect to temperature
-		Float df_t = helmholtz_constants::h5(fi,
-			dsi0t,  dsi1t,  dsi2t,  dsi0mt,  dsi1mt,  dsi2mt,
-			si0d,   si1d,   si2d,   si0md,   si1md,   si2md);
-
-		// derivative with respect to rhosity**2
-		// df_dd = h5(fi,
-		//		si0t,   si1t,   si2t,   si0mt,   si1mt,   si2mt,
-		//		ddsi0d, ddsi1d, ddsi2d, ddsi0md, ddsi1md, ddsi2md)
-
-		// derivative with respect to temperature**2
-		Float df_tt = helmholtz_constants::h5(fi,
-			ddsi0t, ddsi1t, ddsi2t, ddsi0mt, ddsi1mt, ddsi2mt,
-			si0d,   si1d,   si2d,   si0md,   si1md,   si2md);
-
-
-
-		// derivative with respect to temperature and rhosity
-		Float df_dt = helmholtz_constants::h5(fi,
-			dsi0t,  dsi1t,  dsi2t,  dsi0mt,  dsi1mt,  dsi2mt,
-			dsi0d,  dsi1d,  dsi2d,  dsi0md,  dsi1md,  dsi2md);
-
-
-
-		// now get the pressure derivative with rhosity, chemical potential, and
-		// electron positron number rhosities
-		// get the interpolation weight functions
-		si0t   =  helmholtz_constants::xpsi0(xt);
-		si1t   =  helmholtz_constants::xpsi1(xt)*helmholtz_constants::CUDA_ACCESS(dt_sav)[jat];
-
-		si0mt  =  helmholtz_constants::xpsi0(mxt);
-		si1mt  =  -helmholtz_constants::xpsi1(mxt)*helmholtz_constants::CUDA_ACCESS(dt_sav)[jat];
-
-		si0d   =  helmholtz_constants::xpsi0(xd);
-		si1d   =  helmholtz_constants::xpsi1(xd)*helmholtz_constants::CUDA_ACCESS(dd_sav)[iat];
-
-		si0md  =  helmholtz_constants::xpsi0(mxd);
-		si1md  =  -helmholtz_constants::xpsi1(mxd)*helmholtz_constants::CUDA_ACCESS(dd_sav)[iat];
-
-
-		// derivatives of weight functions
-		dsi0t  = helmholtz_constants::xdpsi0(xt)*helmholtz_constants::CUDA_ACCESS(dti_sav)[jat];
-		dsi1t  = helmholtz_constants::xdpsi1(xt);
-
-		dsi0mt = -helmholtz_constants::xdpsi0(mxt)*helmholtz_constants::CUDA_ACCESS(dti_sav)[jat];
-		dsi1mt = helmholtz_constants::xdpsi1(mxt);
-
-		dsi0d  = helmholtz_constants::xdpsi0(xd)*helmholtz_constants::CUDA_ACCESS(ddi_sav)[iat];
-		dsi1d  = helmholtz_constants::xdpsi1(xd);
-
-		dsi0md = -helmholtz_constants::xdpsi0(mxd)*helmholtz_constants::CUDA_ACCESS(ddi_sav)[iat];
-		dsi1md = helmholtz_constants::xdpsi1(mxd);
-
-
-
-
-
-		// move table values into coefficient table
-		fi[0]  = helmholtz_constants::CUDA_ACCESS(dpdf)[JMAX*(iat + 0) + jat + 0];
-		fi[1]  = helmholtz_constants::CUDA_ACCESS(dpdf)[JMAX*(iat + 1) + jat + 0];
-		fi[2]  = helmholtz_constants::CUDA_ACCESS(dpdf)[JMAX*(iat + 0) + jat + 1];
-		fi[3]  = helmholtz_constants::CUDA_ACCESS(dpdf)[JMAX*(iat + 1) + jat + 1];
-		fi[4]  = helmholtz_constants::CUDA_ACCESS(dpdft)[JMAX*(iat + 0) + jat + 0];
-		fi[5]  = helmholtz_constants::CUDA_ACCESS(dpdft)[JMAX*(iat + 1) + jat + 0];
-		fi[6]  = helmholtz_constants::CUDA_ACCESS(dpdft)[JMAX*(iat + 0) + jat + 1];
-		fi[7]  = helmholtz_constants::CUDA_ACCESS(dpdft)[JMAX*(iat + 1) + jat + 1];
-		fi[8]  = helmholtz_constants::CUDA_ACCESS(dpdfd)[JMAX*(iat + 0) + jat + 0];
-		fi[9]  = helmholtz_constants::CUDA_ACCESS(dpdfd)[JMAX*(iat + 1) + jat + 0];
-		fi[10] = helmholtz_constants::CUDA_ACCESS(dpdfd)[JMAX*(iat + 0) + jat + 1];
-		fi[11] = helmholtz_constants::CUDA_ACCESS(dpdfd)[JMAX*(iat + 1) + jat + 1];
-		fi[12] = helmholtz_constants::CUDA_ACCESS(dpdfdt)[JMAX*(iat + 0) + jat + 0];
-		fi[13] = helmholtz_constants::CUDA_ACCESS(dpdfdt)[JMAX*(iat + 1) + jat + 0];
-		fi[14] = helmholtz_constants::CUDA_ACCESS(dpdfdt)[JMAX*(iat + 0) + jat + 1];
-		fi[15] = helmholtz_constants::CUDA_ACCESS(dpdfdt)[JMAX*(iat + 1) + jat + 1];
-
-
-
-
-		Float dpepdd  = helmholtz_constants::h3(fi,
-			si0t,   si1t,   si0mt,   si1mt,
-            si0d,   si1d,   si0md,   si1md);
-			dpepdd  = std::max(ye*dpepdd, 1.e-30);
-
-
-
-
-
-		// move table values into coefficient table
-		fi[0]  = helmholtz_constants::CUDA_ACCESS(ef)[JMAX*(iat + 0) + jat + 0];
-		fi[1]  = helmholtz_constants::CUDA_ACCESS(ef)[JMAX*(iat + 1) + jat + 0];
-		fi[2]  = helmholtz_constants::CUDA_ACCESS(ef)[JMAX*(iat + 0) + jat + 1];
-		fi[3]  = helmholtz_constants::CUDA_ACCESS(ef)[JMAX*(iat + 1) + jat + 1];
-		fi[4]  = helmholtz_constants::CUDA_ACCESS(eft)[JMAX*(iat + 0) + jat + 0];
-		fi[5]  = helmholtz_constants::CUDA_ACCESS(eft)[JMAX*(iat + 1) + jat + 0];
-		fi[6]  = helmholtz_constants::CUDA_ACCESS(eft)[JMAX*(iat + 0) + jat + 1];
-		fi[7]  = helmholtz_constants::CUDA_ACCESS(eft)[JMAX*(iat + 1) + jat + 1];
-		fi[8]  = helmholtz_constants::CUDA_ACCESS(efd)[JMAX*(iat + 0) + jat + 0];
-		fi[9]  = helmholtz_constants::CUDA_ACCESS(efd)[JMAX*(iat + 1) + jat + 0];
-		fi[10] = helmholtz_constants::CUDA_ACCESS(efd)[JMAX*(iat + 0) + jat + 1];
-		fi[11] = helmholtz_constants::CUDA_ACCESS(efd)[JMAX*(iat + 1) + jat + 1];
-		fi[12] = helmholtz_constants::CUDA_ACCESS(efdt)[JMAX*(iat + 0) + jat + 0];
-		fi[13] = helmholtz_constants::CUDA_ACCESS(efdt)[JMAX*(iat + 1) + jat + 0];
-		fi[14] = helmholtz_constants::CUDA_ACCESS(efdt)[JMAX*(iat + 0) + jat + 1];
-		fi[15] = helmholtz_constants::CUDA_ACCESS(efdt)[JMAX*(iat + 1) + jat + 1];
-
-
-
-
-
-
-		// electron chemical potential etaele
-		Float etaele  = helmholtz_constants::h3(fi,
-			si0t,   si1t,   si0mt,   si1mt,
-			si0d,   si1d,   si0md,   si1md);
-
-
-		// derivative with respect to rhosity
-		x = helmholtz_constants::h3(fi,
-			si0t,   si1t,   si0mt,   si1mt,
-			dsi0d,  dsi1d,  dsi0md,  dsi1md);
-		Float detadd  = ye*x;
-
-		// derivative with respect to temperature
-		Float detadt  = helmholtz_constants::h3(fi,
-			dsi0t,  dsi1t,  dsi0mt,  dsi1mt,
-			si0d,   si1d,   si0md,   si1md);
-
-		// derivative with respect to abar and zbar
-		Float detada = -x*din*ytot1;
-		Float detadz =  x*rho*ytot1;
-
-
-
-
-
-		// move table values into coefficient table
-		fi[0]  = helmholtz_constants::CUDA_ACCESS(xf)[JMAX*(iat + 0) + jat + 0];
-		fi[1]  = helmholtz_constants::CUDA_ACCESS(xf)[JMAX*(iat + 1) + jat + 0];
-		fi[2]  = helmholtz_constants::CUDA_ACCESS(xf)[JMAX*(iat + 0) + jat + 1];
-		fi[3]  = helmholtz_constants::CUDA_ACCESS(xf)[JMAX*(iat + 1) + jat + 1];
-		fi[4]  = helmholtz_constants::CUDA_ACCESS(xft)[JMAX*(iat + 0) + jat + 0];
-		fi[5]  = helmholtz_constants::CUDA_ACCESS(xft)[JMAX*(iat + 1) + jat + 0];
-		fi[6]  = helmholtz_constants::CUDA_ACCESS(xft)[JMAX*(iat + 0) + jat + 1];
-		fi[7]  = helmholtz_constants::CUDA_ACCESS(xft)[JMAX*(iat + 1) + jat + 1];
-		fi[8]  = helmholtz_constants::CUDA_ACCESS(xfd)[JMAX*(iat + 0) + jat + 0];
-		fi[9]  = helmholtz_constants::CUDA_ACCESS(xfd)[JMAX*(iat + 1) + jat + 0];
-		fi[10] = helmholtz_constants::CUDA_ACCESS(xfd)[JMAX*(iat + 0) + jat + 1];
-		fi[11] = helmholtz_constants::CUDA_ACCESS(xfd)[JMAX*(iat + 1) + jat + 1];
-		fi[12] = helmholtz_constants::CUDA_ACCESS(xfdt)[JMAX*(iat + 0) + jat + 0];
-		fi[13] = helmholtz_constants::CUDA_ACCESS(xfdt)[JMAX*(iat + 1) + jat + 0];
-		fi[14] = helmholtz_constants::CUDA_ACCESS(xfdt)[JMAX*(iat + 0) + jat + 1];
-		fi[15] = helmholtz_constants::CUDA_ACCESS(xfdt)[JMAX*(iat + 1) + jat + 1];
-
-
-
-
-
-		// electron + positron number rhosities
-		Float xnefer = helmholtz_constants::h3(fi,
-			si0t,   si1t,   si0mt,   si1mt,
-        	si0d,   si1d,   si0md,   si1md);
-
-		// derivative with respect to rhosity
-		x = helmholtz_constants::h3(fi,
-			si0t,   si1t,   si0mt,   si1mt,
-        	dsi0d,  dsi1d,  dsi0md,  dsi1md);
-		x = std::max(x, 1e-30);
-		Float dxnedd   = ye*x;
-
-		// derivative with respect to temperature
-		Float dxnedt   = helmholtz_constants::h3(fi,
-			dsi0t,  dsi1t,  dsi0mt,  dsi1mt,
-        	si0d,   si1d,   si0md,   si1md);
-
-		// derivative with respect to abar and zbar
-		Float dxneda = -x*din*ytot1;
-		Float dxnedz =  x *rho*ytot1;
-
-
-		// the desired electron-positron thermodynamic quantities
-
-		// dpepdd at high temperatures and low rhosities is below the
-		// floating point limit of the subtraction of two large terms.
-		// since dpresdd doesn't enter the maxwell relations at all, use the
-		// bicubic interpolation done above instead of the formally correct expression
-		x       = din*din;
-		Float pele    = x*df_d;
-		Float dpepdt  = x*df_dt;
-		// dpepdd  = ye*(x*df_dd + 2.0*din*df_d)
-		s       = dpepdd/ye - 2.0*din*df_d;
-		Float dpepda  = -ytot1*(2.0*pele + s*din);
-		Float dpepdz  = rho*ytot1*(2.0*din*df_d  +  s);
-
-
-		x       = ye*ye;
-		Float sele    = -df_t*ye;
-		Float dsepdt  = -df_tt*ye;
-		Float dsepdd  = -df_dt*x;
-		Float dsepda  = ytot1*(ye*df_dt*din - sele);
-		Float dsepdz  = -ytot1*(ye*df_dt*rho  + df_t);
-
-
-		/* debug: */
-		// if (debug) std::cout << "dsepdt=" << dsepdt << " = -df_tt=" << df_tt << " * ye=" << ye << "\n";
-
-
-		Float eele    = ye*free + T*sele;
-		Float deepdt  = T*dsepdt;
-		Float deepdd  = x*df_d + T*dsepdd;
-		Float deepda  = -ye*ytot1*(free +  df_d*din) + T*dsepda;
-		Float deepdz  = ytot1* (free + ye*df_d*rho) + T*dsepdz;
-
-
-		/* debug: */
-		// if (debug) std::cout << "deepdt=" << deepdt << " = dsepdt=" << dsepdt << " * T" << "\n";
-
-
-		// coulomb section:
-
-		// uniform background corrections only
-		// from yakovlev & shalybkov 1989
-		// lami is the average ion seperation
-		// plasg is the plasma coupling parameter
-
-		z              = helmholtz_constants::pi*4./3.;
-		s              = z*xni;
-		Float dsdd     = z*dxnidd;
-		Float dsda     = z*dxnida;
-
-		/* debug: */
-		// if (debug) std::cout << "s=" << s << " = z=" << z << " * xni=" << xni << "\n";
-
-
-		Float lami     = std::pow(1./s, 1./3.);
-		Float inv_lami = 1./lami;
-		z              = -lami/3;
-		Float lamidd   = z*dsdd/s;
-		Float lamida   = z*dsda/s;
-
-		Float plasg    = zbar*zbar*helmholtz_constants::esqu*ktinv*inv_lami;
-		z        = -plasg*inv_lami;
-		Float plasgdd  = z*lamidd;
-		Float plasgda  = z*lamida;
-		Float plasgdt  = -plasg*ktinv*helmholtz_constants::kerg;
-		Float plasgdz  = 2.0*plasg/zbar;
-
-		/* debug: */
-		// if (debug) std::cout << "plasg=" << plasg << " = zbar=" << zbar << "^2 * esqu=" << helmholtz_constants::esqu << " * ktinv=" << ktinv << " * inv_lami=" << inv_lami << "\n";
-
-
-		Float ecoul, pcoul, scoul,
-			decouldd, decouldt, decoulda, decouldz,
-			dpcouldd, dpcouldt, dpcoulda, dpcouldz,
-			dscouldd, dscouldt, dscoulda, dscouldz;
-
-		// yakovlev & shalybkov 1989 equations 82, 85, 86, 87
-		if (plasg >= 1.) {
-			x        = std::pow(plasg, 0.25);
-			y        = helmholtz_constants::avo*ytot1*helmholtz_constants::kerg;
-			ecoul    = y*T*(helmholtz_constants::a1*plasg + helmholtz_constants::b1*x + helmholtz_constants::c1/x + helmholtz_constants::d1);
-			pcoul    = rho*ecoul/3.;
-			scoul    = -y*(3.0*helmholtz_constants::b1*x - 5.0*helmholtz_constants::c1/x + helmholtz_constants::d1*(std::log(plasg) - 1.) - helmholtz_constants::e1);
-
-			y        = helmholtz_constants::avo*ytot1*kt*(helmholtz_constants::a1 + 0.25/plasg*(helmholtz_constants::b1*x - helmholtz_constants::c1/x));
-			decouldd = y*plasgdd;
-			decouldt = y*plasgdt + ecoul/T;
-			decoulda = y*plasgda - ecoul/abar;
-			decouldz = y*plasgdz;
+	struct helmholtz_function {
+	private:
+		const double *d        = helmholtz_constants::d.data();
+		const double *dd_sav   = helmholtz_constants::dd_sav.data();
+		const double *dd2_sav  = helmholtz_constants::dd2_sav.data();
+		const double *ddi_sav  = helmholtz_constants::ddi_sav.data();
+		const double *dd2i_sav = helmholtz_constants::dd2i_sav.data();
+		const double *dd3i_sav = helmholtz_constants::dd3i_sav.data();
+
+		const double *t        = helmholtz_constants::t.data();
+		const double *dt_sav   = helmholtz_constants::dt_sav.data();
+		const double *dt2_sav  = helmholtz_constants::dt2_sav.data();
+		const double *dti_sav  = helmholtz_constants::dti_sav.data();
+		const double *dt2i_sav = helmholtz_constants::dt2i_sav.data();
+		const double *dt3i_sav = helmholtz_constants::dt3i_sav.data();
+
+		const double *f     = helmholtz_constants::f.data();
+		const double *fd    = helmholtz_constants::fd.data();
+		const double *ft    = helmholtz_constants::ft.data();
+		const double *fdd   = helmholtz_constants::fdd.data();
+		const double *ftt   = helmholtz_constants::ftt.data();
+		const double *fdt   = helmholtz_constants::fdt.data();
+		const double *fddt  = helmholtz_constants::fddt.data();
+		const double *fdtt  = helmholtz_constants::fdtt.data();
+		const double *fddtt = helmholtz_constants::fddtt.data();
+
+		const double *dpdf   = helmholtz_constants::dpdf.data();
+		const double *dpdfd  = helmholtz_constants::dpdfd.data();
+		const double *dpdft  = helmholtz_constants::dpdft.data();
+		const double *dpdfdt = helmholtz_constants::dpdfdt.data();
+
+		const double *ef   = helmholtz_constants::ef.data();
+		const double *efd  = helmholtz_constants::efd.data();
+		const double *eft  = helmholtz_constants::eft.data();
+		const double *efdt = helmholtz_constants::efdt.data();
+
+		const double *xf   = helmholtz_constants::xf.data();
+		const double *xfd  = helmholtz_constants::xfd.data();
+		const double *xft  = helmholtz_constants::xft.data();
+		const double *xfdt = helmholtz_constants::xfdt.data();
+
+#ifdef USE_CUDA
+		const double *dev_d        = helmholtz_constants::dev_d;
+		const double *dev_dd_sav   = helmholtz_constants::dev_dd_sav;
+		const double *dev_dd2_sav  = helmholtz_constants::dev_dd2_sav;
+		const double *dev_ddi_sav  = helmholtz_constants::dev_ddi_sav;
+		const double *dev_dd2i_sav = helmholtz_constants::dev_dd2i_sav;
+		const double *dev_dd3i_sav = helmholtz_constants::dev_dd3i_sav;
+
+		const double *dev_t        = helmholtz_constants::dev_t;
+		const double *dev_dt_sav   = helmholtz_constants::dev_dt_sav;
+		const double *dev_dt2_sav  = helmholtz_constants::dev_dt2_sav;
+		const double *dev_dti_sav  = helmholtz_constants::dev_dti_sav;
+		const double *dev_dt2i_sav = helmholtz_constants::dev_dt2i_sav;
+		const double *dev_dt3i_sav = helmholtz_constants::dev_dt3i_sav;
+
+		const double *dev_f     = helmholtz_constants::dev_f;
+		const double *dev_fd    = helmholtz_constants::dev_fd;
+		const double *dev_ft    = helmholtz_constants::dev_ft;
+		const double *dev_fdd   = helmholtz_constants::dev_fdd;
+		const double *dev_ftt   = helmholtz_constants::dev_ftt;
+		const double *dev_fdt   = helmholtz_constants::dev_fdt;
+		const double *dev_fddt  = helmholtz_constants::dev_fddt;
+		const double *dev_fdtt  = helmholtz_constants::dev_fdtt;
+		const double *dev_fddtt = helmholtz_constants::dev_fddtt;
+
+		const double *dev_dpdf   = helmholtz_constants::dev_dpdf;
+		const double *dev_dpdfd  = helmholtz_constants::dev_dpdfd;
+		const double *dev_dpdft  = helmholtz_constants::dev_dpdft;
+		const double *dev_dpdfdt = helmholtz_constants::dev_dpdfdt;
+
+		const double *dev_ef   = helmholtz_constants::dev_ef;
+		const double *dev_efd  = helmholtz_constants::dev_efd;
+		const double *dev_eft  = helmholtz_constants::dev_eft;
+		const double *dev_efdt = helmholtz_constants::dev_efdt;
+
+		const double *dev_xf   = helmholtz_constants::dev_xf;
+		const double *dev_xfd  = helmholtz_constants::dev_xfd;
+		const double *dev_xft  = helmholtz_constants::dev_xft;
+		const double *dev_xfdt = helmholtz_constants::dev_xfdt;
+#endif
+	public:
+		helmholtz_function() {};
+
+		template<typename Float>
+		CUDA_FUNCTION_DECORATOR helm_eos_output<Float> inline operator()(double abar_, double zbar_, const Float T, const Float rho) const {
+			// coefs
+			Float fi[36];
+
+			Float abar = 1/abar_;
+			Float zbar = zbar_/abar_;
 
 
 			/* debug: */
-			// if (debug) std::cout << "decouldt=" << decouldt << " = y=" << y << " * plasgdt=" << decouldt << " + ecoul=" << ecoul << " / T" << "\n";
-
-			y        = rho/3.;
-			dpcouldd = ecoul + y*decouldd/3.;
-			dpcouldt = y*decouldt;
-			dpcoulda = y*decoulda;
-			dpcouldz = y*decouldz;
+			// if (debug) std::cout << "T=" << T << ", rho=" << rho << ", abar=" << abar << ", zbar=" << zbar << "\n";
 
 
-			y        = -helmholtz_constants::avo*helmholtz_constants::kerg/(abar*plasg)*(0.75*helmholtz_constants::b1*x + 1.25*helmholtz_constants::c1/x + helmholtz_constants::d1);
-			dscouldd = y*plasgdd;
-			dscouldt = y*plasgdt;
-			dscoulda = y*plasgda - scoul/abar;
-			dscouldz = y*plasgdz;
+			// compute polynoms rates
+			auto const [jat, iat] = helmholtz_constants::get_table_indices(T, rho, abar, zbar);
 
-		//yakovlev & shalybkov 1989 equations 102, 103, 104
-		} else if (plasg < 1.) {
-			x        = plasg*std::sqrt(plasg);
-			y        = std::pow(plasg, helmholtz_constants::b2);
-			z        = helmholtz_constants::c2*x - helmholtz_constants::a2*y/3.;
-			pcoul    = -pion*z;
-			ecoul    = 3.0*pcoul/rho;
-			scoul    = -helmholtz_constants::avo/abar*helmholtz_constants::kerg*(helmholtz_constants::c2*x - helmholtz_constants::a2*(helmholtz_constants::b2 - 1.)/helmholtz_constants::b2*y);
 
-			s        = 1.5*helmholtz_constants::c2*x/plasg - helmholtz_constants::a2*helmholtz_constants::b2*y/plasg/3.;
-			dpcouldd = -dpiondd*z - pion*s*plasgdd;
-			dpcouldt = -dpiondt*z - pion*s*plasgdt;
-			dpcoulda = -dpionda*z - pion*s*plasgda;
-			dpcouldz = -dpiondz*z - pion*s*plasgdz;
+			Float ytot1 = 1/abar;
+			Float ye = std::max(1e-16, zbar/abar);
+			Float din = ye*rho;
 
-			s        = 3.0/rho;
-			decouldd = s*dpcouldd - ecoul/rho;
-			decouldt = s*dpcouldt;
-			decoulda = s*dpcoulda;
-			decouldz = s*dpcouldz;
+			// initialize
+			Float rhoi    = 1./rho;
+			Float tempi   = 1./T;
+			Float kt      = helmholtz_constants::kerg*T;
+			Float ktinv   = 1./kt;
+
+
+			// adiation section:
+			Float prad    = helmholtz_constants::asol*T*T*T*T/3;
+			Float dpraddd = 0.;
+			Float dpraddt = 4.*prad*tempi;
+			Float dpradda = 0.;
+			Float dpraddz = 0.;
+
+			Float erad    = 3.*prad*rhoi;
+			Float deraddd = -erad*rhoi;
+			Float deraddt = 3.*dpraddt*rhoi;
+			Float deradda = 0.;
+			Float deraddz = 0.;
+
+			
+
+			Float srad    = (prad*rhoi + erad)*tempi;
+			Float dsraddd = (dpraddd*rhoi - prad*rhoi*rhoi + deraddd)*tempi;
+			Float dsraddt = (dpraddt*rhoi + deraddt - srad)*tempi;
+			Float dsradda = 0.;
+			Float dsraddz = 0.;
+
+
+			// ion section:
+			Float xni     = helmholtz_constants::avo*ytot1*rho;
+			Float dxnidd  = helmholtz_constants::avo*ytot1;
+			Float dxnida  = -xni*ytot1;
+
+			Float pion    = xni*kt;
+			Float dpiondd = dxnidd*kt;
+			Float dpiondt = xni*helmholtz_constants::kerg;
+			Float dpionda = dxnida*kt;
+			Float dpiondz = 0.;
+
+			Float eion    = 1.5*pion*rhoi;
+			Float deiondd = (1.5*dpiondd - eion)*rhoi;
+			Float deiondt = 1.5*dpiondt*rhoi;
+			Float deionda = 1.5*dpionda*rhoi;
+			Float deiondz = 0.;
+
+
+			// sackur-tetrode equation for the ion entropy of
+			// a single ideal gas characterized by abar
+			      Float x = abar*abar*std::sqrt(abar)*rhoi/helmholtz_constants::avo;
+			Float s = helmholtz_constants::sioncon*T;
+			Float z = x*s*std::sqrt(s);
+			Float y = std::log(z);
+
+			// y       = 1./(abar*kt)
+			// yy      = y*sqrt(y)
+			// z       = xni*sifac*yy
+			// etaion  = log(z)
+
+
+			Float sion    = (pion*rhoi + eion)*tempi + helmholtz_constants::kergavo*ytot1*y;
+			Float dsiondd = (dpiondd*rhoi - pion*rhoi*rhoi + deiondd)*tempi - helmholtz_constants::kergavo*rhoi*ytot1;
+			Float dsiondt = (dpiondt*rhoi + deiondt)*tempi - (pion*rhoi + eion)*tempi*tempi + 1.5*helmholtz_constants::kergavo*tempi*ytot1;
+			            x       = helmholtz_constants::avo*helmholtz_constants::kerg/abar;
+			Float dsionda = (dpionda*rhoi + deionda)*tempi + helmholtz_constants::kergavo*ytot1*ytot1*(2.5 - y);
+			Float dsiondz = 0.;
+
+
+
+			// electron-positron section:
+
+
+			// assume complete ionization
+			Float xnem    = xni*zbar;
+
+
+
+
+
+
+			// move table values into coefficient table
+			fi[0]  = CUDA_ACCESS(f)[JMAX*(iat + 0) + jat + 0];
+			fi[1]  = CUDA_ACCESS(f)[JMAX*(iat + 1) + jat + 0];
+			fi[2]  = CUDA_ACCESS(f)[JMAX*(iat + 0) + jat + 1];
+			fi[3]  = CUDA_ACCESS(f)[JMAX*(iat + 1) + jat + 1];
+			fi[4]  = CUDA_ACCESS(ft)[JMAX*(iat + 0) + jat + 0];
+			fi[5]  = CUDA_ACCESS(ft)[JMAX*(iat + 1) + jat + 0];
+			fi[6]  = CUDA_ACCESS(ft)[JMAX*(iat + 0) + jat + 1];
+			fi[7]  = CUDA_ACCESS(ft)[JMAX*(iat + 1) + jat + 1];
+			fi[8]  = CUDA_ACCESS(ftt)[JMAX*(iat + 0) + jat + 0];
+			fi[9]  = CUDA_ACCESS(ftt)[JMAX*(iat + 1) + jat + 0];
+			fi[10] = CUDA_ACCESS(ftt)[JMAX*(iat + 0) + jat + 1];
+			fi[11] = CUDA_ACCESS(ftt)[JMAX*(iat + 1) + jat + 1];
+			fi[12] = CUDA_ACCESS(fd)[JMAX*(iat + 0) + jat + 0];
+			fi[13] = CUDA_ACCESS(fd)[JMAX*(iat + 1) + jat + 0];
+			fi[14] = CUDA_ACCESS(fd)[JMAX*(iat + 0) + jat + 1];
+			fi[15] = CUDA_ACCESS(fd)[JMAX*(iat + 1) + jat + 1];
+			fi[16] = CUDA_ACCESS(fdd)[JMAX*(iat + 0) + jat + 0];
+			fi[17] = CUDA_ACCESS(fdd)[JMAX*(iat + 1) + jat + 0];
+			fi[18] = CUDA_ACCESS(fdd)[JMAX*(iat + 0) + jat + 1];
+			fi[19] = CUDA_ACCESS(fdd)[JMAX*(iat + 1) + jat + 1];
+			fi[20] = CUDA_ACCESS(fdt)[JMAX*(iat + 0) + jat + 0];
+			fi[21] = CUDA_ACCESS(fdt)[JMAX*(iat + 1) + jat + 0];
+			fi[22] = CUDA_ACCESS(fdt)[JMAX*(iat + 0) + jat + 1];
+			fi[23] = CUDA_ACCESS(fdt)[JMAX*(iat + 1) + jat + 1];
+			fi[24] = CUDA_ACCESS(fddt)[JMAX*(iat + 0) + jat + 0];
+			fi[25] = CUDA_ACCESS(fddt)[JMAX*(iat + 1) + jat + 0];
+			fi[26] = CUDA_ACCESS(fddt)[JMAX*(iat + 0) + jat + 1];
+			fi[27] = CUDA_ACCESS(fddt)[JMAX*(iat + 1) + jat + 1];
+			fi[28] = CUDA_ACCESS(fdtt)[JMAX*(iat + 0) + jat + 0];
+			fi[29] = CUDA_ACCESS(fdtt)[JMAX*(iat + 1) + jat + 0];
+			fi[30] = CUDA_ACCESS(fdtt)[JMAX*(iat + 0) + jat + 1];
+			fi[31] = CUDA_ACCESS(fdtt)[JMAX*(iat + 1) + jat + 1];
+			fi[32] = CUDA_ACCESS(fddtt)[JMAX*(iat + 0) + jat + 0];
+			fi[33] = CUDA_ACCESS(fddtt)[JMAX*(iat + 1) + jat + 0];
+			fi[34] = CUDA_ACCESS(fddtt)[JMAX*(iat + 0) + jat + 1];
+			fi[35] = CUDA_ACCESS(fddtt)[JMAX*(iat + 1) + jat + 1];
+
+
+
+			// various differences
+			Float xt  = std::max( (T - CUDA_ACCESS(t)[jat])*CUDA_ACCESS(dti_sav)[jat], 0.);
+			Float xd  = std::max( (din - CUDA_ACCESS(d)[iat])*CUDA_ACCESS(ddi_sav)[iat], 0.);
+			Float mxt = 1. - xt;
+			Float mxd = 1. - xd;
 
 
 			/* debug: */
-			// if (debug) std::cout << "decouldt=" << decouldt << " = s=" << s << " * dpcouldt=" << dpcouldt <<"\n";
+			// if (debug) std::cout << "xt=" << xt << " = (T - t[" << jat << "]=" << CUDA_ACCESS(t)[jat] << ")* dti_sav[" << jat << "]=" << CUDA_ACCESS(dti_sav)[jat] << "\n";
 
 
-			s        = -helmholtz_constants::avo*helmholtz_constants::kerg/(abar*plasg)*(1.5*helmholtz_constants::c2*x - helmholtz_constants::a2*(helmholtz_constants::b2 - 1.)*y);
-			dscouldd = s*plasgdd;
-			dscouldt = s*plasgdt;
-			dscoulda = s*plasgda - scoul/abar;
-			dscouldz = s*plasgdz;
+			// the six rhosity and six temperature basis functions;
+			Float si0t =   helmholtz_constants::psi0(xt);
+			Float si1t =   helmholtz_constants::psi1(xt)*CUDA_ACCESS(dt_sav)[jat];
+			Float si2t =   helmholtz_constants::psi2(xt)*CUDA_ACCESS(dt2_sav)[jat];
+
+
+			/* debug: */
+			// if (debug) std::cout << "si0t=" << si0t << " = psi0(xt=" << xt << ")\n";
+
+
+			Float si0mt =  helmholtz_constants::psi0(mxt);
+			Float si1mt = -helmholtz_constants::psi1(mxt)*CUDA_ACCESS(dt_sav)[jat];
+			Float si2mt =  helmholtz_constants::psi2(mxt)*CUDA_ACCESS(dt2_sav)[jat];
+
+			Float si0d =   helmholtz_constants::psi0(xd);
+			Float si1d =   helmholtz_constants::psi1(xd)*CUDA_ACCESS(dd_sav)[iat];
+			Float si2d =   helmholtz_constants::psi2(xd)*CUDA_ACCESS(dd2_sav)[iat];
+
+			Float si0md =  helmholtz_constants::psi0(mxd);
+			Float si1md = -helmholtz_constants::psi1(mxd)*CUDA_ACCESS(dd_sav)[iat];
+			Float si2md =  helmholtz_constants::psi2(mxd)*CUDA_ACCESS(dd2_sav)[iat];
+
+			// derivatives of the weight functions
+			Float dsi0t =   helmholtz_constants::dpsi0(xt)*CUDA_ACCESS(dti_sav)[jat];
+			Float dsi1t =   helmholtz_constants::dpsi1(xt);
+			Float dsi2t =   helmholtz_constants::dpsi2(xt)*CUDA_ACCESS(dt_sav)[jat];
+
+			Float dsi0mt = -helmholtz_constants::dpsi0(mxt)*CUDA_ACCESS(dti_sav)[jat];
+			Float dsi1mt =  helmholtz_constants::dpsi1(mxt);
+			Float dsi2mt = -helmholtz_constants::dpsi2(mxt)*CUDA_ACCESS(dt_sav)[jat];
+
+			Float dsi0d =   helmholtz_constants::dpsi0(xd)*CUDA_ACCESS(ddi_sav)[iat];
+			Float dsi1d =   helmholtz_constants::dpsi1(xd);
+			Float dsi2d =   helmholtz_constants::dpsi2(xd)*CUDA_ACCESS(dd_sav)[iat];
+
+			Float dsi0md = -helmholtz_constants::dpsi0(mxd)*CUDA_ACCESS(ddi_sav)[iat];
+			Float dsi1md =  helmholtz_constants::dpsi1(mxd);
+			Float dsi2md = -helmholtz_constants::dpsi2(mxd)*CUDA_ACCESS(dd_sav)[iat];
+
+			// second derivatives of the weight functions
+			Float ddsi0t =   helmholtz_constants::ddpsi0(xt)*CUDA_ACCESS(dt2i_sav)[jat];
+			Float ddsi1t =   helmholtz_constants::ddpsi1(xt)*CUDA_ACCESS(dti_sav)[jat];
+			Float ddsi2t =   helmholtz_constants::ddpsi2(xt);
+
+			Float ddsi0mt =  helmholtz_constants::ddpsi0(mxt)*CUDA_ACCESS(dt2i_sav)[jat];
+			Float ddsi1mt = -helmholtz_constants::ddpsi1(mxt)*CUDA_ACCESS(dti_sav)[jat];
+			Float ddsi2mt =  helmholtz_constants::ddpsi2(mxt);
+
+			// ddsi0d =   ddpsi0(xd)*dd2i_sav[iat];
+			// ddsi1d =   ddpsi1(xd)*ddi_sav[iat];
+			// ddsi2d =   ddpsi2(xd);
+
+			// ddsi0md =  ddpsi0(mxd)*dd2i_sav[iat];
+			// ddsi1md = -ddpsi1(mxd)*ddi_sav[iat];
+			// ddsi2md =  ddpsi2(mxd);
+
+
+			// the free energy
+			Float free  = helmholtz_constants::h5(fi,
+				si0t,   si1t,   si2t,   si0mt,   si1mt,   si2mt,
+				si0d,   si1d,   si2d,   si0md,   si1md,   si2md);
+
+			// derivative with respect to rhosity
+			Float df_d  = helmholtz_constants::h5(fi,
+				si0t,   si1t,   si2t,   si0mt,   si1mt,   si2mt,
+				dsi0d,  dsi1d,  dsi2d,  dsi0md,  dsi1md,  dsi2md);
+
+
+			// derivative with respect to temperature
+			Float df_t = helmholtz_constants::h5(fi,
+				dsi0t,  dsi1t,  dsi2t,  dsi0mt,  dsi1mt,  dsi2mt,
+				si0d,   si1d,   si2d,   si0md,   si1md,   si2md);
+
+			// derivative with respect to rhosity**2
+			// df_dd = h5(fi,
+			//		si0t,   si1t,   si2t,   si0mt,   si1mt,   si2mt,
+			//		ddsi0d, ddsi1d, ddsi2d, ddsi0md, ddsi1md, ddsi2md)
+
+			// derivative with respect to temperature**2
+			Float df_tt = helmholtz_constants::h5(fi,
+				ddsi0t, ddsi1t, ddsi2t, ddsi0mt, ddsi1mt, ddsi2mt,
+				si0d,   si1d,   si2d,   si0md,   si1md,   si2md);
+
+
+
+			// derivative with respect to temperature and rhosity
+			Float df_dt = helmholtz_constants::h5(fi,
+				dsi0t,  dsi1t,  dsi2t,  dsi0mt,  dsi1mt,  dsi2mt,
+				dsi0d,  dsi1d,  dsi2d,  dsi0md,  dsi1md,  dsi2md);
+
+
+
+			// now get the pressure derivative with rhosity, chemical potential, and
+			// electron positron number rhosities
+			// get the interpolation weight functions
+			si0t   =  helmholtz_constants::xpsi0(xt);
+			si1t   =  helmholtz_constants::xpsi1(xt)*CUDA_ACCESS(dt_sav)[jat];
+
+			si0mt  =  helmholtz_constants::xpsi0(mxt);
+			si1mt  =  -helmholtz_constants::xpsi1(mxt)*CUDA_ACCESS(dt_sav)[jat];
+
+			si0d   =  helmholtz_constants::xpsi0(xd);
+			si1d   =  helmholtz_constants::xpsi1(xd)*CUDA_ACCESS(dd_sav)[iat];
+
+			si0md  =  helmholtz_constants::xpsi0(mxd);
+			si1md  =  -helmholtz_constants::xpsi1(mxd)*CUDA_ACCESS(dd_sav)[iat];
+
+
+			// derivatives of weight functions
+			dsi0t  = helmholtz_constants::xdpsi0(xt)*CUDA_ACCESS(dti_sav)[jat];
+			dsi1t  = helmholtz_constants::xdpsi1(xt);
+
+			dsi0mt = -helmholtz_constants::xdpsi0(mxt)*CUDA_ACCESS(dti_sav)[jat];
+			dsi1mt = helmholtz_constants::xdpsi1(mxt);
+
+			dsi0d  = helmholtz_constants::xdpsi0(xd)*CUDA_ACCESS(ddi_sav)[iat];
+			dsi1d  = helmholtz_constants::xdpsi1(xd);
+
+			dsi0md = -helmholtz_constants::xdpsi0(mxd)*CUDA_ACCESS(ddi_sav)[iat];
+			dsi1md = helmholtz_constants::xdpsi1(mxd);
+
+
+
+
+
+			// move table values into coefficient table
+			fi[0]  = CUDA_ACCESS(dpdf)[JMAX*(iat + 0) + jat + 0];
+			fi[1]  = CUDA_ACCESS(dpdf)[JMAX*(iat + 1) + jat + 0];
+			fi[2]  = CUDA_ACCESS(dpdf)[JMAX*(iat + 0) + jat + 1];
+			fi[3]  = CUDA_ACCESS(dpdf)[JMAX*(iat + 1) + jat + 1];
+			fi[4]  = CUDA_ACCESS(dpdft)[JMAX*(iat + 0) + jat + 0];
+			fi[5]  = CUDA_ACCESS(dpdft)[JMAX*(iat + 1) + jat + 0];
+			fi[6]  = CUDA_ACCESS(dpdft)[JMAX*(iat + 0) + jat + 1];
+			fi[7]  = CUDA_ACCESS(dpdft)[JMAX*(iat + 1) + jat + 1];
+			fi[8]  = CUDA_ACCESS(dpdfd)[JMAX*(iat + 0) + jat + 0];
+			fi[9]  = CUDA_ACCESS(dpdfd)[JMAX*(iat + 1) + jat + 0];
+			fi[10] = CUDA_ACCESS(dpdfd)[JMAX*(iat + 0) + jat + 1];
+			fi[11] = CUDA_ACCESS(dpdfd)[JMAX*(iat + 1) + jat + 1];
+			fi[12] = CUDA_ACCESS(dpdfdt)[JMAX*(iat + 0) + jat + 0];
+			fi[13] = CUDA_ACCESS(dpdfdt)[JMAX*(iat + 1) + jat + 0];
+			fi[14] = CUDA_ACCESS(dpdfdt)[JMAX*(iat + 0) + jat + 1];
+			fi[15] = CUDA_ACCESS(dpdfdt)[JMAX*(iat + 1) + jat + 1];
+
+
+
+
+			Float dpepdd  = helmholtz_constants::h3(fi,
+				si0t,   si1t,   si0mt,   si1mt,
+	            si0d,   si1d,   si0md,   si1md);
+				dpepdd  = std::max(ye*dpepdd, 1.e-30);
+
+
+
+
+
+			// move table values into coefficient table
+			fi[0]  = CUDA_ACCESS(ef)[JMAX*(iat + 0) + jat + 0];
+			fi[1]  = CUDA_ACCESS(ef)[JMAX*(iat + 1) + jat + 0];
+			fi[2]  = CUDA_ACCESS(ef)[JMAX*(iat + 0) + jat + 1];
+			fi[3]  = CUDA_ACCESS(ef)[JMAX*(iat + 1) + jat + 1];
+			fi[4]  = CUDA_ACCESS(eft)[JMAX*(iat + 0) + jat + 0];
+			fi[5]  = CUDA_ACCESS(eft)[JMAX*(iat + 1) + jat + 0];
+			fi[6]  = CUDA_ACCESS(eft)[JMAX*(iat + 0) + jat + 1];
+			fi[7]  = CUDA_ACCESS(eft)[JMAX*(iat + 1) + jat + 1];
+			fi[8]  = CUDA_ACCESS(efd)[JMAX*(iat + 0) + jat + 0];
+			fi[9]  = CUDA_ACCESS(efd)[JMAX*(iat + 1) + jat + 0];
+			fi[10] = CUDA_ACCESS(efd)[JMAX*(iat + 0) + jat + 1];
+			fi[11] = CUDA_ACCESS(efd)[JMAX*(iat + 1) + jat + 1];
+			fi[12] = CUDA_ACCESS(efdt)[JMAX*(iat + 0) + jat + 0];
+			fi[13] = CUDA_ACCESS(efdt)[JMAX*(iat + 1) + jat + 0];
+			fi[14] = CUDA_ACCESS(efdt)[JMAX*(iat + 0) + jat + 1];
+			fi[15] = CUDA_ACCESS(efdt)[JMAX*(iat + 1) + jat + 1];
+
+
+
+
+
+
+			// electron chemical potential etaele
+			Float etaele  = helmholtz_constants::h3(fi,
+				si0t,   si1t,   si0mt,   si1mt,
+				si0d,   si1d,   si0md,   si1md);
+
+
+			// derivative with respect to rhosity
+			x = helmholtz_constants::h3(fi,
+				si0t,   si1t,   si0mt,   si1mt,
+				dsi0d,  dsi1d,  dsi0md,  dsi1md);
+			Float detadd  = ye*x;
+
+			// derivative with respect to temperature
+			Float detadt  = helmholtz_constants::h3(fi,
+				dsi0t,  dsi1t,  dsi0mt,  dsi1mt,
+				si0d,   si1d,   si0md,   si1md);
+
+			// derivative with respect to abar and zbar
+			Float detada = -x*din*ytot1;
+			Float detadz =  x*rho*ytot1;
+
+
+
+
+
+			// move table values into coefficient table
+			fi[0]  = CUDA_ACCESS(xf)[JMAX*(iat + 0) + jat + 0];
+			fi[1]  = CUDA_ACCESS(xf)[JMAX*(iat + 1) + jat + 0];
+			fi[2]  = CUDA_ACCESS(xf)[JMAX*(iat + 0) + jat + 1];
+			fi[3]  = CUDA_ACCESS(xf)[JMAX*(iat + 1) + jat + 1];
+			fi[4]  = CUDA_ACCESS(xft)[JMAX*(iat + 0) + jat + 0];
+			fi[5]  = CUDA_ACCESS(xft)[JMAX*(iat + 1) + jat + 0];
+			fi[6]  = CUDA_ACCESS(xft)[JMAX*(iat + 0) + jat + 1];
+			fi[7]  = CUDA_ACCESS(xft)[JMAX*(iat + 1) + jat + 1];
+			fi[8]  = CUDA_ACCESS(xfd)[JMAX*(iat + 0) + jat + 0];
+			fi[9]  = CUDA_ACCESS(xfd)[JMAX*(iat + 1) + jat + 0];
+			fi[10] = CUDA_ACCESS(xfd)[JMAX*(iat + 0) + jat + 1];
+			fi[11] = CUDA_ACCESS(xfd)[JMAX*(iat + 1) + jat + 1];
+			fi[12] = CUDA_ACCESS(xfdt)[JMAX*(iat + 0) + jat + 0];
+			fi[13] = CUDA_ACCESS(xfdt)[JMAX*(iat + 1) + jat + 0];
+			fi[14] = CUDA_ACCESS(xfdt)[JMAX*(iat + 0) + jat + 1];
+			fi[15] = CUDA_ACCESS(xfdt)[JMAX*(iat + 1) + jat + 1];
+
+
+
+
+
+			// electron + positron number rhosities
+			Float xnefer = helmholtz_constants::h3(fi,
+				si0t,   si1t,   si0mt,   si1mt,
+	        	si0d,   si1d,   si0md,   si1md);
+
+			// derivative with respect to rhosity
+			x = helmholtz_constants::h3(fi,
+				si0t,   si1t,   si0mt,   si1mt,
+	        	dsi0d,  dsi1d,  dsi0md,  dsi1md);
+			x = std::max(x, 1e-30);
+			Float dxnedd   = ye*x;
+
+			// derivative with respect to temperature
+			Float dxnedt   = helmholtz_constants::h3(fi,
+				dsi0t,  dsi1t,  dsi0mt,  dsi1mt,
+	        	si0d,   si1d,   si0md,   si1md);
+
+			// derivative with respect to abar and zbar
+			Float dxneda = -x*din*ytot1;
+			Float dxnedz =  x *rho*ytot1;
+
+
+			// the desired electron-positron thermodynamic quantities
+
+			// dpepdd at high temperatures and low rhosities is below the
+			// floating point limit of the subtraction of two large terms.
+			// since dpresdd doesn't enter the maxwell relations at all, use the
+			// bicubic interpolation done above instead of the formally correct expression
+			x       = din*din;
+			Float pele    = x*df_d;
+			Float dpepdt  = x*df_dt;
+			// dpepdd  = ye*(x*df_dd + 2.0*din*df_d)
+			s       = dpepdd/ye - 2.0*din*df_d;
+			Float dpepda  = -ytot1*(2.0*pele + s*din);
+			Float dpepdz  = rho*ytot1*(2.0*din*df_d  +  s);
+
+
+			x       = ye*ye;
+			Float sele    = -df_t*ye;
+			Float dsepdt  = -df_tt*ye;
+			Float dsepdd  = -df_dt*x;
+			Float dsepda  = ytot1*(ye*df_dt*din - sele);
+			Float dsepdz  = -ytot1*(ye*df_dt*rho  + df_t);
+
+
+			/* debug: */
+			// if (debug) std::cout << "dsepdt=" << dsepdt << " = -df_tt=" << df_tt << " * ye=" << ye << "\n";
+
+
+			Float eele    = ye*free + T*sele;
+			Float deepdt  = T*dsepdt;
+			Float deepdd  = x*df_d + T*dsepdd;
+			Float deepda  = -ye*ytot1*(free +  df_d*din) + T*dsepda;
+			Float deepdz  = ytot1* (free + ye*df_d*rho) + T*dsepdz;
+
+
+			/* debug: */
+			// if (debug) std::cout << "deepdt=" << deepdt << " = dsepdt=" << dsepdt << " * T" << "\n";
+
+
+			// coulomb section:
+
+			// uniform background corrections only
+			// from yakovlev & shalybkov 1989
+			// lami is the average ion seperation
+			// plasg is the plasma coupling parameter
+
+			z              = helmholtz_constants::pi*4./3.;
+			s              = z*xni;
+			Float dsdd     = z*dxnidd;
+			Float dsda     = z*dxnida;
+
+			/* debug: */
+			// if (debug) std::cout << "s=" << s << " = z=" << z << " * xni=" << xni << "\n";
+
+
+			Float lami     = std::pow(1./s, 1./3.);
+			Float inv_lami = 1./lami;
+			z              = -lami/3;
+			Float lamidd   = z*dsdd/s;
+			Float lamida   = z*dsda/s;
+
+			Float plasg    = zbar*zbar*helmholtz_constants::esqu*ktinv*inv_lami;
+			z        = -plasg*inv_lami;
+			Float plasgdd  = z*lamidd;
+			Float plasgda  = z*lamida;
+			Float plasgdt  = -plasg*ktinv*helmholtz_constants::kerg;
+			Float plasgdz  = 2.0*plasg/zbar;
+
+			/* debug: */
+			// if (debug) std::cout << "plasg=" << plasg << " = zbar=" << zbar << "^2 * esqu=" << helmholtz_constants::esqu << " * ktinv=" << ktinv << " * inv_lami=" << inv_lami << "\n";
+
+
+			Float ecoul, pcoul, scoul,
+				decouldd, decouldt, decoulda, decouldz,
+				dpcouldd, dpcouldt, dpcoulda, dpcouldz,
+				dscouldd, dscouldt, dscoulda, dscouldz;
+
+			// yakovlev & shalybkov 1989 equations 82, 85, 86, 87
+			if (plasg >= 1.) {
+				x        = std::pow(plasg, 0.25);
+				y        = helmholtz_constants::avo*ytot1*helmholtz_constants::kerg;
+				ecoul    = y*T*(helmholtz_constants::a1*plasg + helmholtz_constants::b1*x + helmholtz_constants::c1/x + helmholtz_constants::d1);
+				pcoul    = rho*ecoul/3.;
+				scoul    = -y*(3.0*helmholtz_constants::b1*x - 5.0*helmholtz_constants::c1/x + helmholtz_constants::d1*(std::log(plasg) - 1.) - helmholtz_constants::e1);
+
+				y        = helmholtz_constants::avo*ytot1*kt*(helmholtz_constants::a1 + 0.25/plasg*(helmholtz_constants::b1*x - helmholtz_constants::c1/x));
+				decouldd = y*plasgdd;
+				decouldt = y*plasgdt + ecoul/T;
+				decoulda = y*plasgda - ecoul/abar;
+				decouldz = y*plasgdz;
+
+
+				/* debug: */
+				// if (debug) std::cout << "decouldt=" << decouldt << " = y=" << y << " * plasgdt=" << decouldt << " + ecoul=" << ecoul << " / T" << "\n";
+
+				y        = rho/3.;
+				dpcouldd = ecoul + y*decouldd/3.;
+				dpcouldt = y*decouldt;
+				dpcoulda = y*decoulda;
+				dpcouldz = y*decouldz;
+
+
+				y        = -helmholtz_constants::avo*helmholtz_constants::kerg/(abar*plasg)*(0.75*helmholtz_constants::b1*x + 1.25*helmholtz_constants::c1/x + helmholtz_constants::d1);
+				dscouldd = y*plasgdd;
+				dscouldt = y*plasgdt;
+				dscoulda = y*plasgda - scoul/abar;
+				dscouldz = y*plasgdz;
+
+			//yakovlev & shalybkov 1989 equations 102, 103, 104
+			} else if (plasg < 1.) {
+				x        = plasg*std::sqrt(plasg);
+				y        = std::pow(plasg, helmholtz_constants::b2);
+				z        = helmholtz_constants::c2*x - helmholtz_constants::a2*y/3.;
+				pcoul    = -pion*z;
+				ecoul    = 3.0*pcoul/rho;
+				scoul    = -helmholtz_constants::avo/abar*helmholtz_constants::kerg*(helmholtz_constants::c2*x - helmholtz_constants::a2*(helmholtz_constants::b2 - 1.)/helmholtz_constants::b2*y);
+
+				s        = 1.5*helmholtz_constants::c2*x/plasg - helmholtz_constants::a2*helmholtz_constants::b2*y/plasg/3.;
+				dpcouldd = -dpiondd*z - pion*s*plasgdd;
+				dpcouldt = -dpiondt*z - pion*s*plasgdt;
+				dpcoulda = -dpionda*z - pion*s*plasgda;
+				dpcouldz = -dpiondz*z - pion*s*plasgdz;
+
+				s        = 3.0/rho;
+				decouldd = s*dpcouldd - ecoul/rho;
+				decouldt = s*dpcouldt;
+				decoulda = s*dpcoulda;
+				decouldz = s*dpcouldz;
+
+
+				/* debug: */
+				// if (debug) std::cout << "decouldt=" << decouldt << " = s=" << s << " * dpcouldt=" << dpcouldt <<"\n";
+
+
+				s        = -helmholtz_constants::avo*helmholtz_constants::kerg/(abar*plasg)*(1.5*helmholtz_constants::c2*x - helmholtz_constants::a2*(helmholtz_constants::b2 - 1.)*y);
+				dscouldd = s*plasgdd;
+				dscouldt = s*plasgdt;
+				dscoulda = s*plasgda - scoul/abar;
+				dscouldz = s*plasgdz;
+			}
+
+
+
+
+
+			// bomb proof
+			x   = prad + pion + pele + pcoul;
+			y   = erad + eion + eele + ecoul;
+			z   = srad + sion + sele + scoul;
+
+			// if (x .le. 0.0 .or. y .le. 0.0 .or. z .le. 0.0) then
+			// if (x .le. 0.0) then
+			if (x <= 0. || y <= 0.) {
+				pcoul    = 0.;
+				dpcouldd = 0.;
+				dpcouldt = 0.;
+				dpcoulda = 0.;
+				dpcouldz = 0.;
+				ecoul    = 0.;
+				decouldd = 0.;
+				decouldt = 0.;
+				decoulda = 0.;
+				decouldz = 0.;
+				scoul    = 0.;
+				dscouldd = 0.;
+				dscouldt = 0.;
+				dscoulda = 0.;
+				dscouldz = 0.;
+			}
+
+
+			// sum all the gas components
+			Float pgas    = pion + pele + pcoul;
+			Float egas    = eion + eele + ecoul;
+			Float sgas    = sion + sele + scoul;
+
+			Float dpgasdd = dpiondd + dpepdd + dpcouldd;
+			Float dpgasdt = dpiondt + dpepdt + dpcouldt;
+			Float dpgasda = dpionda + dpepda + dpcoulda;
+			Float dpgasdz = dpiondz + dpepdz + dpcouldz;
+
+			Float degasdd = deiondd + deepdd + decouldd;
+			Float degasdt = deiondt + deepdt + decouldt;
+			Float degasda = deionda + deepda + decoulda;
+			Float degasdz = deiondz + deepdz + decouldz;
+
+			Float dsgasdd = dsiondd + dsepdd + dscouldd;
+			Float dsgasdt = dsiondt + dsepdt + dscouldt;
+			Float dsgasda = dsionda + dsepda + dscoulda;
+			Float dsgasdz = dsiondz + dsepdz + dscouldz;
+
+
+			/* debug: */
+			// if (debug) std::cout << "degasdt=" << degasdt << " = deiondt=" << deiondt << " + deepdt=" << deepdt << " + decouldt=" << decouldt << "\n";
+
+
+			// add in radiation to get the total
+			Float pres    = prad + pgas;
+			Float ener    = erad + egas;
+			Float entr    = srad + sgas;
+
+			Float dpresdd = dpraddd + dpgasdd;
+			Float dpresdt = dpraddt + dpgasdt;
+			Float dpresda = dpradda + dpgasda;
+			Float dpresdz = dpraddz + dpgasdz;
+
+			Float rhoerdd = deraddd + degasdd;
+			Float rhoerdt = deraddt + degasdt;
+			Float rhoerda = deradda + degasda;
+			Float rhoerdz = deraddz + degasdz;
+
+			Float rhotrdd = dsraddd + dsgasdd;
+			Float rhotrdt = dsraddt + dsgasdt;
+			Float rhotrda = dsradda + dsgasda;
+			Float rhotrdz = dsraddz + dsgasdz;
+
+
+			/* debug: */
+			// if (debug) std::cout << "rhoerdt(cv)=" << rhoerdt << " = deraddt=" << deraddt << " + degasdt=" << degasdt << "\n\n";
+
+
+			// for the gas
+			// the temperature and rhosity exponents (c&g 9.81 9.82)
+			// the specific heat at constant volume (c&g 9.92)
+			// the third adiabatic exponent (c&g 9.93)
+			// the first adiabatic exponent (c&g 9.97)
+			// the second adiabatic exponent (c&g 9.105)
+			// the specific heat at constant pressure (c&g 9.98)
+			// and relativistic formula for the sound speed (c&g 14.29)
+
+			helm_eos_output<double> res;
+
+
+			Float zz            = pgas*rhoi;
+			Float zzi           = rho/pgas;
+			Float chit_gas      = T/pgas*dpgasdt;
+			Float chid_gas      = dpgasdd*zzi;
+			res.cv_gaz    = degasdt;
+			x             = zz*chit_gas/(T*res.cv_gaz);
+			Float gam3_gas      = x + 1.;
+			Float gam1_gas      = chit_gas*x + chid_gas;
+			Float nabad_gas     = x/gam1_gas;
+			Float gam2_gas      = 1./(1. - nabad_gas);
+			res.cp_gaz    = res.cv_gaz*gam1_gas/chid_gas;
+			z             = 1. + (egas + helmholtz_constants::clight*helmholtz_constants::clight)*zzi;
+			res.c_gaz = helmholtz_constants::clight*std::sqrt(gam1_gas/z);
+
+
+
+			// for the totals
+			zz    = pres*rhoi;
+			zzi   = rho/pres;
+			Float chit  = T/pres*dpresdt;
+			Float chid  = dpresdd*zzi;
+			res.cv    = rhoerdt;
+			x     = zz*chit/(T*res.cv);
+			Float gam3  = x + 1.;
+			Float gam1  = chit*x + chid;
+			Float nabad = x/gam1;
+			Float gam2  = 1./(1. - nabad);
+			res.cp    = res.cv*gam1/chid;
+			z     = 1. + (ener + helmholtz_constants::clight*helmholtz_constants::clight)*zzi;
+			res.c = helmholtz_constants::clight*std::sqrt(gam1/z);
+
+
+
+			// maxwell relations; each is zero if the consistency is perfect
+			x   = rho*rho;
+			res.dse = T*rhotrdt/rhoerdt - 1.;
+			res.dpe = (rhoerdd*x + T*dpresdt)/pres - 1.;
+			res.dsp = -rhotrdd*x/dpresdt - 1.;
+
+			// Needed output
+			res.dP_dT  = dpresdt;
+			res.dU_dYe = degasdz*abar;
+			res.p = pres;
+			res.u = ener;
+
+			return res;
 		}
-
-
-
-
-
-		// bomb proof
-		x   = prad + pion + pele + pcoul;
-		y   = erad + eion + eele + ecoul;
-		z   = srad + sion + sele + scoul;
-
-		// if (x .le. 0.0 .or. y .le. 0.0 .or. z .le. 0.0) then
-		// if (x .le. 0.0) then
-		if (x <= 0. || y <= 0.) {
-			pcoul    = 0.;
-			dpcouldd = 0.;
-			dpcouldt = 0.;
-			dpcoulda = 0.;
-			dpcouldz = 0.;
-			ecoul    = 0.;
-			decouldd = 0.;
-			decouldt = 0.;
-			decoulda = 0.;
-			decouldz = 0.;
-			scoul    = 0.;
-			dscouldd = 0.;
-			dscouldt = 0.;
-			dscoulda = 0.;
-			dscouldz = 0.;
-		}
-
-
-		// sum all the gas components
-		Float pgas    = pion + pele + pcoul;
-		Float egas    = eion + eele + ecoul;
-		Float sgas    = sion + sele + scoul;
-
-		Float dpgasdd = dpiondd + dpepdd + dpcouldd;
-		Float dpgasdt = dpiondt + dpepdt + dpcouldt;
-		Float dpgasda = dpionda + dpepda + dpcoulda;
-		Float dpgasdz = dpiondz + dpepdz + dpcouldz;
-
-		Float degasdd = deiondd + deepdd + decouldd;
-		Float degasdt = deiondt + deepdt + decouldt;
-		Float degasda = deionda + deepda + decoulda;
-		Float degasdz = deiondz + deepdz + decouldz;
-
-		Float dsgasdd = dsiondd + dsepdd + dscouldd;
-		Float dsgasdt = dsiondt + dsepdt + dscouldt;
-		Float dsgasda = dsionda + dsepda + dscoulda;
-		Float dsgasdz = dsiondz + dsepdz + dscouldz;
-
-
-		/* debug: */
-		// if (debug) std::cout << "degasdt=" << degasdt << " = deiondt=" << deiondt << " + deepdt=" << deepdt << " + decouldt=" << decouldt << "\n";
-
-
-		// add in radiation to get the total
-		Float pres    = prad + pgas;
-		Float ener    = erad + egas;
-		Float entr    = srad + sgas;
-
-		Float dpresdd = dpraddd + dpgasdd;
-		Float dpresdt = dpraddt + dpgasdt;
-		Float dpresda = dpradda + dpgasda;
-		Float dpresdz = dpraddz + dpgasdz;
-
-		Float rhoerdd = deraddd + degasdd;
-		Float rhoerdt = deraddt + degasdt;
-		Float rhoerda = deradda + degasda;
-		Float rhoerdz = deraddz + degasdz;
-
-		Float rhotrdd = dsraddd + dsgasdd;
-		Float rhotrdt = dsraddt + dsgasdt;
-		Float rhotrda = dsradda + dsgasda;
-		Float rhotrdz = dsraddz + dsgasdz;
-
-
-		/* debug: */
-		// if (debug) std::cout << "rhoerdt(cv)=" << rhoerdt << " = deraddt=" << deraddt << " + degasdt=" << degasdt << "\n\n";
-
-
-		// for the gas
-		// the temperature and rhosity exponents (c&g 9.81 9.82)
-		// the specific heat at constant volume (c&g 9.92)
-		// the third adiabatic exponent (c&g 9.93)
-		// the first adiabatic exponent (c&g 9.97)
-		// the second adiabatic exponent (c&g 9.105)
-		// the specific heat at constant pressure (c&g 9.98)
-		// and relativistic formula for the sound speed (c&g 14.29)
-
-		helm_eos_output<double> res;
-
-
-		Float zz            = pgas*rhoi;
-		Float zzi           = rho/pgas;
-		Float chit_gas      = T/pgas*dpgasdt;
-		Float chid_gas      = dpgasdd*zzi;
-		res.cv_gaz    = degasdt;
-		x             = zz*chit_gas/(T*res.cv_gaz);
-		Float gam3_gas      = x + 1.;
-		Float gam1_gas      = chit_gas*x + chid_gas;
-		Float nabad_gas     = x/gam1_gas;
-		Float gam2_gas      = 1./(1. - nabad_gas);
-		res.cp_gaz    = res.cv_gaz*gam1_gas/chid_gas;
-		z             = 1. + (egas + helmholtz_constants::clight*helmholtz_constants::clight)*zzi;
-		res.c_gaz = helmholtz_constants::clight*std::sqrt(gam1_gas/z);
-
-
-
-		// for the totals
-		zz    = pres*rhoi;
-		zzi   = rho/pres;
-		Float chit  = T/pres*dpresdt;
-		Float chid  = dpresdd*zzi;
-		res.cv    = rhoerdt;
-		x     = zz*chit/(T*res.cv);
-		Float gam3  = x + 1.;
-		Float gam1  = chit*x + chid;
-		Float nabad = x/gam1;
-		Float gam2  = 1./(1. - nabad);
-		res.cp    = res.cv*gam1/chid;
-		z     = 1. + (ener + helmholtz_constants::clight*helmholtz_constants::clight)*zzi;
-		res.c = helmholtz_constants::clight*std::sqrt(gam1/z);
-
-
-
-		// maxwell relations; each is zero if the consistency is perfect
-		x   = rho*rho;
-		res.dse = T*rhotrdt/rhoerdt - 1.;
-		res.dpe = (rhoerdd*x + T*dpresdt)/pres - 1.;
-		res.dsp = -rhotrdd*x/dpresdt - 1.;
-
-		// Needed output
-		res.dP_dT  = dpresdt;
-		res.dU_dYe = degasdz*abar;
-		res.p = pres;
-		res.u = ener;
-
-		return res;
-	}
-
+	} helmholtz;
 
 
 
@@ -1212,19 +1253,13 @@ namespace nnet::eos {
 	template<typename Float=double>
 	class helmholtz_functor {
 	private:
+		helmholtz_function helmholtz_call;
+
 		const Float *Z;
 		int dimension;
 #ifdef USE_CUDA
-		Float *Z_dev;
+		Float *dev_Z;
 #endif
-
-		CUDA_FUNCTION_DECORATOR helm_eos_output<Float> inline compute(const Float *Z_, const Float *Y, const Float T, const Float rho) const {
-			// compute abar and zbar
-			double abar = algorithm::accumulate(Y, Y + dimension, (Float)0);
-			double zbar = eigen::dot(Y, Y + dimension, Z);
-
-			return helmholtz(abar, zbar, T, rho);
-		}
 
 	public:
 		using eos_type = helm_eos_output<Float>;
@@ -1232,8 +1267,8 @@ namespace nnet::eos {
 		CUDA_FUNCTION_DECORATOR helmholtz_functor() {}
 		helmholtz_functor(const Float  *Z_, int dimension_) : Z(Z_), dimension(dimension_) {
 #ifdef USE_CUDA
-			gpuErrchk(cudaMalloc(&Z_dev, dimension*sizeof(Float)));
-			gpuErrchk(cudaMemcpy(Z_dev, Z, dimension*sizeof(Float), cudaMemcpyHostToDevice));
+			gpuErrchk(cudaMalloc(&dev_Z, dimension*sizeof(Float)));
+			gpuErrchk(cudaMemcpy(dev_Z, Z, dimension*sizeof(Float), cudaMemcpyHostToDevice));
 #endif
 		}
 		template<class Vector>
@@ -1243,16 +1278,16 @@ namespace nnet::eos {
 
 		CUDA_FUNCTION_DECORATOR ~helmholtz_functor() {
 #ifdef USE_CUDA
-			cudaFree(Z_dev);
+			cudaFree(dev_Z);
 #endif
 		}
 
 		CUDA_FUNCTION_DECORATOR helm_eos_output<Float> inline operator()(const Float *Y, const Float T, const Float rho) const {
-#ifdef  __CUDA_ARCH__
-			return compute(Z_dev, Y, T, rho);
-#else
-			return compute(Z, Y, T, rho);
-#endif
+			// compute abar and zbar
+			double abar = algorithm::accumulate(Y, Y + dimension, (Float)0);
+			double zbar = eigen::dot(Y, Y + dimension, CUDA_ACCESS(Z));
+
+			return helmholtz_call(abar, zbar, T, rho);
 		}
 	};
 }

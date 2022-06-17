@@ -7,7 +7,7 @@
 
 
 // physical parameters
-#include "../src/net86/net86.hpp"
+#include "../src/net87/net87.hpp"
 #include "../src/net14/net14.hpp"
 #include "../src/eos/helmholtz.hpp"
 
