@@ -141,6 +141,54 @@ namespace nnet::eos {
 		__device__ double *dev_xfd;
 		__device__ double *dev_xft;
 		__device__ double *dev_xfdt;
+
+		// private destructor of global cuda pointers
+		class {
+			struct cudaDestructorClass {
+				~cudaDestructorClass() {
+					std::cout << "freeing helm device buffers...\n";
+					
+					cuda_util::free_from_gpu(dev_d);
+					cuda_util::free_from_gpu(dev_dd_sav);
+					cuda_util::free_from_gpu(dev_dd2_sav);
+					cuda_util::free_from_gpu(dev_ddi_sav);
+					cuda_util::free_from_gpu(dev_dd2i_sav);
+					cuda_util::free_from_gpu(dev_dd3i_sav);
+
+					cuda_util::free_from_gpu(dev_t);
+					cuda_util::free_from_gpu(dev_dt_sav);
+					cuda_util::free_from_gpu(dev_dt2_sav);
+					cuda_util::free_from_gpu(dev_dti_sav);
+					cuda_util::free_from_gpu(dev_dt2i_sav);
+					cuda_util::free_from_gpu(dev_dt3i_sav);
+
+					cuda_util::free_from_gpu(dev_f);
+					cuda_util::free_from_gpu(dev_fd);
+					cuda_util::free_from_gpu(dev_ft);
+					cuda_util::free_from_gpu(dev_fdd);
+					cuda_util::free_from_gpu(dev_ftt);
+					cuda_util::free_from_gpu(dev_fdt);
+					cuda_util::free_from_gpu(dev_fddt);
+					cuda_util::free_from_gpu(dev_fdtt);
+					cuda_util::free_from_gpu(dev_fddtt);
+
+					cuda_util::free_from_gpu(dev_dpdf);
+					cuda_util::free_from_gpu(dev_dpdfd);
+					cuda_util::free_from_gpu(dev_dpdft);
+					cuda_util::free_from_gpu(dev_dpdfdt);
+
+					cuda_util::free_from_gpu(dev_ef);
+					cuda_util::free_from_gpu(dev_efd);
+					cuda_util::free_from_gpu(dev_eft);
+					cuda_util::free_from_gpu(dev_efdt);
+
+					cuda_util::free_from_gpu(dev_xf);
+					cuda_util::free_from_gpu(dev_xfd);
+					cuda_util::free_from_gpu(dev_xft);
+					cuda_util::free_from_gpu(dev_xfdt);
+				}
+			} cudaDestructor;
+		} cudaDestructor;
 #endif
 
 
@@ -254,7 +302,44 @@ namespace nnet::eos {
 
 #ifdef USE_CUDA
 			// copy to device
-			
+			cuda_util::move_to_gpu(dev_d, d.data(), imax);
+			cuda_util::move_to_gpu(dev_dd_sav, dd_sav.data(), imax - 1);
+			cuda_util::move_to_gpu(dev_dd2_sav, dd2_sav.data(), imax - 1);
+			cuda_util::move_to_gpu(dev_ddi_sav, ddi_sav.data(), imax - 1);
+			cuda_util::move_to_gpu(dev_dd2i_sav, dd2i_sav.data(), imax - 1);
+			cuda_util::move_to_gpu(dev_dd3i_sav, dd3i_sav.data(), imax - 1);
+
+			cuda_util::move_to_gpu(dev_t, t.data(), jmax);
+			cuda_util::move_to_gpu(dev_dt_sav, dt_sav.data(), jmax - 1);
+			cuda_util::move_to_gpu(dev_dt2_sav, dt2_sav.data(), jmax - 1);
+			cuda_util::move_to_gpu(dev_dti_sav, dti_sav.data(), jmax - 1);
+			cuda_util::move_to_gpu(dev_dt2i_sav, dt2i_sav.data(), jmax - 1);
+			cuda_util::move_to_gpu(dev_dt3i_sav, dt3i_sav.data(), jmax - 1);
+
+			cuda_util::move_to_gpu(dev_f, f.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_fd, fd.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_ft, ft.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_fdd, fdd.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_ftt, ftt.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_fdt, fdt.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_fddt, fddt.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_fdtt, fdtt.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_fddtt, fddtt.data(), imax*jmax);
+
+			cuda_util::move_to_gpu(dev_dpdf, dpdf.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_dpdfd, dpdfd.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_dpdft, dpdft.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_dpdfdt, dpdfdt.data(), imax*jmax);
+
+			cuda_util::move_to_gpu(dev_ef, ef.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_efd, efd.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_eft, eft.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_efdt, efdt.data(), imax*jmax);
+
+			cuda_util::move_to_gpu(dev_xf, xf.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_xfd, xfd.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_xft, xft.data(), imax*jmax);
+			cuda_util::move_to_gpu(dev_xfdt, xfdt.data(), imax*jmax);
 #endif
 
 			return {

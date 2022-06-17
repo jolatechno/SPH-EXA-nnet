@@ -40,4 +40,12 @@ namespace cuda_util {
 		gpuErrchk(cudaMemcpy(ptr, host_values, N*sizeof(T), cudaMemcpyHostToDevice));
 		gpuErrchk(cudaMemcpy((void **)&dev_ptr, (void **)&ptr, sizeof(T*), cudaMemcpyHostToDevice));
 	}
+
+	/// function to free a buffer from a gpu symbol
+	template<class T>
+	void free_from_gpu(T *&dev_ptr) {
+		T *ptr;
+		gpuErrchk(cudaMemcpy((void **)&ptr, (void **)&dev_ptr, sizeof(T*), cudaMemcpyDeviceToHost));
+		gpuErrchk(cudaFree(ptr));
+	}
 }
