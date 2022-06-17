@@ -58,6 +58,9 @@ namespace eigen {
 			return weights[i*m + j];
 		}
 
+		Type *data() {
+			return weights.data();
+		}
 		const Type *data() const {
 			return weights.data();
 		}
@@ -90,6 +93,9 @@ namespace eigen {
 			return weights[i];
 		}
 
+		Type *data() {
+			return weights.data();
+		}
 		const Type *data() const {
 			return weights.data();
 		}

@@ -13,13 +13,13 @@ namespace sphexa {
 namespace sphnnet {
 	namespace constants {
 		/// number of consecutive iteration per cuda thread
-		const int cuda_num_iteration_per_thread = 16;
+		const int cuda_num_iteration_per_thread = 8;
 		/// number of thread per cuda thread block
-		const int cuda_num_thread_per_block = 128;
+		const int cuda_num_thread_per_block = 32;
 	}
 
 	template<class func_type, class func_eos, typename Float>
-	__global__ void cudaKernelComputeNuclearReactions(const int n_particles, const int dimension,
+	__global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, const int dimension,
 		Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
 		const Float hydro_dt, const Float previous_dt,
 		const nnet::gpu_reaction_list *reactions, const func_type *construct_rates_BE, const func_eos *eos)
@@ -59,11 +59,17 @@ namespace sphnnet {
 	}
 
 	template<class func_type, class func_eos, typename Float>
-	__host__ void cudaComputeNuclearReactions(const int n_particles, const int dimension,
+	__host__ void cudaComputeNuclearReactions(const size_t n_particles, const int dimension,
 		Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
 		const Float hydro_dt, const Float previous_dt,
 		const nnet::gpu_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
 	{
+		// insure that the heap is large enough
+		size_t cuda_heap_limit, requiered_heap = (dimension*dimension*3 + dimension)*n_particles;
+		gpuErrchk(cudaDeviceGetLimit(&cuda_heap_limit, cudaLimitMallocHeapSize));
+		if (cuda_heap_limit < requiered_heap)
+			gpuErrchk(cudaDeviceSetLimit(cudaLimitMallocHeapSize, requiered_heap));
+
 		// copy classes to gpu
 		nnet::gpu_reaction_list *dev_reactions;
 		func_type               *dev_construct_rates_BE;
