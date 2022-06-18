@@ -2,6 +2,9 @@
 
 #include <cuda_runtime.h>
 
+#ifdef USE_MPI
+	#include <mpi.h>
+#endif
 
 __host__ void gpuErrchk(cudaError_t code) {
 	if (code != cudaSuccess) {
@@ -40,4 +43,23 @@ namespace cuda_util {
 	void free_from_gpu(const T *dev_ptr) {
 		gpuErrchk(cudaFree((void*)const_cast<T*>(dev_ptr)));
 	}
+
+
+#ifdef USE_MPI
+	/// function to set a single CUDA device per local MPI rank
+	/**
+	 * TODO
+	 */
+	void initCudaMpi(MPI_Comm comm) {
+		MPI_Comm localComm;
+		int rank, local_rank, local_size;
+		MPI_Comm_rank(comm, &rank);
+		MPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, rank, MPI_INFO_NULL, &localComm);
+		MPI_Comm_rank(localComm, &local_rank);
+		MPI_Comm_size(localComm, &local_size);
+
+		// assume one gpu per node
+		gpuErrchk(cudaSetDevice(local_rank));
+	}
+#endif
 }

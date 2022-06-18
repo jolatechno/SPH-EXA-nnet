@@ -30,8 +30,8 @@
 
 
 /************************************************************************/
-/* non-MPI test to test GPU implementation, mostly using OMP offloading */
-/* compile:  clang++ -std=c++17 -fopenmp -DNOT_FROM_SPHEXA -DCUDA_DEBUG_ -DOMP_TARGET_SOLVER -DCPU_BATCH_SOLVER_ -DUSE_CUDA_ -omptargets=nvptx-none parallel-perftest.cpp -o parallel-perftest.out
+/*              non-MPI test to test GPU implementation                 */
+/* compile:  nvcc -x cu -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -W -std=c++17 -DCPU_CUDA_TEST" parallel-perftest.cpp -o parallel-perftest.out -std=c++17 --expt-relaxed-constexpr
 /* launch:   ./parallel-perftest.out --test-case C-O-burning
 /************************************************************************/
 

@@ -30,6 +30,14 @@
 
 
 
+/************************************************************************/
+/*           MPI test that can test the GPU implementation              */
+/* compile: nvcc -x cu -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -W -std=c++17 -DCPU_CUDA_TEST -pthread -L/usr/lib/openmpi -lmpi_cxx -lmpi -DUSE_MPI" hydro-mockup.cpp -o hydro-mockup.out -std=c++17 --expt-relaxed-constexpr
+/* launch:  mpirun  --bind-to hwthread --map-by node:PE=2:span --quiet -x  OMP_NUM_THREADS=2 -n 2 hydro-mockup.out -n 2 --test-case C-O-burning --n-particle 1000
+/************************************************************************/
+
+
+
 /*
 function stolen from SPH-EXA and retrofited for testing
 */
@@ -197,6 +205,9 @@ int main(int argc, char* argv[]) {
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+#ifdef USE_CUDA
+	cuda_util::initCudaMpi(MPI_COMM_WORLD);
+#endif
 
 
 
