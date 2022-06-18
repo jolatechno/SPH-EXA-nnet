@@ -44,8 +44,12 @@ namespace nnet::net87::electrons {
 		typedef eigen::fixed_size_array<double, nTemp*nRho*nC> rateMatrix;
 		// typedef eigen::fixed_size_matrix<std::array<double, nC>, nTemp, nRho> rateMatrix; // double[nRho][nTemp][nC]
 
+		CUDA_DEFINE(static double, log_temp_ref[N_TEMP], ;)
+        CUDA_DEFINE(static double, log_rho_ref[N_RHO], ;)
+        CUDA_DEFINE(static double, electron_rate[N_TEMP][N_RHO][N_C], ;)
+
 		// read electron rate constants table
-		std::tuple<tempVector, rhoVector, rateMatrix> read_table() {
+		bool read_table() {
 			// read table
 			const std::string electron_rate_table = { 
 				#include ELECTRON_TABLE_PATH
@@ -55,61 +59,32 @@ namespace nnet::net87::electrons {
 	   		std::stringstream rate_table;
 	   		rate_table << electron_rate_table;
 
-			// table definitions
-			tempVector temp;
-			rhoVector rho;
-			rateMatrix rates;
-
 			// read table
 			for (int i = 0; i < nTemp; ++i)
-				rate_table >> temp[i];
+				rate_table >> log_temp_ref[i];
 			for (int i = 0; i < nRho; ++i)
-				rate_table >> rho[i];
+				rate_table >> log_rho_ref[i];
 			for (int i = 0; i < nTemp; ++i)
 				for (int j = 0; j < nRho; ++j)
 					for (int k = 0; k < nC; ++k)
-						rate_table >> rates[N_C*(N_RHO*i + j) + k];
-
-			return {temp, rho, rates};
-		}
-
-
-		// tables
-		auto const [log_temp_ref, log_rho_ref, electron_rate] = read_table();
+						rate_table >> electron_rate[i][j][k];
 
 #ifdef USE_CUDA
-		// cuda device array
-		const double *dev_log_temp_ref  = cuda_util::move_to_gpu(log_temp_ref.data(),  nTemp);
-		const double *dev_log_rho_ref   = cuda_util::move_to_gpu(log_rho_ref.data(),   nRho);
-		const double *dev_electron_rate = cuda_util::move_to_gpu(electron_rate.data(), nTemp*nRho*nC);
-
-		// private destructor of global cuda pointers
-		class {
-			struct cudaDestructorClass {
-				~cudaDestructorClass() {
-					cuda_util::free_from_gpu(dev_log_temp_ref);
-					cuda_util::free_from_gpu(dev_log_rho_ref);
-					cuda_util::free_from_gpu(dev_electron_rate);
-				}
-			} cudaDestructor;
-		} cudaDestructor;
+	        // copy to device 
+			gpuErrchk(cudaMemcpyToSymbol(dev_log_temp_ref, log_temp_ref, nTemp*sizeof(double)));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_log_rho_ref, log_rho_ref, nRho*sizeof(double)));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_electron_rate, electron_rate, nTemp*nRho*nC*sizeof(double)));
 #endif
+
+			return true;
+		}
+
+		// tables
+		bool initalized = read_table();
 	}
 
 
-	class interpolate_function {
-	private:
-		const double *log_temp_ref  = constants::log_temp_ref.data();
-		const double *log_rho_ref   = constants::log_rho_ref.data();
-		const double *electron_rate = constants::electron_rate.data();
-
-#ifdef USE_CUDA
-		const double *dev_log_temp_ref  = constants::dev_log_temp_ref;
-		const double *dev_log_rho_ref   = constants::dev_log_rho_ref;
-		const double *dev_electron_rate = constants::dev_electron_rate;
-#endif
-
-	public:
+	struct interpolate_function {
 		interpolate_function() {}
 
 		/// interpolate electron rate
@@ -121,13 +96,13 @@ namespace nnet::net87::electrons {
 			// find temperature index
 			int i_temp_sup = 0;
 			Float log_temp = std::log10(temp);
-			while (i_temp_sup < constants::nTemp && CUDA_ACCESS(log_temp_ref)[i_temp_sup] < log_temp)
+			while (i_temp_sup < constants::nTemp && constants::CUDA_ACCESS(log_temp_ref)[i_temp_sup] < log_temp)
 				++i_temp_sup;
 
 			// find rho index
 			int i_rho_sup = 0;
 			Float log_rho = std::log10(rhoElec);
-			while (i_rho_sup < constants::nRho && CUDA_ACCESS(log_rho_ref)[i_rho_sup] < log_rho)
+			while (i_rho_sup < constants::nRho && constants::CUDA_ACCESS(log_rho_ref)[i_rho_sup] < log_rho)
 				++i_rho_sup;
 
 			// other limit index
@@ -137,21 +112,21 @@ namespace nnet::net87::electrons {
 			    i_rho_sup  = std::min(constants::nRho  - 1, i_rho_sup);
 
 			// distance between limits
-			Float x2x  =  CUDA_ACCESS(log_temp_ref)[i_temp_sup] - log_temp;
-			Float xx1  = -CUDA_ACCESS(log_temp_ref)[i_temp_inf] + log_temp;
-			Float y2y  =  CUDA_ACCESS(log_rho_ref )[i_rho_sup ] - log_rho;
-			Float yy1  = -CUDA_ACCESS(log_rho_ref )[i_rho_inf ] + log_rho;
-			Float x2x1 =  CUDA_ACCESS(log_temp_ref)[i_temp_sup] - CUDA_ACCESS(log_temp_ref)[i_temp_inf];
+			Float x2x  =  constants::CUDA_ACCESS(log_temp_ref)[i_temp_sup] - log_temp;
+			Float xx1  = -constants::CUDA_ACCESS(log_temp_ref)[i_temp_inf] + log_temp;
+			Float y2y  =  constants::CUDA_ACCESS(log_rho_ref )[i_rho_sup ] - log_rho;
+			Float yy1  = -constants::CUDA_ACCESS(log_rho_ref )[i_rho_inf ] + log_rho;
+			Float x2x1 =  constants::CUDA_ACCESS(log_temp_ref)[i_temp_sup] - constants::CUDA_ACCESS(log_temp_ref)[i_temp_inf];
 				  x2x1 = x2x1 == 0 ? 2 : x2x1;
-			Float y2y1 =  CUDA_ACCESS(log_rho_ref )[i_rho_sup ] - CUDA_ACCESS(log_rho_ref )[i_rho_inf ];
+			Float y2y1 =  constants::CUDA_ACCESS(log_rho_ref )[i_rho_sup ] - constants::CUDA_ACCESS(log_rho_ref )[i_rho_inf ];
 				  y2y1 = y2y1 == 0 ? 2 : y2y1;
 
 			// actual interpolation
 			for (int i = 0; i < constants::nC; ++i)
-				rate[i] = (CUDA_ACCESS(electron_rate)[N_C*(N_RHO*i_temp_inf + i_rho_inf) + i]*x2x*y2y
-						+  CUDA_ACCESS(electron_rate)[N_C*(N_RHO*i_temp_sup + i_rho_inf) + i]*xx1*y2y
-						+  CUDA_ACCESS(electron_rate)[N_C*(N_RHO*i_temp_inf + i_rho_sup) + i]*x2x*yy1
-						+  CUDA_ACCESS(electron_rate)[N_C*(N_RHO*i_temp_sup + i_rho_sup) + i]*xx1*yy1)/(x2x1*y2y1);
+				rate[i] = (constants::CUDA_ACCESS(electron_rate)[i_temp_inf][i_rho_inf][i]*x2x*y2y
+						+  constants::CUDA_ACCESS(electron_rate)[i_temp_sup][i_rho_inf][i]*xx1*y2y
+						+  constants::CUDA_ACCESS(electron_rate)[i_temp_inf][i_rho_sup][i]*x2x*yy1
+						+  constants::CUDA_ACCESS(electron_rate)[i_temp_sup][i_rho_sup][i]*xx1*yy1)/(x2x1*y2y1);
 		}
 	} interpolate;
 }
