@@ -71,8 +71,8 @@ namespace nnet::net87::electrons {
 
 #ifdef USE_CUDA
 	        // copy to device 
-			gpuErrchk(cudaMemcpyToSymbol(dev_log_temp_ref, log_temp_ref, nTemp*sizeof(double)));
-	        gpuErrchk(cudaMemcpyToSymbol(dev_log_rho_ref, log_rho_ref, nRho*sizeof(double)));
+			gpuErrchk(cudaMemcpyToSymbol(dev_log_temp_ref,  log_temp_ref,  nTemp*sizeof(double)));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_log_rho_ref,   log_rho_ref,   nRho*sizeof(double)));
 	        gpuErrchk(cudaMemcpyToSymbol(dev_electron_rate, electron_rate, nTemp*nRho*nC*sizeof(double)));
 #endif
 
