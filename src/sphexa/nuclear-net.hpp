@@ -115,6 +115,21 @@ namespace sphexa::sphnnet {
 	void computeHelmEOS(Data &n, const Vector &Z) {
 		size_t n_particles = n.Y.size();
 
+#ifdef USE_CUDA
+		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && false /* NOT IMPLEMENTED YET */) {
+			/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			simple GPU application of the eos
+			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+			/* TODO */
+		
+			return;
+		}
+#endif
+		/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		simple CPU parallel application of the eos
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
 		#pragma omp parallel for schedule(static)
 		for (size_t i = 0; i < n_particles; ++i) {
 			// compute abar and zbar

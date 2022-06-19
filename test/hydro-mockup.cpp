@@ -21,7 +21,7 @@
 
 
 
-#ifdef USE_CUDA
+#if defined(USE_CUDA) && !defined(CPU_CUDA_TEST)
 	using AccType = cstone::GpuTag;
 #else
 	using AccType = cstone::CpuTag;
@@ -32,8 +32,12 @@
 
 /************************************************************************/
 /*           MPI test that can test the GPU implementation              */
-/* compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" hydro-mockup.cpp -o hydro-mockup.out -std=c++17 --expt-relaxed-constexpr
-/* launch (on a system with 2 GPUs): mpirun --quiet --bind-to hwthread --oversubscribe --quiet -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 100000 -n 2 &> res.out &
+// compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" hydro-mockup.cpp -o hydro-mockup.out -std=c++17 --expt-relaxed-constexpr
+// launch (on a system with 2 GPUs): mpirun --quiet --bind-to hwthread --oversubscribe --quiet -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 1000000 --dt 1e-4 -n 10 &> res_mpi.out &
+/*                                                                      */
+/*          Comparison with the CPU-only version:                       */
+// compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST" hydro-mockup.cpp -o hydro-mockup-cpu.out -std=c++17 --expt-relaxed-constexpr
+// launch (on a system with 2x16 core): mpirun --quiet --bind-to hwthread --oversubscribe --map-by ppr:2:node:PE=16 --quiet -n 2 -x OMP_NUM_THREADS=16 hydro-mockup-cpu.out --test-case C-O-burning --n-particle 1000000 --dt 1e-4 -n 10 &> res_cpu.out &
 /************************************************************************/
 
 

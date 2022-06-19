@@ -31,8 +31,8 @@
 
 /************************************************************************/
 /*              non-MPI test to test GPU implementation                 */
-/* compile:  nvcc -x cu -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -W -std=c++17 -DCPU_CUDA_TEST_" parallel-perftest.cpp -o parallel-perftest.out -std=c++17 --expt-relaxed-constexpr
-/* launch:   ./parallel-perftest.out --test-case C-O-burning --n-particle 100000 -n 2 &> res.out &
+// compile:  nvcc -x cu -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -W -std=c++17 -DCPU_CUDA_TEST_" parallel-perftest.cpp -o parallel-perftest.out -std=c++17 --expt-relaxed-constexpr
+// launch:   ./parallel-perftest.out --test-case C-O-burning --n-particle 1000000 --dt 1e-4 -n 10 &> res.out &
 /************************************************************************/
 
 
@@ -177,7 +177,7 @@ int main(int argc, char* argv[]) {
 		nnet::eos::helmholtz_constants::initalized    = nnet::eos::helmholtz_constants::read_table();
 	if (!nnet::net87::electrons::constants::initalized)
 		nnet::net87::electrons::constants::initalized = nnet::net87::electrons::constants::read_table();
-	
+
 
 
 
