@@ -161,12 +161,12 @@ void step(size_t firstIndex, size_t lastIndex,
 	// std::swap(n.rho, n.previous_rho); // the way it should be done instead of the first "hydroToNuclearUpdate"
 	sphexa::sphnnet::hydroToNuclearUpdate(d, n, {"rho", "temp"});
 	sphexa::sphnnet::transferToDevice(n, {"previous_rho", "rho", "temp"});
-	sphexa::sphnnet::computeHelmEOS(n, nnet::net14::constants::Z);
-	sphexa::sphnnet::transferToHost(n, {"temp"});
 
+	sphexa::sphnnet::computeHelmEOS(n, nnet::net14::constants::Z);
 	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
 		reactions, construct_rates_BE, eos);
-	
+
+	sphexa::sphnnet::transferToHost(n, {"temp"});
 	sphexa::sphnnet::nuclearToHydroUpdate(d, n, {"temp"});
 	
 	// do hydro stuff
