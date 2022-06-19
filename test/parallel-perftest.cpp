@@ -31,8 +31,8 @@
 
 /************************************************************************/
 /*              non-MPI test to test GPU implementation                 */
-/* compile:  nvcc -x cu -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -W -std=c++17 -DCPU_CUDA_TEST" parallel-perftest.cpp -o parallel-perftest.out -std=c++17 --expt-relaxed-constexpr
-/* launch:   ./parallel-perftest.out --test-case C-O-burning
+/* compile:  nvcc -x cu -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -W -std=c++17 -DCPU_CUDA_TEST_" parallel-perftest.cpp -o parallel-perftest.out -std=c++17 --expt-relaxed-constexpr
+/* launch:   ./parallel-perftest.out --test-case C-O-burning --n-particle 100000 -n 2 &> res.out &
 /************************************************************************/
 
 

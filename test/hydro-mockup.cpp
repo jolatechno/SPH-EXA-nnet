@@ -32,8 +32,8 @@
 
 /************************************************************************/
 /*           MPI test that can test the GPU implementation              */
-/* compile: nvcc -x cu -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -W -std=c++17 -DCPU_CUDA_TEST -pthread -L/usr/lib/openmpi -lmpi_cxx -lmpi -DUSE_MPI" hydro-mockup.cpp -o hydro-mockup.out -std=c++17 --expt-relaxed-constexpr
-/* launch:  mpirun  --bind-to hwthread --map-by node:PE=2:span --quiet -x  OMP_NUM_THREADS=2 -n 2 hydro-mockup.out -n 2 --test-case C-O-burning --n-particle 1000
+/* compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" hydro-mockup.cpp -o hydro-mockup.out -std=c++17 --expt-relaxed-constexpr
+/* launch (on a system with 2 GPUs): mpirun --quiet --bind-to hwthread --oversubscribe --quiet -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 100000 -n 2 &> res.out &
 /************************************************************************/
 
 
@@ -313,7 +313,7 @@ int main(int argc, char* argv[]) {
 	} else {
 		nuclear_data_14.setConserved("nid", "pid", "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y", "dt");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_14.devData.setConserved("temp", "rho", "previous_rho", "Y");
+		nuclear_data_14.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_14, Y0_14);
 
