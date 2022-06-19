@@ -261,8 +261,10 @@ namespace nnet::eos {
 	        return true;
 		};
 
-		// tables
-		bool initalized = read_table();
+		bool initalized = false;
+#ifdef AUTO_INITIALIZE
+		initalized = read_table();
+#endif
 
 		// quintic hermite polynomial statement functions
 		// psi0 and its derivatives

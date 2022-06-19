@@ -7,7 +7,7 @@
 
 
 // physical parameters
-#include "../src/net86/net86.hpp"
+#include "../src/net87/net87.hpp"
 #include "../src/net14/net14.hpp"
 #include "../src/eos/helmholtz.hpp"
 
@@ -209,6 +209,10 @@ int main(int argc, char* argv[]) {
 	cuda_util::initCudaMpi(MPI_COMM_WORLD);
 #endif
 
+	if (!nnet::eos::helmholtz_constants::initalized)
+		nnet::eos::helmholtz_constants::initalized    = nnet::eos::helmholtz_constants::read_table();
+	if (!nnet::net87::electrons::constants::initalized)
+		nnet::net87::electrons::constants::initalized = nnet::net87::electrons::constants::read_table();
 
 
 

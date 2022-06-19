@@ -60,6 +60,11 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+	if (!nnet::eos::helmholtz_constants::initalized)
+		nnet::eos::helmholtz_constants::initalized    = nnet::eos::helmholtz_constants::read_table();
+	if (!nnet::net87::electrons::constants::initalized)
+		nnet::net87::electrons::constants::initalized = nnet::net87::electrons::constants::read_table();
+
     const int n_max                         = parser.get("-n",        1000);
     const int n_print                       = parser.get("--n-debug", 30);
     const double t_max                      = parser.get("--t-lim",   1.5);

@@ -79,8 +79,10 @@ namespace nnet::net87::electrons {
 			return true;
 		}
 
-		// tables
-		bool initalized = read_table();
+		bool initalized = false;
+#ifdef AUTO_INITIALIZE
+		initalized = read_table();
+#endif
 	}
 
 

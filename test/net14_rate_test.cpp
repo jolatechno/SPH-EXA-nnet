@@ -9,6 +9,9 @@ int main() {
 	std::cout << "Z.size = " << nnet::net14::constants::Z.size() << "\n";
 	std::cout << "BE.size = " << nnet::net14::BE.size() << "\n\n";
 
+	if (!nnet::eos::helmholtz_constants::initalized)
+		nnet::eos::helmholtz_constants::initalized = nnet::eos::helmholtz_constants::read_table();
+
 #if NO_SCREENING
 	nnet::net14::skip_coulombian_correction = true;
 #endif
