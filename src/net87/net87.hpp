@@ -120,11 +120,7 @@ namespace nnet::net87 {
 	}();
 
 	/// compute a list of rates for net87
-	class compute_reaction_rates_function {
-	private:
-		electrons::interpolate_function electron_interpolate;
-
-	public:
+	struct compute_reaction_rates_function {
 		compute_reaction_rates_function() {}
 
 		template<typename Float, class eos>
@@ -135,7 +131,7 @@ namespace nnet::net87 {
 			const Float Yelec   = Y[constants::electron];
 			const Float rhoElec = Yelec*rho;
 			std::array<Float, electrons::constants::nC> electron_values;
-			electron_interpolate(T, rhoElec, electron_values);
+			electrons::interpolate(T, rhoElec, electron_values);
 
 			Float effe        = electron_values[0];
 			Float deffe       = electron_values[1]*1e-9;
