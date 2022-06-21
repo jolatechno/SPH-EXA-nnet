@@ -119,7 +119,7 @@ namespace sphexa::sphnnet {
 		using Float = std::decay<decltype(n.cv[0])>;
 
 #ifdef USE_CUDA
-		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && false /* NOT IMPLEMENTED YET */) {
+		if constexpr (HaveGpu<typename Data::AcceleratorType>{}) {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			simple GPU application of the eos
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */

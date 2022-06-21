@@ -118,7 +118,16 @@ namespace sphnnet {
 	{
 		size_t thread = blockIdx.x*blockDim.x + threadIdx.x;
 		if (thread < n_particles) {
-			/* TODO */
+			// compute abar and zbar
+			double abar = std::accumulate(Y_ + thread*dimension, Y_ + (thread + 1)*dimension, (double)0.);
+			double zbar = eigen::dot(Y_ + thread*dimension, Y_ + (thread + 1)*dimension, Z);
+
+			auto eos_struct = nnet::eos::helmholtz(abar, zbar, temp_[thread], rho_[thread]);
+
+		 // u[thread]  = eos_struct.u;
+			cv[thread] = eos_struct.cv;
+			p[thread]  = eos_struct.p;
+			c[thread]  = eos_struct.c;
 		}
 	}
 
