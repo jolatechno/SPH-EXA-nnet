@@ -131,13 +131,18 @@ namespace sphexa::sphnnet {
 
 			// call the cuda kernel wrapper
 			cudaComputeHelmholtz(n_particles, dimension, Z_dev,
+				// read buffers:
 		(Float*)thrust::raw_pointer_cast(n.devData.temp.data()),
 		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()),
 		(Float*)thrust::raw_pointer_cast(n.devData.Y.data()),
-
+				// write buffers:
 		(Float*)thrust::raw_pointer_cast(n.devData.cv.data()),
 		(Float*)thrust::raw_pointer_cast(n.devData.p.data()),
 		(Float*)thrust::raw_pointer_cast(n.devData.c.data()));
+
+			/* debuging: check for error */
+			gpuErrchk(cudaPeekAtLastError());
+			gpuErrchk(cudaDeviceSynchronize()); 
 
 			return;
 		}
