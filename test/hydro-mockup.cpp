@@ -312,7 +312,7 @@ int main(int argc, char* argv[]) {
 	if (use_net86) {
 		nuclear_data_86.setConserved("nid", "pid", "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_86.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt");
+		nuclear_data_86.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_86, Y0_86);
 
@@ -321,7 +321,7 @@ int main(int argc, char* argv[]) {
 	} else {
 		nuclear_data_14.setConserved("nid", "pid", "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y", "dt");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_14.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt");
+		nuclear_data_14.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_14, Y0_14);
 

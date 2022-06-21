@@ -119,7 +119,7 @@ namespace sphexa::sphnnet {
 		using Float = typename std::remove_reference<decltype(n.cv[0])>::type;
 
 #ifdef USE_CUDA
-		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && false /* causing crash */) {
+		if constexpr (HaveGpu<typename Data::AcceleratorType>{}) {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			simple GPU application of the eos
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
