@@ -58,6 +58,7 @@ namespace sphexa::sphnnet {
 			!!!!!!!!!!!!! */
 			nnet::gpu_reaction_list dev_reactions = nnet::move_to_gpu(reactions);
 			
+			// call the cuda kernel wrapper
 			cudaComputeNuclearReactions(n_particles, dimension,
 		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()),
 		(Float*)thrust::raw_pointer_cast(n.devData.previous_rho.data()),
@@ -113,7 +114,9 @@ namespace sphexa::sphnnet {
 	 */
 	template<class Data, class Vector>
 	void computeHelmEOS(Data &n, const Vector &Z) {
-		size_t n_particles = n.Y.size();
+		const size_t n_particles = n.Y.size();
+		const int dimension = n.Y[0].size();
+		using Float = std::decay<decltype(n.cv[0])>;
 
 #ifdef USE_CUDA
 		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && false /* NOT IMPLEMENTED YET */) {
@@ -121,8 +124,21 @@ namespace sphexa::sphnnet {
 			simple GPU application of the eos
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
-			/* TODO */
-		
+			// copy data to the gpu
+			Float *Z_dev;
+			gpuErrchk(cudaMalloc((void**)&Z_dev, dimension*sizeof(Float)));
+			gpuErrchk(cudaMemcpy((void*)Z_dev, (void*)Z.data(), dimension*sizeof(Float), cudaMemcpyHostToDevice));
+
+			// call the cuda kernel wrapper
+			cudaComputeHelmholtz(n_particles, dimension, Z_dev,
+		(Float*)thrust::raw_pointer_cast(n.devData.temp.data()),
+		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()),
+		(Float*)thrust::raw_pointer_cast(n.devData.Y.data()),
+
+		(Float*)thrust::raw_pointer_cast(n.devData.cv.data()),
+		(Float*)thrust::raw_pointer_cast(n.devData.p.data()),
+		(Float*)thrust::raw_pointer_cast(n.devData.c.data()));
+
 			return;
 		}
 #endif
@@ -140,8 +156,8 @@ namespace sphexa::sphnnet {
 
 		 // n.u[i]  = eos_struct.u;
 			n.cv[i] = eos_struct.cv;
-			n.c[i]  = eos_struct.c;
 			n.p[i]  = eos_struct.p;
+			n.c[i]  = eos_struct.c;
 		}
 	}
 

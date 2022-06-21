@@ -18,6 +18,15 @@ namespace sphnnet {
 		const int cuda_num_thread_per_block = 32;
 	}
 
+
+
+	/***********************************************/
+	/* code to compute nuclear reaction on the GPU */
+	/***********************************************/
+
+
+
+
 	template<class func_type, class func_eos, typename Float>
 	__global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, const int dimension,
 		Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
@@ -92,6 +101,41 @@ namespace sphnnet {
 			rho_, previous_rho_, Y_, temp_, dt_,
 			hydro_dt, previous_dt,
 			dev_reactions, dev_construct_rates_BE, dev_eos);
+	}
+
+
+
+	/************************************************************/
+	/* code to compute helmholtz equation of a state on the GPU */
+	/************************************************************/
+
+
+
+	template<typename Float>
+	__global__ void cudaKernelComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,
+		const Float *temp_, const Float *rho_, const Float *Y_, 
+		Float *cv, Float *p, Float *c)
+	{
+		size_t thread = blockIdx.x*blockDim.x + threadIdx.x;
+		if (thread < n_particles) {
+			/* TODO */
+		}
+	}
+
+
+	template<typename Float>
+	__host__ void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,
+		const Float *temp_, const Float *rho_, const Float *Y_,
+		Float *cv, Float *p, Float *c)
+	{
+		
+		// compute chunk sizes
+		int cuda_num_blocks = (n_particles + constants::cuda_num_thread_per_block - 1)/constants::cuda_num_thread_per_block;
+		
+		// launch kernel
+	    cudaKernelComputeHelmholtz<<<cuda_num_blocks, constants::cuda_num_thread_per_block>>>(n_particles, dimension, Z,
+			temp_, rho_, Y_,
+			cv, p, c);
 	}
 }
 }

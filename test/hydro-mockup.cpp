@@ -332,7 +332,7 @@ int main(int argc, char* argv[]) {
 
 
 	std::vector<std::string> hydroOutFields   = {"nid", "pid", "temp", "rho"};
-	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "Y(4He)", "Y(12C)", "Y(16O)"};
+	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "Y(4He)", "Y(12C)", "Y(16O)"};
 	particle_data.setOutputFields(hydroOutFields);
 	if (use_net86) {
 		nuclear_data_86.setOutputFields(nuclearOutFields, nnet::net86::constants::species_names);
@@ -441,12 +441,12 @@ int main(int argc, char* argv[]) {
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (use_net86) {
-		sphexa::sphnnet::transferToHost(nuclear_data_86, {"Y"});
+		sphexa::sphnnet::transferToHost(nuclear_data_86, {"Y", "cv"});
 
 		dump(nuclear_data_86, 0,                             n_print,             "/dev/stdout");
 		dump(nuclear_data_86, n_nuclear_particles - n_print, n_nuclear_particles, "/dev/stdout");
 	} else {
-		sphexa::sphnnet::transferToHost(nuclear_data_14, {"Y"});
+		sphexa::sphnnet::transferToHost(nuclear_data_14, {"Y", "cv"});
 
 		dump(nuclear_data_14, 0,                             n_print,             "/dev/stdout");
 		dump(nuclear_data_14, n_nuclear_particles - n_print, n_nuclear_particles, "/dev/stdout");
