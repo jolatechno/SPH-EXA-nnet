@@ -116,10 +116,10 @@ namespace sphexa::sphnnet {
 	void computeHelmEOS(Data &n, const Vector &Z) {
 		const size_t n_particles = n.Y.size();
 		const int dimension = n.Y[0].size();
-		using Float = std::decay<decltype(n.cv[0])>;
+		using Float = typename std::remove_reference<decltype(n.cv[0])>::type;
 
 #ifdef USE_CUDA
-		if constexpr (HaveGpu<typename Data::AcceleratorType>{}) {
+		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && false /* causing crash */) {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			simple GPU application of the eos
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */

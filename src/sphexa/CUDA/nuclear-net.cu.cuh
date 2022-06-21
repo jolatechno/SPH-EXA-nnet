@@ -7,6 +7,7 @@
 
 // #include "nuclear-net.cuh"
 #include "../../nuclear-net.hpp"
+#include "../util/algorithm.hpp"
 
 
 namespace sphexa {
@@ -111,18 +112,19 @@ namespace sphnnet {
 
 
 
-	template<typename Float>
+	template<typename Float, class func_eos>
 	__global__ void cudaKernelComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,
 		const Float *temp_, const Float *rho_, const Float *Y_, 
-		Float *cv, Float *p, Float *c)
+		Float *cv, Float *p, Float *c,
+		const func_eos *eos)
 	{
 		size_t thread = blockIdx.x*blockDim.x + threadIdx.x;
 		if (thread < n_particles) {
 			// compute abar and zbar
-			double abar = std::accumulate(Y_ + thread*dimension, Y_ + (thread + 1)*dimension, (double)0.);
+			double abar = algorithm::accumulate(Y_ + thread*dimension, Y_ + (thread + 1)*dimension, (double)0.);
 			double zbar = eigen::dot(Y_ + thread*dimension, Y_ + (thread + 1)*dimension, Z);
 
-			auto eos_struct = nnet::eos::helmholtz(abar, zbar, temp_[thread], rho_[thread]);
+			auto eos_struct = (*eos)(abar, zbar, temp_[thread], rho_[thread]);
 
 		 // u[thread]  = eos_struct.u;
 			cv[thread] = eos_struct.cv;
@@ -137,6 +139,12 @@ namespace sphnnet {
 		const Float *temp_, const Float *rho_, const Float *Y_,
 		Float *cv, Float *p, Float *c)
 	{
+		// copy classes to gpu
+		nnet::eos::helmholtz_function *dev_eos;
+		// allocate
+		gpuErrchk(cudaMalloc((void**)&dev_eos, sizeof(nnet::eos::helmholtz_function)));
+		// actually copy
+		gpuErrchk(cudaMemcpy(dev_eos, &nnet::eos::helmholtz, sizeof(nnet::eos::helmholtz_function), cudaMemcpyHostToDevice));
 		
 		// compute chunk sizes
 		int cuda_num_blocks = (n_particles + constants::cuda_num_thread_per_block - 1)/constants::cuda_num_thread_per_block;
@@ -144,7 +152,8 @@ namespace sphnnet {
 		// launch kernel
 	    cudaKernelComputeHelmholtz<<<cuda_num_blocks, constants::cuda_num_thread_per_block>>>(n_particles, dimension, Z,
 			temp_, rho_, Y_,
-			cv, p, c);
+			cv, p, c,
+			dev_eos);
 	}
 }
 }
