@@ -123,6 +123,21 @@ namespace nnet::net86::constants {
 		return net14_species_order_;
 	}();
 
+	/// nuclear species index corresponding to net14 species
+	const std::vector<std::vector<int>> net14_accumulated_species_order = []() {
+		const int net14_n_species = nnet::net14::constants::A.size();
+		const int net86_n_species = A.size();
+
+		std::vector<std::vector<int>> net14_accumulated_species_order_(net14_n_species);
+
+		for (int i = 0; i < net14_n_species; ++i)
+			for (int j = 0; j < net86_n_species; ++j)
+				if (nnet::net14::constants::Z[i] == Z[j])
+					net14_accumulated_species_order_[i].push_back(j);
+
+		return net14_accumulated_species_order_;
+	}();
+
 	/// function for coulombian correction
 	template<typename Float>
 	CUDA_FUNCTION_DECORATOR Float inline ggt1(const Float x) {

@@ -179,7 +179,7 @@ int main(int argc, char* argv[]) {
 			}
 
 		// debug print
-			if (n_print > 0)
+		if (n_print > 0)
 			if (n_print >= n_max || (n_max - i) % (int)((float)n_max/(float)n_print) == 0 || t >= t_max) {
 				for (int i = 0; i < 86; ++i) X[i] = Y[i]*nnet::net86::constants::A[i]/eigen::dot(Y.begin(), Y.end(), nnet::net86::constants::A.begin());
 
@@ -187,9 +187,17 @@ int main(int argc, char* argv[]) {
 				if (debug_net86) {
 					for (int i = 0; i < 86; ++i)
 						std::cout << X[nnet::net86::constants::species_order[i]] << ", ";
-				} else
-					for (auto idx : nnet::net86::constants::net14_species_order)
-						std::cout << X[idx] << ", ";
+				} else {
+					/*for (auto idx : nnet::net86::constants::net14_species_order)
+						std::cout << X[idx] << ", ";*/
+
+					for (int i = 0; i < 14; ++i) {
+						double x = 0;
+						for (auto idx : nnet::net86::constants::net14_accumulated_species_order[i])
+							x += X[idx];
+						std::cout << x << ", ";
+					}
+				}
 				std::cout << "\t(m=" << m_tot << ",\tdm_m0=" << dm_m << ")\t" << T << "\n";
 			}
 
