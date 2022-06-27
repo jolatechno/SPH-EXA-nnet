@@ -30,20 +30,20 @@
 		90.55480*constants::Mev_to_cJ
 #else
 	#define BE_NET14 \
-		 28.2970*constants::Mev_to_cJ COMMA \
-		 92.1631*constants::Mev_to_cJ COMMA \
-		127.6211*constants::Mev_to_cJ COMMA \
-		160.6521*constants::Mev_to_cJ COMMA \
-		198.2592*constants::Mev_to_cJ COMMA \
-		236.5392*constants::Mev_to_cJ COMMA \
-		271.7842*constants::Mev_to_cJ COMMA \
-		306.7192*constants::Mev_to_cJ COMMA \
-		342.0563*constants::Mev_to_cJ COMMA \
-		375.4793*constants::Mev_to_cJ COMMA \
-		411.4703*constants::Mev_to_cJ COMMA \
-		447.7044*constants::Mev_to_cJ COMMA \
-		483.9954*constants::Mev_to_cJ COMMA \
-		526.8503*constants::Mev_to_cJ
+		28.2970*constants::Mev_to_cJ COMMA \
+	 	92.1631*constants::Mev_to_cJ COMMA \
+		127.621*constants::Mev_to_cJ COMMA \
+		160.652*constants::Mev_to_cJ COMMA \
+		198.259*constants::Mev_to_cJ COMMA \
+		236.539*constants::Mev_to_cJ COMMA \
+		271.784*constants::Mev_to_cJ COMMA \
+		306.719*constants::Mev_to_cJ COMMA \
+		342.056*constants::Mev_to_cJ COMMA \
+		375.479*constants::Mev_to_cJ COMMA \
+		411.470*constants::Mev_to_cJ COMMA \
+		447.704*constants::Mev_to_cJ COMMA \
+		483.995*constants::Mev_to_cJ COMMA \
+		526.850*constants::Mev_to_cJ
 #endif
 	
 

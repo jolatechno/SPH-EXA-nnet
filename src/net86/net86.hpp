@@ -15,8 +15,8 @@
 
 #define BE_NET86 \
 	0 COMMA 0 COMMA \
-	28.296 *constants::Mev_to_cJ COMMA \
-	92.163 *constants::Mev_to_cJ COMMA \
+	28.2970*constants::Mev_to_cJ COMMA \
+	92.1631*constants::Mev_to_cJ COMMA \
 	127.621*constants::Mev_to_cJ COMMA \
 	160.651*constants::Mev_to_cJ COMMA \
 	163.082*constants::Mev_to_cJ COMMA \
