@@ -12,26 +12,48 @@
 #endif
 #include "../CUDA/cuda.inl"
 
+#ifdef FORTRAN_BE
+	#define BE_NET14 \
+		0                             COMMA \
+		 7.27440*constants::Mev_to_cJ COMMA \
+		14.43580*constants::Mev_to_cJ COMMA \
+		19.16680*constants::Mev_to_cJ COMMA \
+		28.48280*constants::Mev_to_cJ COMMA \
+		38.46680*constants::Mev_to_cJ COMMA \
+		45.41480*constants::Mev_to_cJ COMMA \
+		52.05380*constants::Mev_to_cJ COMMA \
+		59.09380*constants::Mev_to_cJ COMMA \
+		64.22080*constants::Mev_to_cJ COMMA \
+		71.91280*constants::Mev_to_cJ COMMA \
+		79.85180*constants::Mev_to_cJ COMMA \
+		87.84680*constants::Mev_to_cJ COMMA \
+		90.55480*constants::Mev_to_cJ
+#else
+	#define BE_NET14 \
+		 28.2970*constants::Mev_to_cJ COMMA \
+		 92.1631*constants::Mev_to_cJ COMMA \
+		127.6211*constants::Mev_to_cJ COMMA \
+		160.6521*constants::Mev_to_cJ COMMA \
+		198.2592*constants::Mev_to_cJ COMMA \
+		236.5392*constants::Mev_to_cJ COMMA \
+		271.7842*constants::Mev_to_cJ COMMA \
+		306.7192*constants::Mev_to_cJ COMMA \
+		342.0563*constants::Mev_to_cJ COMMA \
+		375.4793*constants::Mev_to_cJ COMMA \
+		411.4703*constants::Mev_to_cJ COMMA \
+		447.7044*constants::Mev_to_cJ COMMA \
+		483.9954*constants::Mev_to_cJ COMMA \
+		526.8503*constants::Mev_to_cJ
+#endif
+	
+
 namespace nnet::net14 {
 	/// if true ignore coulombian corrections
 	bool skip_coulombian_correction = false;
 
 	/// constant mass-excendent values
 	CUDA_DEFINE(inline static const std::array<double COMMA 14>, BE, = {
-		0                             COMMA
-		 7.27440*constants::Mev_to_cJ COMMA
-		14.43580*constants::Mev_to_cJ COMMA
-		19.16680*constants::Mev_to_cJ COMMA
-		28.48280*constants::Mev_to_cJ COMMA
-		38.46680*constants::Mev_to_cJ COMMA
-		45.41480*constants::Mev_to_cJ COMMA
-		52.05380*constants::Mev_to_cJ COMMA
-		59.09380*constants::Mev_to_cJ COMMA
-		64.22080*constants::Mev_to_cJ COMMA
-		71.91280*constants::Mev_to_cJ COMMA
-		79.85180*constants::Mev_to_cJ COMMA
-		87.84680*constants::Mev_to_cJ COMMA
-		90.55480*constants::Mev_to_cJ COMMA
+		BE_NET14
 	};)
 
 	// constant list of ordered reaction
@@ -39,7 +61,6 @@ namespace nnet::net14 {
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		   3He -> C fusion */
 		{{{0, 3}}, {{1}}},
-
 
 
 
