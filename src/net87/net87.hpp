@@ -166,8 +166,8 @@ namespace nnet::net87 {
 			corrected_BE[86] = CUDA_ACCESS(BE).back() + correction;
 
 			// electron energy corrections
-			corrected_BE[constants::proton]  += Eneutr;
-			corrected_BE[constants::neutron] += Eaneutr;
+			/* corrected_BE[constants::proton]  += Eneutr;
+			corrected_BE[constants::neutron] += Eaneutr; */
 
 			/******************************************************/
 			/* start computing reaction rate and their derivative */ 

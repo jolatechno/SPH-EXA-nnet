@@ -239,6 +239,7 @@ int main(int argc, char* argv[]) {
     }
 
     const bool use_net86                    = parser.exists("--use-net86");
+    const bool use_net87                    = parser.exists("--electrons") && use_net86;
 
     const double hydro_dt                   = parser.get("--dt", 1e-1);
     const int n_max                         = parser.get("-n", 10);
