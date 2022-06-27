@@ -134,12 +134,12 @@ namespace nnet::net87 {
 			electrons::interpolate(T, rhoElec, electron_values);
 
 			Float effe        = electron_values[0];
-			Float deffe       = electron_values[1]*1e-9;
+			Float deffe       = electron_values[1];
 			Float deffedYe    = electron_values[2];//*rho;
-			Float Eneutr      = electron_values[3]*4.93e17;
+			Float Eneutr      = electron_values[3];
 
-			Float dEneutr     = electron_values[4]*4.93e17*1.e-9;
-			Float dEneutrdYe  = electron_values[5]*4.93e17;//*rho
+			Float dEneutr     = electron_values[4];
+			Float dEneutrdYe  = electron_values[5];//rho;
 
 			Float effp        = electron_values[6];
 			Float deffp       = electron_values[7];
@@ -166,8 +166,8 @@ namespace nnet::net87 {
 			corrected_BE[86] = CUDA_ACCESS(BE).back() + correction;
 
 			// electron energy corrections
-			/* corrected_BE[constants::proton]  += Eneutr;
-			corrected_BE[constants::neutron] += Eaneutr; */
+			/*corrected_BE[constants::proton]  += Eneutr;
+			corrected_BE[constants::neutron] += Eaneutr;*/
 
 			/******************************************************/
 			/* start computing reaction rate and their derivative */ 

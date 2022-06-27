@@ -251,24 +251,26 @@ int main(int argc, char* argv[]) {
 
     nnet::net14::skip_coulombian_correction = parser.exists("--skip-coulomb-corr");
 
-	util::array<double, 86> Y0_86, X_86;
+	util::array<double, 86> Y0_87, X_87;
 	util::array<double, 14> Y0_14, X_14;
     if (use_net86) {
-   		for (int i = 0; i < 86; ++i) X_86[i] = 0;
+   		for (int i = 0; i < 86; ++i) X_87[i] = 0;
 
 	    if  (      test_case == "C-O-burning") {
-	    	X_86[nnet::net86::constants::net14_species_order[1]] = 0.5;
-			X_86[nnet::net86::constants::net14_species_order[2]] = 0.5;
+	    	X_87[nnet::net86::constants::net14_species_order[1]] = 0.5;
+			X_87[nnet::net86::constants::net14_species_order[2]] = 0.5;
 	    } else if (test_case == "He-burning") {
-	    	X_86[nnet::net86::constants::net14_species_order[0]] = 1;
+	    	X_87[nnet::net86::constants::net14_species_order[0]] = 1;
 	    } else if (test_case == "Si-burning") {
-	    	X_86[nnet::net86::constants::net14_species_order[5]] = 1;
+	    	X_87[nnet::net86::constants::net14_species_order[5]] = 1;
 	    } else {
 	    	printHelp(argv[0], rank);
 	    	throw std::runtime_error("unknown nuclear test case!\n");
 	    }
 
-	    for (int i = 0; i < 86; ++i) Y0_86[i] = X_86[i]/nnet::net86::constants::A[i];
+	    for (int i = 0; i < 86; ++i) Y0_87[i] = X_87[i]/nnet::net86::constants::A[i];
+
+	    Y0_87[nnet::net87::constants::electron] = 1;
     } else {
    		for (int i = 0; i < 14; ++i) X_14[i] = 0;
 
@@ -308,10 +310,12 @@ int main(int argc, char* argv[]) {
 
 
 
+	const nnet::eos::helmholtz_functor helm_eos_87 = nnet::eos::helmholtz_functor(nnet::net87::constants::Z, 87);
 	const nnet::eos::helmholtz_functor helm_eos_86 = nnet::eos::helmholtz_functor(nnet::net86::constants::Z, 86);
 	const nnet::eos::helmholtz_functor helm_eos_14 = nnet::eos::helmholtz_functor(nnet::net14::constants::Z);
 
 
+	sphexa::sphnnet::NuclearDataType<87, double, AccType> nuclear_data_87;
 	sphexa::sphnnet::NuclearDataType<86, double, AccType> nuclear_data_86;
 	sphexa::sphnnet::NuclearDataType<14, double, AccType> nuclear_data_14;
 
@@ -320,12 +324,21 @@ int main(int argc, char* argv[]) {
 	!!!!!!!!!!!! */
 	size_t n_nuclear_particles;
 	sphexa::mpi::initializePointers(first, last, particle_data.node_id, particle_data.particle_id, particle_data.comm);
-	if (use_net86) {
+	if (use_net87) {
+		nuclear_data_87.setConserved("nid", "pid", "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");
+			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_87.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv");
+
+		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_87, Y0_87);
+
+		n_nuclear_particles = nuclear_data_87.Y.size();
+		sphexa::sphnnet::transferToDevice(nuclear_data_87, {"Y", "dt"});
+	} else if (use_net86) {
 		nuclear_data_86.setConserved("nid", "pid", "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
 		nuclear_data_86.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv");
 
-		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_86, Y0_86);
+		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_86, Y0_87);
 
 		n_nuclear_particles = nuclear_data_86.Y.size();
 		sphexa::sphnnet::transferToDevice(nuclear_data_86, {"Y", "dt"});
@@ -345,7 +358,9 @@ int main(int argc, char* argv[]) {
 	std::vector<std::string> hydroOutFields   = {"nid", "pid", "temp", "rho"};
 	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "Y(4He)", "Y(12C)", "Y(16O)"};
 	particle_data.setOutputFields(hydroOutFields);
-	if (use_net86) {
+	if (use_net87) {
+		nuclear_data_87.setOutputFields(nuclearOutFields, nnet::net87::constants::species_names);
+	} else if (use_net86) {
 		nuclear_data_86.setOutputFields(nuclearOutFields, nnet::net86::constants::species_names);
 	} else
 		nuclear_data_14.setOutputFields(nuclearOutFields, nnet::net14::constants::species_names);
@@ -355,7 +370,20 @@ int main(int argc, char* argv[]) {
 
 
 	// "warm-up" (first allocation etc...)
-	if (use_net86) {
+	if (use_net87) {
+		if (isotherm) {
+			step(rank,
+				first, last,
+				particle_data, nuclear_data_87, 1e-10,
+				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, isotherm_eos,
+				nnet::net87::BE.data());
+		} else
+			step(rank,
+				first, last,
+				particle_data, nuclear_data_87, 1e-10,
+				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, helm_eos_87,
+				nnet::net87::BE.data());
+	} else if (use_net86) {
 		if (isotherm) {
 			step(rank,
 				first, last,
@@ -402,7 +430,20 @@ int main(int argc, char* argv[]) {
 		MPI_Barrier(MPI_COMM_WORLD);
 		auto start_it = std::chrono::high_resolution_clock::now();
 
-		if (use_net86) {
+	if (use_net87) {
+		if (isotherm) {
+			step(rank,
+				first, last,
+				particle_data, nuclear_data_87, hydro_dt,
+				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, isotherm_eos,
+				nnet::net87::BE.data());
+		} else
+			step(rank,
+				first, last,
+				particle_data, nuclear_data_87, hydro_dt,
+				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, helm_eos_87,
+				nnet::net87::BE.data());
+	} else if (use_net86) {
 		if (isotherm) {
 			step(rank,
 				first, last,
@@ -467,7 +508,12 @@ int main(int argc, char* argv[]) {
 		std::cout << "\n";
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
-	if (use_net86) {
+	if (use_net87) {
+		sphexa::sphnnet::transferToHost(nuclear_data_87, {"cv"});
+
+		dump(nuclear_data_87, 0,                             n_print,             "/dev/stdout");
+		dump(nuclear_data_87, n_nuclear_particles - n_print, n_nuclear_particles, "/dev/stdout");
+	} else if (use_net86) {
 		sphexa::sphnnet::transferToHost(nuclear_data_86, {"cv"});
 
 		dump(nuclear_data_86, 0,                             n_print,             "/dev/stdout");
