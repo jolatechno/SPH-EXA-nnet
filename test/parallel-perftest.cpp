@@ -16,6 +16,7 @@
 
 // nuclear reaction wrappers
 #include "../src/sphexa/nuclear-net.hpp"
+#include "../src/sphexa/observables.hpp"
 
 
 
@@ -78,15 +79,22 @@ void dump(Dataset& d, size_t firstIndex, size_t lastIndex, /*const cstone::Box<t
 void printHelp(char* name);
 
 // mockup of the step function 
-template<class func_type, class func_eos, size_t n_species, class AccType>
+template<class func_type, class func_eos, size_t n_species, typename Float, class AccType>
 void step(
 	sphexa::sphnnet::NuclearDataType<n_species, double, AccType>  &n, const double dt,
-	const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
+	const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+	const Float* BE)
 {
 	sphexa::sphnnet::transferToDevice(n, {"previous_rho", "rho", "temp"});
 	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
 		reactions, construct_rates_BE, eos);
 	sphexa::sphnnet::transferToHost(n, {"temp"});
+
+	/* !! needed for now !! */
+	sphexa::sphnnet::transferToHost(n, {"Y"});
+	// print total nuclear energy
+	Float total_nuclear_energy = sphexa::sphnnet::totalNuclearEnergy(n, BE);
+	std::cout << "total nuclear energy = " << total_nuclear_energy << "\n";
 }
 
 
@@ -245,18 +253,21 @@ int main(int argc, char* argv[]) {
 	if (use_net86) {
 			if (isotherm) {
 				step(nuclear_data_86, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos);
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos,
+					nnet::net86::BE.data());
 			} else
 				step(nuclear_data_86, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86);
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86,
+					nnet::net86::BE.data());
 		} else
 			if (isotherm) {
 				step(nuclear_data_14, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos);
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos,
+					nnet::net14::BE.data());
 			} else
 				step(nuclear_data_14, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14);
-
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14,
+					nnet::net14::BE.data());
 
 
 
@@ -276,17 +287,21 @@ int main(int argc, char* argv[]) {
 		if (use_net86) {
 			if (isotherm) {
 				step(nuclear_data_86, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos);
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos,
+					nnet::net86::BE.data());
 			} else
 				step(nuclear_data_86, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86);
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86,
+					nnet::net86::BE.data());
 		} else
 			if (isotherm) {
 				step(nuclear_data_14, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos);
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos,
+					nnet::net14::BE.data());
 			} else
 				step(nuclear_data_14, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14);
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14,
+					nnet::net14::BE.data());
 		
 		t += hydro_dt;
 
