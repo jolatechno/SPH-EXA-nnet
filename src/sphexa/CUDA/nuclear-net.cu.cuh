@@ -33,30 +33,25 @@ namespace sphnnet {
 		const Float hydro_dt, const Float previous_dt,
 		const nnet::gpu_reaction_list *reactions, const func_type *construct_rates_BE, const func_eos *eos)
 	{
-	    const size_t block_begin =                    blockIdx.x*blockDim.x*constants::cuda_num_iteration_per_thread;
-	    const size_t begin       =          block_begin +       threadIdx.x*constants::cuda_num_iteration_per_thread;
-	    const size_t end         = std::min(block_begin + (threadIdx.x + 1)*constants::cuda_num_iteration_per_thread, n_particles);
+	    const size_t block_begin =                               blockIdx.x*blockDim.x*constants::cuda_num_iteration_per_thread;
+	    const size_t block_end   = algorithm::min((size_t)((blockIdx.x + 1)*blockDim.x*constants::cuda_num_iteration_per_thread), n_particles);
+	    const size_t block_size  = block_end - block_begin;
 
 	    // initialized shared array
 	    __shared__ Float elapsed[constants::cuda_num_thread_per_block*constants::cuda_num_iteration_per_thread];
 	    __shared__ int   iter   [constants::cuda_num_thread_per_block*constants::cuda_num_iteration_per_thread];
-	    for (int i = constants::cuda_num_iteration_per_thread*threadIdx.x;
-	    		 i < constants::cuda_num_iteration_per_thread*(threadIdx.x + 1);
+	    __shared__ bool  running[constants::cuda_num_thread_per_block*constants::cuda_num_iteration_per_thread];
+	    for (int i =                         constants::cuda_num_iteration_per_thread*threadIdx.x;
+	    		 i < algorithm::min((size_t)(constants::cuda_num_iteration_per_thread*(threadIdx.x + 1)), block_size);
 	    	   ++i)
 	   	{
 	    	elapsed[i] = 0.0;
 	    	iter   [i] = 1;
+	    	running[i] = rho_[block_begin + i] > nnet::constants::min_rho && temp_[block_begin + i] > nnet::constants::min_temp;
 	    }
 
-	    // initialize array for load balancing
-	    __shared__ int    num_running;
-	    __shared__ size_t indexes[constants::cuda_num_thread_per_block*constants::cuda_num_iteration_per_thread];
-	    for (int i = constants::cuda_num_iteration_per_thread*threadIdx.x;
-	    		 i < constants::cuda_num_iteration_per_thread*(threadIdx.x + 1);
-	    	   ++i)
-	    	indexes[i] = block_begin + i;
-
 	    // allocate local buffer
+	    Float T_buffer;
     	Float *Mp        = new Float[(dimension + 1)*(dimension + 1)];
 		Float *RHS       = new Float[                (dimension + 1)];
 		Float *DY_T      = new Float[                (dimension + 1)];
@@ -64,51 +59,54 @@ namespace sphnnet {
 		Float *rates     = new Float[reactions->size()];
 		Float *drates_dT = new Float[reactions->size()];
 
-		// run simulation
-		for (int i = constants::cuda_num_iteration_per_thread*threadIdx.x;
-	    		 i < constants::cuda_num_iteration_per_thread*(threadIdx.x + 1);
-	    	   ++i)
-	   	{
-	   		const size_t idx = indexes[i];
-		    if (rho_[idx] > nnet::constants::min_rho && temp_[idx] > nnet::constants::min_temp) {
+		// run simulation 
+		while (true) {
+			// find index
+			__syncthreads();
+			int i = 0, num_running = 0;
+			for (; i < block_size; ++i)
+				if (running[i])
+					if(num_running++ == threadIdx.x)
+						break;
+			__syncthreads();
+
+			// exit condition
+			if (num_running == 0)
+				break;
+
+			// run simulation
+			if (i < block_size) {
+				const size_t idx = block_begin + i;
+
 				// compute drho/dt
 				Float drho_dt = previous_rho_[idx] <= 0 ? 0. : (rho_[idx] - previous_rho_[idx])/previous_dt;
 
-				// solve
-				Float T_buffer;
-				while (true) {
-					// generate system
-					nnet::prepare_system_substep(dimension,
-						Mp, RHS, rates, drates_dT,
-						*reactions, *construct_rates_BE, *eos,
-						Y_ + dimension*idx, temp_[idx], Y_buffer, T_buffer,
-						rho_[idx], drho_dt,
-						hydro_dt, elapsed[i], dt_[idx], iter[i]);
+				// generate system
+				nnet::prepare_system_substep(dimension,
+					Mp, RHS, rates, drates_dT,
+					*reactions, *construct_rates_BE, *eos,
+					Y_ + dimension*idx, temp_[idx], Y_buffer, T_buffer,
+					rho_[idx], drho_dt,
+					hydro_dt, elapsed[i], dt_[idx], iter[i]);
 
-					// solve M*D{T, Y} = RHS
-					eigen::solve(Mp, RHS, DY_T, dimension + 1, nnet::constants::epsilon_system);
+				// solve M*D{T, Y} = RHS
+				eigen::solve(Mp, RHS, DY_T, dimension + 1, nnet::constants::epsilon_system);
 
-					// finalize
-					if(nnet::finalize_system_substep(dimension,
-						Y_ + dimension*idx, temp_[idx],
-						Y_buffer, T_buffer,
-						DY_T, hydro_dt, elapsed[i],
-						dt_[idx], iter[i]))
-					{
-						break;
-					}
-
-					++iter[i];
+				// finalize
+				if(nnet::finalize_system_substep(dimension,
+					Y_ + dimension*idx, temp_[idx],
+					Y_buffer, T_buffer,
+					DY_T, hydro_dt, elapsed[i],
+					dt_[idx], iter[i]))
+				{
+					running[i] = false;
 				}
 
-				/*nnet::solve_system_substep(dimension,
-					Mp, RHS, DY_T, rates, drates_dT,
-					*reactions, *construct_rates_BE, *eos,
-					Y_ + dimension*i, temp_[i], Y_buffer,
-					rho_[i], drho_dt, hydro_dt, dt_[i]);*/
+				++iter[i];
 			}
 		}
 
+		// free buffers
 		delete[] Mp;
 		delete[] RHS;
 		delete[] DY_T;
