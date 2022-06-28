@@ -31,8 +31,8 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<class Dataset, typename Float>
-	Float totalNuclearEnergy(Dataset const &n, const Float *BE) {
+	template<class Data, typename Float>
+	Float totalNuclearEnergy(Data const &n, const Float *BE) {
 		const size_t n_particles = n.temp.size();
 		const int dimension = n.Y[0].size();
 

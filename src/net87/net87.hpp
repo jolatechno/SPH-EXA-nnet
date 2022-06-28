@@ -36,7 +36,11 @@ namespace nnet::net87 {
 	}();
 
 	/// compute a list of rates for net87
-	struct compute_reaction_rates_function {
+	class compute_reaction_rates_function {
+	private:
+		nnet::net86::compute_reaction_rates_function net86_compute_reaction_rates;
+
+	public:
 		compute_reaction_rates_function() {}
 
 		template<typename Float, class eos>
@@ -67,7 +71,7 @@ namespace nnet::net87 {
 			Float dUedYe = eos_struct.dU_dYe;
 
 
-			nnet::net86::compute_reaction_rates(Y, T, rho, eos_struct, corrected_BE, rates, drates);
+			net86_compute_reaction_rates(Y, T, rho, eos_struct, corrected_BE, rates, drates);
 
 			/*********************************************/
 			/* start computing the binding energy vector */
@@ -91,11 +95,11 @@ namespace nnet::net87 {
 
 			int idx = 157-1 + 157-4 -1, jdx = 157-1 + 157-4 -1;
 			// electron capture rates
-			rates [++idx] = deffedYe; // = effe/rhoElec
+			rates [++idx] = rhoElec == 0 ? 0 :  effe/rhoElec;
 			drates[++jdx] = rhoElec == 0 ? 0 : deffe/rhoElec;
 
-			rates [++idx] = deffpdYe; // = deffp/rhoElec
-			drates[++jdx] = rhoElec == 0 ? 0 : deffp/rhoElec; // deffp/Y[86]/rho, !!! hack !!!
+			rates [++idx] = rhoElec == 0 ? 0 :  effp/rhoElec;
+			drates[++jdx] = rhoElec == 0 ? 0 : deffp/rhoElec;
 		}
 	} compute_reaction_rates;
 }

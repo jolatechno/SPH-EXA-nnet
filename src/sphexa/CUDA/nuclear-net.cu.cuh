@@ -27,7 +27,6 @@ namespace sphnnet {
 
 
 
-
 	template<class func_type, class func_eos, typename Float>
 	__global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, const int dimension,
 		Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,

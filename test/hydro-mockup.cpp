@@ -34,11 +34,27 @@
 /************************************************************************/
 /*           MPI test that can test the GPU implementation              */
 // compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" hydro-mockup.cpp -o hydro-mockup.out -std=c++17 --expt-relaxed-constexpr
-// launch (on a system with 2 GPUs): mpirun --quiet --bind-to hwthread --oversubscribe --quiet -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 1000000 --dt 1e-4 -n 10 &> res_mpi.out &
+/*                                                                      */
+/*             Launch on a system with 2 GPUs:                          */
+// mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 10000000 --dt 1e-4 -n 10 > res_mpi_big.out 2> err.out &
+/*                                                                      */
+/*           Comparison between networks on GPU:                        */
+/*             launch on a system with 2 GPUs:                          */
+// net14: mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 500000 --dt 1e-5 -n 10 > res_mpi_net14.out 2> err.out &
+// net86: mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 500000 --dt 1e-5 -n 10 --use-net86 > res_mpi_net86.out 2> err.out &
+// net87: mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 500000 --dt 1e-5 -n 10 --use-net86 --electrons > res_mpi_net87.out 2> err.out &
 /*                                                                      */
 /*          Comparison with the CPU-only version:                       */
 // compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST" hydro-mockup.cpp -o hydro-mockup-cpu.out -std=c++17 --expt-relaxed-constexpr
-// launch (on a system with 2x16 core): mpirun --quiet --bind-to hwthread --oversubscribe --map-by ppr:2:node:PE=16 --quiet -n 2 -x OMP_NUM_THREADS=16 hydro-mockup-cpu.out --test-case C-O-burning --n-particle 1000000 --dt 1e-4 -n 10 &> res_cpu.out &
+/*                                                                      */
+/*            Launch on a system with 2x32 core:                        */
+// mpirun --quiet --bind-to hwthread --oversubscribe --map-by ppr:2:node:PE=32 -n 2 -x OMP_NUM_THREADS=32 hydro-mockup-cpu.out --test-case C-O-burning --n-particle 10000000 --dt 1e-4 -n 10 > res_mpi_cpu_big.out 2> err.out &
+/*                                                                      */
+/*           Comparison between networks on CPU:                        */
+/*           Launch on a system with 2x32 core:                         */
+// net14: mpirun --quiet --bind-to hwthread --oversubscribe --map-by ppr:2:node:PE=32 -n 2 -x OMP_NUM_THREADS=32 hydro-mockup-cpu.out --test-case C-O-burning --n-particle 500000 --dt 1e-5 -n 10 > res_mpi_cpu_net14.out 2> err.out &
+// net86: mpirun --quiet --bind-to hwthread --oversubscribe --map-by ppr:2:node:PE=32 -n 2 -x OMP_NUM_THREADS=32 hydro-mockup-cpu.out --test-case C-O-burning --n-particle 500000 --dt 1e-5 -n 10 --use-net86 > res_mpi_cpu_net86.out 2> err.out &
+// net87: mpirun --quiet --bind-to hwthread --oversubscribe --map-by ppr:2:node:PE=32 -n 2 -x OMP_NUM_THREADS=32 hydro-mockup-cpu.out --test-case C-O-burning --n-particle 500000 --dt 1e-5 -n 10 --use-net86 --electrons > res_mpi_cpu_net87.out 2> err.out &
 /************************************************************************/
 
 
