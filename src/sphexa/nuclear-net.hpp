@@ -60,6 +60,7 @@ namespace sphexa::sphnnet {
 			
 			// call the cuda kernel wrapper
 			cudaComputeNuclearReactions(n_particles, dimension,
+				n.devData.buffer,
 		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()),
 		(Float*)thrust::raw_pointer_cast(n.devData.previous_rho.data()),
 		(Float*)thrust::raw_pointer_cast(n.devData.Y.data()),

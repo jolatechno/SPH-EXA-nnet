@@ -9,14 +9,25 @@
 #include "../../nuclear-net.hpp"
 #include "../util/algorithm.hpp"
 
+#ifndef CUDA_NUM_ITERATION_PER_THREAD
+	#define CUDA_NUM_ITERATION_PER_THREAD 8
+#endif
+#ifndef CUDA_NUM_THREAD_PER_BLOCK_NNET
+	#define CUDA_NUM_THREAD_PER_BLOCK_NNET 32
+#endif
+#ifndef CUDA_NUM_THREAD_PER_BLOCK
+	#define CUDA_NUM_THREAD_PER_BLOCK 32
+#endif
 
 namespace sphexa {
 namespace sphnnet {
 	namespace constants {
 		/// number of consecutive iteration per cuda thread
-		const int cuda_num_iteration_per_thread = 8;
+		const int cuda_num_iteration_per_thread = CUDA_NUM_ITERATION_PER_THREAD;
+		/// number of thread per cuda thread block for nuclear network
+		const int cuda_num_thread_per_block_nnet = CUDA_NUM_THREAD_PER_BLOCK_NNET;
 		/// number of thread per cuda thread block
-		const int cuda_num_thread_per_block = 32;
+		const int cuda_num_thread_per_block = CUDA_NUM_THREAD_PER_BLOCK;
 	}
 
 
@@ -29,6 +40,7 @@ namespace sphnnet {
 
 	template<class func_type, class func_eos, typename Float>
 	__global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, const int dimension,
+		Float *global_buffer,
 		Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
 		const Float hydro_dt, const Float previous_dt,
 		const nnet::gpu_reaction_list *reactions, const func_type *construct_rates_BE, const func_eos *eos)
@@ -51,13 +63,21 @@ namespace sphnnet {
 	     	status[i] = free_status;
 	    }
 
+	    // buffer sizes
+	    const int Mp_size       = (dimension + 1)*(dimension + 1);
+	    const int RHS_size      =  dimension + 1;
+	    const int DY_T_size     =  dimension + 1;
+	    const int Y_buffer_size =  dimension;
+	    const int rates_size    =  reactions->size();
+
 	    // allocate local buffer
 	    Float T_buffer;
-    	Float *Mp        = new Float[(dimension + 1)*(dimension + 1)];
-		Float *RHS       = new Float[                (dimension + 1)];
-		Float *DY_T      = new Float[                (dimension + 1)];
-		Float *Y_buffer  = new Float[                      dimension];
-		Float *rates     = new Float[reactions->size()];
+	    Float *Buffer    = global_buffer + (Mp_size + RHS_size + DY_T_size + Y_buffer_size + rates_size)*(blockIdx.x*blockDim.x + threadIdx.x);
+    	Float *Mp        = Buffer;
+		Float *RHS       = Buffer + Mp_size;
+		Float *DY_T      = Buffer + Mp_size + RHS_size;
+		Float *Y_buffer  = Buffer + Mp_size + RHS_size + DY_T_size;
+		Float *rates     = Buffer + Mp_size + RHS_size + DY_T_size + Y_buffer_size;
 
 		// run simulation 
 		int iter = 1;
@@ -140,27 +160,15 @@ namespace sphnnet {
 				++iter;
 			}
 		}
-
-		// free buffers
-		delete[] Mp;
-		delete[] RHS;
-		delete[] DY_T;
-		delete[] Y_buffer;
-		delete[] rates;
 	}
 
 	template<class func_type, class func_eos, typename Float>
 	__host__ void cudaComputeNuclearReactions(const size_t n_particles, const int dimension,
+		thrust::device_vector<Float> &buffer,
 		Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
 		const Float hydro_dt, const Float previous_dt,
 		const nnet::gpu_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos)
 	{
-		// insure that the heap is large enough
-		size_t cuda_heap_limit, requiered_heap = (dimension*dimension*3 + dimension)*n_particles;
-		gpuErrchk(cudaDeviceGetLimit(&cuda_heap_limit, cudaLimitMallocHeapSize));
-		if (cuda_heap_limit < requiered_heap)
-			gpuErrchk(cudaDeviceSetLimit(cudaLimitMallocHeapSize, requiered_heap));
-
 		// copy classes to gpu
 		nnet::gpu_reaction_list *dev_reactions;
 		func_type               *dev_construct_rates_BE;
@@ -175,14 +183,31 @@ namespace sphnnet {
 		gpuErrchk(cudaMemcpy(dev_eos,                &eos,                sizeof(func_eos),                cudaMemcpyHostToDevice));
 
 		// compute chunk sizes
-		int num_threads     = (n_particles + constants::cuda_num_iteration_per_thread - 1)/constants::cuda_num_iteration_per_thread;
-		int cuda_num_blocks = (num_threads + constants::cuda_num_thread_per_block     - 1)/constants::cuda_num_thread_per_block;
+		int num_threads     = (n_particles + constants::cuda_num_iteration_per_thread  - 1)/constants::cuda_num_iteration_per_thread;
+		int cuda_num_blocks = (num_threads + constants::cuda_num_thread_per_block_nnet - 1)/constants::cuda_num_thread_per_block_nnet;
+
+		// buffer sizes
+	    const int Mp_size       = (dimension + 1)*(dimension + 1);
+	    const int RHS_size      =  dimension + 1;
+	    const int DY_T_size     =  dimension + 1;
+	    const int Y_buffer_size =  dimension;
+	    const int rates_size    =  reactions.size();
+		// allocate global buffer
+	    const size_t buffer_size = (Mp_size + RHS_size + DY_T_size + Y_buffer_size + rates_size)*cuda_num_blocks*constants::cuda_num_thread_per_block_nnet;
+		if (buffer.size() < buffer_size)
+			buffer.resize(buffer_size);
 
 		// launch kernel
-	    cudaKernelComputeNuclearReactions<<<cuda_num_blocks, constants::cuda_num_thread_per_block>>>(n_particles, dimension,
+	    cudaKernelComputeNuclearReactions<<<cuda_num_blocks, constants::cuda_num_thread_per_block_nnet>>>(n_particles, dimension,
+	(Float*)thrust::raw_pointer_cast(buffer.data()),
 			rho_, previous_rho_, Y_, temp_, dt_,
 			hydro_dt, previous_dt,
 			dev_reactions, dev_construct_rates_BE, dev_eos);
+
+	    // free cuda classes
+	    gpuErrchk(cudaFree(dev_reactions));
+	    gpuErrchk(cudaFree(dev_construct_rates_BE));
+	    gpuErrchk(cudaFree(dev_eos));
 	}
 
 
@@ -196,8 +221,7 @@ namespace sphnnet {
 	template<typename Float /*, class func_eos*/>
 	__global__ void cudaKernelComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,
 		const Float *temp_, const Float *rho_, const Float *Y_, 
-		Float *cv, Float *p, Float *c /*,
-		const func_eos *eos*/)
+		Float *cv, Float *p, Float *c)
 	{
 		size_t thread = blockIdx.x*blockDim.x + threadIdx.x;
 		if (thread < n_particles) {
@@ -220,13 +244,6 @@ namespace sphnnet {
 		const Float *temp_, const Float *rho_, const Float *Y_,
 		Float *cv, Float *p, Float *c)
 	{
-		/* // copy classes to gpu
-		nnet::eos::helmholtz_function *dev_eos;
-		// allocate
-		gpuErrchk(cudaMalloc((void**)&dev_eos, sizeof(nnet::eos::helmholtz_function)));
-		// actually copy
-		gpuErrchk(cudaMemcpy(dev_eos, &nnet::eos::helmholtz, sizeof(nnet::eos::helmholtz_function), cudaMemcpyHostToDevice)); */
-		
 		// compute chunk sizes
 		int cuda_num_blocks = (n_particles + constants::cuda_num_thread_per_block - 1)/constants::cuda_num_thread_per_block;
 		

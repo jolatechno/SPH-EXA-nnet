@@ -39,6 +39,9 @@ namespace sphexa::sphnnet {
 
 		/// timesteps
 		thrust::device_vector<Float> dt;
+
+		/// solver buffer
+		mutable thrust::device_vector<Float> buffer;
 #endif
 
 		/// resize the number of particules
