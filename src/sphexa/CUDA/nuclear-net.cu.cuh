@@ -37,17 +37,18 @@ namespace sphnnet {
 	    const size_t block_end   = algorithm::min((size_t)((blockIdx.x + 1)*blockDim.x*constants::cuda_num_iteration_per_thread), n_particles);
 	    const size_t block_size  = block_end - block_begin;
 
+	    // satatus
+	    static const int free_status     = -2;
+	    static const int finished_status = -1;
+	    static const int running_status  =  0;
+
 	    // initialized shared array
-	    __shared__ Float elapsed[constants::cuda_num_thread_per_block*constants::cuda_num_iteration_per_thread];
-	    __shared__ int   iter   [constants::cuda_num_thread_per_block*constants::cuda_num_iteration_per_thread];
-	    __shared__ bool  running[constants::cuda_num_thread_per_block*constants::cuda_num_iteration_per_thread];
-	    for (int i =                         constants::cuda_num_iteration_per_thread*threadIdx.x;
+	    __shared__ int status[constants::cuda_num_thread_per_block*constants::cuda_num_iteration_per_thread];
+	     for (int i =                         constants::cuda_num_iteration_per_thread*threadIdx.x;
 	    		 i < algorithm::min((size_t)(constants::cuda_num_iteration_per_thread*(threadIdx.x + 1)), block_size);
 	    	   ++i)
-	   	{
-	    	elapsed[i] = 0.0;
-	    	iter   [i] = 1;
-	    	running[i] = rho_[block_begin + i] > nnet::constants::min_rho && temp_[block_begin + i] > nnet::constants::min_temp;
+	    {
+	     	status[i] = free_status;
 	    }
 
 	    // allocate local buffer
@@ -57,37 +58,67 @@ namespace sphnnet {
 		Float *DY_T      = new Float[                (dimension + 1)];
 		Float *Y_buffer  = new Float[                      dimension];
 		Float *rates     = new Float[reactions->size()];
-		Float *drates_dT = new Float[reactions->size()];
 
 		// run simulation 
+		int iter = 1;
+		int shared_idx = -1;
+		Float elapsed = 0.0;
+		bool did_not_find = false;
 		while (true) {
-			// find index
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			       work sharing
+			!!!!!!!!!!!!!!!!!!!!!!!! */
 			__syncthreads();
-			int i = 0, num_running = 0;
-			for (; i < block_size; ++i)
-				if (running[i])
-					if(num_running++ == threadIdx.x)
+			bool exit = shared_idx == -1;
+			if (did_not_find) {
+				for (int i = 0; i < block_size; ++i)
+					if (status[i] != finished_status) {
+						exit = false;
 						break;
+					}
+			} else if (shared_idx == -1) {
+				int num_free = 0, thread_id = threadIdx.x;
+				for (int i = 0; i < block_size; ++i)
+					if (status[i] == free_status) {
+						exit = false;
+						++num_free;
+
+						// acquire n-th free ttask
+						if (num_free == thread_id + 1) {
+							shared_idx = i;
+							break;
+						}
+					} else if (status[i] >= running_status) {
+						exit = false;
+
+						if (status[i] < threadIdx.x)
+							--thread_id;
+					}
+				if (shared_idx == -1)
+					did_not_find = true;
+			}
+			// exit condition
+			if (exit)
+				break;
 			__syncthreads();
 
-			// exit condition
-			if (num_running == 0)
-				break;
-
-			// run simulation
-			if (i < block_size) {
-				const size_t idx = block_begin + i;
+			/* !!!!!!!!!!!!!!!!!!!!!!!!
+			     actual simulation
+			!!!!!!!!!!!!!!!!!!!!!!!! */
+			if (shared_idx >= 0) {
+				status[shared_idx] = threadIdx.x;
+				const size_t idx = block_begin + shared_idx;
 
 				// compute drho/dt
 				Float drho_dt = previous_rho_[idx] <= 0 ? 0. : (rho_[idx] - previous_rho_[idx])/previous_dt;
 
 				// generate system
 				nnet::prepare_system_substep(dimension,
-					Mp, RHS, rates, drates_dT,
+					Mp, RHS, rates,
 					*reactions, *construct_rates_BE, *eos,
 					Y_ + dimension*idx, temp_[idx], Y_buffer, T_buffer,
 					rho_[idx], drho_dt,
-					hydro_dt, elapsed[i], dt_[idx], iter[i]);
+					hydro_dt, elapsed, dt_[idx], iter);
 
 				// solve M*D{T, Y} = RHS
 				eigen::solve(Mp, RHS, DY_T, dimension + 1, nnet::constants::epsilon_system);
@@ -96,13 +127,17 @@ namespace sphnnet {
 				if(nnet::finalize_system_substep(dimension,
 					Y_ + dimension*idx, temp_[idx],
 					Y_buffer, T_buffer,
-					DY_T, hydro_dt, elapsed[i],
-					dt_[idx], iter[i]))
+					DY_T, hydro_dt, elapsed,
+					dt_[idx], iter))
 				{
-					running[i] = false;
+					// reset
+					status[shared_idx] = finished_status;
+					iter = 0;
+					shared_idx = -1;
+					elapsed = 0.0;
 				}
 
-				++iter[i];
+				++iter;
 			}
 		}
 
@@ -112,7 +147,6 @@ namespace sphnnet {
 		delete[] DY_T;
 		delete[] Y_buffer;
 		delete[] rates;
-		delete[] drates_dT;
 	}
 
 	template<class func_type, class func_eos, typename Float>

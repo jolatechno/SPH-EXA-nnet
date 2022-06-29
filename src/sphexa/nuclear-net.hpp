@@ -82,7 +82,7 @@ namespace sphexa::sphnnet {
 		!!!!!!!!!!!!!!!!!!!!!!! */
 
 		// buffers
-		std::vector<Float> rates(reactions.size()), drates_dT(reactions.size());
+		std::vector<Float> rates(reactions.size());
 		eigen::Vector<Float> RHS(dimension + 1), DY_T(dimension + 1), Y_buffer(dimension);
 		eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 
@@ -92,7 +92,7 @@ namespace sphexa::sphnnet {
 		num_threads = omp_get_num_threads();
 		int omp_batch_size = util::dynamic_batch_size(n_particles, num_threads);
 
-		#pragma omp parallel for firstprivate(Mp, RHS, DY_T, rates, drates_dT, Y_buffer, reactions/*, construct_rates_BE, eos*/) schedule(dynamic, omp_batch_size)
+		#pragma omp parallel for firstprivate(Mp, RHS, DY_T, rates, Y_buffer, reactions/*, construct_rates_BE, eos*/) schedule(dynamic, omp_batch_size)
 		for (size_t i = 0; i < n_particles; ++i) 
 			if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp) {
 				// compute drho/dt
@@ -100,7 +100,7 @@ namespace sphexa::sphnnet {
 
 				// solve
 				nnet::solve_system_substep(dimension,
-					Mp.data(), RHS.data(), DY_T.data(), rates.data(), drates_dT.data(),
+					Mp.data(), RHS.data(), DY_T.data(), rates.data(),
 					reactions, construct_rates_BE, eos,
 					n.Y[i].data(), n.temp[i], Y_buffer.data(),
 					n.rho[i], drho_dt, hydro_dt, n.dt[i],
