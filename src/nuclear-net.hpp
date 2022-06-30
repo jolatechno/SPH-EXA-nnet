@@ -835,7 +835,7 @@ Substeping solver
 		
 		// insure convergence to the right time
 		Float used_dt = dt;
-		if ((dt_tot - elapsed_time) < used_dt)
+		if (dt_tot - elapsed_time < dt)
 			used_dt = dt_tot - elapsed_time;
 
 		// prepare system
@@ -860,17 +860,22 @@ Substeping solver
 		const Float *DY_T, const Float dt_tot, Float &elapsed_time,
 		Float &dt, int &i)
 	{
-		// finalize system
+		// insure convergence to the right time
 		Float timestep, used_dt = dt;
-		if ((dt_tot - elapsed_time) < used_dt)
+		if (dt_tot - elapsed_time < dt)
 			used_dt = dt_tot - elapsed_time;
+
+		// finalize system
 		bool converged = finalize_system_NR(dimension,
 			final_Y, final_T,
 			next_Y, next_T,
 			DY_T, used_dt, timestep, i);
 
 		// update timestep
-		if (used_dt < dt_tot - elapsed_time)
+		if (dt_tot - elapsed_time < dt) {
+			if (used_dt < dt_tot - elapsed_time)
+				dt = used_dt;
+		} else
 			dt = used_dt;
 
 		if (converged) {
