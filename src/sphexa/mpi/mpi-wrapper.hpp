@@ -89,7 +89,7 @@ namespace sphexa::mpi {
 			send_buffer[i] = particle_id[partition.send_partition[i]];
 
 		// prepare recv buffer
-		size_t n_particles_recv  = partition.recv_disp[size];
+		size_t n_particles_recv = partition.recv_disp[size];
 		partition.recv_partition.resize(n_particles_recv);
 
 		// send particle id

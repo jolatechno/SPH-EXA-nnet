@@ -38,6 +38,29 @@ namespace sphexa::sphnnet::io {
 		outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, nuclearOutFields);
 		return hydroOutFields;
     }
+
+    /// allow writing lines of float for HDF5 part
+	/**
+	 * TODO
+	 */
+	template<typename T, size_t n, class writter_function>
+	auto write_lines(const util::array<T, n> *Y, size_t n_particles, const writter_function &write_func) {
+		std::vector<T> buffer(n_particles);
+		for (int i = 0; i < outputFieldIndices.size(); ++i) {
+			const         int  fieldIdx  = outputFieldIndices[i];
+			const std::string& fieldName = outputFieldNames[  i];
+
+			// move to buffer
+			for (size_t j = 0; j < n_particles; ++j)
+				buffer[j] = Y[j][fieldIdx]; 
+
+			// write
+			if (i == outputFieldIndices.size() - 1)
+				return write_func(fieldName, buffer.data());
+			else
+				write_func(fieldName, buffer.data());
+		}
+	}
 }
 
 /// overwritten output operator for nuclear array
