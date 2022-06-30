@@ -861,7 +861,9 @@ Substeping solver
 		Float &dt, int &i)
 	{
 		// finalize system
-		Float used_dt = dt, timestep;
+		Float timestep, used_dt = dt;
+		if ((dt_tot - elapsed_time) < used_dt)
+			used_dt = dt_tot - elapsed_time;
 		bool converged = finalize_system_NR(dimension,
 			final_Y, final_T,
 			next_Y, next_T,

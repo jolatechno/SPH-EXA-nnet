@@ -43,7 +43,7 @@
 // net14: mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 500000 --dt 1e-5 -n 10 > res_mpi_net14.out 2> err.out &
 // net86: mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 500000 --dt 1e-5 -n 10 --use-net86 > res_mpi_net86.out 2> err.out &
 // net87: mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 500000 --dt 1e-5 -n 10 --use-net86 --electrons > res_mpi_net87.out 2> err.out &
-// net87 big: mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 2000000 --dt 1e-6 -n 4 --use-net86 --electrons > res_mpi_big_net87.out 2> err.out &
+// net87 big: mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 2000000 --dt 1e-6 -n 10 --use-net86 --electrons > res_mpi_net87_big.out 2> err.out &
 /*                                                                      */
 /*          Comparison with the CPU-only version:                       */
 // compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST" hydro-mockup.cpp -o hydro-mockup-cpu.out -std=c++17 --expt-relaxed-constexpr
@@ -56,6 +56,7 @@
 // net14: mpirun --quiet --bind-to hwthread --oversubscribe --map-by ppr:2:node:PE=32 -n 2 -x OMP_NUM_THREADS=32 hydro-mockup-cpu.out --test-case C-O-burning --n-particle 500000 --dt 1e-5 -n 10 > res_mpi_cpu_net14.out 2> err.out &
 // net86: mpirun --quiet --bind-to hwthread --oversubscribe --map-by ppr:2:node:PE=32 -n 2 -x OMP_NUM_THREADS=32 hydro-mockup-cpu.out --test-case C-O-burning --n-particle 500000 --dt 1e-5 -n 10 --use-net86 > res_mpi_cpu_net86.out 2> err.out &
 // net87: mpirun --quiet --bind-to hwthread --oversubscribe --map-by ppr:2:node:PE=32 -n 2 -x OMP_NUM_THREADS=32 hydro-mockup-cpu.out --test-case C-O-burning --n-particle 500000 --dt 1e-5 -n 10 --use-net86 --electrons > res_mpi_cpu_net87.out 2> err.out &
+// net87 big: mpirun --quiet --bind-to hwthread --oversubscribe --map-by ppr:2:node:PE=32 -n 2 -x OMP_NUM_THREADS=32 hydro-mockup-cpu.out --test-case C-O-burning --n-particle 2000000 --dt 1e-6 -n 10 --use-net86 --electrons > res_mpi_cpu_net87_big.out 2> err.out &
 /************************************************************************/
 
 
