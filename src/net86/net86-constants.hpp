@@ -20,7 +20,7 @@ namespace nnet::net86::constants {
 	const static double Kb = 1.380658e-16;
 	const static double Na = 6.022137e23;
 	const static double e2 = 2.306022645e-19;
-	const static double Mev_to_cJ = 9.648529392e17;
+	const static double Mev_to_erg = 9.648529392e17;
 
 	/// constant atomic number values
 	CUDA_DEFINE(inline static const std::array<double COMMA 87>, Z, = {

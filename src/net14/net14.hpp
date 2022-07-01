@@ -15,35 +15,35 @@
 #ifdef FORTRAN_BE
 	#define BE_NET14 \
 		0                             COMMA \
-		 7.27440*constants::Mev_to_cJ COMMA \
-		14.43580*constants::Mev_to_cJ COMMA \
-		19.16680*constants::Mev_to_cJ COMMA \
-		28.48280*constants::Mev_to_cJ COMMA \
-		38.46680*constants::Mev_to_cJ COMMA \
-		45.41480*constants::Mev_to_cJ COMMA \
-		52.05380*constants::Mev_to_cJ COMMA \
-		59.09380*constants::Mev_to_cJ COMMA \
-		64.22080*constants::Mev_to_cJ COMMA \
-		71.91280*constants::Mev_to_cJ COMMA \
-		79.85180*constants::Mev_to_cJ COMMA \
-		87.84680*constants::Mev_to_cJ COMMA \
-		90.55480*constants::Mev_to_cJ
+		 7.27440*constants::Mev_to_Erg COMMA \
+		14.43580*constants::Mev_to_erg COMMA \
+		19.16680*constants::Mev_to_erg COMMA \
+		28.48280*constants::Mev_to_erg COMMA \
+		38.46680*constants::Mev_to_erg COMMA \
+		45.41480*constants::Mev_to_erg COMMA \
+		52.05380*constants::Mev_to_erg COMMA \
+		59.09380*constants::Mev_to_erg COMMA \
+		64.22080*constants::Mev_to_erg COMMA \
+		71.91280*constants::Mev_to_erg COMMA \
+		79.85180*constants::Mev_to_erg COMMA \
+		87.84680*constants::Mev_to_erg COMMA \
+		90.55480*constants::Mev_to_erg
 #else
 	#define BE_NET14 \
-		28.2970*constants::Mev_to_cJ COMMA \
-	 	92.1631*constants::Mev_to_cJ COMMA \
-		127.621*constants::Mev_to_cJ COMMA \
-		160.652*constants::Mev_to_cJ COMMA \
-		198.259*constants::Mev_to_cJ COMMA \
-		236.539*constants::Mev_to_cJ COMMA \
-		271.784*constants::Mev_to_cJ COMMA \
-		306.719*constants::Mev_to_cJ COMMA \
-		342.056*constants::Mev_to_cJ COMMA \
-		375.479*constants::Mev_to_cJ COMMA \
-		411.470*constants::Mev_to_cJ COMMA \
-		447.704*constants::Mev_to_cJ COMMA \
-		483.995*constants::Mev_to_cJ COMMA \
-		526.850*constants::Mev_to_cJ
+		28.2970*constants::Mev_to_erg COMMA \
+	 	92.1631*constants::Mev_to_erg COMMA \
+		127.621*constants::Mev_to_erg COMMA \
+		160.652*constants::Mev_to_erg COMMA \
+		198.259*constants::Mev_to_erg COMMA \
+		236.539*constants::Mev_to_erg COMMA \
+		271.784*constants::Mev_to_erg COMMA \
+		306.719*constants::Mev_to_erg COMMA \
+		342.056*constants::Mev_to_erg COMMA \
+		375.479*constants::Mev_to_erg COMMA \
+		411.470*constants::Mev_to_erg COMMA \
+		447.704*constants::Mev_to_erg COMMA \
+		483.995*constants::Mev_to_erg COMMA \
+		526.850*constants::Mev_to_erg
 #endif
 	
 

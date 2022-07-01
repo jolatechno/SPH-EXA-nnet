@@ -46,7 +46,7 @@ namespace sphexa::sphnnet::io {
 	template<typename T, size_t n, class writter_function>
 	auto write_lines(const util::array<T, n> *Y, size_t n_particles, const writter_function &write_func) {
 		std::vector<T> buffer(n_particles);
-		for (int i = 0; i < outputFieldIndices.size(); ++i) {
+		for (int i = 0;; ++i) {
 			const         int  fieldIdx  = outputFieldIndices[i];
 			const std::string& fieldName = outputFieldNames[  i];
 
@@ -55,7 +55,7 @@ namespace sphexa::sphnnet::io {
 				buffer[j] = Y[j][fieldIdx]; 
 
 			// write
-			if (i == outputFieldIndices.size() - 1)
+			if (i >= outputFieldIndices.size() - 1)
 				return write_func(fieldName, buffer.data());
 			else
 				write_func(fieldName, buffer.data());

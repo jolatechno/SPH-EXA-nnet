@@ -21,7 +21,7 @@ namespace nnet::net87 {
 	/// constant mass-excendent values
 	CUDA_DEFINE(inline static const std::array<double COMMA 87>, BE, = {
 		BE_NET86 COMMA
-		0.782*constants::Mev_to_cJ
+		0.782*constants::Mev_to_erg
 	};)
 
 	/// constant list of ordered reaction
