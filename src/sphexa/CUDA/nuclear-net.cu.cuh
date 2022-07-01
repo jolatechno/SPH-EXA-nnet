@@ -231,7 +231,7 @@ namespace sphnnet {
 
 			auto eos_struct = /*(*eos)*/ nnet::eos::helmholtz(abar, zbar, temp_[thread], rho_[thread]);
 
-		 // u[thread]  = eos_struct.u;
+			u[thread]  = eos_struct.u;
 			cv[thread] = eos_struct.cv;
 			p[thread]  = eos_struct.p;
 			c[thread]  = eos_struct.c;

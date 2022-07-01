@@ -160,7 +160,7 @@ namespace sphexa::sphnnet {
 
 			auto eos_struct = nnet::eos::helmholtz(abar, zbar, n.temp[i], n.rho[i]);
 
-		 // n.u[i]  = eos_struct.u;
+			n.u[i]  = eos_struct.u;
 			n.cv[i] = eos_struct.cv;
 			n.p[i]  = eos_struct.p;
 			n.c[i]  = eos_struct.c;

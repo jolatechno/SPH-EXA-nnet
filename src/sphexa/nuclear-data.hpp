@@ -46,7 +46,7 @@ namespace sphexa::sphnnet {
 	    Float g{0.0};
 
 		/// hydro data
-		std::vector<Float> c, p, cv, rho, temp, previous_rho; // drho_dt
+		std::vector<Float> c, p, cv, u, rho, temp, previous_rho; // drho_dt
 
 		/// nuclear abundances (vector of vector)
 		std::vector<util::array<Float, n_species>> Y;
@@ -112,7 +112,7 @@ namespace sphexa::sphnnet {
 
 		/// base fieldNames (without knowledge of nuclear species names)
 		inline static constexpr std::array fieldNames {
-			"nid", "pid", "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y",
+			"nid", "pid", "dt", "c", "p", "cv", "u", "temp", "rho", "previous_rho", "Y",
 		};
 
 
@@ -128,20 +128,9 @@ namespace sphexa::sphnnet {
 	    		std::vector<size_t>*,
 	    		std::vector<Float>*>;
 	    	
-			util::array<FieldType, 10> ret;
-
-			ret[0] = &node_id;
-			ret[1] = &particle_id;
-			ret[2] = &dt;
-			ret[3] = &c;
-			ret[4] = &p;
-			ret[5] = &cv;
-			ret[6] = &temp;
-			ret[7] = &rho;
-			ret[8] = &previous_rho;
-			ret[9] = &Y;
-
-			return ret;
+			return util::array<FieldType, 11>{
+				&node_id, &particle_id, &dt, &c, &p, &cv, &u, &temp, &rho, &previous_rho, &Y
+			};
 	    }
 
 	    void setOutputFields(const std::vector<std::string>& outFields) {

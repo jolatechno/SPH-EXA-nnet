@@ -32,7 +32,7 @@ namespace sphexa::sphnnet {
 
 #ifdef USE_CUDA
 		/// hydro data
-		thrust::device_vector<Float> c, p, cv, rho, temp, previous_rho; // drho_dt
+		thrust::device_vector<Float> c, p, cv, u, rho, temp, previous_rho; // drho_dt
 
 		/// nuclear abundances (vector of vector)
 		thrust::device_vector<util::array<Float, n_species>> Y;
@@ -67,7 +67,7 @@ namespace sphexa::sphnnet {
 
 		/// base fieldNames (without knowledge of nuclear species names)
 		inline static constexpr std::array fieldNames {
-			"dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y",
+			"dt", "c", "p", "cv", "u", "temp", "rho", "previous_rho", "Y",
 		};
 
 
@@ -84,16 +84,9 @@ namespace sphexa::sphnnet {
 		    	thrust::device_vector<Float>*>;
 
 		    if constexpr (HaveGpu<AcceleratorType>{}) {
-				util::array<FieldType, 8> ret;
-
-				ret[0] = &dt;
-				ret[1] = &c;
-				ret[2] = &p;
-				ret[3] = &cv;
-				ret[4] = &temp;
-				ret[5] = &rho;
-				ret[6] = &previous_rho;
-				ret[7] = &Y;
+				return util::array<FieldType, 9>{
+					&dt, &c, &p, &cv, &u, &temp, &rho, &previous_rho, &Y
+				};
 
 				return ret;
 			} else
