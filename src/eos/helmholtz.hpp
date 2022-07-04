@@ -380,10 +380,10 @@ namespace nnet::eos {
 			const Float din = ye*rho;
 
 			int jat = int((std::log10(T) - tlo)*tstpi);
-			jat = std::max(0, std::min(jat, jmax - 2));
+			jat = std::max(1, std::min(jat, jmax - 2));
 
 			int iat = int((std::log10(din) - dlo)*dstpi);
-			iat = std::max(0, std::min(iat, imax - 2));
+			iat = std::max(1, std::min(iat, imax - 2));
 
 			return {jat, iat};
 		}
