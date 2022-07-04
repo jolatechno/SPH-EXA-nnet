@@ -400,13 +400,13 @@ namespace nnet::eos {
 		CUDA_FUNCTION_DECORATOR helm_eos_output() {}
 		CUDA_FUNCTION_DECORATOR ~helm_eos_output() {}
 
-		Float cv, dP_dT, p;
+		Float cv, dpdT, p;
 		Float cp, c, u;
 
 		Float dse, dpe, dsp;
 		Float cv_gaz, cp_gaz, c_gaz; 
 
-		Float dU_dYe;
+		Float dudYe;
 	};
 
 
@@ -1086,8 +1086,8 @@ namespace nnet::eos {
 		res.dsp = -rhotrdd*x/dpresdt - 1.;
 
 		// Needed output
-		res.dP_dT  = dpresdt;
-		res.dU_dYe = degasdz*abar;
+		res.dpdT  = dpresdt;
+		res.dudYe = degasdz*abar;
 		res.p = pres;
 		res.u = ener;
 

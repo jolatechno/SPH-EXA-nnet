@@ -191,7 +191,8 @@ void step(int rank,
 	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
 		reactions, construct_rates_BE, eos);
 
-	sphexa::sphnnet::transferToHost(n, {"temp"});
+	sphexa::sphnnet::transferToHost(n, {"temp",
+		"c", "p", "cv", "u", "dpdT"});
 	sphexa::sphnnet::nuclearToHydroUpdate(d, n, {"temp"});
 	
 	// do hydro stuff
@@ -206,13 +207,13 @@ void step(int rank,
 
 
 struct eos_output {
-	CUDA_FUNCTION_DECORATOR eos_output(double cv_=0., double dP_dT_=0., double dU_dYe_=0.) :
+	CUDA_FUNCTION_DECORATOR eos_output(double cv_=0., double dpdT_=0., double dudYe_=0.) :
 		cv(cv_),
-		dP_dT(dP_dT_),
-		dU_dYe(dU_dYe_) {}
+		dpdT(dpdT_),
+		dudYe(dudYe_) {}
 	CUDA_FUNCTION_DECORATOR ~eos_output() {}
 
-	double cv, dP_dT, dU_dYe;
+	double cv, dpdT, dudYe;
 };
 struct isotherm_eos_struct {
 	CUDA_FUNCTION_DECORATOR isotherm_eos_struct() {}
@@ -343,27 +344,27 @@ int main(int argc, char* argv[]) {
 	size_t n_nuclear_particles;
 	sphexa::mpi::initializePointers(first, last, particle_data.node_id, particle_data.particle_id, particle_data.comm);
 	if (use_net87) {
-		nuclear_data_87.setConserved("nid", "pid", "dt", "c", "p", "cv", "u", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_87.setConserved("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_87.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u");
+		nuclear_data_87.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_87, Y0_87);
 
 		n_nuclear_particles = nuclear_data_87.Y.size();
 		sphexa::sphnnet::transferToDevice(nuclear_data_87, {"Y", "dt"});
 	} else if (use_net86) {
-		nuclear_data_86.setConserved("nid", "pid", "dt", "c", "p", "cv", "u", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_86.setConserved("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_86.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u");
+		nuclear_data_86.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_86, Y0_87);
 
 		n_nuclear_particles = nuclear_data_86.Y.size();
 		sphexa::sphnnet::transferToDevice(nuclear_data_86, {"Y", "dt"});
 	} else {
-		nuclear_data_14.setConserved("nid", "pid", "dt", "c", "p", "cv", "u", "temp", "rho", "previous_rho", "Y", "dt");
+		nuclear_data_14.setConserved("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_14.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u");
+		nuclear_data_14.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_14, Y0_14);
 
@@ -374,7 +375,7 @@ int main(int argc, char* argv[]) {
 
 
 	std::vector<std::string> hydroOutFields   = {"nid", "pid", "temp", "rho"};
-	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "Y(4He)", "Y(12C)", "Y(16O)"};
+	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y(4He)", "Y(12C)", "Y(16O)"};
 	particle_data.setOutputFields(hydroOutFields);
 	if (use_net87) {
 		nuclear_data_87.setOutputFields(nuclearOutFields, nnet::net87::constants::species_names);

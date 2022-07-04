@@ -461,7 +461,7 @@ First simple direct solver:
 			std::string error = "Zero timestep in nuclear network\n";
 			error += "\tT=" + std::to_string(T) + ",\tTguess=" + std::to_string(T_guess) + "\n";
 			error += "\trho=" + std::to_string(rho) + "\tdrho/dt=" + std::to_string(drho_dt) + "\n";
-			error += "\tdP/dT=" + std::to_string(eos_struct.dP_dT) + ", cv=" + std::to_string(eos_struct.cv) + "\n";
+			error += "\tdP/dT=" + std::to_string(eos_struct.dpdT) + ", cv=" + std::to_string(eos_struct.cv) + "\n";
 			error += "\tY=";
 			for (int i = 0; i < dimension; ++i)
 				error += std::to_string(Y[i]) + " ";
@@ -520,7 +520,7 @@ First simple direct solver:
 
 		// compute value1
 		const Float drho = drho_dt*dt;
-		const Float value_1 = eos_struct.dP_dT*drho/(rho*rho);
+		const Float value_1 = eos_struct.dpdT*drho/(rho*rho);
 
 		// energy equation
 		RHS[0] = T*value_1/eos_struct.cv;

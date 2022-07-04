@@ -36,13 +36,13 @@ void printHelp(char* name) {
 
 
 struct eos_output {
-	CUDA_FUNCTION_DECORATOR eos_output(double cv_=0., double dP_dT_=0., double dU_dYe_=0.) :
+	CUDA_FUNCTION_DECORATOR eos_output(double cv_=0., double dpdT_=0., double dudYe_=0.) :
 		cv(cv_),
-		dP_dT(dP_dT_),
-		dU_dYe(dU_dYe_) {}
+		dpdT(dpdT_),
+		dudYe(dudYe_) {}
 	CUDA_FUNCTION_DECORATOR ~eos_output() {}
 
-	double cv, dP_dT, dU_dYe;
+	double cv, dpdT, dudYe;
 };
 struct isotherm_eos_struct {
 	CUDA_FUNCTION_DECORATOR isotherm_eos_struct() {}

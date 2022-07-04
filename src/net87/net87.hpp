@@ -68,7 +68,7 @@ namespace nnet::net87 {
 			Float dEaneutr    = electron_values[10];
 			Float dEaneutrdYe = electron_values[11];//*rho;
 
-			Float dUedYe = eos_struct.dU_dYe;
+			Float dUedYe = eos_struct.dudYe;
 
 
 			net86_compute_reaction_rates(Y, T, rho, eos_struct, corrected_BE, rates, drates);

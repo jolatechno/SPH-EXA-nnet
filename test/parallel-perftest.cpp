@@ -99,13 +99,13 @@ void step(
 
 
 struct eos_output {
-	CUDA_FUNCTION_DECORATOR eos_output(double cv_=0., double dP_dT_=0., double dU_dYe_=0.) :
+	CUDA_FUNCTION_DECORATOR eos_output(double cv_=0., double dpdT_=0., double dudYe_=0.) :
 		cv(cv_),
-		dP_dT(dP_dT_),
-		dU_dYe(dU_dYe_) {}
+		dpdT(dpdT_),
+		dudYe(dudYe_) {}
 	CUDA_FUNCTION_DECORATOR ~eos_output() {}
 
-	double cv, dP_dT, dU_dYe;
+	double cv, dpdT, dudYe;
 };
 struct isotherm_eos_struct {
 	CUDA_FUNCTION_DECORATOR isotherm_eos_struct() {}
@@ -196,16 +196,16 @@ int main(int argc, char* argv[]) {
 	sphexa::sphnnet::NuclearDataType<14, double, AccType> nuclear_data_14;
 
 	if (use_net87) {
-		nuclear_data_87.setConserved(/*"nid", "pid",*/ "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_87.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt");
+		nuclear_data_87.setConserved(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_87.devData.setConserved("c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
 		nuclear_data_87.resize(n_particles);
 	} else if (use_net86) {
-		nuclear_data_86.setConserved(/*"nid", "pid",*/ "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_86.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt");
+		nuclear_data_86.setConserved(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_86.devData.setConserved("c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
 		nuclear_data_86.resize(n_particles);
 	} else {
-		nuclear_data_14.setConserved(/*"nid", "pid",*/ "dt", "c", "p", "cv", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_14.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt");
+		nuclear_data_14.setConserved(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_14.devData.setConserved("c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
 		nuclear_data_14.resize(n_particles);
 	}
 

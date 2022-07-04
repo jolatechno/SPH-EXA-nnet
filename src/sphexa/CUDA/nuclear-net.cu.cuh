@@ -221,7 +221,7 @@ namespace sphnnet {
 	template<typename Float /*, class func_eos*/>
 	__global__ void cudaKernelComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,
 		const Float *temp_, const Float *rho_, const Float *Y_, 
-		Float *cv, Float *p, Float *c)
+		Float *u, Float *cv, Float *p, Float *c, Float *dpdT)
 	{
 		size_t thread = blockIdx.x*blockDim.x + threadIdx.x;
 		if (thread < n_particles) {
@@ -231,10 +231,11 @@ namespace sphnnet {
 
 			auto eos_struct = /*(*eos)*/ nnet::eos::helmholtz(abar, zbar, temp_[thread], rho_[thread]);
 
-			u[thread]  = eos_struct.u;
-			cv[thread] = eos_struct.cv;
-			p[thread]  = eos_struct.p;
-			c[thread]  = eos_struct.c;
+			u[thread]    = eos_struct.u;
+			cv[thread]   = eos_struct.cv;
+			p[thread]    = eos_struct.p;
+			c[thread]    = eos_struct.c;
+			dpdT[thread] = eos_struct.dpdT;
 		}
 	}
 
@@ -242,7 +243,7 @@ namespace sphnnet {
 	template<typename Float>
 	__host__ void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,
 		const Float *temp_, const Float *rho_, const Float *Y_,
-		Float *cv, Float *p, Float *c)
+		Float *u, Float *cv, Float *p, Float *c, Float *dpdT)
 	{
 		// compute chunk sizes
 		int cuda_num_blocks = (n_particles + constants::cuda_num_thread_per_block - 1)/constants::cuda_num_thread_per_block;
@@ -250,8 +251,7 @@ namespace sphnnet {
 		// launch kernel
 	    cudaKernelComputeHelmholtz<<<cuda_num_blocks, constants::cuda_num_thread_per_block>>>(n_particles, dimension, Z,
 			temp_, rho_, Y_,
-			cv, p, c/*,
-			dev_eos*/);
+			u, cv, p, c, dpdT);
 	}
 }
 }

@@ -137,9 +137,11 @@ namespace sphexa::sphnnet {
 		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()),
 		(Float*)thrust::raw_pointer_cast(n.devData.Y.data()),
 				// write buffers:
+		(Float*)thrust::raw_pointer_cast(n.devData.u.data()),
 		(Float*)thrust::raw_pointer_cast(n.devData.cv.data()),
 		(Float*)thrust::raw_pointer_cast(n.devData.p.data()),
-		(Float*)thrust::raw_pointer_cast(n.devData.c.data()));
+		(Float*)thrust::raw_pointer_cast(n.devData.c.data()),
+		(Float*)thrust::raw_pointer_cast(n.devData.dpdT.data()));
 
 			/* debuging: check for error */
 			gpuErrchk(cudaPeekAtLastError());
@@ -160,10 +162,11 @@ namespace sphexa::sphnnet {
 
 			auto eos_struct = nnet::eos::helmholtz(abar, zbar, n.temp[i], n.rho[i]);
 
-			n.u[i]  = eos_struct.u;
-			n.cv[i] = eos_struct.cv;
-			n.p[i]  = eos_struct.p;
-			n.c[i]  = eos_struct.c;
+			n.u[i]    = eos_struct.u;
+			n.cv[i]   = eos_struct.cv;
+			n.p[i]    = eos_struct.p;
+			n.c[i]    = eos_struct.c;
+			n.dpdT[i] = eos_struct.dpdT;
 		}
 	}
 
