@@ -189,9 +189,9 @@ namespace nnet::net86 {
 			/*********************************************/
 
 			// ideal gaz correction
-			Float kbt = constants::Kb*T;
-			Float nakbt = constants::Na*kbt;
-			Float correction = -1.5*nakbt;
+			const Float kbt = constants::Kb*T;
+			const Float nakbt = constants::Na*kbt;
+			const Float correction = -1.5*nakbt;
 
 			for (int i = 0; i < 86; ++i)
 				corrected_BE[i] = CUDA_ACCESS(BE)[i] + correction;
@@ -200,12 +200,12 @@ namespace nnet::net86 {
 	#ifndef __CUDA_ARCH__
 			if (!skip_coulombian_correction) {
 	#endif
-				Float ne = rho*constants::Na/2.;
-			    Float ae = std::pow((3./4.)/(constants::pi*ne), 1./3.);
-			    Float gam = constants::e2/(kbt*ae);
+				const Float ne = rho*constants::Na/2.;
+			    const Float ae = std::pow((3./4.)/(constants::pi*ne), 1./3.);
+			    const Float gam = constants::e2/(kbt*ae);
 			    for (int i = 0; i < 86; ++i) {
-			    	Float gamma = gam*std::pow(constants::CUDA_ACCESS(Z)[i], 5./3.);
-			    	Float funcion = gamma > 1 ? constants::ggt1(gamma) : constants::glt1(gamma);
+			    	const Float gamma = gam*std::pow(constants::CUDA_ACCESS(Z)[i], 5./3.);
+			    	const Float funcion = gamma > 1 ? constants::ggt1(gamma) : constants::glt1(gamma);
 
 			    	//  if (debug) std::cout << "funcion[" << i << "]=" << funcion << (i == 13 ? "\n\n" : "\n");
 

@@ -78,9 +78,9 @@ namespace nnet::net87 {
 			/*********************************************/
 
 			// ideal gaz correction
-			Float kbt = constants::Kb*T;
-			Float nakbt = constants::Na*kbt;
-			Float correction = -1.5*nakbt;
+			const Float kbt = constants::Kb*T;
+			const Float nakbt = constants::Na*kbt;
+			const Float correction = -1.5*nakbt;
 
 			// adding electrons to net86
 			corrected_BE[86] = CUDA_ACCESS(BE).back() + correction;
