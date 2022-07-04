@@ -46,7 +46,7 @@ namespace sphexa::sphnnet {
 	    Float g{0.0};
 
 		/// hydro data
-		std::vector<Float> c, p, cv, u, dpdT, rho, temp, previous_rho; // drho_dt
+		std::vector<Float> c, p, cv, u, dpdT, m, rho, temp, previous_rho; // drho_dt
 
 		/// nuclear abundances (vector of vector)
 		std::vector<util::array<Float, n_species>> Y;
@@ -112,7 +112,7 @@ namespace sphexa::sphnnet {
 
 		/// base fieldNames (without knowledge of nuclear species names)
 		inline static constexpr std::array fieldNames {
-			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y",
+			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y",
 		};
 
 
@@ -129,7 +129,7 @@ namespace sphexa::sphnnet {
 	    		std::vector<Float>*>;
 	    	
 			return util::array<FieldType, fieldNames.size()>{
-				&node_id, &particle_id, &dt, &c, &p, &cv, &u, &dpdT, &temp, &rho, &previous_rho, &Y
+				&node_id, &particle_id, &dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &previous_rho, &Y
 			};
 	    }
 

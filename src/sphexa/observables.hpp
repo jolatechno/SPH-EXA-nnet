@@ -45,10 +45,9 @@ namespace sphexa::sphnnet {
 		}
 #endif
 		Float total_energy = 0;
-		
 		#pragma omp parallel for schedule(static) reduction(+:total_energy)
 		for (size_t i = 0; i < n_particles; ++i)
-			total_energy += -eigen::dot(n.Y[i].data(), n.Y[i].data() + dimension, BE);
+			total_energy += -eigen::dot(n.Y[i].data(), n.Y[i].data() + dimension, BE)*n.m[i];
 
 #ifdef USE_MPI
 		double mpi_buffer_total_energy = (double)total_energy;

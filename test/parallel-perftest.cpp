@@ -196,16 +196,16 @@ int main(int argc, char* argv[]) {
 	sphexa::sphnnet::NuclearDataType<14, double, AccType> nuclear_data_14;
 
 	if (use_net87) {
-		nuclear_data_87.setConserved(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_87.devData.setConserved("c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
+		nuclear_data_87.setDependent(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_87.devData.setDependent("c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
 		nuclear_data_87.resize(n_particles);
 	} else if (use_net86) {
-		nuclear_data_86.setConserved(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_86.devData.setConserved("c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
+		nuclear_data_86.setDependent(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_86.devData.setDependent("c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
 		nuclear_data_86.resize(n_particles);
 	} else {
-		nuclear_data_14.setConserved(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_14.devData.setConserved("c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
+		nuclear_data_14.setDependent(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_14.devData.setDependent("c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
 		nuclear_data_14.resize(n_particles);
 	}
 

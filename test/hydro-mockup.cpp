@@ -158,6 +158,20 @@ public:
     }
 };
 
+template<class Data>
+double totalInternalEnergy(Data const &n) {
+	const size_t n_particles = n.temp.size();
+	double total_energy = 0;
+	#pragma omp parallel for schedule(static) reduction(+:total_energy)
+	for (size_t i = 0; i < n_particles; ++i)
+		total_energy += n.u[i]*n.m[i];
+
+#ifdef USE_MPI
+	MPI_Allreduce(MPI_IN_PLACE, &total_energy, 1, MPI_DOUBLE, MPI_SUM, n.comm);
+#endif
+
+	return total_energy;
+}
 
 
 
@@ -187,9 +201,9 @@ void step(int rank,
 	sphexa::sphnnet::hydroToNuclearUpdate(d, n, {"rho", "temp"});
 	sphexa::sphnnet::transferToDevice(n, {"previous_rho", "rho", "temp"});
 
-	sphexa::sphnnet::computeHelmEOS(n, nnet::net14::constants::Z);
 	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
 		reactions, construct_rates_BE, eos);
+	sphexa::sphnnet::computeHelmEOS(n, nnet::net14::constants::Z);
 
 	sphexa::sphnnet::transferToHost(n, {"temp",
 		"c", "p", "cv", "u", "dpdT"});
@@ -200,9 +214,10 @@ void step(int rank,
 	/* !! needed for now !! */
 	sphexa::sphnnet::transferToHost(n, {"Y"});
 	// print total nuclear energy
-	Float total_nuclear_energy = sphexa::sphnnet::totalNuclearEnergy(n, BE);
+	Float total_nuclear_energy  = sphexa::sphnnet::totalNuclearEnergy(n, BE);
+	Float total_internal_energy = totalInternalEnergy(n);
 	if (rank == 0)
-		std::cout << "total nuclear energy = " << total_nuclear_energy << "\n";
+		std::cout << "etot=" << total_nuclear_energy+total_internal_energy << " (nuclear=" << total_nuclear_energy << ", internal=" << total_internal_energy << ")\n";
 }
 
 
@@ -344,32 +359,38 @@ int main(int argc, char* argv[]) {
 	size_t n_nuclear_particles;
 	sphexa::mpi::initializePointers(first, last, particle_data.node_id, particle_data.particle_id, particle_data.comm);
 	if (use_net87) {
-		nuclear_data_87.setConserved("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_87.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_87.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
+		nuclear_data_87.devData.setDependent("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_87, Y0_87);
 
 		n_nuclear_particles = nuclear_data_87.Y.size();
 		sphexa::sphnnet::transferToDevice(nuclear_data_87, {"Y", "dt"});
+
+		std::fill(nuclear_data_87.m.begin(), nuclear_data_87.m.end(), 1.);
 	} else if (use_net86) {
-		nuclear_data_86.setConserved("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_86.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_86.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
+		nuclear_data_86.devData.setDependent("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_86, Y0_87);
 
 		n_nuclear_particles = nuclear_data_86.Y.size();
 		sphexa::sphnnet::transferToDevice(nuclear_data_86, {"Y", "dt"});
+
+		std::fill(nuclear_data_86.m.begin(), nuclear_data_86.m.end(), 1.);
 	} else {
-		nuclear_data_14.setConserved("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
+		nuclear_data_14.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y", "dt");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_14.devData.setConserved("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
+		nuclear_data_14.devData.setDependent("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_14, Y0_14);
 
 		n_nuclear_particles = nuclear_data_14.Y.size();
 		sphexa::sphnnet::transferToDevice(nuclear_data_14, {"Y", "dt"});
+
+		std::fill(nuclear_data_14.m.begin(), nuclear_data_14.m.end(), 1.);
 	}
 
 
