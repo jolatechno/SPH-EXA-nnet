@@ -29,6 +29,8 @@
 
 #ifndef NOT_FROM_SPHEXA
 	#include "sph/data_util.hpp"
+#else
+	#include "../../test/util/sphexa_utils.hpp"
 #endif
 
 #ifdef USE_CUDA

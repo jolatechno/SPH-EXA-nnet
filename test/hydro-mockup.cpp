@@ -34,7 +34,12 @@
 
 /************************************************************************/
 /*           MPI test that can test the GPU implementation              */
-// compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" hydro-mockup.cpp -o hydro-mockup.out -std=c++17 --expt-relaxed-constexpr
+// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" -c  ../src/sphexa/CUDA/nuclear-net.cu -o nuclear-net.obj -std=c++17 --expt-relaxed-constexpr
+// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" -c  ../src/sphexa/CUDA/nuclear-data-gpu.cu -o nuclear-data.obj -std=c++17 --expt-relaxed-constexpr
+// compile CPU:  nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" -c hydro-mockup.cpp -o hydro-mockup-gpu.obj -std=c++17 --expt-relaxed-constexpr
+// link:         g++ nuclear-net.obj hydro-mockup-gpu.obj nuclear-data.obj -o hydro-mockup-gpu.out -lcudart
+
+// compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DIMPORT_DOT_CU -DCPU_CUDA_TEST_" hydro-mockup.cpp -o hydro-mockup.out -std=c++17 --expt-relaxed-constexpr
 /*                                                                      */
 /*             Launch on a system with 2 GPUs:                          */
 // mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 10000000 --dt 1e-4 -n 10 > res_mpi_big.out 2> err.out &
@@ -47,7 +52,7 @@
 // net87 big: mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 2000000 --dt 1e-6 -n 10 --use-net86 --electrons > res_mpi_net87_big.out 2> err.out &
 /*                                                                      */
 /*          Comparison with the CPU-only version:                       */
-// compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST" hydro-mockup.cpp -o hydro-mockup-cpu.out -std=c++17 --expt-relaxed-constexpr
+// compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DIMPORT_DOT_CU -DCPU_CUDA_TEST" hydro-mockup.cpp -o hydro-mockup-cpu.out -std=c++17 --expt-relaxed-constexpr
 /*                                                                      */
 /*            Launch on a system with 2x32 core:                        */
 // mpirun --quiet --bind-to hwthread --oversubscribe --map-by ppr:2:node:PE=32 -n 2 -x OMP_NUM_THREADS=32 hydro-mockup-cpu.out --test-case C-O-burning --n-particle 10000000 --dt 1e-4 -n 10 > res_mpi_cpu_big.out 2> err.out &

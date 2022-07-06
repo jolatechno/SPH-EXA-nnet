@@ -4,8 +4,11 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <cuda_runtime.h>
+#include <thrust/device_vector.h>
 
 #include "../../nuclear-net.hpp"
+#include "../../CUDA/nuclear-net.hpp"
+#include "../../eos/helmholtz.hpp"
 #include "../util/algorithm.hpp"
 
 #ifndef CUDA_NUM_ITERATION_PER_THREAD

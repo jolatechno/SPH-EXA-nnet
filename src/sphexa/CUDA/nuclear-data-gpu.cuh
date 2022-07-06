@@ -11,11 +11,12 @@
 	#include "sph/traits.hpp"
 
 	#include "cstone/util/util.hpp"
+#else
+	#include "../../../test/util/sphexa_utils.hpp"
 #endif
 
 #ifdef USE_CUDA
 	#include <thrust/device_vector.h>
-	#include "../../CUDA/nuclear-net.hpp"
 #endif
 
 namespace sphexa::sphnnet {
@@ -23,8 +24,8 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<class AccType, size_t n_species, typename Float=double>
-	struct DeviceNuclearDataType : public FieldStates<DeviceNuclearDataType<AccType, n_species, Float>> {
+	template<class AccType, size_t n_species, typename Float>
+	class DeviceNuclearDataType : public FieldStates<DeviceNuclearDataType<AccType, n_species, Float>> {
 	public:
 		// types
 		using RealType = Float;
@@ -45,24 +46,11 @@ namespace sphexa::sphnnet {
 #endif
 
 		/// resize the number of particules
-		void resize(size_t size) {
 #ifdef USE_CUDA
-			if constexpr (HaveGpu<AcceleratorType>{}) {
-		        double growthRate = 1;
-		        auto   data_      = data();
-
-		        for (size_t i = 0; i < data_.size(); ++i) {
-		            if (this->isAllocated(i)) {
-		            	// actually resize
-		                std::visit([&](auto& arg) { 
-		                	size_t previous_size = arg->size();
-		                	reallocate(*arg, size, growthRate); 
-		                }, data_[i]);
-		            }
-		        }
-		    }
+		void resize(size_t size);
+#else
+		void resize(size_t size) {}
 #endif
-	    }
 
 
 		/// base fieldNames (without knowledge of nuclear species names)

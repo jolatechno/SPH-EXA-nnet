@@ -20,7 +20,11 @@
 	#include "cstone/util/util.hpp"
 #endif
 
-#include "CUDA/nuclear-data-gpu.hpp"
+#if defined(IMPORT_DOT_CU) && defined(USE_CUDA)
+	#include "CUDA/nuclear-data-gpu.cu"
+#else
+	#include "CUDA/nuclear-data-gpu.cuh"
+#endif
 
 namespace sphexa::sphnnet {
 	/// nuclear data class for n_species nuclear network
