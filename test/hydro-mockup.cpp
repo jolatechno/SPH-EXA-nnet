@@ -10,6 +10,7 @@
 #include "../src/net87/net87.hpp"
 #include "../src/net14/net14.hpp"
 #include "../src/eos/helmholtz.hpp"
+#include "../src/eos/ideal_gas.hpp"
 
 // base datatype
 #include "../src/sphexa/nuclear-data.hpp"
@@ -221,23 +222,6 @@ void step(int rank,
 }
 
 
-struct eos_output {
-	CUDA_FUNCTION_DECORATOR eos_output(double cv_=0., double dpdT_=0., double dudYe_=0.) :
-		cv(cv_),
-		dpdT(dpdT_),
-		dudYe(dudYe_) {}
-	CUDA_FUNCTION_DECORATOR ~eos_output() {}
-
-	double cv, dpdT, dudYe;
-};
-struct isotherm_eos_struct {
-	CUDA_FUNCTION_DECORATOR isotherm_eos_struct() {}
-
-	CUDA_FUNCTION_DECORATOR eos_output inline operator()(const double *Y_, const double T, const double rho_) const {
-		return eos_output{1e20, 0, 0};;
-	}
-} isotherm_eos;
-
 
 int main(int argc, char* argv[]) {
 	/* initial hydro data */
@@ -282,6 +266,7 @@ int main(int argc, char* argv[]) {
 
     std::string test_case                   = parser.get("--test-case");
     const bool isotherm                     = parser.exists("--isotherm");
+    const bool idealGas                     = parser.exists("--ideal-gas") || isotherm;
 
 	util::array<double, 86> Y0_87, X_87;
 	util::array<double, 14> Y0_14, X_14;
@@ -342,9 +327,10 @@ int main(int argc, char* argv[]) {
 
 
 
-	const nnet::eos::helmholtz_functor helm_eos_87 = nnet::eos::helmholtz_functor(nnet::net87::constants::Z, 87);
-	const nnet::eos::helmholtz_functor helm_eos_86 = nnet::eos::helmholtz_functor(nnet::net86::constants::Z, 86);
-	const nnet::eos::helmholtz_functor helm_eos_14 = nnet::eos::helmholtz_functor(nnet::net14::constants::Z);
+	const nnet::eos::ideal_gas_functor idea_gas_eos = nnet::eos::ideal_gas_functor(isotherm ? 1e-20 : 10.0);
+	const nnet::eos::helmholtz_functor helm_eos_87  = nnet::eos::helmholtz_functor(nnet::net87::constants::Z, 87);
+	const nnet::eos::helmholtz_functor helm_eos_86  = nnet::eos::helmholtz_functor(nnet::net86::constants::Z, 86);
+	const nnet::eos::helmholtz_functor helm_eos_14  = nnet::eos::helmholtz_functor(nnet::net14::constants::Z);
 
 
 	sphexa::sphnnet::NuclearDataType<87, double, AccType> nuclear_data_87;
@@ -409,11 +395,11 @@ int main(int argc, char* argv[]) {
 
 	// "warm-up" (first allocation etc...)
 	if (use_net87) {
-		if (isotherm) {
+		if (idealGas) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_87, 1e-10,
-				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, isotherm_eos,
+				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, idea_gas_eos,
 				nnet::net87::BE.data());
 		} else
 			step(rank,
@@ -422,11 +408,11 @@ int main(int argc, char* argv[]) {
 				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, helm_eos_87,
 				nnet::net87::BE.data());
 	} else if (use_net86) {
-		if (isotherm) {
+		if (idealGas) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_86, 1e-10,
-				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos,
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, idea_gas_eos,
 				nnet::net86::BE.data());
 		} else
 			step(rank,
@@ -435,11 +421,11 @@ int main(int argc, char* argv[]) {
 				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86,
 				nnet::net86::BE.data());
 	} else
-		if (isotherm) {
+		if (idealGas) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_14, 1e-10,
-				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, idea_gas_eos,
 				nnet::net14::BE.data());
 		} else
 			step(rank,
@@ -469,11 +455,11 @@ int main(int argc, char* argv[]) {
 		auto start_it = std::chrono::high_resolution_clock::now();
 
 	if (use_net87) {
-		if (isotherm) {
+		if (idealGas) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_87, hydro_dt,
-				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, isotherm_eos,
+				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, idea_gas_eos,
 				nnet::net87::BE.data());
 		} else
 			step(rank,
@@ -482,11 +468,11 @@ int main(int argc, char* argv[]) {
 				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, helm_eos_87,
 				nnet::net87::BE.data());
 	} else if (use_net86) {
-		if (isotherm) {
+		if (idealGas) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_86, hydro_dt,
-				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, isotherm_eos,
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, idea_gas_eos,
 				nnet::net86::BE.data());
 		} else
 			step(rank,
@@ -495,11 +481,11 @@ int main(int argc, char* argv[]) {
 				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86,
 				nnet::net86::BE.data());
 	} else
-		if (isotherm) {
+		if (idealGas) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_14, hydro_dt,
-				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, idea_gas_eos,
 				nnet::net14::BE.data());
 		} else
 			step(rank,

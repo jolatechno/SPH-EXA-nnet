@@ -4,6 +4,7 @@
 #include "../src/nuclear-net.hpp"
 #include "../src/net14/net14.hpp"
 #include "../src/eos/helmholtz.hpp"
+#include "../src/eos/ideal_gas.hpp"
 
 #include "util/arg_parser.hpp"
 
@@ -31,23 +32,6 @@ void printHelp(char* name) {
 }
 
 
-struct eos_output {
-	CUDA_FUNCTION_DECORATOR eos_output(double cv_=0., double dpdT_=0., double dudYe_=0.) :
-		cv(cv_),
-		dpdT(dpdT_),
-		dudYe(dudYe_) {}
-	CUDA_FUNCTION_DECORATOR ~eos_output() {}
-
-	double cv, dpdT, dudYe;
-};
-struct isotherm_eos_struct {
-	CUDA_FUNCTION_DECORATOR isotherm_eos_struct() {}
-
-	CUDA_FUNCTION_DECORATOR eos_output inline operator()(const double *Y_, const double T, const double rho_) const {
-		return eos_output{1e20, 0, 0};;
-	}
-} isotherm_eos;
-
 
 int main(int argc, char* argv[]) {
 	const ArgParser parser(argc, argv);
@@ -70,6 +54,7 @@ int main(int argc, char* argv[]) {
     double T, last_T                        = parser.get("-T", 1e9);
     std::string test_case                   = parser.get("--test-case");
     const bool isotherm                     = parser.exists("--isotherm");
+    const bool idealGas                     = parser.exists("--ideal-gas") || isotherm;
 
     nnet::net14::debug                      = parser.exists("--nnet-debug");
 
@@ -113,6 +98,7 @@ int main(int argc, char* argv[]) {
 		std::cerr << ",\"Dm/m\"\n";
 	}
 
+	const nnet::eos::ideal_gas_functor idea_gas_eos(isotherm ? 1e-20 : 10.0);
 	const nnet::eos::helmholtz_functor helm_eos(nnet::net14::constants::Z);
 
 	auto start = std::chrono::high_resolution_clock::now();
@@ -123,10 +109,10 @@ int main(int argc, char* argv[]) {
 			break;
 
 		// solve the system
-		double current_dt = isotherm ? 
+		double current_dt = idealGas ? 
 			nnet::solve_system_NR(14, 
 				Mp.data(), RHS.data(), DY_T.data(), rates.data(),
-				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, isotherm_eos,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, idea_gas_eos,
 				last_Y.data(), last_T, Y.data(), T,
 				rho, 0., dt) :
 			nnet::solve_system_NR(14, 

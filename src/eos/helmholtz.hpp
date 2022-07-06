@@ -1150,7 +1150,7 @@ namespace nnet::eos {
 #endif
 		}
 
-		CUDA_FUNCTION_DECORATOR helm_eos_output<Float> inline operator()(const Float *Y, const Float T, const Float rho) const {
+		CUDA_FUNCTION_DECORATOR eos_type inline operator()(const Float *Y, const Float T, const Float rho) const {
 			// compute abar and zbar
 			double abar = algorithm::accumulate(Y, Y + dimension, (Float)0);
 			double zbar = eigen::dot(Y, Y + dimension, CUDA_ACCESS(Z));
