@@ -49,6 +49,7 @@ namespace nnet::net87::electrons {
         CUDA_DEFINE(static double, electron_rate[N_TEMP][N_RHO][N_C], ;)
 
 		// read electron rate constants table
+		template<class AccType>
 		bool read_table() {
 			// read table
 			const std::string electron_rate_table = { 
@@ -70,10 +71,12 @@ namespace nnet::net87::electrons {
 						rate_table >> electron_rate[i][j][k];
 
 #ifdef USE_CUDA
-	        // copy to device 
-			gpuErrchk(cudaMemcpyToSymbol(dev_log_temp_ref,  log_temp_ref,  nTemp*sizeof(double)));
-	        gpuErrchk(cudaMemcpyToSymbol(dev_log_rho_ref,   log_rho_ref,   nRho*sizeof(double)));
-	        gpuErrchk(cudaMemcpyToSymbol(dev_electron_rate, electron_rate, nTemp*nRho*nC*sizeof(double)));
+			if constexpr (sphexa::HaveGpu<AccType>{}) {
+		        // copy to device 
+				gpuErrchk(cudaMemcpyToSymbol(dev_log_temp_ref,  log_temp_ref,  nTemp*sizeof(double)));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_log_rho_ref,   log_rho_ref,   nRho*sizeof(double)));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_electron_rate, electron_rate, nTemp*nRho*nC*sizeof(double)));
+		    }
 #endif
 
 			return true;
@@ -81,7 +84,11 @@ namespace nnet::net87::electrons {
 
 		bool initalized = false;
 #ifdef AUTO_INITIALIZE
-		initalized = read_table();
+	#ifdef USE_CUDA
+		initalized = read_table<cstone::GpuTag>();
+	#else
+		initalized = read_table<cstone::CpuTag>();
+	#endif
 #endif
 	}
 

@@ -170,9 +170,9 @@ int main(int argc, char* argv[]) {
 
 	
 	if (!nnet::eos::helmholtz_constants::initalized)
-		nnet::eos::helmholtz_constants::initalized    = nnet::eos::helmholtz_constants::read_table();
+		nnet::eos::helmholtz_constants::initalized    = nnet::eos::helmholtz_constants::read_table<AccType>();
 	if (!nnet::net87::electrons::constants::initalized)
-		nnet::net87::electrons::constants::initalized = nnet::net87::electrons::constants::read_table();
+		nnet::net87::electrons::constants::initalized = nnet::net87::electrons::constants::read_table<AccType>();
 
 
 

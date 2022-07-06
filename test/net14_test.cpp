@@ -1,6 +1,8 @@
 #include <iostream>
 #include <chrono>
 
+#include "util/sphexa_utils.hpp"
+
 #include "../src/nuclear-net.hpp"
 #include "../src/net14/net14.hpp"
 #include "../src/eos/helmholtz.hpp"
@@ -42,7 +44,7 @@ int main(int argc, char* argv[]) {
 
 
     if (!nnet::eos::helmholtz_constants::initalized)
-		nnet::eos::helmholtz_constants::initalized = nnet::eos::helmholtz_constants::read_table();
+		nnet::eos::helmholtz_constants::initalized = nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
 
 
     const int n_max                         = parser.get("-n", 1000);

@@ -2,6 +2,8 @@
 
 #define NET14_DEBUG
 
+#include "util/sphexa_utils.hpp"
+
 #include "../src/nuclear-net.hpp"
 #include "../src/net14/net14.hpp"
 #include "../src/eos/helmholtz.hpp"
@@ -12,7 +14,7 @@ int main() {
 	std::cout << "BE.size = " << nnet::net14::BE.size() << "\n\n";
 
 	if (!nnet::eos::helmholtz_constants::initalized)
-		nnet::eos::helmholtz_constants::initalized = nnet::eos::helmholtz_constants::read_table();
+		nnet::eos::helmholtz_constants::initalized = nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
 
 	std::array<double, 14> Y, X;
     for (int i = 0; i < 14; ++i) X[i] = 0;

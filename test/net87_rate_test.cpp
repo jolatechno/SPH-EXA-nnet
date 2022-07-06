@@ -2,6 +2,8 @@
 
 #define NET86_DEBUG
 
+#include "util/sphexa_utils.hpp"
+
 #include "../src/nuclear-net.hpp"
 #include "../src/net87/net87.hpp"
 #include "../src/eos/helmholtz.hpp"
@@ -12,9 +14,9 @@ int main() {
 	std::cout << "BE.size = " << nnet::net87::BE.size() << "\n\n";
 
 	if (!nnet::eos::helmholtz_constants::initalized)
-		nnet::eos::helmholtz_constants::initalized    = nnet::eos::helmholtz_constants::read_table();
+		nnet::eos::helmholtz_constants::initalized    = nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
 	if (!nnet::net87::electrons::constants::initalized)
-		nnet::net87::electrons::constants::initalized = nnet::net87::electrons::constants::read_table();
+		nnet::net87::electrons::constants::initalized = nnet::net87::electrons::constants::read_table<cstone::CpuTag>();
 
 #if NO_SCREENING
 	nnet::net87::skip_coulombian_correction = true;
