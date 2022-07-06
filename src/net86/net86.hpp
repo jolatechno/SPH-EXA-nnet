@@ -101,8 +101,20 @@
 	506.460*constants::Mev_to_erg
 
 namespace nnet::net86 {
+#ifdef NET86_DEBUG
+	bool debug = true;
+#else
+	bool debug = false;
+#endif
+
+
+#ifdef NET86_NO_COULOMBIAN_DEBUG
 	/// if true ignore coulombian corrections
-	bool skip_coulombian_correction = false;
+	const bool skip_coulombian_correction = true;
+#else
+	/// if true ignore coulombian corrections
+	const bool skip_coulombian_correction = false;
+#endif
 
 	/// constant mass-excendent values
 	CUDA_DEFINE(inline static const std::array<double COMMA 86>, BE, = {
@@ -197,9 +209,7 @@ namespace nnet::net86 {
 				corrected_BE[i] = CUDA_ACCESS(BE)[i] + correction;
 
 			// coulombian correctio
-	#ifndef __CUDA_ARCH__
 			if (!skip_coulombian_correction) {
-	#endif
 				const Float ne = rho*constants::Na/2.;
 			    const Float ae = std::pow((3./4.)/(constants::pi*ne), 1./3.);
 			    const Float gam = constants::e2/(kbt*ae);
@@ -211,9 +221,7 @@ namespace nnet::net86 {
 
 				    corrected_BE[i] -= nakbt*funcion;
 				}
-	#ifndef __CUDA_ARCH__
 			}
-	#endif
 
 
 			/******************************************************/
@@ -277,9 +285,12 @@ namespace nnet::net86 {
 					eff[i] = std::exp(constants::fits::CUDA_ACCESS(fit)[i - 7][0] + coefs[i - 7]);
 					deff[i] = eff[i]*dcoefs[i - 7];
 
+
 					// debuging :
-					// if (debug) std::cout << "dir(" << i << ")=" << eff[i] << ", coef(" << i << ")=" << coefs[i - 7];
-					// if (debug) std::cout << "\tddir(" << i << ")=" << deff[i] << ", dcoef(" << i << ")=" << dcoefs[i - 7] << "\n";
+#ifndef __CUDA_ARCH__
+					if (debug)  { std::cout << "dir(" << i << ")=" << eff[i] << ", coef(" << i << ")=" << coefs[i - 7];
+					              std::cout << "\tddir(" << i << ")=" << deff[i] << ", dcoef(" << i << ")=" << dcoefs[i - 7] << "\n"; }
+#endif
 				}
 			}
 
@@ -335,7 +346,9 @@ namespace nnet::net86 {
 
 
 			      	// debuging :
-					// if (debug) std::cout << "\nr3a=" << eff[4] << ", rg3a=" << l[4] << "\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "\nr3a=" << eff[4] << ", rg3a=" << l[4] << "\n";
+#endif
 			    }
 
 			    
@@ -351,7 +364,9 @@ namespace nnet::net86 {
 
 
 		      		// debuging :
-					// if (debug) std::cout << "r24=" << eff[0];
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "r24=" << eff[0];
+#endif
 				}
 
 
@@ -372,7 +387,9 @@ namespace nnet::net86 {
 
 
 			        // debuging :
-					// if (debug) std::cout << ", r1216=" << eff[1] << "\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << ", r1216=" << eff[1] << "\n";
+#endif
 				}
 
 
@@ -384,7 +401,9 @@ namespace nnet::net86 {
 
 
 					// debuging :
-					// if (debug) std::cout << "r32=" << eff[2] << "\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "r32=" << eff[2] << "\n";
+#endif
 				}
 
 
@@ -406,7 +425,9 @@ namespace nnet::net86 {
 
 
 					// debuging :
-					// if (debug) std::cout << "rcag=" << eff[5] << ", roga=" << l[5] << "\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "rcag=" << eff[5] << ", roga=" << l[5] << "\n";
+#endif
 				}
 
 
@@ -425,7 +446,9 @@ namespace nnet::net86 {
 
 
 					// debuging :
-					// if (debug) std::cout << "roag=" << eff[6] << ", rnega=" << l[6] << "\n\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "roag=" << eff[6] << ", rnega=" << l[6] << "\n\n";
+#endif
 				}
 			}
 
@@ -484,7 +507,9 @@ namespace nnet::net86 {
 				    deff[4] =(2.90e-16*(dr2abe*rbeac + r2abe*drbeac) + 1.35e-8*std::exp(vA)*(-1.5*t9i52 + t9i32*dvA))*1.e-9;
 
 			      	// debuging :
-					// if (debug) std::cout << "\ndr3a=" << deff[4] << "\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "\ndr3a=" << deff[4] << "\n";
+#endif
 		      	}
 
 
@@ -508,8 +533,11 @@ namespace nnet::net86 {
 
 		      		dl[4] = 2.00e20*std::exp(vA)*t93*(dvA*eff[4] + 3.*t9i*eff[4] + deff[4])*1.e-9;
 
+
 			      	// debuging :
-					// if (debug) std::cout << "drg3a=" << dl[4] << "\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "drg3a=" << dl[4] << "\n";
+#endif
 				}
 
 			    
@@ -526,8 +554,11 @@ namespace nnet::net86 {
 
 				    deff[0] = 4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
 
+
 		      		// debuging :
-					// if (debug) std::cout << "dr24=" << deff[0] << "\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "dr24=" << deff[0] << "\n";
+#endif
 				}
 
 
@@ -553,8 +584,11 @@ namespace nnet::net86 {
 				        deff[1] = 1.72e31*t9i32*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i+vA56*(dvB - dval/val))*std::exp(vB)/val*1.e-9;
 				    }
 
+
 			        // debuging :
-					// if (debug) std::cout << "dr1216=" << deff[1] << "\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "dr1216=" << deff[1] << "\n";
+#endif
 				}
 
 
@@ -566,8 +600,11 @@ namespace nnet::net86 {
 					const Float dvA=45.31*t9i43 - .629*t9i13*2./3. - .445*t913*4./3. + .0206*t9;
 					deff[2]=7.10e36*std::exp(vA)*t9i23*(-t9i*2./3. + dvA)*1.e-9;
 
+
 					// debuging :
-					// if (debug) std::cout << "dr32=" << deff[2] << "\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "dr32=" << deff[2] << "\n";
+#endif
 				}
 
 
@@ -596,7 +633,9 @@ namespace nnet::net86 {
 	       				+ 1.43e-2*std::exp(vG)*(5.*t94 + dvG*t95))*1.e-9;
 
 		      		// debuging :
-					// if (debug) std::cout << "drcag=" << deff[5] << "\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "drcag=" << deff[5] << "\n";
+#endif
 		      	}
 
 				
@@ -616,8 +655,11 @@ namespace nnet::net86 {
 					!!!!!!!!!!!!!!!!!!!!!!!! */
 					dl[5]=5.13e10*std::exp(vA)*(deff[5]*t932 + eff[5]*1.5*t912 + eff[5]*t932*dvA)*1.e-9;
 
+
 					// debuging :
-					// if (debug) std::cout << "droga=" << dl[5] << "\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "droga=" << dl[5] << "\n";
+#endif
 
 
 					/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -627,8 +669,11 @@ namespace nnet::net86 {
 			      		+ 538.*std::exp(vD)*(-1.5*t9i52 + t9i32*dvD)
 	       				+ 13.*std::exp(vE)*(2.*t9 + t92*dvE))*1.e-9;
 
+
 		      		// debuging :
-					// if (debug) std::cout << "droag=" << deff[6] << "\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "droag=" << deff[6] << "\n";
+#endif
 				}
 
 
@@ -640,8 +685,11 @@ namespace nnet::net86 {
 
 	  				dl[6] = 5.65e10*std::exp(vA)*(deff[6]*t932 + 1.5*eff[6]*t912 + eff[6]*t932*dvA)*1.e-9;
 
+
 					// debuging :
-					// if (debug) std::cout << "drnega=" << dl[6] << "\n\n";
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "drnega=" << dl[6] << "\n\n";
+#endif
 				}
 			}
 
@@ -693,10 +741,7 @@ namespace nnet::net86 {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			correction for direct rate for coulumbian correction
 			!!!!!!!!!!!!!!!!!!!!!!!! */
-	#ifndef __CUDA_ARCH__
 			if (!skip_coulombian_correction) {
-	#endif
-
 				/* !!!!!!!!!!!!!!!!!!!!!!!!
 				compute deltamukbt */
 				{
@@ -753,8 +798,11 @@ namespace nnet::net86 {
 			        eff [i] =  eff[i]*EF;
 			        deff[i] = deff[i]*EF - 2.*eff[i]*deltamukbt[i]/T;
 
+
 			        // debuging :
-					// if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 156 ? "\n\n" : "\n");
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 156 ? "\n\n" : "\n");
+#endif
 				}
 
 				/* correction for inverse rate for coulumbian correction
@@ -764,12 +812,13 @@ namespace nnet::net86 {
 			        l [i] =  l[i]*EF;
 			        dl[i] = dl[i]*EF - 2.*l[i]*deltamukbt[i]/T;
 
+
 			        // debuging :
-					// if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 156 ? "\n\n" : "\n");
+#ifndef __CUDA_ARCH__
+					if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 156 ? "\n\n" : "\n");
+#endif
 				}
-	#ifndef __CUDA_ARCH__
 			}
-	#endif
 			
 
 

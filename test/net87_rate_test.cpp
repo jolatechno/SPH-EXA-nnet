@@ -1,5 +1,7 @@
 #include <iostream>
 
+#define NET86_DEBUG
+
 #include "../src/nuclear-net.hpp"
 #include "../src/net87/net87.hpp"
 #include "../src/eos/helmholtz.hpp"

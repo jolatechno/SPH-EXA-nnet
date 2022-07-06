@@ -142,8 +142,6 @@ int main(int argc, char* argv[]) {
     std::string test_case                   = parser.get("--test-case");
     const bool isotherm                     = parser.exists("--isotherm");
 
-    nnet::net14::skip_coulombian_correction = parser.exists("--skip-coulomb-corr");
-
 	util::array<double, 87> Y0_87, X_87;
 	util::array<double, 14> Y0_14, X_14;
     if (use_net86) {

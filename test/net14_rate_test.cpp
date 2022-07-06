@@ -1,5 +1,7 @@
 #include <iostream>
 
+#define NET14_DEBUG
+
 #include "../src/nuclear-net.hpp"
 #include "../src/net14/net14.hpp"
 #include "../src/eos/helmholtz.hpp"
@@ -11,13 +13,6 @@ int main() {
 
 	if (!nnet::eos::helmholtz_constants::initalized)
 		nnet::eos::helmholtz_constants::initalized = nnet::eos::helmholtz_constants::read_table();
-
-#if NO_SCREENING
-	nnet::net14::skip_coulombian_correction = true;
-#endif
-#if DEBUG
-	nnet::debug = true;
-#endif
 
 	std::array<double, 14> Y, X;
     for (int i = 0; i < 14; ++i) X[i] = 0;

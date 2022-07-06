@@ -74,9 +74,7 @@ int main(int argc, char* argv[]) {
     std::string test_case                   = parser.get("--test-case");
     const bool isotherm                     = parser.exists("--isotherm");
 
-    nnet::debug                             = parser.exists("--nnet-debug");
-
-    nnet::net86::skip_coulombian_correction = parser.exists("--skip-coulomb-corr");
+    nnet::net86::debug                      = parser.exists("--nnet-debug");
 
     const int n_save                        = parser.get("--n-save", 0);
     const bool save_res_net14               = parser.exists("--output-net14");
@@ -154,7 +152,7 @@ int main(int argc, char* argv[]) {
 				rho, 0., dt);
 		t += current_dt;
 
-		nnet::debug = false;
+		nnet::net86::debug = false;
 
 
 		// double E_tot = eigen::dot(Y.begin(), Y.end(), nnet::net86::BE.begin()) + cv*T;

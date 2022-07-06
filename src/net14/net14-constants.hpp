@@ -20,7 +20,7 @@ namespace nnet::net14::constants {
 	};)
 
 	/// constant number of masses values
-	CUDA_DEFINE(inline static const std::array<double COMMA 14>, A, ={
+	CUDA_DEFINE(inline static const std::array<double COMMA 14>, A, = {
 		4 COMMA 12 COMMA 16 COMMA 20 COMMA 24 COMMA 28 COMMA 32 COMMA 36 COMMA 40 COMMA 44 COMMA 48 COMMA 52 COMMA 56 COMMA 60
 	};)
 

@@ -38,19 +38,16 @@ namespace nnet::eos {
 	/* !!!!!!!!!!!!
 	debuging :
 	!!!!!!!!!!!! */
+#ifdef HELM_DEBUG
+	bool debug = true;
+#else
 	bool debug = false;
+#endif
 
 
 	namespace helmholtz_constants {
 		// table size
 		const int imax = IMAX, jmax = JMAX;
-
-		// table type
-		/*typedef eigen::fixed_size_array<double, imax> ivector; // double[imax]
-		typedef eigen::fixed_size_array<double, jmax> jvector; // double[jmax]
-		typedef eigen::fixed_size_array<double, imax - 1> imvector; // double[imax]
-		typedef eigen::fixed_size_array<double, jmax - 1> jmvector; // double[jmax]
-		typedef eigen::fixed_size_array<double, imax*jmax> ijmatrix; // double[imax][jmax]*/
 
 		// table limits
 		const double tlo   = 3.;
@@ -416,7 +413,7 @@ namespace nnet::eos {
 	*...TODO
 	 */
 	template<typename Float>
-	CUDA_FUNCTION_DECORATOR helm_eos_output<Float> inline /*operator()*/helmholtz(double abar_, double zbar_, const Float T, const Float rho) {
+	CUDA_FUNCTION_DECORATOR helm_eos_output<Float> inline helmholtz(double abar_, double zbar_, const Float T, const Float rho) {
 		// coefs
 		Float fi[36];
 
@@ -425,7 +422,9 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		// if (debug) std::cout << "T=" << T << ", rho=" << rho << ", abar=" << abar << ", zbar=" << zbar << "\n";
+#ifndef __CUDA_ARCH__
+		if (debug) std::cout << "T=" << T << ", rho=" << rho << ", abar=" << abar << ", zbar=" << zbar << "\n";
+#endif
 
 
 		// compute polynoms rates
@@ -564,7 +563,9 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		// if (debug) std::cout << "xt=" << xt << " = (T - t[" << jat << "]=" << CUDA_ACCESS(t)[jat] << ")* dti_sav[" << jat << "]=" << CUDA_ACCESS(dti_sav)[jat] << "\n";
+#ifndef __CUDA_ARCH__
+		if (debug) std::cout << "xt=" << xt << " = (T - t[" << jat << "]=" << helmholtz_constants::t[jat] << ")* dti_sav[" << jat << "]=" << helmholtz_constants::dti_sav[jat] << "\n";
+#endif
 
 
 		// the six rhosity and six temperature basis functions;
@@ -574,7 +575,9 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		// if (debug) std::cout << "si0t=" << si0t << " = psi0(xt=" << xt << ")\n";
+#ifndef __CUDA_ARCH__
+		if (debug) std::cout << "si0t=" << si0t << " = psi0(xt=" << xt << ")\n";
+#endif
 
 
 		Float si0mt =  helmholtz_constants::psi0(mxt);
@@ -838,7 +841,9 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		// if (debug) std::cout << "dsepdt=" << dsepdt << " = -df_tt=" << df_tt << " * ye=" << ye << "\n";
+#ifndef __CUDA_ARCH__
+		if (debug) std::cout << "dsepdt=" << dsepdt << " = -df_tt=" << df_tt << " * ye=" << ye << "\n";
+#endif
 
 
 		Float eele    = ye*free + T*sele;
@@ -849,7 +854,9 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		// if (debug) std::cout << "deepdt=" << deepdt << " = dsepdt=" << dsepdt << " * T" << "\n";
+#ifndef __CUDA_ARCH__
+		if (debug) std::cout << "deepdt=" << deepdt << " = dsepdt=" << dsepdt << " * T" << "\n";
+#endif
 
 
 		// coulomb section:
@@ -865,7 +872,9 @@ namespace nnet::eos {
 		Float dsda     = z*dxnida;
 
 		/* debug: */
-		// if (debug) std::cout << "s=" << s << " = z=" << z << " * xni=" << xni << "\n";
+#ifndef __CUDA_ARCH__
+		if (debug) std::cout << "s=" << s << " = z=" << z << " * xni=" << xni << "\n";
+#endif
 
 
 		Float lami     = std::pow(1./s, 1./3.);
@@ -882,7 +891,9 @@ namespace nnet::eos {
 		Float plasgdz  = 2.0*plasg/zbar;
 
 		/* debug: */
-		// if (debug) std::cout << "plasg=" << plasg << " = zbar=" << zbar << "^2 * esqu=" << helmholtz_constants::esqu << " * ktinv=" << ktinv << " * inv_lami=" << inv_lami << "\n";
+#ifndef __CUDA_ARCH__
+		if (debug) std::cout << "plasg=" << plasg << " = zbar=" << zbar << "^2 * esqu=" << helmholtz_constants::esqu << " * ktinv=" << ktinv << " * inv_lami=" << inv_lami << "\n";
+#endif
 
 
 		Float ecoul, pcoul, scoul,
@@ -906,7 +917,10 @@ namespace nnet::eos {
 
 
 			/* debug: */
-			// if (debug) std::cout << "decouldt=" << decouldt << " = y=" << y << " * plasgdt=" << decouldt << " + ecoul=" << ecoul << " / T" << "\n";
+#ifndef __CUDA_ARCH__
+		if (debug) std::cout << "decouldt=" << decouldt << " = y=" << y << " * plasgdt=" << decouldt << " + ecoul=" << ecoul << " / T" << "\n";
+#endif
+
 
 			y        = rho/3.;
 			dpcouldd = ecoul + y*decouldd/3.;
@@ -944,7 +958,9 @@ namespace nnet::eos {
 
 
 			/* debug: */
-			// if (debug) std::cout << "decouldt=" << decouldt << " = s=" << s << " * dpcouldt=" << dpcouldt <<"\n";
+#ifndef __CUDA_ARCH__
+			if (debug) std::cout << "decouldt=" << decouldt << " = s=" << s << " * dpcouldt=" << dpcouldt <<"\n";
+#endif
 
 
 			s        = -helmholtz_constants::avo*helmholtz_constants::kerg/(abar*plasg)*(1.5*helmholtz_constants::c2*x - helmholtz_constants::a2*(helmholtz_constants::b2 - 1.)*y);
@@ -1006,7 +1022,9 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		// if (debug) std::cout << "degasdt=" << degasdt << " = deiondt=" << deiondt << " + deepdt=" << deepdt << " + decouldt=" << decouldt << "\n";
+#ifndef __CUDA_ARCH__
+		if (debug) std::cout << "degasdt=" << degasdt << " = deiondt=" << deiondt << " + deepdt=" << deepdt << " + decouldt=" << decouldt << "\n";
+#endif
 
 
 		// add in radiation to get the total
@@ -1031,7 +1049,9 @@ namespace nnet::eos {
 
 
 		/* debug: */
-		// if (debug) std::cout << "rhoerdt(cv)=" << rhoerdt << " = deraddt=" << deraddt << " + degasdt=" << degasdt << "\n\n";
+#ifndef __CUDA_ARCH__
+		if (debug) std::cout << "rhoerdt(cv)=" << rhoerdt << " = deraddt=" << deraddt << " + degasdt=" << degasdt << "\n\n";
+#endif
 
 
 		// for the gas

@@ -20,9 +20,6 @@ namespace nnet {
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 constants :
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-	/* debuging: */
-	bool debug = false;
-
 	namespace constants {
 		/// initial nuclear timestep
 		const double initial_dt = 1e-5;
