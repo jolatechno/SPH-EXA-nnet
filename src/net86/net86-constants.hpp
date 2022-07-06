@@ -23,7 +23,7 @@ namespace nnet::net86::constants {
 	const static double Mev_to_erg = 9.648529392e17;
 
 	/// constant atomic number values
-	CUDA_DEFINE(inline static const std::array<double COMMA 87>, Z, = {
+	DEVICE_DEFINE(inline static const std::array<double COMMA 87>, Z, = {
 		 1 COMMA  0 COMMA  2 COMMA  6 COMMA  8 COMMA 10 COMMA 11 COMMA
 		12 COMMA 12 COMMA 10 COMMA 11 COMMA 12 COMMA 11 COMMA 10 COMMA
 		13 COMMA 14 COMMA 14 COMMA 12 COMMA 13 COMMA 14 COMMA 13 COMMA
@@ -40,7 +40,7 @@ namespace nnet::net86::constants {
 	};)
 
 	/// constant number of masses values
-	CUDA_DEFINE(inline static const std::array<double COMMA 87>, A, = {
+	DEVICE_DEFINE(inline static const std::array<double COMMA 87>, A, = {
 		 1 COMMA  1 COMMA  4 COMMA 12 COMMA 16 COMMA 20 COMMA 21 COMMA
 		24 COMMA 23 COMMA 21 COMMA 23 COMMA 22 COMMA 22 COMMA 22 COMMA
 		25 COMMA 28 COMMA 27 COMMA 25 COMMA 27 COMMA 26 COMMA 26 COMMA
@@ -140,7 +140,7 @@ namespace nnet::net86::constants {
 
 	/// function for coulombian correction
 	template<typename Float>
-	CUDA_FUNCTION_DECORATOR Float inline ggt1(const Float x) {
+	HOST_DEVICE_FUN Float inline ggt1(const Float x) {
 		const Float a1 = -.898004;
 		const Float b1 = .96786;
 		const Float c1 = .220703;
@@ -151,7 +151,7 @@ namespace nnet::net86::constants {
 	}
 	/// function for coulombian correction
 	template<typename Float>
-	CUDA_FUNCTION_DECORATOR Float inline glt1(const Float x) {
+	HOST_DEVICE_FUN Float inline glt1(const Float x) {
 		const Float a1 = -.5*std::sqrt(3.);
 		const Float b1 = .29561;
 		const Float c1 = 1.9885;
@@ -161,7 +161,7 @@ namespace nnet::net86::constants {
 
 
     // reactant and products
-	CUDA_DEFINE(static const inline int, main_reactant[157], = { // (-1 applied)
+	DEVICE_DEFINE(static const inline int, main_reactant[157], = { // (-1 applied)
 		 3 COMMA  3 COMMA  4 COMMA  0 COMMA  2 COMMA  3 COMMA  4 COMMA
 		 5 COMMA  8 COMMA 11 COMMA  5 COMMA 12 COMMA  6 COMMA  6 COMMA  9 COMMA  7 COMMA 16 COMMA 19 COMMA  7 COMMA 20 COMMA 14 COMMA 14 COMMA 17 COMMA
 		15 COMMA 24 COMMA 27 COMMA 15 COMMA 28 COMMA 22 COMMA 22 COMMA 25 COMMA 23 COMMA 32 COMMA 35 COMMA 23 COMMA 36 COMMA 30 COMMA 30 COMMA 33 COMMA
@@ -175,7 +175,7 @@ namespace nnet::net86::constants {
 		 5 COMMA  7 COMMA 15 COMMA 23 COMMA 31 COMMA 39 COMMA 47 COMMA 55 COMMA 63 COMMA 71 COMMA
 		 5 COMMA  7 COMMA 15 COMMA 23 COMMA 31 COMMA 39 COMMA 47 COMMA 55 COMMA 63 COMMA 71
     };)
-    CUDA_DEFINE(static const inline int, secondary_reactant[157], = { // (-1 applied)
+    DEVICE_DEFINE(static const inline int, secondary_reactant[157], = { // (-1 applied)
     	3 COMMA 4 COMMA 4 COMMA 0 COMMA 2 COMMA 2 COMMA 2 COMMA
     	0 COMMA 1 COMMA 1 COMMA 1 COMMA 1 COMMA 0 COMMA 1 COMMA 1 COMMA 0 COMMA 1 COMMA 1 COMMA 1 COMMA 1 COMMA 0 COMMA 1 COMMA 1 COMMA 0 COMMA 1 COMMA 1 COMMA 1 COMMA 1 COMMA 0 COMMA 1 COMMA 1 COMMA
     	0 COMMA 1 COMMA 1 COMMA 1 COMMA 1 COMMA 0 COMMA 1 COMMA 1 COMMA 0 COMMA 1 COMMA 1 COMMA 1 COMMA 1 COMMA 0 COMMA 1 COMMA 1 COMMA 0 COMMA 1 COMMA 1 COMMA 1 COMMA 1 COMMA 0 COMMA 1 COMMA 1 COMMA
@@ -187,7 +187,7 @@ namespace nnet::net86::constants {
     	2 COMMA 2 COMMA 2 COMMA 2 COMMA 2 COMMA 2 COMMA 2 COMMA 2 COMMA 2 COMMA 2 COMMA
     	2 COMMA 2 COMMA 2 COMMA 2 COMMA 2 COMMA 2 COMMA 2 COMMA 2 COMMA 2 COMMA 2
     };)
-    CUDA_DEFINE(static const inline int, main_product[157], = { // (-1 applied)
+    DEVICE_DEFINE(static const inline int, main_product[157], = { // (-1 applied)
     	 5 COMMA  7 COMMA 15 COMMA  0 COMMA  3 COMMA  4 COMMA  5 COMMA
     	 6 COMMA  7 COMMA  8 COMMA  9 COMMA 10 COMMA 11 COMMA 12 COMMA 13 COMMA 14 COMMA 15 COMMA 16 COMMA 17 COMMA 18 COMMA 19 COMMA 20 COMMA 21 COMMA
     	22 COMMA 23 COMMA 24 COMMA 25 COMMA 26 COMMA 27 COMMA 28 COMMA 29 COMMA 30 COMMA 31 COMMA 32 COMMA 33 COMMA 34 COMMA 35 COMMA 36 COMMA 37 COMMA 
@@ -212,7 +212,7 @@ namespace nnet::net86::constants {
 
 
 	namespace fits {
-		CUDA_FUNCTION_DECORATOR int inline get_temperature_range(double T) {
+		HOST_DEVICE_FUN int inline get_temperature_range(double T) {
 			if (T < 1.5e8) return 0;
 
 			if (T < 2e8) return 1;
@@ -243,7 +243,7 @@ namespace nnet::net86::constants {
 			return 23;
 		}
 
-		CUDA_DEFINE(static constexpr inline double, q[157 - 7], = {
+		DEVICE_DEFINE(static constexpr inline double, q[157 - 7], = {
 			2.4310 COMMA 16.532 COMMA 13.147 COMMA 6.7610 COMMA 12.419 COMMA
 			5.5020 COMMA 11.069 COMMA 10.364 COMMA 2.2710 COMMA 17.179 COMMA 13.312 COMMA
 			7.3310 COMMA 13.058 COMMA 5.5180 COMMA 11.366 COMMA 11.093 COMMA 2.7480 COMMA
@@ -272,7 +272,7 @@ namespace nnet::net86::constants {
 			2.4130
 		};)
 
-		CUDA_DEFINE(static constexpr inline double, fit[157 - 7][8], = {
+		DEVICE_DEFINE(static constexpr inline double, fit[157 - 7][8], = {
 		    { 35.48986 COMMA -1.806713 COMMA 35.44666 COMMA -67.56999 COMMA 4.000620 COMMA -.2335706 COMMA 31.89835 COMMA 57.73614 } COMMA
 		    { 11.39207 COMMA -1.837460e-2 COMMA 3.219166 COMMA -5.407895 COMMA 5.745295e-2 COMMA 6.107425e-3 COMMA 3.343716 COMMA 36.42029 } COMMA
 		    { 7.719048 COMMA 5.644467e-3 COMMA -.2121762 COMMA 4.680793 COMMA -.6838608 COMMA 5.149486e-2 COMMA -.4863560 COMMA 29.97184 } COMMA
@@ -425,7 +425,7 @@ namespace nnet::net86::constants {
 		    { 221.1075 COMMA -7.421734 COMMA 295.3902 COMMA -551.2794 COMMA 36.41244 COMMA -2.338715 COMMA 254.6778 COMMA 221.1858 }
 		};)
 
-		CUDA_DEFINE(static constexpr inline double, choose[87 - 6][24], = {
+		DEVICE_DEFINE(static constexpr inline double, choose[87 - 6][24], = {
 			{
 				1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000016 COMMA
 				1.000382 COMMA 1.002544 COMMA 1.009003 COMMA 1.022212 COMMA 1.043747 COMMA 1.074176 COMMA 1.113314 COMMA 1.215134 COMMA 1.343451 COMMA 1.493867 COMMA 1.664363 COMMA 1.854977

@@ -15,12 +15,12 @@ namespace nnet::net14::constants {
 	const static double Mev_to_erg = 9.648529392e17;
 
 	/// constant atomic number values
-	CUDA_DEFINE(inline static const std::array<double COMMA 14>, Z, = {
+	DEVICE_DEFINE(inline static const std::array<double COMMA 14>, Z, = {
 		2 COMMA 6 COMMA 8 COMMA 10 COMMA 12 COMMA 14 COMMA 16 COMMA 18 COMMA 20 COMMA 22 COMMA 24 COMMA 26 COMMA 28 COMMA 30
 	};)
 
 	/// constant number of masses values
-	CUDA_DEFINE(inline static const std::array<double COMMA 14>, A, = {
+	DEVICE_DEFINE(inline static const std::array<double COMMA 14>, A, = {
 		4 COMMA 12 COMMA 16 COMMA 20 COMMA 24 COMMA 28 COMMA 32 COMMA 36 COMMA 40 COMMA 44 COMMA 48 COMMA 52 COMMA 56 COMMA 60
 	};)
 
@@ -49,7 +49,7 @@ namespace nnet::net14::constants {
 
 	/// function for coulombian correction
 	template<typename Float>
-	CUDA_FUNCTION_DECORATOR Float inline ggt1(const Float x) {
+	HOST_DEVICE_FUN Float inline ggt1(const Float x) {
 		const Float a1 = -.898004;
 		const Float b1 = .96786;
 		const Float c1 = .220703;
@@ -60,7 +60,7 @@ namespace nnet::net14::constants {
 	}
 	/// function for coulombian correction
 	template<typename Float>
-	CUDA_FUNCTION_DECORATOR Float inline glt1(const Float x) {
+	HOST_DEVICE_FUN Float inline glt1(const Float x) {
 		const Float a1 = -.5*std::sqrt(3.);
 		const Float b1 = .29561;
 		const Float c1 = 1.9885;
@@ -70,7 +70,7 @@ namespace nnet::net14::constants {
 
 
 	namespace fits {
-		CUDA_FUNCTION_DECORATOR int inline get_temperature_range(double T) {
+		HOST_DEVICE_FUN int inline get_temperature_range(double T) {
 			if (T < 1.5e8) return 0;
 
 			if (T < 2e8) return 1;
@@ -101,11 +101,11 @@ namespace nnet::net14::constants {
 			return 23;
 		}
 
-		CUDA_DEFINE(static constexpr inline double, q[14 - 4], = {
+		DEVICE_DEFINE(static constexpr inline double, q[14 - 4], = {
 			9.3160e0 COMMA 9.9840e0 COMMA 6.9480e0 COMMA 6.6390e0 COMMA 7.0400e0 COMMA 5.1270e0 COMMA 7.6920e0 COMMA 7.9390e0 COMMA 7.9950e0 COMMA 2.7080e0
 		};)
 
-		CUDA_DEFINE(static constexpr inline double, fit[14 - 4][8], = {
+		DEVICE_DEFINE(static constexpr inline double, fit[14 - 4][8], = {
 			{1.335429e2 COMMA -2.504361e0 COMMA   7.351683e1 COMMA -2.217197e2 COMMA  1.314774e1 COMMA -7.475602e-1 COMMA 9.602703e1 COMMA  1.583615e2} COMMA
 			{1.429069e2 COMMA -3.288633e0 COMMA   1.042707e2 COMMA -2.650548e2 COMMA  1.391863e1 COMMA -6.999523e-1 COMMA 1.216164e2 COMMA  1.677677e2} COMMA
 			{9.710066e1 COMMA -3.324446e0 COMMA   5.358524e1 COMMA -1.656830e2 COMMA  7.199997e0 COMMA -2.828443e-1 COMMA 7.933873e1 COMMA  1.219924e2} COMMA
@@ -118,7 +118,7 @@ namespace nnet::net14::constants {
 			{-1.043410e3 COMMA 2.280261e1 COMMA  -2.281027e3 COMMA  3.453872e3 COMMA -1.969194e2 COMMA  1.101885e1 COMMA -1.685657e3 COMMA -1.018421e3} COMMA
 		};)
 
-		CUDA_DEFINE(static constexpr inline double, choose[14 - 4 + 1][24], = {
+		DEVICE_DEFINE(static constexpr inline double, choose[14 - 4 + 1][24], = {
 			{
 				1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000000 COMMA 1.000016 COMMA
 				1.000382 COMMA 1.002544 COMMA 1.009003 COMMA 1.022212 COMMA 1.043747 COMMA 1.074176 COMMA 1.113314 COMMA 1.215134 COMMA 1.343451 COMMA 1.493867 COMMA 1.664363 COMMA 1.854977

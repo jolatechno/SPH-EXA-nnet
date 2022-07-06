@@ -13,8 +13,8 @@ namespace nnet::eos {
 	 */
 	template<typename Float>
 	struct ideal_gas_eos_output {
-		CUDA_FUNCTION_DECORATOR ideal_gas_eos_output() {}
-		CUDA_FUNCTION_DECORATOR ~ideal_gas_eos_output() {}
+		HOST_DEVICE_FUN ideal_gas_eos_output() {}
+		HOST_DEVICE_FUN ~ideal_gas_eos_output() {}
 
 		Float cv, dpdT, p;
 		Float c, u;
@@ -35,7 +35,7 @@ namespace nnet::eos {
 		~ideal_gas_functor() {}
 
 		template<typename Float=double>
-		CUDA_FUNCTION_DECORATOR ideal_gas_eos_output<Float> inline operator()(const Float *Y, const Float T, const Float rho) const {
+		HOST_DEVICE_FUN ideal_gas_eos_output<Float> inline operator()(const Float *Y, const Float T, const Float rho) const {
 			ideal_gas_eos_output<Float> res;
 
 			const Float dmy  = ideal_gas_constants::R / mu;

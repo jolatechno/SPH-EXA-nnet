@@ -16,7 +16,7 @@ namespace nnet::net87 {
 	namespace constants = nnet::net86::constants;
 
 	/// constant mass-excendent values
-	CUDA_DEFINE(inline static const std::array<double COMMA 87>, BE, = {
+	DEVICE_DEFINE(inline static const std::array<double COMMA 87>, BE, = {
 		BE_NET86 COMMA
 		0.782*constants::Mev_to_erg
 	};)
@@ -41,7 +41,7 @@ namespace nnet::net87 {
 		compute_reaction_rates_function() {}
 
 		template<typename Float, class eos>
-		CUDA_FUNCTION_DECORATOR void inline operator()(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {
+		HOST_DEVICE_FUN void inline operator()(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			electron value
 			!!!!!!!!!!!!!!!!!!!!!!!! */
@@ -80,7 +80,7 @@ namespace nnet::net87 {
 			const Float correction = -1.5*nakbt;
 
 			// adding electrons to net86
-			corrected_BE[86] = CUDA_ACCESS(BE).back() + correction;
+			corrected_BE[86] = DEVICE_ACCESS(BE).back() + correction;
 
 			// electron energy corrections
 			corrected_BE[constants::proton]  += -Eneutr;

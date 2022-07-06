@@ -34,10 +34,10 @@
 
 /************************************************************************/
 /*           MPI test that can test the GPU implementation              */
-// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" -c  ../src/sphexa/CUDA/nuclear-net.cu -o nuclear-net.obj -std=c++17 --expt-relaxed-constexpr
-// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" -c  ../src/sphexa/CUDA/nuclear-data-gpu.cu -o nuclear-data.obj -std=c++17 --expt-relaxed-constexpr
-// compile CPU:  nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" -c hydro-mockup.cpp -o hydro-mockup-gpu.obj -std=c++17 --expt-relaxed-constexpr
-// link:         g++ nuclear-net.obj hydro-mockup-gpu.obj nuclear-data.obj -o hydro-mockup-gpu.out -lcudart
+// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" -dc  ../src/sphexa/CUDA/nuclear-net.cu -o nuclear-net.o -std=c++17 --expt-relaxed-constexpr
+// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" -dc  ../src/sphexa/CUDA/nuclear-data-gpu.cu -o nuclear-data.o -std=c++17 --expt-relaxed-constexpr
+// compile CPU:  nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" -c hydro-mockup.cpp -o hydro-mockup-gpu.o -std=c++17 --expt-relaxed-constexpr
+// link:         g++ nuclear-net.o hydro-mockup-gpu.o nuclear-data.o -o hydro-mockup-gpu.out -lcudart
 
 // compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DIMPORT_DOT_CU -DCPU_CUDA_TEST_" hydro-mockup.cpp -o hydro-mockup.out -std=c++17 --expt-relaxed-constexpr
 /*                                                                      */

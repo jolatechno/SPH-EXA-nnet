@@ -1,19 +1,22 @@
 #define COMMA ,
 
 #ifdef USE_CUDA
-	#define CUDA_FUNCTION_DECORATOR __host__ __device__
+	#define HOST_DEVICE_FUN __host__ __device__
 
-	#define CUDA_DEFINE(type, symbol, definition) \
+	#define DEVICE_DEFINE(type, symbol, definition) \
 		           type       symbol definition   \
 		__device__ type dev_##symbol definition
 #else
-	#define CUDA_FUNCTION_DECORATOR
+	#define HOST_DEVICE_FUN
 
-	#define CUDA_DEFINE(type, symbol, definition) type symbol definition
+	#define DEVICE_DEFINE(type, symbol, definition) type symbol definition
 #endif
 
-#ifdef __CUDA_ARCH__ 
-	#define CUDA_ACCESS(symbol) dev_##symbol
+#define DEVICE_CODE (defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__))
+
+#if DEVICE_CODE
+	#define DEVICE_ACCESS(symbol) dev_##symbol
 #else
-	#define CUDA_ACCESS(symbol) symbol
+	#define DEVICE_ACCESS(symbol) symbol
 #endif
+

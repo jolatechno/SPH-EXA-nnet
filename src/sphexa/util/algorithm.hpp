@@ -23,7 +23,7 @@ stolen from QuIDS (https://github.com/jolatechno/QuIDS)
 namespace algorithm {
 	/// equivalent to std::accumulate
 	template<typename Float, class it>
-	CUDA_FUNCTION_DECORATOR Float inline accumulate(const it begin, const it end, Float x) {
+	HOST_DEVICE_FUN Float inline accumulate(const it begin, const it end, Float x) {
 		for (it i = begin; i != end; ++i)
 			x += *i;
 
@@ -32,7 +32,7 @@ namespace algorithm {
 
 	/// equivalent to std::swap
 	template<typename Float>
-	CUDA_FUNCTION_DECORATOR void inline swap(Float &x, Float &y) {
+	HOST_DEVICE_FUN void inline swap(Float &x, Float &y) {
 		Float buffer = x;
 		x = y;
 		y = buffer;
@@ -40,14 +40,14 @@ namespace algorithm {
 
 	/// equivalent to std::fill
 	template<typename Float, class it>
-	CUDA_FUNCTION_DECORATOR void inline fill(it begin, it end, Float x) {
+	HOST_DEVICE_FUN void inline fill(it begin, it end, Float x) {
 		for (it i = begin; i != end; ++i)
 			*i = x;
 	}
 
 	/// equivalent to std::min
 	template<typename Float>
-	CUDA_FUNCTION_DECORATOR Float inline min(Float x, Float y) {
+	HOST_DEVICE_FUN Float inline min(Float x, Float y) {
 		if (x < y)
 			return x;
 		return y;
@@ -55,7 +55,7 @@ namespace algorithm {
 
 	/// equivalent to std::min
 	template<typename Float>
-	CUDA_FUNCTION_DECORATOR Float inline max(Float x, Float y) {
+	HOST_DEVICE_FUN Float inline max(Float x, Float y) {
 		if (x > y)
 			return x;
 		return y;

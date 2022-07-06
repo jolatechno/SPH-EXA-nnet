@@ -142,7 +142,7 @@ namespace eigen {
 
 	/// dot product function
 	template<class it1, class it2>
-	CUDA_FUNCTION_DECORATOR double dot(it1 const X_begin, it1 const X_end, it2 const Y_begin) {
+	HOST_DEVICE_FUN double dot(it1 const X_begin, it1 const X_end, it2 const Y_begin) {
 		double res = 0;
 		const int n = std::distance(X_begin, X_end);
 
@@ -155,7 +155,7 @@ namespace eigen {
 
 	/// custom analytical solver
 	template<typename Float=double>
-	CUDA_FUNCTION_DECORATOR void solve(Float *M, Float *RHS, Float *X, const int n, Float epsilon=0) {
+	HOST_DEVICE_FUN void solve(Float *M, Float *RHS, Float *X, const int n, Float epsilon=0) {
 		// reduce into upper triangular
 		for (int i = 0; i < n; ++i) {
 			for (int j = 0; j < i; ++j) {

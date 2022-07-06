@@ -114,7 +114,7 @@ constants :
 
 	/// class referencing a reaction
 	struct reaction_reference {
-		CUDA_FUNCTION_DECORATOR reaction_reference() {}
+		HOST_DEVICE_FUN reaction_reference() {}
 
 		/// class simulating a vector from a pointer
 		template<class T>
@@ -123,18 +123,18 @@ constants :
 			const T *ptr = nullptr;
 			size_t size_ = 0;
 		public:
-			CUDA_FUNCTION_DECORATOR vector_reference() {}
-			CUDA_FUNCTION_DECORATOR vector_reference(const T *ptr_, size_t size) : ptr(ptr_), size_(size) {}
+			HOST_DEVICE_FUN vector_reference() {}
+			HOST_DEVICE_FUN vector_reference(const T *ptr_, size_t size) : ptr(ptr_), size_(size) {}
 			size_t inline size() const {
 				return size_;
 			}
-			CUDA_FUNCTION_DECORATOR const T *begin() const {
+			HOST_DEVICE_FUN const T *begin() const {
 				return ptr;
 			}
-			CUDA_FUNCTION_DECORATOR const T *end() const {
+			HOST_DEVICE_FUN const T *end() const {
 				return ptr + size_;
 			}
-			CUDA_FUNCTION_DECORATOR const T &operator[](int i) {
+			HOST_DEVICE_FUN const T &operator[](int i) {
 				return ptr[i];
 			}
 		};
@@ -237,7 +237,7 @@ constants :
 			reactant_product = other.reactant_product.data();
 		}
 
-		CUDA_FUNCTION_DECORATOR reaction_reference inline operator[](int i) const {
+		HOST_DEVICE_FUN reaction_reference inline operator[](int i) const {
 			reaction_reference Reaction;
 
 			Reaction.reactants = reaction_reference::vector_reference(reactant_product + reactant_begin[i], product_begin [i    ] - reactant_begin[i]);
@@ -246,7 +246,7 @@ constants :
 			return Reaction;
 		}
 
-		CUDA_FUNCTION_DECORATOR size_t inline size() const {
+		HOST_DEVICE_FUN size_t inline size() const {
 			return num_reactions;
 		}
 	};
@@ -301,7 +301,7 @@ utils functions:
 		 * ...TODO
 		 */
 		template<typename Float>
-		CUDA_FUNCTION_DECORATOR void inline clip(Float *X, const int dimension, const Float epsilon) {
+		HOST_DEVICE_FUN void inline clip(Float *X, const int dimension, const Float epsilon) {
 			for (int i = 0; i < dimension; ++i)
 				if (X[i] <= epsilon) //if (std::abs(X(i)) <= epsilon)
 					X[i] = 0;
@@ -315,7 +315,7 @@ utils functions:
 		 * ...TODO
 		 */
 		template<typename Float>
-		CUDA_FUNCTION_DECORATOR bool inline contain_nan(const Float T, const Float *Y, const int dimension) {
+		HOST_DEVICE_FUN bool inline contain_nan(const Float T, const Float *Y, const int dimension) {
 			if (std::isnan(T))
 				return true;
 
@@ -335,7 +335,7 @@ utils functions:
 		 * ...TODO
 		 */
 		template<typename Float>
-		CUDA_FUNCTION_DECORATOR void inline derivatives_from_reactions(const ptr_reaction_list &reactions, const Float *rates, const Float rho, const Float *Y, Float *dY, const int dimension) {
+		HOST_DEVICE_FUN void inline derivatives_from_reactions(const ptr_reaction_list &reactions, const Float *rates, const Float rho, const Float *Y, Float *dY, const int dimension) {
 			// fill with zero
 			for (int i = 0; i < dimension; ++i)
 				dY[i] = 0.;
@@ -377,7 +377,7 @@ utils functions:
 		 * ...TODO
 		 */
 		template<typename Float>
-		CUDA_FUNCTION_DECORATOR void inline order_1_dY_from_reactions(const ptr_reaction_list &reactions, const Float *rates, const Float rho,
+		HOST_DEVICE_FUN void inline order_1_dY_from_reactions(const ptr_reaction_list &reactions, const Float *rates, const Float rho,
 			Float const *Y, Float *M, const int dimension)
 		{
 			// fill matrix with zero
@@ -435,7 +435,7 @@ First simple direct solver:
 	 * TODO
 	 */
 	template<class eos_type, class func_type, typename Float=double>
-	CUDA_FUNCTION_DECORATOR void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS, Float *rates,
+	HOST_DEVICE_FUN void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS, Float *rates,
 		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess,
 		const Float rho, const Float drho_dt,
@@ -453,7 +453,7 @@ First simple direct solver:
 	<=> DT*cv = value_1*(T + theta*DT) + DY.BE
 	<=> DT*(cv - theta*value_1) - DY.BE = value_1*T
 		------------------- */
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 		if (dt == 0) {
 			std::string error = "Zero timestep in nuclear network\n";
 			error += "\tT=" + std::to_string(T) + ",\tTguess=" + std::to_string(T_guess) + "\n";
@@ -532,7 +532,7 @@ First simple direct solver:
 	 * TODO
 	 */
 	template<typename Float>
-	CUDA_FUNCTION_DECORATOR void inline finalize_system(const int dimension, const Float *Y, const Float T, Float *next_Y, Float &next_T, const Float *DY_T) {
+	HOST_DEVICE_FUN void inline finalize_system(const int dimension, const Float *Y, const Float T, Float *next_Y, Float &next_T, const Float *DY_T) {
 		// increment values
 		for (int i = 0; i < dimension; ++i)
 			next_Y[i] = Y[i] + DY_T[i + 1];
@@ -620,7 +620,7 @@ Iterative solver:
 	 * TODO
 	 */
 	template<class func_type, class func_eos, typename Float=double>
-	CUDA_FUNCTION_DECORATOR void inline prepare_system_NR(const int dimension, 
+	HOST_DEVICE_FUN void inline prepare_system_NR(const int dimension, 
 		Float *Mp, Float *RHS, Float *rates,
 		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		const Float *Y, Float T, Float *final_Y, Float final_T, 
@@ -658,7 +658,7 @@ Iterative solver:
 	 * TODO
 	 */
 	template<typename Float>
-	CUDA_FUNCTION_DECORATOR bool inline finalize_system_NR(const int dimension,
+	HOST_DEVICE_FUN bool inline finalize_system_NR(const int dimension,
 		const Float *Y, const Float T,
 		Float *final_Y, Float &final_T,
 		const Float *DY_T, Float &dt, Float &used_dt, int &i)
@@ -807,7 +807,7 @@ Substeping solver
 	 * TODO
 	 */
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
-	CUDA_FUNCTION_DECORATOR void inline prepare_system_substep(const int dimension,
+	HOST_DEVICE_FUN void inline prepare_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *rates,
 		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		const Float *final_Y, Float final_T, Float *next_Y, Float &next_T, 
@@ -851,7 +851,7 @@ Substeping solver
 	 * TODO
 	 */
 	template<typename Float=double>
-	CUDA_FUNCTION_DECORATOR bool inline finalize_system_substep(const int dimension,
+	HOST_DEVICE_FUN bool inline finalize_system_substep(const int dimension,
 		Float *final_Y, Float &final_T,
 		Float *next_Y, Float &next_T,
 		const Float *DY_T, const Float dt_tot, Float &elapsed_time,
@@ -902,7 +902,7 @@ Substeping solver
 	 * ...TODO
 	 */
 	template<class func_type, class func_eos, typename Float=double, class nseFunction=void*>
-	CUDA_FUNCTION_DECORATOR void inline solve_system_substep(const int dimension,
+	HOST_DEVICE_FUN void inline solve_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates,
 		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		Float *final_Y, Float &final_T, Float *Y_buffer,

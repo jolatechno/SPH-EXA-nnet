@@ -46,7 +46,7 @@ namespace nnet::net14 {
 #endif
 
 	/// constant mass-excendent values
-	CUDA_DEFINE(inline static const std::array<double COMMA 14>, BE, = {
+	DEVICE_DEFINE(inline static const std::array<double COMMA 14>, BE, = {
 		BE_NET14
 	};)
 
@@ -129,10 +129,10 @@ namespace nnet::net14 {
 
 	/// compute a list of reactions for net14
 	struct compute_reaction_rates_function {
-		CUDA_FUNCTION_DECORATOR compute_reaction_rates_function() {}
+		HOST_DEVICE_FUN compute_reaction_rates_function() {}
 		
 		template<typename Float, class eos>
-		CUDA_FUNCTION_DECORATOR void inline operator()(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {
+		HOST_DEVICE_FUN void inline operator()(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {
 			/*********************************************/
 			/* start computing the binding energy vector */
 			/*********************************************/
@@ -143,7 +143,7 @@ namespace nnet::net14 {
 			const Float correction = -1.5*nakbt;
 
 			for (int i = 0; i < 14; ++i)
-				corrected_BE[i] = CUDA_ACCESS(BE)[i] + correction;
+				corrected_BE[i] = DEVICE_ACCESS(BE)[i] + correction;
 
 			// coulombian correction
 			if (!skip_coulombian_correction) {
@@ -151,12 +151,12 @@ namespace nnet::net14 {
 			    const Float ae = std::pow((3./4.)/(constants::pi*ne), 1./3.);
 			    const Float gam = constants::e2/(kbt*ae);
 			    for (int i = 0; i < 14; ++i) {
-			    	const Float gamma = gam*std::pow(constants::CUDA_ACCESS(Z)[i], 5./3.);
+			    	const Float gamma = gam*std::pow(constants::DEVICE_ACCESS(Z)[i], 5./3.);
 			    	const Float funcion = gamma > 1 ? constants::ggt1(gamma) : constants::glt1(gamma);
 
 
 			    	// debuging:
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 			    	if (debug) std::cout << "funcion[" << i << "]=" << funcion << (i == 13 ? "\n\n" : "\n");
 #endif
 
@@ -208,26 +208,26 @@ namespace nnet::net14 {
 					- Ni + He -> Zn */
 				for (int i = 4; i < 14; ++i) {
 					coefs[i - 4] = 
-						  constants::fits::CUDA_ACCESS(fit)[i - 4][1]*t9i
-						+ constants::fits::CUDA_ACCESS(fit)[i - 4][2]*t9i13
-						+ constants::fits::CUDA_ACCESS(fit)[i - 4][3]*t913
-						+ constants::fits::CUDA_ACCESS(fit)[i - 4][4]*t9
-						+ constants::fits::CUDA_ACCESS(fit)[i - 4][5]*t953
-						+ constants::fits::CUDA_ACCESS(fit)[i - 4][6]*lt9;
+						  constants::fits::DEVICE_ACCESS(fit)[i - 4][1]*t9i
+						+ constants::fits::DEVICE_ACCESS(fit)[i - 4][2]*t9i13
+						+ constants::fits::DEVICE_ACCESS(fit)[i - 4][3]*t913
+						+ constants::fits::DEVICE_ACCESS(fit)[i - 4][4]*t9
+						+ constants::fits::DEVICE_ACCESS(fit)[i - 4][5]*t953
+						+ constants::fits::DEVICE_ACCESS(fit)[i - 4][6]*lt9;
 
-					dcoefs[i - 4] = (- constants::fits::CUDA_ACCESS(fit)     [i - 4][1]*t9i2 
-						             + (-   constants::fits::CUDA_ACCESS(fit)[i - 4][2]*t9i43
-						                +   constants::fits::CUDA_ACCESS(fit)[i - 4][3]*t9i23
-						                + 5*constants::fits::CUDA_ACCESS(fit)[i - 4][5]*t923)*(1./3.)
-						             + constants::fits::CUDA_ACCESS(fit)     [i - 4][4]
-						             + constants::fits::CUDA_ACCESS(fit)     [i - 4][6]*t9i)*1e-9;
+					dcoefs[i - 4] = (- constants::fits::DEVICE_ACCESS(fit)     [i - 4][1]*t9i2 
+						             + (-   constants::fits::DEVICE_ACCESS(fit)[i - 4][2]*t9i43
+						                +   constants::fits::DEVICE_ACCESS(fit)[i - 4][3]*t9i23
+						                + 5*constants::fits::DEVICE_ACCESS(fit)[i - 4][5]*t923)*(1./3.)
+						             + constants::fits::DEVICE_ACCESS(fit)     [i - 4][4]
+						             + constants::fits::DEVICE_ACCESS(fit)     [i - 4][6]*t9i)*1e-9;
 
-					eff[i - 1] = std::exp(constants::fits::CUDA_ACCESS(fit)[i - 4][0] + coefs[i - 4]);
+					eff[i - 1] = std::exp(constants::fits::DEVICE_ACCESS(fit)[i - 4][0] + coefs[i - 4]);
 
 					deff[i - 1] = eff[i - 1]*dcoefs[i - 4];
 
 					// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) { std::cout << "dir(" << i << ")=" << eff[i - 1] << ", coef(" << i << ")=" << coefs[i - 4];
 								 std::cout << "\tddir(" << i << ")=" << deff[i - 1] << ", dcoef(" << i << ")=" << dcoefs[i - 4] << "\n"; }
 #endif
@@ -262,22 +262,22 @@ namespace nnet::net14 {
 					- Ni + He <- Zn */
 				const int k = constants::fits::get_temperature_range(T);
 				for (int i = 4; i < 14; ++i) {
-					l[i - 1] = constants::fits::CUDA_ACCESS(choose)[i - 4][k]/constants::fits::CUDA_ACCESS(choose)[i + 1 - 4][k]*
+					l[i - 1] = constants::fits::DEVICE_ACCESS(choose)[i - 4][k]/constants::fits::DEVICE_ACCESS(choose)[i + 1 - 4][k]*
 						std::exp(
 							  coefs                            [i - 4]
-							+ constants::fits::CUDA_ACCESS(fit)[i - 4][7]
-							- constants::fits::CUDA_ACCESS(q)  [i - 4]*val1
+							+ constants::fits::DEVICE_ACCESS(fit)[i - 4][7]
+							- constants::fits::DEVICE_ACCESS(q)  [i - 4]*val1
 							+ val2
 						);
 
 					dl[i - 1] = l[i - 1]*(
 						  dcoefs                         [i - 4]
-						+ constants::fits::CUDA_ACCESS(q)[i - 4]*val3
+						+ constants::fits::DEVICE_ACCESS(q)[i - 4]*val3
 						+ val4);
 
 
 					// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) { std::cout << (i == 4 ? "\n" : "") << "inv(" << i << ")=" << l[i - 1];
 					             std::cout << "\tdinv(" << i << ")=" << dl[i - 1] << "\n"; }
 #endif
@@ -334,7 +334,7 @@ namespace nnet::net14 {
 
 
 			      	// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "\nr3a=" << eff[0] << ", rg3a=" << l[0] << "\n";
 #endif
 			    }
@@ -352,7 +352,7 @@ namespace nnet::net14 {
 
 
 		      		// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "r24=" << eff[13];
 #endif
 				}
@@ -375,7 +375,7 @@ namespace nnet::net14 {
 
 
 			        // debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << ", r1216=" << eff[14] << "\n";
 #endif
 				}
@@ -389,7 +389,7 @@ namespace nnet::net14 {
 
 
 					// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "r32=" << eff[15] << "\n";
 #endif
 				}
@@ -413,7 +413,7 @@ namespace nnet::net14 {
 
 
 					// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "rcag=" << eff[1] << ", roga=" << l[1] << "\n";
 #endif
 				}
@@ -434,7 +434,7 @@ namespace nnet::net14 {
 
 
 					// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "roag=" << eff[2] << ", rnega=" << l[2] << "\n\n";
 #endif
 				}
@@ -495,7 +495,7 @@ namespace nnet::net14 {
 				    deff[0] =(2.90e-16*(dr2abe*rbeac + r2abe*drbeac) + 1.35e-8*std::exp(vA)*(-1.5*t9i52 + t9i32*dvA))*1.e-9;
 
 			      	// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "\ndr3a=" << deff[0] << "\n";
 #endif
 		      	}
@@ -523,7 +523,7 @@ namespace nnet::net14 {
 
 			      	// debuging :
 
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "drg3a=" << dl[0] << "\n";
 #endif
 				}
@@ -543,7 +543,7 @@ namespace nnet::net14 {
 				    deff[13] = 4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
 
 		      		// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "dr24=" << deff[13] << "\n";
 #endif
 				}
@@ -572,7 +572,7 @@ namespace nnet::net14 {
 				    }
 
 			        // debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "dr1216=" << deff[14] << "\n";
 #endif
 				}
@@ -587,7 +587,7 @@ namespace nnet::net14 {
 					deff[15]=7.10e36*std::exp(vA)*t9i23*(-t9i*2./3. + dvA)*1.e-9;
 
 					// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "dr32=" << deff[15] << "\n";
 #endif
 				}
@@ -618,7 +618,7 @@ namespace nnet::net14 {
 	       				+ 1.43e-2*std::exp(vG)*(5.*t94 + dvG*t95))*1.e-9;
 
 		      		// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "drcag=" << deff[1] << "\n";
 #endif
 		      	}
@@ -641,7 +641,7 @@ namespace nnet::net14 {
 					dl[1]=5.13e10*std::exp(vA)*(deff[1]*t932 + eff[1]*1.5*t912 + eff[1]*t932*dvA)*1.e-9;
 
 					// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "droga=" << dl[1] << "\n";
 #endif
 
@@ -654,7 +654,7 @@ namespace nnet::net14 {
 	       				+ 13.*std::exp(vE)*(2.*t9 + t92*dvE))*1.e-9;
 
 		      		// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "droag=" << deff[2] << "\n";
 #endif
 				}
@@ -670,7 +670,7 @@ namespace nnet::net14 {
 
 
 					// debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "drnega=" << dl[2] << "\n\n";
 #endif
 				}
@@ -697,7 +697,7 @@ namespace nnet::net14 {
 
 			    	// compute mukbt
 					for (int i = 0; i < 14; ++i) {
-						const double gamp = gam*std::pow(constants::CUDA_ACCESS(Z)[i], 5./3.);
+						const double gamp = gam*std::pow(constants::DEVICE_ACCESS(Z)[i], 5./3.);
 				        const double sqrootgamp = std::sqrt(gamp);
 				        const double sqroot2gamp = std::sqrt(sqrootgamp);
 				        if(gamp <= 1) {
@@ -740,7 +740,7 @@ namespace nnet::net14 {
 			        deff[i] = deff[i]*EF - 2.*eff[i]*deltamukbt[i]/T;
 
 			        // debuging :
-#ifndef __CUDA_ARCH__
+#ifndef DEVICE_CODE
 					if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 15 ? "\n\n" : "\n");
 #endif
 				}
