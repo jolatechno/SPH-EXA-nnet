@@ -189,6 +189,7 @@ void step(int rank,
 	const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 	const Float *BE)
 {
+	size_t n_nuclear_particles = n.Y.size();
 
 	// domain redecomposition
 
@@ -200,20 +201,20 @@ void step(int rank,
 
 	// std::swap(n.rho, n.previous_rho); // the way it should be done instead of the first "hydroToNuclearUpdate"
 	sphexa::sphnnet::hydroToNuclearUpdate(d, n, {"rho", "temp"});
-	sphexa::sphnnet::transferToDevice(n, {"previous_rho", "rho", "temp"});
+	sphexa::transferToDevice(n, 0, n_nuclear_particles, {"previous_rho", "rho", "temp"});
 
 	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
 		reactions, construct_rates_BE, eos);
 	sphexa::sphnnet::computeHelmEOS(n, nnet::net14::constants::Z);
 
-	sphexa::sphnnet::transferToHost(n, {"temp",
+	sphexa::transferToHost(n, 0, n_nuclear_particles, {"temp",
 		"c", "p", "cv", "u", "dpdT"});
 	sphexa::sphnnet::nuclearToHydroUpdate(d, n, {"temp"});
 	
 	// do hydro stuff
 
 	/* !! needed for now !! */
-	sphexa::sphnnet::transferToHost(n, {"Y"});
+	sphexa::transferToHost(n, 0, n_nuclear_particles, {"Y"});
 	// print total nuclear energy
 	Float total_nuclear_energy  = sphexa::sphnnet::totalNuclearEnergy(n, BE);
 	Float total_internal_energy = totalInternalEnergy(n);
@@ -350,7 +351,7 @@ int main(int argc, char* argv[]) {
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_87, Y0_87);
 
 		n_nuclear_particles = nuclear_data_87.Y.size();
-		sphexa::sphnnet::transferToDevice(nuclear_data_87, {"Y", "dt"});
+		sphexa::transferToDevice(nuclear_data_87, 0, n_nuclear_particles, {"Y", "dt"});
 
 		std::fill(nuclear_data_87.m.begin(), nuclear_data_87.m.end(), 1.);
 	} else if (use_net86) {
@@ -361,7 +362,7 @@ int main(int argc, char* argv[]) {
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_86, Y0_87);
 
 		n_nuclear_particles = nuclear_data_86.Y.size();
-		sphexa::sphnnet::transferToDevice(nuclear_data_86, {"Y", "dt"});
+		sphexa::transferToDevice(nuclear_data_86, 0, n_nuclear_particles, {"Y", "dt"});
 
 		std::fill(nuclear_data_86.m.begin(), nuclear_data_86.m.end(), 1.);
 	} else {
@@ -372,7 +373,7 @@ int main(int argc, char* argv[]) {
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_14, Y0_14);
 
 		n_nuclear_particles = nuclear_data_14.Y.size();
-		sphexa::sphnnet::transferToDevice(nuclear_data_14, {"Y", "dt"});
+		sphexa::transferToDevice(nuclear_data_14, 0, n_nuclear_particles, {"Y", "dt"});
 
 		std::fill(nuclear_data_14.m.begin(), nuclear_data_14.m.end(), 1.);
 	}
@@ -533,17 +534,17 @@ int main(int argc, char* argv[]) {
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (use_net87) {
-		sphexa::sphnnet::transferToHost(nuclear_data_87, {"cv"});
+		sphexa::transferToHost(nuclear_data_87, 0, n_nuclear_particles, {"cv"});
 
 		dump(nuclear_data_87, 0,                             n_print,             "/dev/stdout");
 		dump(nuclear_data_87, n_nuclear_particles - n_print, n_nuclear_particles, "/dev/stdout");
 	} else if (use_net86) {
-		sphexa::sphnnet::transferToHost(nuclear_data_86, {"cv"});
+		sphexa::transferToHost(nuclear_data_86, 0, n_nuclear_particles, {"cv"});
 
 		dump(nuclear_data_86, 0,                             n_print,             "/dev/stdout");
 		dump(nuclear_data_86, n_nuclear_particles - n_print, n_nuclear_particles, "/dev/stdout");
 	} else {
-		sphexa::sphnnet::transferToHost(nuclear_data_14, {"cv"});
+		sphexa::transferToHost(nuclear_data_14, 0, n_nuclear_particles, {"cv"});
 
 		dump(nuclear_data_14, 0,                             n_print,             "/dev/stdout");
 		dump(nuclear_data_14, n_nuclear_particles - n_print, n_nuclear_particles, "/dev/stdout");

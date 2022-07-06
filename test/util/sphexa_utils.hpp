@@ -5,9 +5,12 @@
 #include <variant>
 #include <type_traits>
 #include <array>
-#include <type_traits>
 
 #include <iostream>
+
+#ifdef USE_CUDA
+    #include <thrust/device_vector.h>
+#endif
 
 namespace util {
 	template<class T, long unsigned int n>
@@ -307,5 +310,106 @@ private:
     //! @brief current state of each field
     std::vector<State> fieldStates_;
 };
+
+
+
+
+#ifdef USE_CUDA
+template<class ThrustVec>
+typename ThrustVec::value_type* rawPtr(ThrustVec& p)
+{
+    assert(p.size() && "cannot get pointer to unallocated device vector memory");
+    return thrust::raw_pointer_cast(p.data());
+}
+
+template<class ThrustVec>
+const typename ThrustVec::value_type* rawPtr(const ThrustVec& p)
+{
+    assert(p.size() && "cannot get pointer to unallocated device vector memory");
+    return thrust::raw_pointer_cast(p.data());
+}
+#endif
+
+
+
+template<class Dataset, std::enable_if_t<not HaveGpu<typename Dataset::AcceleratorType>{}, int> = 0>
+void transferToDevice(Dataset&, size_t, size_t, const std::vector<std::string>&)
+{
+}
+
+template<class Dataset, std::enable_if_t<not HaveGpu<typename Dataset::AcceleratorType>{}, int> = 0>
+void transferToHost(Dataset&, size_t, size_t, const std::vector<std::string>&)
+{
+}
+
+
+
+template<class DataType, std::enable_if_t<HaveGpu<typename DataType::AcceleratorType>{}, int> = 0>
+void transferToDevice(DataType& d, size_t first, size_t last, const std::vector<std::string>& fields)
+{
+#ifdef USE_CUDA
+    auto hostData = d.data();
+    auto deviceData = d.devData.data();
+
+    auto launchTransfer = [first, last](const auto* hostField, auto* deviceField)
+    {
+        using Type1 = std::decay_t<decltype(*hostField)>;
+        using Type2 = std::decay_t<decltype(*deviceField)>;
+        if constexpr (std::is_same_v<typename Type1::value_type, typename Type2::value_type>)
+        {
+            assert(hostField->size() > 0);
+            assert(deviceField->size() > 0);
+            size_t transferSize = (last - first) * sizeof(typename Type1::value_type);
+            // CHECK_CUDA_ERR(
+            gpuErrchk(
+                cudaMemcpy(
+                rawPtr(*deviceField) + first, hostField->data() + first, transferSize, cudaMemcpyHostToDevice));
+        }
+        else { throw std::runtime_error("Field type mismatch between CPU and GPU in copy to device");
+        }
+    };
+
+    for (const auto& field : fields)
+    {
+        int fieldIdx =
+            std::find(DataType::fieldNames.begin(), DataType::fieldNames.end(), field) - DataType::fieldNames.begin();
+        std::visit(launchTransfer, hostData[fieldIdx], deviceData[fieldIdx]);
+    }
+#endif
+}
+
+template<class DataType, std::enable_if_t<HaveGpu<typename DataType::AcceleratorType>{}, int> = 0>
+void transferToHost(DataType& d, size_t first, size_t last, const std::vector<std::string>& fields)
+{
+#ifdef USE_CUDA
+    auto hostData   = d.data();
+    auto deviceData = d.devData.data();
+
+    auto launchTransfer = [first, last](auto* hostField, const auto* deviceField)
+    {
+        using Type1 = std::decay_t<decltype(*hostField)>;
+        using Type2 = std::decay_t<decltype(*deviceField)>;
+        if constexpr (std::is_same_v<typename Type1::value_type, typename Type2::value_type>)
+        {
+            assert(hostField->size() > 0);
+            assert(deviceField->size() > 0);
+            size_t transferSize = (last - first) * sizeof(typename Type1::value_type);
+            // CHECK_CUDA_ERR(
+            gpuErrchk(
+                cudaMemcpy(
+                hostField->data() + first, rawPtr(*deviceField) + first, transferSize, cudaMemcpyDeviceToHost));
+        }
+        else { throw std::runtime_error("Field type mismatch between CPU and GPU in copy to device");
+        }
+    };
+
+    for (const auto& field : fields)
+    {
+        int fieldIdx =
+            std::find(DataType::fieldNames.begin(), DataType::fieldNames.end(), field) - DataType::fieldNames.begin();
+        std::visit(launchTransfer, hostData[fieldIdx], deviceData[fieldIdx]);
+    }
+#endif
+}
 
 } // namespace sphexa

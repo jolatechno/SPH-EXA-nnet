@@ -67,7 +67,7 @@ namespace sphexa::sphnnet {
 
 		/// base fieldNames (without knowledge of nuclear species names)
 		inline static constexpr std::array fieldNames {
-			"dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y",
+			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y",
 		};
 
 
@@ -85,6 +85,7 @@ namespace sphexa::sphnnet {
 
 		    if constexpr (HaveGpu<AcceleratorType>{}) {
 				return util::array<FieldType, fieldNames.size()>{
+					(thrust::device_vector<Float>*)nullptr, (thrust::device_vector<Float>*)nullptr,
 					&dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &previous_rho, &Y
 				};
 			} else
@@ -94,61 +95,4 @@ namespace sphexa::sphnnet {
 #endif
 	    }
 	 };
-
-    template<class DataType>
-	void transferToDevice(DataType& d, const std::vector<std::string>& fields) {
-#ifdef USE_CUDA
-	    if constexpr (HaveGpu<typename DataType::AcceleratorType>{}) {
-			auto hostData   = d.data();
-			auto deviceData = d.devData.data();
-
-			// send fields
-			for (auto field : fields) {
-				// find field
-				int hostFieldIdx = std::distance(d.fieldNames.begin(), 
-					std::find(d.fieldNames.begin(), d.fieldNames.end(), field));
-				int devFieldIdx  = std::distance(d.devData.fieldNames.begin(), 
-					std::find(d.devData.fieldNames.begin(), d.devData.fieldNames.end(), field));
-
-				// copy to device
-				std::visit(
-					[&](auto&& dev, auto &&host) {
-						size_t n_copy = host->size();
-						using T = decltype(*host->data());
-
-						gpuErrchk(cudaMemcpy((void*)thrust::raw_pointer_cast(dev->data()), (void*)host->data(), n_copy*sizeof(T), cudaMemcpyHostToDevice));
-					}, deviceData[devFieldIdx], hostData[hostFieldIdx]);
-				
-			}
-		}
-#endif
-	}
-
-	template<class DataType>
-	void transferToHost(DataType& d, const std::vector<std::string>& fields) {
-#ifdef USE_CUDA
-		if constexpr (HaveGpu<typename DataType::AcceleratorType>{}) {
-			auto hostData   = d.data();
-			auto deviceData = d.devData.data();
-
-			// send fields
-			for (auto field : fields) {
-				// find field
-				int hostFieldIdx = std::distance(d.fieldNames.begin(), 
-					std::find(d.fieldNames.begin(), d.fieldNames.end(), field));
-				int devFieldIdx  = std::distance(d.devData.fieldNames.begin(), 
-					std::find(d.devData.fieldNames.begin(), d.devData.fieldNames.end(), field));
-
-				// copy to host
-				std::visit(
-				[&](auto&& host, auto &&dev) {
-					size_t n_copy = host->size();
-					using T = decltype(*host->data());
-
-					gpuErrchk(cudaMemcpy((void*)host->data(), (void*)thrust::raw_pointer_cast(dev->data()), n_copy*sizeof(T), cudaMemcpyDeviceToHost));
-				}, hostData[hostFieldIdx], deviceData[devFieldIdx]);
-			}
-		}
-#endif
-	}
 }

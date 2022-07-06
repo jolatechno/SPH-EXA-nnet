@@ -86,13 +86,15 @@ void step(
 	const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 	const Float* BE)
 {
-	sphexa::sphnnet::transferToDevice(n, {"previous_rho", "rho", "temp"});
+	size_t n_particles = n.Y.size();
+
+	sphexa::transferToDevice(n, 0, n_particles, {"previous_rho", "rho", "temp"});
 	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
 		reactions, construct_rates_BE, eos);
-	sphexa::sphnnet::transferToHost(n, {"temp"});
+	sphexa::transferToHost(n, 0, n_particles, {"temp"});
 
 	/* !! needed for now !! */
-	sphexa::sphnnet::transferToHost(n, {"Y"});
+	sphexa::transferToHost(n, 0, n_particles, {"Y"});
 	// print total nuclear energy
 	Float total_nuclear_energy = sphexa::sphnnet::totalNuclearEnergy(n, BE);
 	std::cout << "total nuclear energy = " << total_nuclear_energy << "\n";
@@ -179,17 +181,23 @@ int main(int argc, char* argv[]) {
 	sphexa::sphnnet::NuclearDataType<14, double, AccType> nuclear_data_14;
 
 	if (use_net87) {
-		nuclear_data_87.setDependent(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_87.setDependent(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y");
 		nuclear_data_87.devData.setDependent("c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
 		nuclear_data_87.resize(n_particles);
+
+		std::fill(nuclear_data_87.m.begin(), nuclear_data_87.m.end(), 1.);
 	} else if (use_net86) {
-		nuclear_data_86.setDependent(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_86.setDependent(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y");
 		nuclear_data_86.devData.setDependent("c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
 		nuclear_data_86.resize(n_particles);
+
+		std::fill(nuclear_data_86.m.begin(), nuclear_data_86.m.end(), 1.);
 	} else {
-		nuclear_data_14.setDependent(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y");
+		nuclear_data_14.setDependent(/*"nid", "pid",*/ "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y");
 		nuclear_data_14.devData.setDependent("c", "p", "cv", "u", "dpdT", "temp", "rho", "previous_rho", "Y", "dt");
 		nuclear_data_14.resize(n_particles);
+
+		std::fill(nuclear_data_14.m.begin(), nuclear_data_14.m.end(), 1.);
 	}
 
 
@@ -205,7 +213,7 @@ int main(int argc, char* argv[]) {
 			nuclear_data_87.temp[i] = T_left   + (T_right   - T_left  )*((float)i)/((float)(n_particles - 1));
 			nuclear_data_87.rho[i]  = rho_left + (rho_right - rho_left)*((float)i)/((float)(n_particles - 1));
 		}
-		sphexa::sphnnet::transferToDevice(nuclear_data_87, {"Y", "dt"});
+		sphexa::transferToDevice(nuclear_data_87, 0, n_particles, {"Y", "dt"});
 	} else if (use_net86) {
 		for (size_t i = 0; i < n_particles; ++i) {
 			for (int j = 0; j < 86; ++j)
@@ -213,14 +221,14 @@ int main(int argc, char* argv[]) {
 			nuclear_data_86.temp[i] = T_left   + (T_right   - T_left  )*((float)i)/((float)(n_particles - 1));
 			nuclear_data_86.rho[i]  = rho_left + (rho_right - rho_left)*((float)i)/((float)(n_particles - 1));
 		}
-		sphexa::sphnnet::transferToDevice(nuclear_data_86, {"Y", "dt"});
+		sphexa::transferToDevice(nuclear_data_86, 0, n_particles, {"Y", "dt"});
 	} else {
 		for (size_t i = 0; i < n_particles; ++i) {
 			nuclear_data_14.Y[i]    = Y0_14;
 			nuclear_data_14.temp[i] = T_left   + (T_right   - T_left  )*((float)i)/((float)(n_particles - 1));
 			nuclear_data_14.rho[i]  = rho_left + (rho_right - rho_left)*((float)i)/((float)(n_particles - 1));
 		}
-		sphexa::sphnnet::transferToDevice(nuclear_data_14, {"Y", "dt"});
+		sphexa::transferToDevice(nuclear_data_14, 0, n_particles, {"Y", "dt"});
 	}
 	
 
@@ -347,17 +355,17 @@ int main(int argc, char* argv[]) {
 		std::cout << name << " ";
 	std::cout << "\n";
 	if (use_net87) {
-		sphexa::sphnnet::transferToHost(nuclear_data_87, {"Y"});
+		sphexa::transferToHost(nuclear_data_87, 0, n_particles, {"Y"});
 
 		dump(nuclear_data_87, 0,                     n_print,     "/dev/stdout");
 		dump(nuclear_data_87, n_particles - n_print, n_particles, "/dev/stdout");
 	} else if (use_net86) {
-		sphexa::sphnnet::transferToHost(nuclear_data_86, {"Y"});
+		sphexa::transferToHost(nuclear_data_86, 0, n_particles, {"Y"});
 
 		dump(nuclear_data_86, 0,                     n_print,     "/dev/stdout");
 		dump(nuclear_data_86, n_particles - n_print, n_particles, "/dev/stdout");
 	} else {
-		sphexa::sphnnet::transferToHost(nuclear_data_14, {"Y"});
+		sphexa::transferToHost(nuclear_data_14, 0, n_particles, {"Y"});
 
 		dump(nuclear_data_14, 0,                     n_print,     "/dev/stdout");
 		dump(nuclear_data_14, n_particles - n_print, n_particles, "/dev/stdout");
