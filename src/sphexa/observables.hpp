@@ -22,8 +22,9 @@
 
 	#include <thrust/device_vector.h>
 
-	#include "CUDA/nuclear-net.cu.cuh"
 	#include "../CUDA/nuclear-net.hpp"
+	// #include "CUDA/nuclear-net.cuh"
+	#include "CUDA/nuclear-net.cu"
 #endif
 
 namespace sphexa::sphnnet {

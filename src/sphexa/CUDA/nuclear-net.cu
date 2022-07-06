@@ -1,37 +1,9 @@
 #pragma once
 
-#include <device_launch_parameters.h>
-#include <cuda.h>
-#include <cuda_runtime_api.h>
-#include <cuda_runtime.h>
-
-// #include "nuclear-net.cuh"
-#include "../../nuclear-net.hpp"
-#include "../util/algorithm.hpp"
-
-#ifndef CUDA_NUM_ITERATION_PER_THREAD
-	#define CUDA_NUM_ITERATION_PER_THREAD 8
-#endif
-#ifndef CUDA_NUM_THREAD_PER_BLOCK_NNET
-	#define CUDA_NUM_THREAD_PER_BLOCK_NNET 32
-#endif
-#ifndef CUDA_NUM_THREAD_PER_BLOCK
-	#define CUDA_NUM_THREAD_PER_BLOCK 32
-#endif
+#include "nuclear-net.cuh"
 
 namespace sphexa {
 namespace sphnnet {
-	namespace constants {
-		/// number of consecutive iteration per cuda thread
-		const int cuda_num_iteration_per_thread = CUDA_NUM_ITERATION_PER_THREAD;
-		/// number of thread per cuda thread block for nuclear network
-		const int cuda_num_thread_per_block_nnet = CUDA_NUM_THREAD_PER_BLOCK_NNET;
-		/// number of thread per cuda thread block
-		const int cuda_num_thread_per_block = CUDA_NUM_THREAD_PER_BLOCK;
-	}
-
-
-
 	/***********************************************/
 	/* code to compute nuclear reaction on the GPU */
 	/***********************************************/
