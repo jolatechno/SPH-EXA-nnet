@@ -1,5 +1,22 @@
 #pragma once
 
+#include "../CUDA/cuda.inl"
+#if COMPILE_DEVICE
+	#include <device_launch_parameters.h>
+	#include <cuda.h>
+	#include <cuda_runtime_api.h>
+	#include <cuda_runtime.h>
+
+	#include <thrust/device_vector.h>
+
+	#include "../CUDA/nuclear-net.hpp"
+#ifdef IMPORT_DOT_CU
+	#include "CUDA/nuclear-net.cu"
+#else
+	#include "CUDA/nuclear-net.cuh"
+#endif
+#endif
+
 #include <numeric>
 #include <omp.h>
 
@@ -14,19 +31,6 @@
 	#include "sph/data_util.hpp"
 #endif
 
-#ifdef USE_CUDA
-	#include <device_launch_parameters.h>
-	#include <cuda.h>
-	#include <cuda_runtime_api.h>
-	#include <cuda_runtime.h>
-
-	#include <thrust/device_vector.h>
-
-	#include "../CUDA/nuclear-net.hpp"
-	#include "CUDA/nuclear-net.cuh"
- // #include "CUDA/nuclear-net.cu"
-#endif
-
 namespace sphexa::sphnnet {
 	/// function to compute the total nuclear energy
 	/**
@@ -37,7 +41,7 @@ namespace sphexa::sphnnet {
 		const size_t n_particles = n.temp.size();
 		const int dimension = n.Y[0].size();
 
-#ifdef USE_CUDA
+#if COMPILE_DEVICE
 		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && false /* NOT IMPLEMENTED */) {
 
 			/* TODO */

@@ -1,5 +1,10 @@
 #pragma once
 
+#include "CUDA/cuda.inl"
+#if COMPILE_DEVICE
+	#include <cuda_runtime.h>
+#endif
+
 #include "eigen/eigen.hpp"
 #include "sphexa/util/algorithm.hpp"
 
@@ -10,11 +15,6 @@
 #include <vector>
 #include <tuple>
 #include <memory>
-
-#ifdef USE_CUDA
-	#include <cuda_runtime.h>
-#endif
-#include "CUDA/cuda.inl"
 
 namespace nnet {
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

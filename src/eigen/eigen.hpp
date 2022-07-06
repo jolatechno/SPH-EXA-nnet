@@ -1,19 +1,17 @@
 #pragma once
 
+#include "../CUDA/cuda.inl"
+#if COMPILE_DEVICE
+	#include "../CUDA/cuda-util.hpp"
+#endif
+
 #include <vector>
 #include <cmath>
 #include <tuple>
 
-#ifdef USE_CUDA
-	#include <cuda_runtime.h>
-	
-	#include "../CUDA/cuda-util.hpp"
-#endif
-#include "../CUDA/cuda.inl"
-
 // base implementations
 namespace eigen {
-#ifdef USE_CUDA
+#if COMPILE_DEVICE
 	// forward declarations
 	namespace cuda {
 		template<typename Type, int n, int m>

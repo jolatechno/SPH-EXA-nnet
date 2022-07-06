@@ -15,7 +15,8 @@
 	#include "../../../test/util/sphexa_utils.hpp"
 #endif
 
-#ifdef USE_CUDA
+#include "../../CUDA/cuda.inl"
+#if COMPILE_DEVICE
 	#include <thrust/device_vector.h>
 #endif
 
@@ -31,7 +32,7 @@ namespace sphexa::sphnnet {
 		using RealType = Float;
     	using AcceleratorType = AccType;
 
-#ifdef USE_CUDA
+#if COMPILE_DEVICE
 		/// hydro data
 		thrust::device_vector<Float> c, p, cv, dpdT, u, m, rho, temp, previous_rho;
 
@@ -46,7 +47,7 @@ namespace sphexa::sphnnet {
 #endif
 
 		/// resize the number of particules
-#ifdef USE_CUDA
+#if COMPILE_DEVICE
 		void resize(size_t size);
 #else
 		void resize(size_t size) {}
@@ -66,7 +67,7 @@ namespace sphexa::sphnnet {
 	     */
 
 	    auto data() {
-#ifdef USE_CUDA
+#if COMPILE_DEVICE
 	    	using FieldType = std::variant<
 		    	thrust::device_vector<util::array<Float, n_species>>*,
 		    	thrust::device_vector<Float>*>;

@@ -22,7 +22,7 @@
 
 
 
-#if defined(USE_CUDA) && !defined(CPU_CUDA_TEST)
+#if defined(COMPILE_DEVICE) && !defined(CPU_CUDA_TEST)
 	using AccType = cstone::GpuTag;
 #else
 	using AccType = cstone::CpuTag;
@@ -33,7 +33,7 @@
 
 /************************************************************************/
 /*              non-MPI test to test GPU implementation                 */
-// compile:  nvcc -x cu -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -W -std=c++17 -DCPU_CUDA_TEST_" parallel-perftest.cpp -o parallel-perftest.out -std=c++17 --expt-relaxed-constexpr
+// compile:  nvcc -x cu -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -W -std=c++17 -DCPU_CUDA_TEST_" parallel-perftest.cpp -o parallel-perftest.out -std=c++17 --expt-relaxed-constexpr
 // launch:   ./parallel-perftest.out --test-case C-O-burning --n-particle 1000000 --dt 1e-4 -n 10 &> res.out &
 /************************************************************************/
 

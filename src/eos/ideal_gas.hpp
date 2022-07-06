@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../CUDA/cuda.inl"
+
 namespace nnet::eos {
 	namespace ideal_gas_constants {
 		const static double Kb = 1.380658e-16;

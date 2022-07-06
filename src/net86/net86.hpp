@@ -1,5 +1,10 @@
 #pragma once
 
+#include "../CUDA/cuda.inl"
+#if COMPILE_DEVICE
+	#include "../CUDA/cuda-util.hpp"
+#endif
+
 #include <vector>
 #include <iostream>
 
@@ -7,11 +12,6 @@
 #include "net86-constants.hpp"
 
 #include "../sphexa/util/algorithm.hpp"
-
-#ifdef USE_CUDA
-	#include <cuda_runtime.h>
-#endif
-#include "../CUDA/cuda.inl"
 
 #define BE_NET86 \
 	0 COMMA 0 COMMA \
@@ -287,7 +287,7 @@ namespace nnet::net86 {
 
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug)  { std::cout << "dir(" << i << ")=" << eff[i] << ", coef(" << i << ")=" << coefs[i - 7];
 					              std::cout << "\tddir(" << i << ")=" << deff[i] << ", dcoef(" << i << ")=" << dcoefs[i - 7] << "\n"; }
 #endif
@@ -346,7 +346,7 @@ namespace nnet::net86 {
 
 
 			      	// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "\nr3a=" << eff[4] << ", rg3a=" << l[4] << "\n";
 #endif
 			    }
@@ -364,7 +364,7 @@ namespace nnet::net86 {
 
 
 		      		// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "r24=" << eff[0];
 #endif
 				}
@@ -387,7 +387,7 @@ namespace nnet::net86 {
 
 
 			        // debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << ", r1216=" << eff[1] << "\n";
 #endif
 				}
@@ -401,7 +401,7 @@ namespace nnet::net86 {
 
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "r32=" << eff[2] << "\n";
 #endif
 				}
@@ -425,7 +425,7 @@ namespace nnet::net86 {
 
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "rcag=" << eff[5] << ", roga=" << l[5] << "\n";
 #endif
 				}
@@ -446,7 +446,7 @@ namespace nnet::net86 {
 
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "roag=" << eff[6] << ", rnega=" << l[6] << "\n\n";
 #endif
 				}
@@ -507,7 +507,7 @@ namespace nnet::net86 {
 				    deff[4] =(2.90e-16*(dr2abe*rbeac + r2abe*drbeac) + 1.35e-8*std::exp(vA)*(-1.5*t9i52 + t9i32*dvA))*1.e-9;
 
 			      	// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "\ndr3a=" << deff[4] << "\n";
 #endif
 		      	}
@@ -535,7 +535,7 @@ namespace nnet::net86 {
 
 
 			      	// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "drg3a=" << dl[4] << "\n";
 #endif
 				}
@@ -556,7 +556,7 @@ namespace nnet::net86 {
 
 
 		      		// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "dr24=" << deff[0] << "\n";
 #endif
 				}
@@ -586,7 +586,7 @@ namespace nnet::net86 {
 
 
 			        // debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "dr1216=" << deff[1] << "\n";
 #endif
 				}
@@ -602,7 +602,7 @@ namespace nnet::net86 {
 
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "dr32=" << deff[2] << "\n";
 #endif
 				}
@@ -633,7 +633,7 @@ namespace nnet::net86 {
 	       				+ 1.43e-2*std::exp(vG)*(5.*t94 + dvG*t95))*1.e-9;
 
 		      		// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "drcag=" << deff[5] << "\n";
 #endif
 		      	}
@@ -657,7 +657,7 @@ namespace nnet::net86 {
 
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "droga=" << dl[5] << "\n";
 #endif
 
@@ -671,7 +671,7 @@ namespace nnet::net86 {
 
 
 		      		// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "droag=" << deff[6] << "\n";
 #endif
 				}
@@ -687,7 +687,7 @@ namespace nnet::net86 {
 
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "drnega=" << dl[6] << "\n\n";
 #endif
 				}
@@ -800,7 +800,7 @@ namespace nnet::net86 {
 
 
 			        // debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 156 ? "\n\n" : "\n");
 #endif
 				}
@@ -814,7 +814,7 @@ namespace nnet::net86 {
 
 
 			        // debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 156 ? "\n\n" : "\n");
 #endif
 				}

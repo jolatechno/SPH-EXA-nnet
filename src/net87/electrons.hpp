@@ -1,5 +1,10 @@
 #pragma once
 
+#include "../CUDA/cuda.inl"
+#if COMPILE_DEVICE
+	#include "../CUDA/cuda-util.hpp"
+#endif
+
 #define STRINGIFY(...) #__VA_ARGS__
 #define STR(...) STRINGIFY(__VA_ARGS__)
 
@@ -25,13 +30,6 @@
 #include <array>
 
 #include <cmath>
-
-#ifdef USE_CUDA
-	#include <cuda_runtime.h>
-
-	#include "../CUDA/cuda-util.hpp"
-#endif
-#include "../CUDA/cuda.inl"
 
 namespace nnet::net87::electrons {
 	namespace constants {

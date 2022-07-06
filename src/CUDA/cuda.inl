@@ -1,6 +1,8 @@
 #define COMMA ,
 
-#ifdef USE_CUDA
+#define COMPILE_DEVICE (defined(__CUDACC__) || defined(__HIPCC__))
+
+#if COMPILE_DEVICE
 	#define HOST_DEVICE_FUN __host__ __device__
 
 	#define DEVICE_DEFINE(type, symbol, definition) \

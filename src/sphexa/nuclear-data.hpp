@@ -1,5 +1,12 @@
 #pragma once
 
+#include "../CUDA/cuda.inl"
+#if defined(IMPORT_DOT_CU) && COMPILE_DEVICE
+	#include "CUDA/nuclear-data-gpu.cu"
+#else
+	#include "CUDA/nuclear-data-gpu.cuh"
+#endif
+
 #include <vector>
 #include <array>
 #include <memory>
@@ -18,12 +25,6 @@
 	#include "sph/field_states.hpp"
 
 	#include "cstone/util/util.hpp"
-#endif
-
-#if defined(IMPORT_DOT_CU) && defined(USE_CUDA)
-	#include "CUDA/nuclear-data-gpu.cu"
-#else
-	#include "CUDA/nuclear-data-gpu.cuh"
 #endif
 
 namespace sphexa::sphnnet {
