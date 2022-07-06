@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../CUDA/cuda.inl"
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
 	#include "../CUDA/cuda-util.hpp"
 #endif
 
@@ -217,7 +217,7 @@ namespace nnet::eos {
 				dd3i_sav[i] = dd3i;
 			}
 
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
 			if constexpr (sphexa::HaveGpu<AccType>{}) {
 		        // copy to device 
 		        gpuErrchk(cudaMemcpyToSymbol(dev_d,        d,              imax*sizeof(double)));
@@ -267,7 +267,7 @@ namespace nnet::eos {
 
 		bool initalized = false;
 #ifdef AUTO_INITIALIZE
-	#if COMPILE_DEVICE
+	#ifdef COMPILE_DEVICE
 		initalized = read_table<cstone::GpuTag>();
 	#else
 		initalized = read_table<cstone::CpuTag>();
@@ -433,7 +433,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-#if !DEVICE_CODE
+#ifndef DEVICE_CODE
 		if (debug) std::cout << "T=" << T << ", rho=" << rho << ", abar=" << abar << ", zbar=" << zbar << "\n";
 #endif
 
@@ -574,7 +574,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-#if !DEVICE_CODE
+#ifndef DEVICE_CODE
 		if (debug) std::cout << "xt=" << xt << " = (T - t[" << jat << "]=" << helmholtz_constants::t[jat] << ")* dti_sav[" << jat << "]=" << helmholtz_constants::dti_sav[jat] << "\n";
 #endif
 
@@ -586,7 +586,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-#if !DEVICE_CODE
+#ifndef DEVICE_CODE
 		if (debug) std::cout << "si0t=" << si0t << " = psi0(xt=" << xt << ")\n";
 #endif
 
@@ -852,7 +852,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-#if !DEVICE_CODE
+#ifndef DEVICE_CODE
 		if (debug) std::cout << "dsepdt=" << dsepdt << " = -df_tt=" << df_tt << " * ye=" << ye << "\n";
 #endif
 
@@ -865,7 +865,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-#if !DEVICE_CODE
+#ifndef DEVICE_CODE
 		if (debug) std::cout << "deepdt=" << deepdt << " = dsepdt=" << dsepdt << " * T" << "\n";
 #endif
 
@@ -883,7 +883,7 @@ namespace nnet::eos {
 		Float dsda     = z*dxnida;
 
 		/* debug: */
-#if !DEVICE_CODE
+#ifndef DEVICE_CODE
 		if (debug) std::cout << "s=" << s << " = z=" << z << " * xni=" << xni << "\n";
 #endif
 
@@ -902,7 +902,7 @@ namespace nnet::eos {
 		Float plasgdz  = 2.0*plasg/zbar;
 
 		/* debug: */
-#if !DEVICE_CODE
+#ifndef DEVICE_CODE
 		if (debug) std::cout << "plasg=" << plasg << " = zbar=" << zbar << "^2 * esqu=" << helmholtz_constants::esqu << " * ktinv=" << ktinv << " * inv_lami=" << inv_lami << "\n";
 #endif
 
@@ -928,7 +928,7 @@ namespace nnet::eos {
 
 
 			/* debug: */
-#if !DEVICE_CODE
+#ifndef DEVICE_CODE
 		if (debug) std::cout << "decouldt=" << decouldt << " = y=" << y << " * plasgdt=" << decouldt << " + ecoul=" << ecoul << " / T" << "\n";
 #endif
 
@@ -969,7 +969,7 @@ namespace nnet::eos {
 
 
 			/* debug: */
-#if !DEVICE_CODE
+#ifndef DEVICE_CODE
 			if (debug) std::cout << "decouldt=" << decouldt << " = s=" << s << " * dpcouldt=" << dpcouldt <<"\n";
 #endif
 
@@ -1033,7 +1033,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-#if !DEVICE_CODE
+#ifndef DEVICE_CODE
 		if (debug) std::cout << "degasdt=" << degasdt << " = deiondt=" << deiondt << " + deepdt=" << deepdt << " + decouldt=" << decouldt << "\n";
 #endif
 
@@ -1060,7 +1060,7 @@ namespace nnet::eos {
 
 
 		/* debug: */
-#if !DEVICE_CODE
+#ifndef DEVICE_CODE
 		if (debug) std::cout << "rhoerdt(cv)=" << rhoerdt << " = deraddt=" << deraddt << " + degasdt=" << degasdt << "\n\n";
 #endif
 
@@ -1136,7 +1136,7 @@ namespace nnet::eos {
 	private:
 		const Float *Z;
 		int dimension;
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
 		Float *dev_Z;
 #endif
 
@@ -1145,7 +1145,7 @@ namespace nnet::eos {
 
 		HOST_DEVICE_FUN helmholtz_functor() {}
 		helmholtz_functor(const Float  *Z_, int dimension_) : Z(Z_), dimension(dimension_) {
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
 			gpuErrchk(cudaMalloc(&dev_Z, dimension*sizeof(Float)));
 			gpuErrchk(cudaMemcpy(dev_Z, Z, dimension*sizeof(Float), cudaMemcpyHostToDevice));
 #endif
@@ -1156,7 +1156,7 @@ namespace nnet::eos {
 		helmholtz_functor(const Vector &Z_) : helmholtz_functor(Z_.data(), Z_.size()) {}
 
 		HOST_DEVICE_FUN ~helmholtz_functor() {
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
 			cudaFree(dev_Z);
 #endif
 		}

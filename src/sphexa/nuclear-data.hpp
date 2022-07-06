@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../CUDA/cuda.inl"
-#if defined(IMPORT_DOT_CU) && COMPILE_DEVICE
+#if defined(IMPORT_DOT_CU) && defined(COMPILE_DEVICE)
 	#include "CUDA/nuclear-data-gpu.cu"
 #else
 	#include "CUDA/nuclear-data-gpu.cuh"

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../CUDA/cuda.inl"
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
 	#include "../CUDA/cuda-util.hpp"
 #endif
 
@@ -11,7 +11,7 @@
 
 // base implementations
 namespace eigen {
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
 	// forward declarations
 	namespace cuda {
 		template<typename Type, int n, int m>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../CUDA/cuda.inl"
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
 	#include <device_launch_parameters.h>
 	#include <cuda.h>
 	#include <cuda_runtime_api.h>
@@ -55,7 +55,7 @@ namespace sphexa::sphnnet {
 		const size_t n_particles = n.temp.size();
 		const int dimension = n.Y[0].size();
 		
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
 		if constexpr (HaveGpu<typename Data::AcceleratorType>{}) {
 
 			/* !!!!!!!!!!!!!
@@ -124,7 +124,7 @@ namespace sphexa::sphnnet {
 		const int dimension = n.Y[0].size();
 		using Float = typename std::remove_reference<decltype(n.cv[0])>::type;
 
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
 		if constexpr (HaveGpu<typename Data::AcceleratorType>{}) {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			simple GPU application of the eos

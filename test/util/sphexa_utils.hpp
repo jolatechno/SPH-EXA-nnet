@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
     #include <thrust/device_vector.h>
 #endif
 
@@ -316,7 +316,7 @@ private:
 
 
 
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
 template<class ThrustVec>
 typename ThrustVec::value_type* rawPtr(ThrustVec& p)
 {
@@ -349,7 +349,7 @@ void transferToHost(Dataset&, size_t, size_t, const std::vector<std::string>&)
 template<class DataType, std::enable_if_t<HaveGpu<typename DataType::AcceleratorType>{}, int> = 0>
 void transferToDevice(DataType& d, size_t first, size_t last, const std::vector<std::string>& fields)
 {
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
     auto hostData = d.data();
     auto deviceData = d.devData.data();
 
@@ -383,7 +383,7 @@ void transferToDevice(DataType& d, size_t first, size_t last, const std::vector<
 template<class DataType, std::enable_if_t<HaveGpu<typename DataType::AcceleratorType>{}, int> = 0>
 void transferToHost(DataType& d, size_t first, size_t last, const std::vector<std::string>& fields)
 {
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
     auto hostData   = d.data();
     auto deviceData = d.devData.data();
 

@@ -39,7 +39,7 @@
 // compile CPU:  nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" -c hydro-mockup.cpp -o hydro-mockup-gpu.o -std=c++17 --expt-relaxed-constexpr
 // link:         g++ nuclear-net.o hydro-mockup-gpu.o nuclear-data.o -o hydro-mockup-gpu.out -lcudart
 
-// compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DIMPORT_DOT_CU -DCPU_CUDA_TEST_" hydro-mockup.cpp -o hydro-mockup.out -std=c++17 --expt-relaxed-constexpr
+// compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -std=c++17 -DUSE_MPI -DIMPORT_DOT_CU -DCPU_CUDA_TEST_" hydro-mockup.cpp -o hydro-mockup.out -std=c++17 --expt-relaxed-constexpr
 /*                                                                      */
 /*             Launch on a system with 2 GPUs:                          */
 // mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 10000000 --dt 1e-4 -n 10 > res_mpi_big.out 2> err.out &
@@ -243,7 +243,7 @@ int main(int argc, char* argv[]) {
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-#if COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
 	cuda_util::initCudaMpi(MPI_COMM_WORLD);
 #endif
 

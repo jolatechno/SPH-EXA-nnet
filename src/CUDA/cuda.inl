@@ -1,8 +1,8 @@
 #define COMMA ,
 
-#define COMPILE_DEVICE (defined(__CUDACC__) || defined(__HIPCC__))
+#if defined(__CUDACC__) || defined(__HIPCC__)
+	#define COMPILE_DEVICE
 
-#if COMPILE_DEVICE
 	#define HOST_DEVICE_FUN __host__ __device__
 
 	#define DEVICE_DEFINE(type, symbol, definition) \
@@ -14,9 +14,10 @@
 	#define DEVICE_DEFINE(type, symbol, definition) type symbol definition
 #endif
 
-#define DEVICE_CODE (defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__))
 
-#if DEVICE_CODE
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+	#define DEVICE_CODE
+
 	#define DEVICE_ACCESS(symbol) dev_##symbol
 #else
 	#define DEVICE_ACCESS(symbol) symbol
