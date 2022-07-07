@@ -1,7 +1,8 @@
 #include <iostream>
 #include <chrono>
 
-#include "util/sphexa_utils.hpp"
+#include "sph/traits.hpp"
+#include "cstone/util/array.hpp"
 
 #include "../src/nuclear-net.hpp"
 #include "../src/net14/net14.hpp"

@@ -20,12 +20,10 @@
 	#include "mpi/mpi-wrapper.hpp"
 #endif
 
-#ifndef NOT_FROM_SPHEXA
-	#include "sph/data_util.hpp"
-	#include "sph/field_states.hpp"
+#include "sph/data_util.hpp"
+#include "sph/field_states.hpp"
 
-	#include "cstone/util/util.hpp"
-#endif
+#include "cstone/util/util.hpp"
 
 namespace sphexa::sphnnet {
 	/// nuclear data class for n_species nuclear network

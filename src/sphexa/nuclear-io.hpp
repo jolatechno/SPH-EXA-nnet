@@ -4,9 +4,7 @@
 #include <variant>
 #include <tuple>
 
-#ifndef NOT_FROM_SPHEXA
-	#include "sph/data_util.hpp"
-#endif
+#include "sph/data_util.hpp"
 
 namespace sphexa::sphnnet::io {
 	std::vector<int>         outputFieldIndices;

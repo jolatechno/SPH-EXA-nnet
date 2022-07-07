@@ -6,12 +6,6 @@
 #include <algorithm>
 #include <variant>
 #include <type_traits>
-#include <array>
-
-namespace util {
-	template<class T, long unsigned int n>
-	using array = std::array<T, n>;
-}
 
 //! @brief resizes a vector with a determined growth rate upon reallocation
 template<class Vector>

@@ -1,6 +1,6 @@
 #define COMMA ,
 
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__CUDACC__) || defined(__HIPCC__) || defined(FORCE_COMPILE_DEVICE)
 	#define COMPILE_DEVICE
 
 	#define HOST_DEVICE_FUN __host__ __device__

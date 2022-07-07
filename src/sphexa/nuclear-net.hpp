@@ -31,9 +31,7 @@
 	#include "mpi/mpi-wrapper.hpp"
 #endif
 
-#ifndef NOT_FROM_SPHEXA
-	#include "sph/data_util.hpp"
-#endif
+#include "sph/data_util.hpp"
 
 #include "../nuclear-net.hpp"
 

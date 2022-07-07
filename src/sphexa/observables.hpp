@@ -27,9 +27,7 @@
 	#include "mpi/mpi-wrapper.hpp"
 #endif
 
-#ifndef NOT_FROM_SPHEXA
-	#include "sph/data_util.hpp"
-#endif
+#include "sph/data_util.hpp"
 
 namespace sphexa::sphnnet {
 	/// function to compute the total nuclear energy

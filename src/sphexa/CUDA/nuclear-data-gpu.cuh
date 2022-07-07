@@ -5,15 +5,12 @@
 #include <memory>
 #include <variant>
 
-#ifndef NOT_FROM_SPHEXA
-	#include "sph/data_util.hpp"
-	#include "sph/field_states.hpp"
-	#include "sph/traits.hpp"
+#include "sph/data_util.hpp"
+#include "sph/field_states.hpp"
+#include "sph/traits.hpp"
 
-	#include "cstone/util/util.hpp"
-#else
-	#include "../../../test/util/sphexa_utils.hpp"
-#endif
+#include "cstone/util/util.hpp"
+#include "cstone/util/array.hpp"
 
 #include "../../CUDA/cuda.inl"
 #ifdef COMPILE_DEVICE

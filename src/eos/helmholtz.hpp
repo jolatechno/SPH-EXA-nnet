@@ -32,11 +32,7 @@
 #include <tuple>
 #include <math.h>
 
-#ifndef NOT_FROM_SPHEXA
-	#include "sph/data_util.hpp"
-#else
-	#include "../../test/util/sphexa_utils.hpp"
-#endif
+#include "sph/data_util.hpp"
 
 namespace nnet::eos {
 	/* !!!!!!!!!!!!

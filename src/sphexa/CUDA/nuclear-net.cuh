@@ -6,6 +6,13 @@
 #include <cuda_runtime.h>
 #include <thrust/device_vector.h>
 
+#include "sph/data_util.hpp"
+#include "sph/field_states.hpp"
+#include "sph/traits.hpp"
+
+#include "cstone/util/util.hpp"
+#include "cstone/util/array.hpp"
+
 #include "../../nuclear-net.hpp"
 #include "../../CUDA/nuclear-net.hpp"
 #include "../../eos/helmholtz.hpp"

@@ -8,6 +8,8 @@
 #include <type_traits>
 #include <array>
 
+#include "cstone/util/array.hpp"
+
 namespace sphexa {
     //! @brief extract a vector of pointers to particle fields for file output
     template<class Dataset>

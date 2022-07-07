@@ -6,9 +6,7 @@
 
 #include <omp.h>
 
-#ifndef NOT_FROM_SPHEXA
-	#include "cstone/util/array.hpp"
-#endif
+#include "cstone/util/array.hpp"
 
 #ifdef COMPILE_DEVICE
 	#include <cuda_runtime.h>

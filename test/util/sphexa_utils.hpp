@@ -8,11 +8,8 @@
 #include <type_traits>
 #include <array>
 
-#include "domain/include/cstone/util/util.hpp"
-
-#include "sph/include/sph/data_util.hpp"
-#include "sph/include/sph/field_states.hpp"
-#include "sph/include/sph/traits.hpp"
+#include "sph/traits.hpp"
+#include "cstone/util/array.hpp"
 
 #include <iostream>
 
@@ -65,7 +62,7 @@ namespace sphexa {
 	}
 
 
-    #ifdef COMPILE_DEVICE
+#ifdef COMPILE_DEVICE
     template<class ThrustVec>
     typename ThrustVec::value_type* rawPtr(ThrustVec& p)
     {
