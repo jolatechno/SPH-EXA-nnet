@@ -81,13 +81,6 @@ namespace nnet::net87::electrons {
 		}
 
 		bool initalized = false;
-#ifdef AUTO_INITIALIZE
-	#ifdef USE_CUDA
-		initalized = read_table<cstone::GpuTag>();
-	#else
-		initalized = read_table<cstone::CpuTag>();
-	#endif
-#endif
 	}
 
 

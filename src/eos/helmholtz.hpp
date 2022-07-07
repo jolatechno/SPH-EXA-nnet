@@ -266,13 +266,6 @@ namespace nnet::eos {
 		};
 
 		bool initalized = false;
-#ifdef AUTO_INITIALIZE
-	#ifdef COMPILE_DEVICE
-		initalized = read_table<cstone::GpuTag>();
-	#else
-		initalized = read_table<cstone::CpuTag>();
-	#endif	
-#endif
 
 		// quintic hermite polynomial statement functions
 		// psi0 and its derivatives
