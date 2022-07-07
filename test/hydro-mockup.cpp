@@ -23,7 +23,7 @@
 
 
 
-#if defined(COMPILE_DEVICE) && !defined(CPU_CUDA_TEST)
+#ifdef USE_CUDA
 	using AccType = cstone::GpuTag;
 #else
 	using AccType = cstone::CpuTag;
@@ -34,12 +34,12 @@
 
 /************************************************************************/
 /*           MPI test that can test the GPU implementation              */
-// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" -dc  ../src/sphexa/CUDA/nuclear-net.cu -o nuclear-net.o -std=c++17 --expt-relaxed-constexpr
-// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" -dc  ../src/sphexa/CUDA/nuclear-data-gpu.cu -o nuclear-data.o -std=c++17 --expt-relaxed-constexpr
-// compile CPU:  nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -std=c++17 -DUSE_MPI -DCPU_CUDA_TEST_" -c hydro-mockup.cpp -o hydro-mockup-gpu.o -std=c++17 --expt-relaxed-constexpr
+// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -std=c++17 -DUSE_MPI -DUSE_CUDA" -dc  ../src/sphexa/CUDA/nuclear-net.cu -o nuclear-net.o -std=c++17 --expt-relaxed-constexpr
+// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -std=c++17 -DUSE_MPI -DUSE_CUDA" -dc  ../src/sphexa/CUDA/nuclear-data-gpu.cu -o nuclear-data.o -std=c++17 --expt-relaxed-constexpr
+// compile CPU:  nvcc -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -std=c++17 -DUSE_MPI -DUSE_CUDA" -c hydro-mockup.cpp -o hydro-mockup-gpu.o -std=c++17 --expt-relaxed-constexpr
 // link:         g++ nuclear-net.o hydro-mockup-gpu.o nuclear-data.o -o hydro-mockup-gpu.out -lcudart
 
-// compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -std=c++17 -DUSE_MPI -DIMPORT_DOT_CU -DCPU_CUDA_TEST_" hydro-mockup.cpp -o hydro-mockup.out -std=c++17 --expt-relaxed-constexpr
+// compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -std=c++17 -DUSE_MPI -DIMPORT_DOT_CU -DUSE_CUDA" hydro-mockup.cpp -o hydro-mockup.out -std=c++17 --expt-relaxed-constexpr
 /*                                                                      */
 /*             Launch on a system with 2 GPUs:                          */
 // mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 10000000 --dt 1e-4 -n 10 > res_mpi_big.out 2> err.out &
@@ -52,7 +52,7 @@
 // net87 big: mpirun --quiet --bind-to hwthread --oversubscribe -n 2 hydro-mockup.out --test-case C-O-burning --n-particle 2000000 --dt 1e-6 -n 10 --use-net86 --electrons > res_mpi_net87_big.out 2> err.out &
 /*                                                                      */
 /*          Comparison with the CPU-only version:                       */
-// compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -DUSE_CUDA -std=c++17 -DUSE_MPI -DIMPORT_DOT_CU -DCPU_CUDA_TEST" hydro-mockup.cpp -o hydro-mockup-cpu.out -std=c++17 --expt-relaxed-constexpr
+// compile: nvcc -x cu -ccbin mpic++ -Xcompiler="-DNOT_FROM_SPHEXA -fopenmp -std=c++17 -DUSE_MPI -DIMPORT_DOT_CU" hydro-mockup.cpp -o hydro-mockup-cpu.out -std=c++17 --expt-relaxed-constexpr
 /*                                                                      */
 /*            Launch on a system with 2x32 core:                        */
 // mpirun --quiet --bind-to hwthread --oversubscribe --map-by ppr:2:node:PE=32 -n 2 -x OMP_NUM_THREADS=32 hydro-mockup-cpu.out --test-case C-O-burning --n-particle 10000000 --dt 1e-4 -n 10 > res_mpi_cpu_big.out 2> err.out &
@@ -75,9 +75,11 @@ void dump(Dataset& d, size_t firstIndex, size_t lastIndex, /*const cstone::Box<t
     const char separator = ' ';
     // path += std::to_string(d.iteration) + ".txt";
 
-    int rank, numRanks;
+    int rank = 0, numRanks = 1;
+#ifdef USE_MPI
     MPI_Comm_rank(d.comm, &rank);
     MPI_Comm_size(d.comm, &numRanks);
+#endif
 
     for (int turn = 0; turn < numRanks; turn++)
     {
@@ -92,12 +94,13 @@ void dump(Dataset& d, size_t firstIndex, size_t lastIndex, /*const cstone::Box<t
             }
             catch (std::runtime_error& ex)
             {
-                if (rank == 0) fprintf(stderr, "ERROR: %s Terminating\n", ex.what());
-                MPI_Abort(d.comm, 1);
+                throw std::runtime_error("ERROR: Terminating\n"/*, ex.what()*/);
             }
         }
 
+#ifdef USE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
+#endif
     }
 }
 
@@ -110,8 +113,10 @@ void dump(Dataset& d, size_t firstIndex, size_t lastIndex, /*const cstone::Box<t
 // mockup of the ParticlesDataType
 class ParticlesDataType {
 public:
+#ifdef USE_MPI
 	// communicator
 	MPI_Comm comm=MPI_COMM_WORLD;
+#endif
 
 	// pointers
 	std::vector<int> node_id;
@@ -237,13 +242,16 @@ int main(int argc, char* argv[]) {
 
 
 
-	int size, rank;
+    int size = 1, rank = 0;
+#ifdef USE_MPI
     MPI_Init(&argc, &argv);
 
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+	
 
-#ifdef COMPILE_DEVICE
+#if defined(COMPILE_DEVICE) && defined(USE_MPI)
 	cuda_util::initCudaMpi(MPI_COMM_WORLD);
 #endif
 
@@ -258,7 +266,10 @@ int main(int argc, char* argv[]) {
 	const ArgParser parser(argc, argv);
     if (parser.exists("-h") || parser.exists("--h") || parser.exists("-help") || parser.exists("--help")) {
         printHelp(argv[0], rank);
+
+#ifdef USE_MPI
         MPI_Finalize();
+#endif
         return 0;
     }
 
@@ -347,7 +358,9 @@ int main(int argc, char* argv[]) {
 	initialize nuclear data
 	!!!!!!!!!!!! */
 	size_t n_nuclear_particles;
+#ifdef USE_MPI
 	sphexa::mpi::initializePointers(first, last, particle_data.node_id, particle_data.particle_id, particle_data.comm);
+#endif
 	if (use_net87) {
 		nuclear_data_87.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y");
 			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
@@ -445,7 +458,9 @@ int main(int argc, char* argv[]) {
 
 
 
+#ifdef USE_MPI
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	auto start = std::chrono::high_resolution_clock::now();
 	double min_time = 3600, max_time = 0;
 
@@ -457,7 +472,9 @@ int main(int argc, char* argv[]) {
 		if (rank == 0)
 			std::cout << i << "th iteration...\n";
 
+#ifdef USE_MPI
 		MPI_Barrier(MPI_COMM_WORLD);
+#endif
 		auto start_it = std::chrono::high_resolution_clock::now();
 
 	if (use_net87) {
@@ -502,7 +519,9 @@ int main(int argc, char* argv[]) {
 
 		t += hydro_dt;
 
+#ifdef USE_MPI
 		MPI_Barrier(MPI_COMM_WORLD);
+#endif
 		auto end_it = std::chrono::high_resolution_clock::now();
 		auto duration_it = ((float)std::chrono::duration_cast<std::chrono::milliseconds>(end_it - start_it).count())/1e3;
 		min_time = std::min(min_time, duration_it);
@@ -513,7 +532,9 @@ int main(int argc, char* argv[]) {
 	}
 
 
+#ifdef USE_MPI
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	if (rank == 0) {
 		auto stop = std::chrono::high_resolution_clock::now();
 		auto duration = ((float)std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count())/1e3;
@@ -525,19 +546,25 @@ int main(int argc, char* argv[]) {
 			std::cout << name << " ";
 		std::cout << "\n";
 	}
+#ifdef USE_MPI
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	dump(particle_data, first, first + n_print, "/dev/stdout");
 	dump(particle_data, last - n_print,   last, "/dev/stdout");
 
 
+#ifdef USE_MPI
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	if (rank == 0) {
 		std::cout << "\n";
 		for (auto name : nuclearOutFields)
 			std::cout << name << " ";
 		std::cout << "\n";
 	}
+#ifdef USE_MPI
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	if (use_net87) {
 		sphexa::transferToHost(nuclear_data_87, 0, n_nuclear_particles, {"cv"});
 
@@ -555,7 +582,9 @@ int main(int argc, char* argv[]) {
 		dump(nuclear_data_14, n_nuclear_particles - n_print, n_nuclear_particles, "/dev/stdout");
 	}
 
+#ifdef USE_MPI
 	MPI_Finalize();
+#endif
 
 	return 0;
 }

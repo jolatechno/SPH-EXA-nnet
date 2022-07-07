@@ -196,7 +196,6 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType, class nuclearDataType>
 	void hydroToNuclearUpdate(ParticlesDataType &d, nuclearDataType &n, const std::vector<std::string> &sync_fields) {
-#ifdef USE_MPI
 		// get data
 		auto nuclearData  = n.data();
 		auto particleData = d.data();
@@ -214,10 +213,14 @@ namespace sphexa::sphnnet {
 			// send
 			std::visit(
 				[&d, &n](auto&& send, auto &&recv){
+#ifdef USE_MPI
 					sphexa::mpi::directSyncDataFromPartition(n.partition, send->data(), recv->data(), d.comm);
+#else
+					if constexpr (std::is_same<decltype(send), decltype(recv)>::value)
+						*recv = *send;
+#endif
 				}, particleData[particleFieldIdx], nuclearData[nuclearFieldIdx]);
 		}
-#endif
 	}
 
 	/// sending back hydro data from NuclearDataType to ParticlesDataType
@@ -226,7 +229,6 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType, class nuclearDataType>
 	void nuclearToHydroUpdate(ParticlesDataType &d, nuclearDataType &n, const std::vector<std::string> &sync_fields) {
-#ifdef USE_MPI
 		auto nuclearData  = n.data();
 		auto particleData = d.data();
 
@@ -240,9 +242,13 @@ namespace sphexa::sphnnet {
 
 			std::visit(
 				[&d, &n](auto&& send, auto &&recv){
+#ifdef USE_MPI
 					sphexa::mpi::reversedSyncDataFromPartition(n.partition, send->data(), recv->data(), d.comm);
+#else
+					if constexpr (std::is_same<decltype(send), decltype(recv)>::value)
+						*recv = *send;
+#endif
 				}, nuclearData[nuclearFieldIdx], particleData[particleFieldIdx]);
 		}
-#endif
 	}
 }
