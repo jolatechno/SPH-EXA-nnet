@@ -6,7 +6,6 @@
 #endif
 
 #include "eigen/eigen.hpp"
-#include "sphexa/util/algorithm.hpp"
 
 #include <iostream>
 
@@ -694,7 +693,7 @@ Iterative solver:
 		}
 
 		// cleanup Vector
-		util::clip(final_Y, dimension, nnet::constants::epsilon_vector);
+		util::clip(final_Y, dimension, (Float)nnet::constants::epsilon_vector);
 		
 		// return condition
 		Float correction = std::abs((final_T - last_T)/final_T);
@@ -706,10 +705,10 @@ Iterative solver:
 
 			// timestep tweeking
 			used_dt = dt;
-			dt = (dT_T == 0 ? (Float)constants::max_dt_step : constants::NR::dT_T_target/dT_T)*used_dt;
-			dt = algorithm::min(dt, used_dt*constants::max_dt_step);
-			dt = algorithm::max(dt, used_dt*constants::min_dt_step);
-			dt = algorithm::min(dt,  (Float)constants::NR::max_dt);
+			dt = (dT_T == 0 ? constants::max_dt_step : constants::NR::dT_T_target/dT_T)*used_dt;
+			dt = std::min(dt, used_dt*(Float)constants::max_dt_step);
+			dt = std::max(dt, used_dt*(Float)constants::min_dt_step);
+			dt = std::min(dt,         (Float)constants::NR::max_dt);
 
 			return true;
 		}

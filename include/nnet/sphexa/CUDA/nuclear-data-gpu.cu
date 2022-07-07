@@ -21,5 +21,21 @@ namespace sphexa {
 	            }
 	        }
 	    }
+
+	    template class DeviceNuclearDataType<cstone::GpuTag, 14, double>;
+	    template class DeviceNuclearDataType<cstone::GpuTag, 86, double>;
+	    template class DeviceNuclearDataType<cstone::GpuTag, 87, double>;
+
+	    template class DeviceNuclearDataType<cstone::CpuTag, 14, double>;
+	    template class DeviceNuclearDataType<cstone::CpuTag, 86, double>;
+	    template class DeviceNuclearDataType<cstone::CpuTag, 87, double>;
+
+	    template class DeviceNuclearDataType<cstone::GpuTag, 14, float>;
+	    template class DeviceNuclearDataType<cstone::GpuTag, 86, float>;
+	    template class DeviceNuclearDataType<cstone::GpuTag, 87, float>;
+
+	    template class DeviceNuclearDataType<cstone::CpuTag, 14, float>;
+	    template class DeviceNuclearDataType<cstone::CpuTag, 86, float>;
+	    template class DeviceNuclearDataType<cstone::CpuTag, 87, float>;
 	}
 }

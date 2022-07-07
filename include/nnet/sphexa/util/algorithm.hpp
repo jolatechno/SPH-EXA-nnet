@@ -42,22 +42,6 @@ namespace algorithm {
 		for (it i = begin; i != end; ++i)
 			*i = x;
 	}
-
-	/// equivalent to std::min
-	template<typename Float>
-	HOST_DEVICE_FUN Float inline min(Float x, Float y) {
-		if (x < y)
-			return x;
-		return y;
-	}
-
-	/// equivalent to std::min
-	template<typename Float>
-	HOST_DEVICE_FUN Float inline max(Float x, Float y) {
-		if (x > y)
-			return x;
-		return y;
-	}
 }
 
 

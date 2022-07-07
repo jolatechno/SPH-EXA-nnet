@@ -89,7 +89,7 @@ namespace nnet::net87::electrons {
 	 * TODO
 	 */
 	template<typename Float>
-	HOST_DEVICE_FUN void inline interpolate(Float temp, Float rhoElec, std::array<double, constants::nC> &rate) {
+	HOST_DEVICE_FUN void inline interpolate(Float temp, Float rhoElec, std::array<Float, constants::nC> &rate) {
 		// find temperature index
 		int i_temp_sup = 0;
 		Float log_temp = std::log10(temp);

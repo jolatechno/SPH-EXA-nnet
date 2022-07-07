@@ -10,8 +10,6 @@
 #include "../nuclear-net.hpp"
 #include "net14-constants.hpp"
 
-#include "../sphexa/util/algorithm.hpp"
-
 #define BE_NET14 \
 	28.2970*constants::Mev_to_erg COMMA \
 	92.1631*constants::Mev_to_erg COMMA \
@@ -290,7 +288,7 @@ namespace nnet::net14 {
 			{
 				// constants:
 				const Float t9r=T*1.0e-09;
-	      		const Float t9=algorithm::min((Float)10., t9r);
+	      		const Float t9=std::min((Float)10., t9r);
 	      		const Float t92=t9*t9;
 	      		const Float t93=t92*t9;
 	      		const Float t95=t92*t93;

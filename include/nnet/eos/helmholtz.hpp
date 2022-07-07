@@ -373,7 +373,7 @@ namespace nnet::eos {
 		// get correspong table indices
 		template<typename Float>
 		HOST_DEVICE_FUN std::pair<int, int> inline get_table_indices(const Float T, const Float rho, const Float abar, const Float zbar) {
-			const Float ye = std::max(1e-16, zbar/abar);
+			const Float ye = std::max((Float)1e-16, zbar/abar);
 			const Float din = ye*rho;
 
 			int jat = int((std::log10(T) - tlo)*tstpi);
@@ -432,7 +432,7 @@ namespace nnet::eos {
 
 
 		Float ytot1 = 1/abar;
-		Float ye = std::max(1e-16, zbar/abar);
+		Float ye = std::max((Float)1e-16, zbar/abar);
 		Float din = ye*rho;
 
 		// initialize
@@ -719,7 +719,7 @@ namespace nnet::eos {
 		Float dpepdd  = helmholtz_constants::h3(fi,
 			si0t,   si1t,   si0mt,   si1mt,
             si0d,   si1d,   si0md,   si1md);
-			dpepdd  = std::max(ye*dpepdd, 1.e-30);
+			dpepdd  = std::max(ye*dpepdd, (Float)1.e-30);
 
 
 
@@ -804,7 +804,7 @@ namespace nnet::eos {
 		x = helmholtz_constants::h3(fi,
 			si0t,   si1t,   si0mt,   si1mt,
         	dsi0d,  dsi1d,  dsi0md,  dsi1md);
-		x = std::max(x, 1e-30);
+		x = std::max(x, (Float)1e-30);
 		Float dxnedd   = ye*x;
 
 		// derivative with respect to temperature
@@ -1063,7 +1063,7 @@ namespace nnet::eos {
 		// the specific heat at constant pressure (c&g 9.98)
 		// and relativistic formula for the sound speed (c&g 14.29)
 
-		helm_eos_output<double> res;
+		helm_eos_output<Float> res;
 
 
 		Float zz            = pgas*rhoi;
@@ -1159,4 +1159,3 @@ namespace nnet::eos {
 		}
 	};
 }
-

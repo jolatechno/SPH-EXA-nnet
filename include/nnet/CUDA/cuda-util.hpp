@@ -6,7 +6,7 @@
 	#include <mpi.h>
 #endif
 
-__host__ void gpuErrchk(cudaError_t code) {
+void gpuErrchk(cudaError_t code) {
 	if (code != cudaSuccess) {
 #ifdef CUDA_ERROR_FATAL
 		std::string err = "CUDA error (fatal) ! \"";
