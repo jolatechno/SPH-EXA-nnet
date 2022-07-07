@@ -33,3 +33,6 @@
 
 # excel
 *.res#
+
+#build
+test/build
