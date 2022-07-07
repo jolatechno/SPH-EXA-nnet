@@ -7,18 +7,18 @@
 
 
 // physical parameters
-#include "../src/net87/net87.hpp"
-#include "../src/net14/net14.hpp"
-#include "../src/eos/helmholtz.hpp"
-#include "../src/eos/ideal_gas.hpp"
+#include "nnet/net87/net87.hpp"
+#include "nnet/net14/net14.hpp"
+#include "nnet/eos/helmholtz.hpp"
+#include "nnet/eos/ideal_gas.hpp"
 
 // base datatype
-#include "../src/sphexa/nuclear-data.hpp"
+#include "nnet/sphexa/nuclear-data.hpp"
 
 // nuclear reaction wrappers
-#include "../src/sphexa/nuclear-net.hpp"
-#include "../src/sphexa/observables.hpp"
-#include "../src/sphexa/initializers.hpp"
+#include "nnet/sphexa/nuclear-net.hpp"
+#include "nnet/sphexa/observables.hpp"
+#include "nnet/sphexa/initializers.hpp"
 
 
 
@@ -34,8 +34,8 @@
 
 /************************************************************************/
 /*           MPI test that can test the GPU implementation              */
-// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-fopenmp -std=c++17 -DUSE_MPI -DUSE_CUDA" -dc  ../src/sphexa/CUDA/nuclear-net.cu -o nuclear-net.o -std=c++17 --expt-relaxed-constexpr
-// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-fopenmp -std=c++17 -DUSE_MPI -DUSE_CUDA" -dc  ../src/sphexa/CUDA/nuclear-data-gpu.cu -o nuclear-data.o -std=c++17 --expt-relaxed-constexpr
+// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-fopenmp -std=c++17 -DUSE_MPI -DUSE_CUDA" -dc  nnet/sphexa/CUDA/nuclear-net.cu -o nuclear-net.o -std=c++17 --expt-relaxed-constexpr
+// compile CUDA: nvcc -ccbin mpic++ -Xcompiler="-fopenmp -std=c++17 -DUSE_MPI -DUSE_CUDA" -dc  nnet/sphexa/CUDA/nuclear-data-gpu.cu -o nuclear-data.o -std=c++17 --expt-relaxed-constexpr
 // compile CPU:  nvcc -ccbin mpic++ -Xcompiler="-fopenmp -std=c++17 -DUSE_MPI -DUSE_CUDA" -c hydro-mockup.cpp -o hydro-mockup-gpu.o -std=c++17 --expt-relaxed-constexpr
 // link:         g++ nuclear-net.o hydro-mockup-gpu.o nuclear-data.o -o hydro-mockup-gpu.out -lcudart
 

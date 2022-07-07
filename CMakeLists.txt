@@ -39,8 +39,7 @@ endif()
 
 set(SPH_DIR ${PROJECT_SOURCE_DIR}/test/util/sph/include)
 set(CSTONE_DIR ${PROJECT_SOURCE_DIR}/test/util/domain/include)
+set(NNET_DIR ${PROJECT_SOURCE_DIR}/include)
 
-set(NNET_DIR ${PROJECT_SOURCE_DIR}/src/sphexa/CUDA)
-
-add_subdirectory(src/sphexa/CUDA)
+add_subdirectory(include)
 add_subdirectory(test)

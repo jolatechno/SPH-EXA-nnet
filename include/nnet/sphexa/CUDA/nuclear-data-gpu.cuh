@@ -44,11 +44,7 @@ namespace sphexa::sphnnet {
 #endif
 
 		/// resize the number of particules
-#ifdef COMPILE_DEVICE
 		void resize(size_t size);
-#else
-		void resize(size_t size) {}
-#endif
 
 
 		/// base fieldNames (without knowledge of nuclear species names)

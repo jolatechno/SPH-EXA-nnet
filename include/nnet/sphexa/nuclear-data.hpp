@@ -1,11 +1,7 @@
 #pragma once
 
 #include "../CUDA/cuda.inl"
-#if defined(IMPORT_DOT_CU) && defined(COMPILE_DEVICE)
-	#include "CUDA/nuclear-data-gpu.cu"
-#else
-	#include "CUDA/nuclear-data-gpu.cuh"
-#endif
+#include "CUDA/nuclear-data-gpu.cuh"
 
 #include <vector>
 #include <array>
@@ -72,7 +68,8 @@ namespace sphexa::sphnnet {
 	        double growthRate = 1;
 	        auto   data_      = data();
 
-	        devData.resize(size);
+			if constexpr (HaveGpu<AcceleratorType>{})
+	        	devData.resize(size);
 
 	        for (size_t i = 0; i < data_.size(); ++i) {
 	            if (this->isAllocated(i)) {

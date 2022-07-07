@@ -5,10 +5,9 @@
 #include "nuclear-data-gpu.cuh"
 
 namespace sphexa {
-namespace sphnnet {
-	template<class AccType, size_t n_species, typename Float>
-	void DeviceNuclearDataType<AccType, n_species, Float>::resize(size_t size) {
-		if constexpr (HaveGpu<AcceleratorType>{}) {
+	namespace sphnnet {
+		template<class AccType, size_t n_species, typename Float>
+		void DeviceNuclearDataType<AccType, n_species, Float>::resize(size_t size) {
 	        double growthRate = 1;
 	        auto   data_      = data();
 
@@ -22,6 +21,5 @@ namespace sphnnet {
 	            }
 	        }
 	    }
-    }
-}
+	}
 }
