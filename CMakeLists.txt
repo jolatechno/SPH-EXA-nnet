@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.17)
 project(sphexa CXX C)
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 --std=c++17")
-set(CMAKE_CUDA_FLAGS_RELEASE "-O3 --std=c++17")
+set(CMAKE_CXX_FLAGS "-O3 --std=c++17")
+set(CMAKE_CUDA_FLAGS "-O3 --std=c++17")
 
 find_package(MPI)
 find_package(OpenMP REQUIRED)
