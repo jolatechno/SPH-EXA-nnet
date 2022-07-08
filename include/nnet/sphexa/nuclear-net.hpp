@@ -177,7 +177,7 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<class ParticlesDataType,class nuclearDataType, typename Float=double>
+	template<class ParticlesDataType,class nuclearDataType>
 	void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, nuclearDataType &n) {
 #ifdef USE_MPI
 		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);

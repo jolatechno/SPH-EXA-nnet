@@ -15,8 +15,15 @@
 
 #include "../../nuclear-net.hpp"
 #include "../../CUDA/nuclear-net.hpp"
+
 #include "../../eos/helmholtz.hpp"
 #include "../util/algorithm.hpp"
+
+#include "../../net14/net14.hpp"
+#include "../../net86/net86.hpp"
+#include "../../net87/net87.hpp"
+#include "../../eos/ideal_gas.hpp"
+#include "../../eos/helmholtz.hpp"
 
 #ifndef CUDA_NUM_ITERATION_PER_THREAD
 	#define CUDA_NUM_ITERATION_PER_THREAD 8

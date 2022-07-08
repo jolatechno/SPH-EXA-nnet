@@ -126,8 +126,8 @@ namespace nnet::net14 {
 	});
 
 	/// compute a list of reactions for net14
-	struct compute_reaction_rates_function {
-		HOST_DEVICE_FUN compute_reaction_rates_function() {}
+	struct compute_reaction_rates_functor {
+		compute_reaction_rates_functor() {}
 		
 		template<typename Float, class eos>
 		HOST_DEVICE_FUN void inline operator()(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {

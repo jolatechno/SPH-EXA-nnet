@@ -4,12 +4,6 @@
 
 #include "nuclear-net.cuh"
 
-#include "../../net14/net14.hpp"
-#include "../../net86/net86.hpp"
-#include "../../net87/net87.hpp"
-#include "../../eos/ideal_gas.hpp"
-#include "../../eos/helmholtz.hpp"
-
 namespace sphexa {
 namespace sphnnet {
 	/***********************************************/
@@ -194,43 +188,43 @@ namespace sphnnet {
 
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
 		thrust::device_vector<double, thrust::device_allocator<double> >&, double*, double*, double*, double*, double*, const double, const double,
-		nnet::gpu_reaction_list const&, nnet::net87::compute_reaction_rates_function const&, nnet::eos::ideal_gas_functor const&);
+		nnet::gpu_reaction_list const&, nnet::net87::compute_reaction_rates_functor const&, nnet::eos::ideal_gas_functor const&);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
 		thrust::device_vector<double, thrust::device_allocator<double> >&, double*, double*, double*, double*, double*, const double, const double,
-		nnet::gpu_reaction_list const&, nnet::net86::compute_reaction_rates_function const&, nnet::eos::ideal_gas_functor const&);
+		nnet::gpu_reaction_list const&, nnet::net86::compute_reaction_rates_functor const&, nnet::eos::ideal_gas_functor const&);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
 		thrust::device_vector<double, thrust::device_allocator<double> >&, double*, double*, double*, double*, double*, const double, const double,
-		nnet::gpu_reaction_list const&, nnet::net14::compute_reaction_rates_function const&, nnet::eos::ideal_gas_functor const&);
+		nnet::gpu_reaction_list const&, nnet::net14::compute_reaction_rates_functor const&, nnet::eos::ideal_gas_functor const&);
 
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
 		thrust::device_vector<double, thrust::device_allocator<double> >&, double*, double*, double*, double*, double*, const double, const double,
-		nnet::gpu_reaction_list const&, nnet::net87::compute_reaction_rates_function const&, nnet::eos::helmholtz_functor<double> const&);
+		nnet::gpu_reaction_list const&, nnet::net87::compute_reaction_rates_functor const&, nnet::eos::helmholtz_functor<double> const&);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
 		thrust::device_vector<double, thrust::device_allocator<double> >&, double*, double*, double*, double*, double*, const double, const double,
-		nnet::gpu_reaction_list const&, nnet::net86::compute_reaction_rates_function const&, nnet::eos::helmholtz_functor<double> const&);
+		nnet::gpu_reaction_list const&, nnet::net86::compute_reaction_rates_functor const&, nnet::eos::helmholtz_functor<double> const&);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
 		thrust::device_vector<double, thrust::device_allocator<double> >&, double*, double*, double*, double*, double*, const double, const double,
-		nnet::gpu_reaction_list const&, nnet::net14::compute_reaction_rates_function const&, nnet::eos::helmholtz_functor<double> const&);
+		nnet::gpu_reaction_list const&, nnet::net14::compute_reaction_rates_functor const&, nnet::eos::helmholtz_functor<double> const&);
 
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
 		thrust::device_vector<float, thrust::device_allocator<float> >&, float*, float*, float*, float*, float*, const float, const float,
-		nnet::gpu_reaction_list const&, nnet::net87::compute_reaction_rates_function const&, nnet::eos::ideal_gas_functor const&);
+		nnet::gpu_reaction_list const&, nnet::net87::compute_reaction_rates_functor const&, nnet::eos::ideal_gas_functor const&);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
 		thrust::device_vector<float, thrust::device_allocator<float> >&, float*, float*, float*, float*, float*, const float, const float,
-		nnet::gpu_reaction_list const&, nnet::net86::compute_reaction_rates_function const&, nnet::eos::ideal_gas_functor const&);
+		nnet::gpu_reaction_list const&, nnet::net86::compute_reaction_rates_functor const&, nnet::eos::ideal_gas_functor const&);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
 		thrust::device_vector<float, thrust::device_allocator<float> >&, float*, float*, float*, float*, float*, const float, const float,
-		nnet::gpu_reaction_list const&, nnet::net14::compute_reaction_rates_function const&, nnet::eos::ideal_gas_functor const&);
+		nnet::gpu_reaction_list const&, nnet::net14::compute_reaction_rates_functor const&, nnet::eos::ideal_gas_functor const&);
 
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
 		thrust::device_vector<float, thrust::device_allocator<float> >&, float*, float*, float*, float*, float*, const float, const float,
-		nnet::gpu_reaction_list const&, nnet::net87::compute_reaction_rates_function const&, nnet::eos::helmholtz_functor<float> const&);
+		nnet::gpu_reaction_list const&, nnet::net87::compute_reaction_rates_functor const&, nnet::eos::helmholtz_functor<float> const&);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
 		thrust::device_vector<float, thrust::device_allocator<float> >&, float*, float*, float*, float*, float*, const float, const float,
-		nnet::gpu_reaction_list const&, nnet::net86::compute_reaction_rates_function const&, nnet::eos::helmholtz_functor<float> const&);
+		nnet::gpu_reaction_list const&, nnet::net86::compute_reaction_rates_functor const&, nnet::eos::helmholtz_functor<float> const&);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
 		thrust::device_vector<float, thrust::device_allocator<float> >&, float*, float*, float*, float*, float*, const float, const float,
-		nnet::gpu_reaction_list const&, nnet::net14::compute_reaction_rates_function const&, nnet::eos::helmholtz_functor<float> const&);
+		nnet::gpu_reaction_list const&, nnet::net14::compute_reaction_rates_functor const&, nnet::eos::helmholtz_functor<float> const&);
 
 
 

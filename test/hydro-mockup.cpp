@@ -255,10 +255,8 @@ int main(int argc, char* argv[]) {
 	cuda_util::initCudaMpi(MPI_COMM_WORLD);
 #endif
 
-	if (!nnet::eos::helmholtz_constants::initalized)
-		nnet::eos::helmholtz_constants::initalized    = nnet::eos::helmholtz_constants::read_table<AccType>();
-	if (!nnet::net87::electrons::constants::initalized)
-		nnet::net87::electrons::constants::initalized = nnet::net87::electrons::constants::read_table<AccType>();
+	nnet::eos::helmholtz_constants::read_table<AccType>();
+	nnet::net87::electrons::constants::read_table<AccType>();
 
 
 

@@ -36,7 +36,7 @@ namespace nnet::eos {
 		ideal_gas_functor(double mu_) : mu(mu_) {}
 		~ideal_gas_functor() {}
 
-		template<typename Float=double>
+		template<typename Float>
 		HOST_DEVICE_FUN ideal_gas_eos_output<Float> inline operator()(const Float *Y, const Float T, const Float rho) const {
 			ideal_gas_eos_output<Float> res;
 

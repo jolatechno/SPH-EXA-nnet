@@ -14,10 +14,8 @@ int main() {
 	std::cout << "Z.size = " << nnet::net87::constants::Z.size() << "\n";
 	std::cout << "BE.size = " << nnet::net87::BE.size() << "\n\n";
 
-	if (!nnet::eos::helmholtz_constants::initalized)
-		nnet::eos::helmholtz_constants::initalized    = nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
-	if (!nnet::net87::electrons::constants::initalized)
-		nnet::net87::electrons::constants::initalized = nnet::net87::electrons::constants::read_table<cstone::CpuTag>();
+	nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
+	nnet::net87::electrons::constants::read_table<cstone::CpuTag>();
 
 #if NO_SCREENING
 	nnet::net87::skip_coulombian_correction = true;

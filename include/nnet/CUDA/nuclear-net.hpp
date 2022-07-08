@@ -25,7 +25,7 @@ namespace nnet {
 	/**
 	 * TODO
 	 */
-	gpu_reaction_list move_to_gpu(const ptr_reaction_list &reactions) {
+	gpu_reaction_list inline move_to_gpu(const ptr_reaction_list &reactions) {
 		gpu_reaction_list dev_reactions;
 		dev_reactions.num_reactions = reactions.num_reactions;
 

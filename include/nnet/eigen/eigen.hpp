@@ -152,7 +152,7 @@ namespace eigen {
 
 
 	/// custom analytical solver
-	template<typename Float=double>
+	template<typename Float>
 	HOST_DEVICE_FUN void solve(Float *M, Float *RHS, Float *X, const int n, Float epsilon=0) {
 		// reduce into upper triangular
 		for (int i = 0; i < n; ++i) {

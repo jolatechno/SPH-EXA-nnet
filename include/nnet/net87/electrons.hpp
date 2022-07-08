@@ -48,7 +48,7 @@ namespace nnet::net87::electrons {
 
 		// read electron rate constants table
 		template<class AccType>
-		bool read_table() {
+		void read_table() {
 			// read table
 			const std::string electron_rate_table = { 
 				#include ELECTRON_TABLE_PATH
@@ -68,7 +68,7 @@ namespace nnet::net87::electrons {
 					for (int k = 0; k < nC; ++k)
 						rate_table >> electron_rate[i][j][k];
 
-#ifdef USE_CUDA
+#ifdef COMPILE_DEVICE
 			if constexpr (sphexa::HaveGpu<AccType>{}) {
 		        // copy to device 
 				gpuErrchk(cudaMemcpyToSymbol(dev_log_temp_ref,  log_temp_ref,  nTemp*sizeof(double)));
@@ -76,11 +76,7 @@ namespace nnet::net87::electrons {
 		        gpuErrchk(cudaMemcpyToSymbol(dev_electron_rate, electron_rate, nTemp*nRho*nC*sizeof(double)));
 		    }
 #endif
-
-			return true;
 		}
-
-		bool initalized = false;
 	}
 
 

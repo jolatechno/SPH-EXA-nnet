@@ -33,12 +33,12 @@ namespace nnet::net87 {
 	}();
 
 	/// compute a list of rates for net87
-	class compute_reaction_rates_function {
+	class compute_reaction_rates_functor {
 	private:
-		nnet::net86::compute_reaction_rates_function net86_compute_reaction_rates;
+		nnet::net86::compute_reaction_rates_functor net86_compute_reaction_rates;
 
 	public:
-		compute_reaction_rates_function() {}
+		compute_reaction_rates_functor() {}
 
 		template<typename Float, class eos>
 		HOST_DEVICE_FUN void inline operator()(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {

@@ -44,8 +44,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    if (!nnet::eos::helmholtz_constants::initalized)
-		nnet::eos::helmholtz_constants::initalized = nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
+    nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
 
 
     const int n_max                         = parser.get("-n", 1000);

@@ -139,7 +139,7 @@ namespace nnet::eos {
 
 		// read helmholtz constants table
 		template<class AccType>
-		bool read_table() {
+		void read_table() {
 			// read table
 			const std::string helmolt_table = { 
 				#include HELM_TABLE_PATH
@@ -257,11 +257,7 @@ namespace nnet::eos {
 		        gpuErrchk(cudaMemcpyToSymbol(dev_xfdt, xfdt, imax*jmax*sizeof(double)));
 		   	}
 #endif
-
-	        return true;
 		};
-
-		bool initalized = false;
 
 		// quintic hermite polynomial statement functions
 		// psi0 and its derivatives
@@ -1120,7 +1116,7 @@ namespace nnet::eos {
 	/**
 	*...TODO
 	 */
-	template<typename Float=double>
+	template<typename Float>
 	class helmholtz_functor {
 	private:
 		const Float *Z;
@@ -1143,6 +1139,14 @@ namespace nnet::eos {
 		helmholtz_functor(const Vector &Z_, int dimension_) : helmholtz_functor(Z_.data(), dimension_) {}
 		template<class Vector>
 		helmholtz_functor(const Vector &Z_) : helmholtz_functor(Z_.data(), Z_.size()) {}
+
+		helmholtz_functor(const std::vector<Float> &Z_, int dimension_) : helmholtz_functor(Z_.data(), dimension_) {}
+		helmholtz_functor(const std::vector<Float> &Z_) : helmholtz_functor(Z_.data(), Z_.size()) {}
+
+		template<size_t n>
+		helmholtz_functor(const std::array<Float, n> &Z_, int dimension_) : helmholtz_functor(Z_.data(), dimension_) {}
+		template<size_t n>
+		helmholtz_functor(const std::array<Float, n> &Z_) : helmholtz_functor(Z_.data(), Z_.size()) {}
 
 		HOST_DEVICE_FUN ~helmholtz_functor() {
 #ifdef COMPILE_DEVICE

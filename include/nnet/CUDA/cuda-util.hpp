@@ -6,7 +6,7 @@
 	#include <mpi.h>
 #endif
 
-void gpuErrchk(cudaError_t code) {
+HOST_FUN void inline gpuErrchk(cudaError_t code) {
 	if (code != cudaSuccess) {
 #ifdef CUDA_ERROR_FATAL
 		std::string err = "CUDA error (fatal) ! \"";
@@ -26,7 +26,7 @@ namespace cuda_util {
 	 * TODO
 	 */
 	template<class T>
-	T *move_to_gpu(const T* const ptr, int dimension) {
+	HOST_FUN T inline *move_to_gpu(const T* const ptr, int dimension) {
 		T *dev_ptr;
 		
 		gpuErrchk(cudaMalloc((void**)&dev_ptr, dimension*sizeof(T)));
@@ -40,7 +40,7 @@ namespace cuda_util {
 	 * TODO
 	 */
 	template<class T>
-	void free_from_gpu(const T *dev_ptr) {
+	HOST_FUN void inline free_from_gpu(const T *dev_ptr) {
 		gpuErrchk(cudaFree((void*)const_cast<T*>(dev_ptr)));
 	}
 
@@ -50,7 +50,7 @@ namespace cuda_util {
 	/**
 	 * TODO
 	 */
-	void initCudaMpi(MPI_Comm comm) {
+	HOST_FUN void inline initCudaMpi(MPI_Comm comm) {
 		MPI_Comm localComm;
 		int rank, local_rank, local_size;
 		MPI_Comm_rank(comm, &rank);
