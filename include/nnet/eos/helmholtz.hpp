@@ -5,6 +5,8 @@
 	#include "../CUDA/cuda-util.hpp"
 #endif
 
+#include "sph/traits.hpp"
+
 #define STRINGIFY(...) #__VA_ARGS__
 #define STR(...) STRINGIFY(__VA_ARGS__)
 

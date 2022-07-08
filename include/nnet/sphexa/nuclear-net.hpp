@@ -10,11 +10,7 @@
 	#include <thrust/device_vector.h>
 
 	#include "../CUDA/nuclear-net.hpp"
-#ifdef IMPORT_DOT_CU
-	#include "CUDA/nuclear-net.cu"
-#else
 	#include "CUDA/nuclear-net.cuh"
-#endif
 #endif
 
 #include <numeric>
