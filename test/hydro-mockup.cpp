@@ -20,18 +20,6 @@
 #include "nnet/sphexa/observables.hpp"
 #include "nnet/sphexa/initializers.hpp"
 
-namespace nnet {
-	namespace net86 {
-		bool debug = false;
-	}
-	namespace net14 {
-		bool debug = false;
-	}
-	namespace eos {
-		bool debug = false;
-	}
-}
-
 
 
 
@@ -270,10 +258,6 @@ int main(int argc, char* argv[]) {
 	nnet::eos::helmholtz_constants::read_table<AccType>();
 	nnet::net87::electrons::constants::read_table<AccType>();
 
-	nnet::net14::compute_reaction_rates_functor net14_compute_reaction_rates;
-	nnet::net86::compute_reaction_rates_functor net86_compute_reaction_rates;
-	nnet::net87::compute_reaction_rates_functor net87_compute_reaction_rates;
-
 
 
 
@@ -432,39 +416,39 @@ int main(int argc, char* argv[]) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_87, 1e-10,
-				nnet::net87::reaction_list, net87_compute_reaction_rates, idea_gas_eos,
+				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, idea_gas_eos,
 				nnet::net87::BE.data());
 		} else
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_87, 1e-10,
-				nnet::net87::reaction_list, net87_compute_reaction_rates, helm_eos_87,
+				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, helm_eos_87,
 				nnet::net87::BE.data());
 	} else if (use_net86) {
 		if (idealGas) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_86, 1e-10,
-				nnet::net86::reaction_list, net86_compute_reaction_rates, idea_gas_eos,
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, idea_gas_eos,
 				nnet::net86::BE.data());
 		} else
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_86, 1e-10,
-				nnet::net86::reaction_list, net86_compute_reaction_rates, helm_eos_86,
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86,
 				nnet::net86::BE.data());
 	} else
 		if (idealGas) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_14, 1e-10,
-				nnet::net14::reaction_list, net14_compute_reaction_rates, idea_gas_eos,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, idea_gas_eos,
 				nnet::net14::BE.data());
 		} else
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_14, 1e-10,
-				nnet::net14::reaction_list, net14_compute_reaction_rates, helm_eos_14,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14,
 				nnet::net14::BE.data());
 
 
@@ -496,39 +480,39 @@ int main(int argc, char* argv[]) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_87, hydro_dt,
-				nnet::net87::reaction_list, net87_compute_reaction_rates, idea_gas_eos,
+				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, idea_gas_eos,
 				nnet::net87::BE.data());
 		} else
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_87, hydro_dt,
-				nnet::net87::reaction_list, net87_compute_reaction_rates, helm_eos_87,
+				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, helm_eos_87,
 				nnet::net87::BE.data());
 	} else if (use_net86) {
 		if (idealGas) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_86, hydro_dt,
-				nnet::net86::reaction_list, net86_compute_reaction_rates, idea_gas_eos,
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, idea_gas_eos,
 				nnet::net86::BE.data());
 		} else
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_86, hydro_dt,
-				nnet::net86::reaction_list, net86_compute_reaction_rates, helm_eos_86,
+				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86,
 				nnet::net86::BE.data());
 	} else
 		if (idealGas) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_14, hydro_dt,
-				nnet::net14::reaction_list, net14_compute_reaction_rates, idea_gas_eos,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, idea_gas_eos,
 				nnet::net14::BE.data());
 		} else
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_14, hydro_dt,
-				nnet::net14::reaction_list, net14_compute_reaction_rates, helm_eos_14,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14,
 				nnet::net14::BE.data());
 
 		t += hydro_dt;

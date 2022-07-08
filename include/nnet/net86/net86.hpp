@@ -843,4 +843,6 @@ namespace nnet::net86 {
 			}
 		}
 	};
+
+	extern compute_reaction_rates_functor compute_reaction_rates;
 }

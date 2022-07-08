@@ -757,4 +757,6 @@ namespace nnet::net14 {
 			}
 		}
 	};
+
+	extern compute_reaction_rates_functor compute_reaction_rates;
 }

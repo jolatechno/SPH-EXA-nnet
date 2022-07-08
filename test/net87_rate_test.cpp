@@ -9,18 +9,6 @@
 #include "nnet/net87/net87.hpp"
 #include "nnet/eos/helmholtz.hpp"
 
-namespace nnet {
-	namespace net86 {
-		bool debug = false;
-	}
-	namespace net14 {
-		bool debug = false;
-	}
-	namespace eos {
-		bool debug = false;
-	}
-}
-
 
 int main() {
 	std::cout << "A.size = " << nnet::net87::constants::A.size() << "\n";
@@ -29,8 +17,6 @@ int main() {
 
 	nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
 	nnet::net87::electrons::constants::read_table<cstone::CpuTag>();
-
-	nnet::net87::compute_reaction_rates_functor net87_compute_reaction_rates;
 
 #if DEBUG
 	nnet::net86::debug = nnet::eos::debug = true;
@@ -46,8 +32,8 @@ int main() {
 	Y[86] = 1;
 
     std::vector<double> rate(nnet::net87::reaction_list.size()), drates(nnet::net87::reaction_list.size()), BE(87);
-	auto eos_struct = helm(                        Y.data(), 3e9, 1e9);
-	                  net87_compute_reaction_rates(Y.data(), 3e9, 1e9, eos_struct, BE.data(), rate.data(), drates.data());
+	auto eos_struct = helm(                               Y.data(), 3e9, 1e9);
+	                  nnet::net87::compute_reaction_rates(Y.data(), 3e9, 1e9, eos_struct, BE.data(), rate.data(), drates.data());
 
 	"net14 <-> net87:\t";
 	for (int i = 0; i < 14; ++i)

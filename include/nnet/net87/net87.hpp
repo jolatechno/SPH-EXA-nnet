@@ -99,4 +99,6 @@ namespace nnet::net87 {
 			drates[++jdx] = rhoElec == 0 ? 0 : deffp/rhoElec;
 		}
 	};
+	
+	extern compute_reaction_rates_functor compute_reaction_rates;
 }

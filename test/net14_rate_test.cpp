@@ -9,15 +9,6 @@
 #include "nnet/net14/net14.hpp"
 #include "nnet/eos/helmholtz.hpp"
 
-namespace nnet {
-	namespace net14 {
-		bool debug = false;
-	}
-	namespace eos {
-		bool debug = false;
-	}
-}
-
 
 int main() {
 	std::cout << "A.size = " << nnet::net14::constants::A.size() << "\n";
@@ -25,8 +16,6 @@ int main() {
 	std::cout << "BE.size = " << nnet::net14::BE.size() << "\n\n";
 
 	nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
-
-	nnet::net14::compute_reaction_rates_functor net14_compute_reaction_rates;
 
 #if DEBUG
 	nnet::net14::debug = nnet::eos::debug = true;
@@ -40,7 +29,7 @@ int main() {
 
    
     std::vector<double> rate(nnet::net14::reaction_list.size()), drates(nnet::net14::reaction_list.size()), BE(14);
-	net14_compute_reaction_rates(Y.data(), 2e9, 1e9, NULL, BE.data(), rate.data(), drates.data());
+	nnet::net14::compute_reaction_rates(Y.data(), 2e9, 1e9, NULL, BE.data(), rate.data(), drates.data());
 
 	std::cout << "reaction_list.size=" << nnet::net14::reaction_list.size() << ", rates.size=" << rate.size() << "\n\n";
 	
