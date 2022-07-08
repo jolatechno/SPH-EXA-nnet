@@ -11,6 +11,16 @@
 
 #include "util/arg_parser.hpp"
 
+namespace nnet {
+	namespace net14 {
+		bool debug = false;
+	}
+	namespace eos {
+		bool debug = false;
+	}
+}
+
+
 void printHelp(char* name) {
 	std::cout << "\nUsage:\n\n";
 	std::cout << name << " [OPTION]\n";

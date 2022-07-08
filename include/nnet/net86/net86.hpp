@@ -101,11 +101,7 @@
 	506.460*constants::Mev_to_erg
 
 namespace nnet::net86 {
-#ifdef NET86_DEBUG
-	bool debug = true;
-#else
-	bool debug = false;
-#endif
+	extern bool debug;
 
 
 #ifdef NET86_NO_COULOMBIAN_DEBUG

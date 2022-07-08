@@ -259,7 +259,7 @@ print functions:
 
 
 
-	HOST_FUN std::ostream inline &operator<<(std::ostream& os, const reaction_reference& r) {
+	std::ostream inline &operator<<(std::ostream& os, const reaction_reference& r) {
 		// print reactant
 		for (auto [reactant_id, n_reactant_consumed] : r.reactants)
 			os << n_reactant_consumed << "*[" << reactant_id << "] ";
@@ -273,7 +273,7 @@ print functions:
 	}
 
 
-	HOST_FUN std::ostream inline &operator<<(std::ostream& os, const reaction& r) {
+	std::ostream inline &operator<<(std::ostream& os, const reaction& r) {
 		// print reactant
 		for (auto [reactant_id, n_reactant_consumed] : r.reactants)
 			os << n_reactant_consumed << "*[" << reactant_id << "] ";

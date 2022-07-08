@@ -35,15 +35,7 @@
 #include "sph/data_util.hpp"
 
 namespace nnet::eos {
-	/* !!!!!!!!!!!!
-	debuging :
-	!!!!!!!!!!!! */
-#ifdef HELM_DEBUG
-	bool debug = true;
-#else
-	bool debug = false;
-#endif
-
+	extern bool debug;
 
 	namespace helmholtz_constants {
 		// table size

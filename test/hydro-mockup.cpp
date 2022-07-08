@@ -20,6 +20,18 @@
 #include "nnet/sphexa/observables.hpp"
 #include "nnet/sphexa/initializers.hpp"
 
+namespace nnet {
+	namespace net86 {
+		bool debug = false;
+	}
+	namespace net14 {
+		bool debug = false;
+	}
+	namespace eos {
+		bool debug = false;
+	}
+}
+
 
 
 

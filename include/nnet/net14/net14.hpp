@@ -28,12 +28,7 @@
 	
 
 namespace nnet::net14 {
-#ifdef NET14_DEBUG
-	bool debug = true;
-#else
-	bool debug = false;
-#endif
-
+	extern bool debug;
 
 #ifdef NET14_NO_COULOMBIAN_DEBUG
 	/// if true ignore coulombian corrections

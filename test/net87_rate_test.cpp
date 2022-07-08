@@ -9,6 +9,19 @@
 #include "nnet/net87/net87.hpp"
 #include "nnet/eos/helmholtz.hpp"
 
+namespace nnet {
+	namespace net86 {
+		bool debug = false;
+	}
+	namespace net14 {
+		bool debug = false;
+	}
+	namespace eos {
+		bool debug = false;
+	}
+}
+
+
 int main() {
 	std::cout << "A.size = " << nnet::net87::constants::A.size() << "\n";
 	std::cout << "Z.size = " << nnet::net87::constants::Z.size() << "\n";
@@ -17,12 +30,10 @@ int main() {
 	nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
 	nnet::net87::electrons::constants::read_table<cstone::CpuTag>();
 
-#if NO_SCREENING
-	nnet::net87::skip_coulombian_correction = true;
-#endif
 #if DEBUG
-	nnet::debug = true;
+	nnet::net86::debug = nnet::eos::debug = true;
 #endif
+
 	nnet::eos::helmholtz_functor helm(nnet::net87::constants::Z);
 
 	std::array<double, 87> Y, X;

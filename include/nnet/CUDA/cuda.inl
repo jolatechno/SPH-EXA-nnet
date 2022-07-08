@@ -4,14 +4,12 @@
 	#define COMPILE_DEVICE
 
 	#define HOST_DEVICE_FUN __host__ __device__
-	#define HOST_FUN __host__
 
 	#define DEVICE_DEFINE(type, symbol, definition) \
 		           type       symbol definition   \
 		__device__ type dev_##symbol definition
 #else
 	#define HOST_DEVICE_FUN
-	#define HOST_FUN
 
 	#define DEVICE_DEFINE(type, symbol, definition) type symbol definition
 #endif

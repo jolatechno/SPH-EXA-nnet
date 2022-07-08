@@ -9,12 +9,26 @@
 #include "nnet/net14/net14.hpp"
 #include "nnet/eos/helmholtz.hpp"
 
+namespace nnet {
+	namespace net14 {
+		bool debug = false;
+	}
+	namespace eos {
+		bool debug = false;
+	}
+}
+
+
 int main() {
 	std::cout << "A.size = " << nnet::net14::constants::A.size() << "\n";
 	std::cout << "Z.size = " << nnet::net14::constants::Z.size() << "\n";
 	std::cout << "BE.size = " << nnet::net14::BE.size() << "\n\n";
 
 	nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
+
+#if DEBUG
+	nnet::net14::debug = nnet::eos::debug = true;
+#endif
 
 	std::array<double, 14> Y, X;
     for (int i = 0; i < 14; ++i) X[i] = 0;
