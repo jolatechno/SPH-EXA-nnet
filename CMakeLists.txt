@@ -24,9 +24,7 @@ include(CheckLanguage)
 
 
 check_language(CUDA)
-if(NO_CUDA)
-    set(CMAKE_CUDA_COMPILER 0)
-endif()
+
 if(CMAKE_CUDA_COMPILER)
     enable_language(CUDA)
     find_package(CUDAToolkit)

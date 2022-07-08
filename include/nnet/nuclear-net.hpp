@@ -46,7 +46,7 @@ constants :
 		const double dT_T_tol = 4;
 
 		/// the value that is considered null inside a system
-		const double epsilon_system = 1e-100;
+		const double epsilon_system = 1e-40;
 		/// the value that is considered null inside a state
 		const double epsilon_vector = 1e-16;
 
