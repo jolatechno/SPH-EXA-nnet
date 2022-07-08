@@ -842,5 +842,5 @@ namespace nnet::net86 {
 				}
 			}
 		}
-	} compute_reaction_rates;
+	};
 }

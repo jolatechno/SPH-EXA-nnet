@@ -98,5 +98,5 @@ namespace nnet::net87 {
 			rates [++idx] = rhoElec == 0 ? 0 :  effp/rhoElec;
 			drates[++jdx] = rhoElec == 0 ? 0 : deffp/rhoElec;
 		}
-	} compute_reaction_rates;
+	};
 }

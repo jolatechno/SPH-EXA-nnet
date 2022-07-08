@@ -756,5 +756,5 @@ namespace nnet::net14 {
 				}
 			}
 		}
-	} compute_reaction_rates;
+	};
 }

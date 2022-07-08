@@ -62,6 +62,8 @@ int main(int argc, char* argv[]) {
 	nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
 	nnet::net87::electrons::constants::read_table<cstone::CpuTag>();
 
+	nnet::net86::compute_reaction_rates_functor net86_compute_reaction_rates;
+
     const int n_max                         = parser.get("-n",        1000);
     const int n_print                       = parser.get("--n-debug", 30);
     const double t_max                      = parser.get("--t-lim",   1.5);
@@ -141,12 +143,12 @@ int main(int argc, char* argv[]) {
 		double current_dt = idealGas ? 
 			nnet::solve_system_NR(86,
 				Mp.data(), RHS.data(), DY_T.data(), rates.data(),
-				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, idea_gas_eos,
+				nnet::net86::reaction_list, net86_compute_reaction_rates, idea_gas_eos,
 				last_Y.data(), last_T, Y.data(), T,
 				rho, 0., dt) :
 			nnet::solve_system_NR(86,
 				Mp.data(), RHS.data(), DY_T.data(), rates.data(),
-				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos,
+				nnet::net86::reaction_list, net86_compute_reaction_rates, helm_eos,
 				last_Y.data(), last_T, Y.data(), T,
 				rho, 0., dt);
 		t += current_dt;
