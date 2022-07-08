@@ -72,10 +72,14 @@ namespace nnet::net87::electrons {
 
 #ifdef COMPILE_DEVICE
 			if constexpr (sphexa::HaveGpu<AccType>{}) {
+				std::cerr << "init electron...\n";
+
 		        // copy to device 
 				gpuErrchk(cudaMemcpyToSymbol(dev_log_temp_ref,  log_temp_ref,  nTemp*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_log_rho_ref,   log_rho_ref,   nRho*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_electron_rate, electron_rate, nTemp*nRho*nC*sizeof(double)));
+
+				std::cerr << "...init electron\n";
 		    }
 #endif
 		}

@@ -209,6 +209,8 @@ namespace nnet::eos {
 
 #ifdef COMPILE_DEVICE
 			if constexpr (sphexa::HaveGpu<AccType>{}) {
+				std::cerr << "init helmholtz_constants...\n";
+
 		        // copy to device 
 		        gpuErrchk(cudaMemcpyToSymbol(dev_d,        d,              imax*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_dd_sav,   dd_sav,   (imax - 1)*sizeof(double)));
@@ -249,6 +251,8 @@ namespace nnet::eos {
 		        gpuErrchk(cudaMemcpyToSymbol(dev_xfd,  xfd,  imax*jmax*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_xft,  xft,  imax*jmax*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_xfdt, xfdt, imax*jmax*sizeof(double)));
+
+				std::cerr << "...init helmholtz_constants\n";
 		   	}
 #endif
 		};

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cuda_runtime.h>
+#include <iostream>
 
 #ifdef USE_MPI
 	#include <mpi.h>
