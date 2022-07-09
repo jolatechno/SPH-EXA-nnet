@@ -38,12 +38,6 @@ namespace nnet::net87::electrons {
 		// table size
 		static const int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
 
-		// table type
-		typedef eigen::fixed_size_array<double, nRho> rhoVector;
-		typedef eigen::fixed_size_array<double, nTemp> tempVector;
-		typedef eigen::fixed_size_array<double, nTemp*nRho*nC> rateMatrix;
-		// typedef eigen::fixed_size_matrix<std::array<double, nC>, nTemp, nRho> rateMatrix; // double[nRho][nTemp][nC]
-
 		DEVICE_DEFINE(static double, log_temp_ref[N_TEMP], ;)
         DEVICE_DEFINE(static double, log_rho_ref[N_RHO], ;)
         DEVICE_DEFINE(static double, electron_rate[N_TEMP][N_RHO][N_C], ;)
