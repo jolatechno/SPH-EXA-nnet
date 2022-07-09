@@ -4,7 +4,7 @@ project(sphexa CXX C)
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS "-O3 --std=c++17")
-set(CMAKE_CUDA_FLAGS "-O3 --std=c++17")
+set(CMAKE_CUDA_FLAGS "-O3 --std=c++17 --expt-relaxed-constexpr")
 
 find_package(MPI)
 find_package(OpenMP REQUIRED)
@@ -29,6 +29,10 @@ if(CMAKE_CUDA_COMPILER)
     enable_language(CUDA)
     find_package(CUDAToolkit)
     set(CMAKE_CUDA_STANDARD 17)
+
+    set(CUDA_SEPARABLE_COMPILATION ON)
+    set(POSITION_INDEPENDENT_CODE ON)
+    set(CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 
     if (DEFINED CMAKE_CUDA_ARCHITECTURES)
         set(CMAKE_CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})

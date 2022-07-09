@@ -67,3 +67,7 @@ The variable defined in [include/nnet/eos/helmholtz.hpp](./include/nnet/eos/helm
 And copied to device in [include/nnet/eos/helmholtz.hpp](./include/nnet/eos/helmholtz.hpp) line 219-257.
 
 The variable defined in [include/nnet/net87/electrons.hpp](./include/nnet/net87/electrons.hpp) line 41-43 (through `DEVICE_DEFINE`), and copied to device in [include/nnet/net87/electrons.hpp](./include/nnet/net87/electrons.hpp) line 72-74.
+
+#### MPI + CUDA + SPH-EXA
+
+Compilling but not running, same as MPI + CUDA.
