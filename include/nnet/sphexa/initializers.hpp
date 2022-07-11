@@ -3,9 +3,7 @@
 #include <numeric>
 
 #include "nuclear-data.hpp"
-#ifdef USE_MPI
-	#include "mpi/mpi-wrapper.hpp"
-#endif
+#include "mpi/mpi-wrapper.hpp"
 
 namespace sphexa::sphnnet {
 	/// intialize nuclear data, from a function of positions:
@@ -32,9 +30,9 @@ namespace sphexa::sphnnet {
 		// receiv position for initializer
 #ifdef USE_MPI
 		std::vector<Float> x(local_nuclear_n_particles), y(local_nuclear_n_particles), z(local_nuclear_n_particles);
-		sphexa::mpi::directSyncDataFromPartition(n.partition, d.x.data(), x.data(), d.comm);
-		sphexa::mpi::directSyncDataFromPartition(n.partition, d.y.data(), y.data(), d.comm);
-		sphexa::mpi::directSyncDataFromPartition(n.partition, d.z.data(), z.data(), d.comm);
+		sphexa::mpi::syncDataToStaticPartition(n.partition, d.x.data(), x.data(), d.comm);
+		sphexa::mpi::syncDataToStaticPartition(n.partition, d.y.data(), y.data(), d.comm);
+		sphexa::mpi::syncDataToStaticPartition(n.partition, d.z.data(), z.data(), d.comm);
 #else
 		std::vector<Float> &x = d.x, &y = d.y, &z = d.z;
 #endif
@@ -76,7 +74,7 @@ namespace sphexa::sphnnet {
 		for (size_t i = 0; i < local_n_particles; ++i)
 			send_r[i] = std::sqrt(d.x[i]*d.x[i] + d.y[i]*d.y[i] + d.z[i]*d.z[i]);
 #ifdef USE_MPI
-		sphexa::mpi::directSyncDataFromPartition(n.partition, send_r.data(), r.data(), d.comm);
+		sphexa::mpi::syncDataToStaticPartition(n.partition, send_r.data(), r.data(), d.comm);
 #endif
 
 		// intialize nuclear data
@@ -105,7 +103,7 @@ namespace sphexa::sphnnet {
 		// share the initial rho
 		n.resize(local_nuclear_n_particles);
 #ifdef USE_MPI
-		sphexa::mpi::directSyncDataFromPartition(n.partition, d.rho.data(), n.rho.data(), d.comm);
+		sphexa::mpi::syncDataToStaticPartition(n.partition, d.rho.data(), n.rho.data(), d.comm);
 #else
 		n.rho = d.rho;
 #endif

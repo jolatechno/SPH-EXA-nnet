@@ -23,9 +23,7 @@
 #include "../eigen/eigen.hpp"
 #include "util/algorithm.hpp"
 
-#ifdef USE_MPI
-	#include "mpi/mpi-wrapper.hpp"
-#endif
+#include "mpi/mpi-wrapper.hpp"
 
 #include "sph/data_util.hpp"
 
@@ -37,7 +35,7 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<class Data, class func_type, class func_eos, typename Float, class nseFunction=void*>
-	void computeNuclearReactions(Data &n, const Float hydro_dt, const Float previous_dt,
+	void computeNuclearReactions(Data &n, size_t firstIndex, size_t lastIndex, const Float hydro_dt, const Float previous_dt,
 		const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		const nseFunction jumpToNse=NULL)
 	{
@@ -58,13 +56,13 @@ namespace sphexa::sphnnet {
 			nnet::gpu_reaction_list dev_reactions = nnet::move_to_gpu(reactions);
 			
 			// call the cuda kernel wrapper
-			cudaComputeNuclearReactions(n_particles, dimension,
+			cudaComputeNuclearReactions(lastIndex - firstIndex, dimension,
 				n.devData.buffer,
-		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()),
-		(Float*)thrust::raw_pointer_cast(n.devData.previous_rho.data()),
-		(Float*)thrust::raw_pointer_cast(n.devData.Y.data()),
-		(Float*)thrust::raw_pointer_cast(n.devData.temp.data()),
-		(Float*)thrust::raw_pointer_cast(n.devData.dt.data()),
+		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()          + firstIndex),
+		(Float*)thrust::raw_pointer_cast(n.devData.previous_rho.data() + firstIndex),
+		(Float*)thrust::raw_pointer_cast(n.devData.Y.data()            + firstIndex),
+		(Float*)thrust::raw_pointer_cast(n.devData.temp.data()         + firstIndex),
+		(Float*)thrust::raw_pointer_cast(n.devData.dt.data()           + firstIndex),
 				hydro_dt, previous_dt,
 				dev_reactions, construct_rates_BE, eos);
 			
@@ -93,7 +91,7 @@ namespace sphexa::sphnnet {
 		int omp_batch_size = util::dynamic_batch_size(n_particles, num_threads);
 
 		#pragma omp parallel for firstprivate(Mp, RHS, DY_T, rates, Y_buffer, reactions/*, construct_rates_BE, eos*/) schedule(dynamic, omp_batch_size)
-		for (size_t i = 0; i < n_particles; ++i) 
+		for (size_t i = firstIndex; i < lastIndex; ++i) 
 			if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp) {
 				// compute drho/dt
 				Float drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
@@ -113,8 +111,7 @@ namespace sphexa::sphnnet {
 	 * TODO
 	 */
 	template<class Data, class Vector>
-	void computeHelmEOS(Data &n, const Vector &Z) {
-		const size_t n_particles = n.Y.size();
+	void computeHelmEOS(Data &n, size_t firstIndex, size_t lastIndex, const Vector &Z) {
 		const int dimension = n.Y[0].size();
 		using Float = typename std::remove_reference<decltype(n.cv[0])>::type;
 
@@ -130,17 +127,17 @@ namespace sphexa::sphnnet {
 			gpuErrchk(cudaMemcpy((void*)Z_dev, (void*)Z.data(), dimension*sizeof(Float), cudaMemcpyHostToDevice));
 
 			// call the cuda kernel wrapper
-			cudaComputeHelmholtz(n_particles, dimension, Z_dev,
+			cudaComputeHelmholtz(lastIndex - firstIndex, dimension, Z_dev,
 				// read buffers:
-		(Float*)thrust::raw_pointer_cast(n.devData.temp.data()),
-		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()),
-		(Float*)thrust::raw_pointer_cast(n.devData.Y.data()),
+		(Float*)thrust::raw_pointer_cast(n.devData.temp.data() + firstIndex),
+		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()  + firstIndex),
+		(Float*)thrust::raw_pointer_cast(n.devData.Y.data()    + firstIndex),
 				// write buffers:
-		(Float*)thrust::raw_pointer_cast(n.devData.u.data()),
-		(Float*)thrust::raw_pointer_cast(n.devData.cv.data()),
-		(Float*)thrust::raw_pointer_cast(n.devData.p.data()),
-		(Float*)thrust::raw_pointer_cast(n.devData.c.data()),
-		(Float*)thrust::raw_pointer_cast(n.devData.dpdT.data()));
+		(Float*)thrust::raw_pointer_cast(n.devData.u.data()    + firstIndex),
+		(Float*)thrust::raw_pointer_cast(n.devData.cv.data()   + firstIndex),
+		(Float*)thrust::raw_pointer_cast(n.devData.p.data()    + firstIndex),
+		(Float*)thrust::raw_pointer_cast(n.devData.c.data()    + firstIndex),
+		(Float*)thrust::raw_pointer_cast(n.devData.dpdT.data() + firstIndex));
 
 			/* debuging: check for error */
 			gpuErrchk(cudaPeekAtLastError());
@@ -154,7 +151,7 @@ namespace sphexa::sphnnet {
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 		#pragma omp parallel for schedule(static)
-		for (size_t i = 0; i < n_particles; ++i) {
+		for (size_t i = firstIndex; i < lastIndex; ++i) {
 			// compute abar and zbar
 			double abar = std::accumulate(n.Y[i].begin(), n.Y[i].end(), (double)0.);
 			double zbar = eigen::dot(n.Y[i].begin(), n.Y[i].end(), Z);
@@ -181,68 +178,5 @@ namespace sphexa::sphnnet {
 		size_t n_particles = lastIndex - firstIndex;
 		MPI_Allreduce(&n_particles, &n.numParticlesGlobal, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, n.comm);
 #endif
-	}
-
-
-	/// function sending requiered hydro data from ParticlesDataType to NuclearDataType
-	/**
-	 * TODO
-	 */
-	template<class ParticlesDataType, class nuclearDataType>
-	void hydroToNuclearUpdate(ParticlesDataType &d, nuclearDataType &n, const std::vector<std::string> &sync_fields) {
-		// get data
-		auto nuclearData  = n.data();
-		auto particleData = d.data();
-
-		// send fields
-		for (auto field : sync_fields) {
-			// find field
-			int nuclearFieldIdx = std::distance(n.fieldNames.begin(), 
-				std::find(n.fieldNames.begin(), n.fieldNames.end(), field));
-			if (field == "previous_rho")
-				field = "rho";
-			int particleFieldIdx = std::distance(d.fieldNames.begin(), 
-				std::find(d.fieldNames.begin(), d.fieldNames.end(), field));
-
-			// send
-			std::visit(
-				[&d, &n](auto&& send, auto &&recv){
-#ifdef USE_MPI
-					sphexa::mpi::directSyncDataFromPartition(n.partition, send->data(), recv->data(), d.comm);
-#else
-					if constexpr (std::is_same<decltype(send), decltype(recv)>::value)
-						*recv = *send;
-#endif
-				}, particleData[particleFieldIdx], nuclearData[nuclearFieldIdx]);
-		}
-	}
-
-	/// sending back hydro data from NuclearDataType to ParticlesDataType
-	/**
-	 * TODO
-	 */
-	template<class ParticlesDataType, class nuclearDataType>
-	void nuclearToHydroUpdate(ParticlesDataType &d, nuclearDataType &n, const std::vector<std::string> &sync_fields) {
-		auto nuclearData  = n.data();
-		auto particleData = d.data();
-
-		// send fields
-		for (auto field : sync_fields) {
-			// find field
-			int nuclearFieldIdx = std::distance(n.fieldNames.begin(), 
-				std::find(n.fieldNames.begin(), n.fieldNames.end(), field));
-			int particleFieldIdx = std::distance(d.fieldNames.begin(), 
-				std::find(d.fieldNames.begin(), d.fieldNames.end(), field));
-
-			std::visit(
-				[&d, &n](auto&& send, auto &&recv){
-#ifdef USE_MPI
-					sphexa::mpi::reversedSyncDataFromPartition(n.partition, send->data(), recv->data(), d.comm);
-#else
-					if constexpr (std::is_same<decltype(send), decltype(recv)>::value)
-						*recv = *send;
-#endif
-				}, nuclearData[nuclearFieldIdx], particleData[particleFieldIdx]);
-		}
 	}
 }

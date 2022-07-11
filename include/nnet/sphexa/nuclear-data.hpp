@@ -13,8 +13,8 @@
 
 #ifdef USE_MPI
 	#include <mpi.h>
-	#include "mpi/mpi-wrapper.hpp"
 #endif
+#include "mpi/mpi-wrapper.hpp"
 
 #include "sph/data_util.hpp"
 #include "sph/field_states.hpp"

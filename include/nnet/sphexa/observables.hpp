@@ -19,9 +19,7 @@
 #include "../eigen/eigen.hpp"
 #include "util/algorithm.hpp"
 
-#ifdef USE_MPI
-	#include "mpi/mpi-wrapper.hpp"
-#endif
+#include "mpi/mpi-wrapper.hpp"
 
 #include "sph/data_util.hpp"
 

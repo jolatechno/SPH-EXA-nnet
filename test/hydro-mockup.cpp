@@ -205,21 +205,19 @@ void step(int rank,
 
 	sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n);
 
-	sphexa::sphnnet::hydroToNuclearUpdate(d, n, {"previous_rho"}); // useless, just for testing
-
 	// do hydro stuff
 
-	// std::swap(n.rho, n.previous_rho); // the way it should be done instead of the first "hydroToNuclearUpdate"
-	sphexa::sphnnet::hydroToNuclearUpdate(d, n, {"rho", "temp"});
+	std::swap(n.rho, n.previous_rho);
+	sphexa::mpi::syncDataToStaticPartition(d, n, {"rho", "temp"});
 	sphexa::transferToDevice(n, 0, n_nuclear_particles, {"previous_rho", "rho", "temp"});
 
-	sphexa::sphnnet::computeNuclearReactions(n, dt, dt,
+	sphexa::sphnnet::computeNuclearReactions(n, 0, n_nuclear_particles, dt, dt,
 		reactions, construct_rates_BE, eos);
-	sphexa::sphnnet::computeHelmEOS(n, nnet::net14::constants::Z);
+	sphexa::sphnnet::computeHelmEOS(n, 0, n_nuclear_particles, nnet::net14::constants::Z);
 
 	sphexa::transferToHost(n, 0, n_nuclear_particles, {"temp",
 		"c", "p", "cv", "u", "dpdT"});
-	sphexa::sphnnet::nuclearToHydroUpdate(d, n, {"temp"});
+	sphexa::mpi::syncDataFromStaticPartition(d, n, {"temp"});
 	
 	// do hydro stuff
 
