@@ -38,9 +38,18 @@ namespace nnet::net87::electrons {
 		// table size
 		static const int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
 
-		DEVICE_DEFINE(static double, log_temp_ref[N_TEMP], ;)
+	 /* DEVICE_DEFINE(static double, log_temp_ref[N_TEMP], ;)
         DEVICE_DEFINE(static double, log_rho_ref[N_RHO], ;)
-        DEVICE_DEFINE(static double, electron_rate[N_TEMP][N_RHO][N_C], ;)
+        DEVICE_DEFINE(static double, electron_rate[N_TEMP][N_RHO][N_C], ;) */
+
+        static double log_temp_ref[N_TEMP];
+        static double log_rho_ref[N_RHO];
+        static double electron_rate[N_TEMP][N_RHO][N_C];
+#ifdef COMPILE_DEVICE
+        extern __device__ double dev_log_temp_ref[N_TEMP];
+        extern __device__ double dev_log_rho_ref[N_RHO];
+        extern __device__ double dev_electron_rate[N_TEMP][N_RHO][N_C];
+#endif
 
 		// read electron rate constants table
 		template<class AccType>
@@ -64,18 +73,18 @@ namespace nnet::net87::electrons {
 					for (int k = 0; k < nC; ++k)
 						rate_table >> electron_rate[i][j][k];
 
-#ifdef COMPILE_DEVICE
 			if constexpr (sphexa::HaveGpu<AccType>{}) {
+#ifdef COMPILE_DEVICE
 				std::cerr << "init electron...\n";
 
-		        // copy to device 
+			    // copy to device 
 				gpuErrchk(cudaMemcpyToSymbol(dev_log_temp_ref,  log_temp_ref,  nTemp*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_log_rho_ref,   log_rho_ref,   nRho*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_electron_rate, electron_rate, nTemp*nRho*nC*sizeof(double)));
+			    gpuErrchk(cudaMemcpyToSymbol(dev_log_rho_ref,   log_rho_ref,   nRho*sizeof(double)));
+			    gpuErrchk(cudaMemcpyToSymbol(dev_electron_rate, electron_rate, nTemp*nRho*nC*sizeof(double)));
 
 				std::cerr << "...init electron\n";
-		    }
 #endif
+			}
 		}
 	}
 

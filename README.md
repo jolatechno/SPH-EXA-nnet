@@ -6,7 +6,7 @@ nuclear network implementation for SPH-EXA
 ```bash
 cd test
 mkdir build && cd build
-cmake -DCMAKE_CXX_COMPILER=mpic++ ../..
+cmake ../..
 make
 ```
 
@@ -15,7 +15,7 @@ To set a specific CUDA compute capability, for example `8.0`
 ```bash
 cd test
 mkdir build && cd build
-cmake -DCMAKE_CXX_COMPILER=mpic++ ../.. -DCMAKE_CUDA_ARCHITECTURES=80
+cmake ../.. -DCMAKE_CUDA_ARCHITECTURES=80
 make
 ```
 
