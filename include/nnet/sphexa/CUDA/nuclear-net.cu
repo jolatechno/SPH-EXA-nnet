@@ -1,7 +1,3 @@
-#ifdef IMPORT_DOT_CU
-#pragma once
-#endif
-
 #include "nuclear-net.cuh"
 
 namespace sphexa {

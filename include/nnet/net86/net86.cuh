@@ -8,10 +8,10 @@
 #include <vector>
 #include <iostream>
 
-#include "../nuclear-net.hpp"
-#include "net86-constants.hpp"
+#include "../nuclear-net.cuh"
+#include "net86-constants.cuh"
 
-#include "../sphexa/util/algorithm.hpp"
+#include "../sphexa/util/algorithm.cuh"
 
 #define BE_NET86 \
 	0 COMMA 0 COMMA \

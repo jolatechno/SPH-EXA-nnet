@@ -8,7 +8,7 @@
 #include <memory>
 #include <variant>
 
-#include "../nuclear-net.hpp"
+#include "../nuclear-net.cuh"
 #include "nuclear-io.hpp"
 
 #ifdef USE_MPI

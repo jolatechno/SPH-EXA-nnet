@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <numeric>
 
-#include "../net14/net14-constants.hpp"
+#include "../net14/net14-constants.cuh"
 
 namespace nnet::net86::constants {
 	static const int proton = 0;

@@ -8,9 +8,9 @@
 #include <vector>
 #include <iostream>
 
-#include "../nuclear-net.hpp"
-#include "../net86/net86.hpp"
-#include "electrons.hpp"
+#include "../nuclear-net.cuh"
+#include "../net86/net86.cuh"
+#include "electrons.cuh"
 
 namespace nnet::net87 {
 	namespace constants = nnet::net86::constants;

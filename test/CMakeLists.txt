@@ -65,9 +65,9 @@ target_link_libraries(${nnet} PRIVATE ${MPI_CXX_LIBRARIES} OpenMP::OpenMP_CXX $<
 if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
 	add_executable(${nnet}-cuda hydro-mockup.cpp)
 
-	set_target_properties(${nnet}-cuda PROPERTIES
-		CUDA_SEPARABLE_COMPILATION ON
-		CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+	 set_target_properties(${nnet}-cuda PROPERTIES
+	 	CUDA_SEPARABLE_COMPILATION ON
+ 	 	CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 
 	target_include_directories(${nnet}-cuda PRIVATE ${SPH_DIR})
 	target_include_directories(${nnet}-cuda PRIVATE ${CSTONE_DIR})
@@ -76,7 +76,8 @@ if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
 	target_include_directories(${nnet}-cuda PUBLIC ${MPI_CXX_INCLUDE_DIRS})
 
 	target_compile_definitions(${nnet}-cuda PRIVATE USE_MPI USE_CUDA FORCE_COMPILE_DEVICE)
-	target_link_libraries(${nnet}-cuda PRIVATE OpenMP::OpenMP_CXX ${MPI_CXX_LIBRARIES} CUDA::cudart
-		$<TARGET_OBJECTS:net87_gpu>
-		$<TARGET_OBJECTS:nuclear_gpu> $<TARGET_OBJECTS:nuclear_net_gpu>)
+	target_link_libraries(${nnet}-cuda PRIVATE
+		OpenMP::OpenMP_CXX ${MPI_CXX_LIBRARIES} CUDA::cudart
+		$<TARGET_OBJECTS:nuclear_gpu>
+	)
 endif()

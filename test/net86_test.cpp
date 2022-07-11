@@ -4,10 +4,10 @@
 #include "sph/traits.hpp"
 #include "cstone/util/array.hpp"
 
-#include "nnet/nuclear-net.hpp"
-#include "nnet/net87/net87.hpp"
-#include "nnet/eos/helmholtz.hpp"
-#include "nnet/eos/ideal_gas.hpp"
+#include "nnet/nuclear-net.cuh"
+#include "nnet/net87/net87.cuh"
+#include "nnet/eos/helmholtz.cuh"
+#include "nnet/eos/ideal_gas.cuh"
 
 #include "util/arg_parser.hpp"
 

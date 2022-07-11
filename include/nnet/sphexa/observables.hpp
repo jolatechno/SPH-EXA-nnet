@@ -16,8 +16,8 @@
 #include <numeric>
 #include <omp.h>
 
-#include "../eigen/eigen.hpp"
-#include "util/algorithm.hpp"
+#include "../eigen/eigen.cuh"
+#include "util/algorithm.cuh"
 
 #include "mpi/mpi-wrapper.hpp"
 
