@@ -8,6 +8,8 @@ target_include_directories(${net14_test} PRIVATE ${NNET_DIR})
 target_compile_definitions(${net14_test} PRIVATE)
 target_link_libraries(${net14_test} PRIVATE $<TARGET_OBJECTS:nuclear> OpenMP::OpenMP_CXX)
 
+install(TARGETS ${net14_test} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 
 
 set(net86_test net86_test)
@@ -19,6 +21,8 @@ target_include_directories(${net86_test} PRIVATE ${NNET_DIR})
 
 target_compile_definitions(${net86_test} PRIVATE)
 target_link_libraries(${net86_test} PRIVATE $<TARGET_OBJECTS:nuclear> OpenMP::OpenMP_CXX)
+
+install(TARGETS ${net86_test} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 
 
@@ -32,6 +36,8 @@ target_include_directories(${net14_rate_test} PRIVATE ${NNET_DIR})
 target_compile_definitions(${net14_rate_test} PRIVATE)
 target_link_libraries(${net14_rate_test} PRIVATE $<TARGET_OBJECTS:nuclear> OpenMP::OpenMP_CXX)
 
+install(TARGETS ${net14_rate_test} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 
 
 set(net87_rate_test net87_rate_test)
@@ -43,6 +49,8 @@ target_include_directories(${net87_rate_test} PRIVATE ${NNET_DIR})
 
 target_compile_definitions(${net87_rate_test} PRIVATE)
 target_link_libraries(${net87_rate_test} PRIVATE $<TARGET_OBJECTS:nuclear> OpenMP::OpenMP_CXX)
+
+install(TARGETS ${net87_rate_test} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 
 
@@ -58,12 +66,22 @@ target_include_directories(${nnet} PRIVATE ${NNET_DIR})
 target_include_directories(${nnet} PUBLIC ${MPI_CXX_INCLUDE_DIRS})
 
 target_compile_definitions(${nnet} PRIVATE USE_MPI)
-target_link_libraries(${nnet} PRIVATE ${MPI_CXX_LIBRARIES} OpenMP::OpenMP_CXX $<TARGET_OBJECTS:nuclear> )
+target_link_libraries(${nnet} PRIVATE ${MPI_CXX_LIBRARIES} OpenMP::OpenMP_CXX
+	$<TARGET_OBJECTS:nuclear>)
+
+install(TARGETS ${nnet} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 
 
 if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
-	add_executable(${nnet}-cuda hydro-mockup.cpp)
+  # add_executable(${nnet}-cuda hydro-mockup.cpp)
+	add_executable(${nnet}-cuda hydro-mockup-cuda.cpp)
+
+	if(CMAKE_CUDA_COMPILER)
+		set_source_files_properties(hydro-mockup-cuda.cpp PROPERTIES LANGUAGE CUDA)
+	elseif(CMAKE_HIP_COMPILER)
+		set_source_files_properties(hydro-mockup-cuda.cpp PROPERTIES LANGUAGE HIP)
+	endif()
 
 	if(CUDA_SEPARABLE_COMPILATION)
 		set_target_properties(${nnet}-cuda PROPERTIES
@@ -78,9 +96,11 @@ if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
 
 	target_include_directories(${nnet}-cuda PUBLIC ${MPI_CXX_INCLUDE_DIRS})
 
-	target_compile_definitions(${nnet}-cuda PRIVATE USE_MPI USE_CUDA FORCE_COMPILE_DEVICE)
+	target_compile_definitions(${nnet}-cuda PRIVATE USE_MPI USE_CUDA)
 	target_link_libraries(${nnet}-cuda PRIVATE
 		OpenMP::OpenMP_CXX ${MPI_CXX_LIBRARIES} CUDA::cudart
 		$<TARGET_OBJECTS:nuclear_gpu>
 	)
+
+	install(TARGETS ${nnet}-cuda RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

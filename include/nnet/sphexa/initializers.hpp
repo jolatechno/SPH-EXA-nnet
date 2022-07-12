@@ -10,8 +10,8 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<size_t n_species, typename Float, class AccType, class initFunc, class ParticlesDataType>
-	void initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, AccType> &n, const initFunc initializer) {
+	template<size_t n_species, typename Float, typename KeyType, class AccType, class initFunc, class ParticlesDataType>
+	void initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, KeyType, AccType> &n, const initFunc initializer) {
 #ifdef USE_MPI
 		int size;
 		MPI_Comm_size(d.comm, &size);
@@ -47,8 +47,8 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<size_t n_species, typename Float, class AccType, class initFunc, class ParticlesDataType>
-	void initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, AccType> &n, const initFunc initializer) {
+	template<size_t n_species, typename Float, typename KeyType, class AccType, class initFunc, class ParticlesDataType>
+	void initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, KeyType, AccType> &n, const initFunc initializer) {
 #ifdef USE_MPI
 		int size;
 		MPI_Comm_size(d.comm, &size);
@@ -87,8 +87,8 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<size_t n_species, typename Float, class AccType, class initFunc, class ParticlesDataType>
-	void initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, AccType> &n, const initFunc initializer) {
+	template<size_t n_species, typename Float, typename KeyType, class AccType, class initFunc, class ParticlesDataType>
+	void initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, KeyType, AccType> &n, const initFunc initializer) {
 #ifdef USE_MPI
 		int size;
 		MPI_Comm_size(d.comm, &size);
@@ -119,8 +119,8 @@ namespace sphexa::sphnnet {
 	/**
 	 * TODO
 	 */
-	template<size_t n_species, typename Float, class AccType, class Vector, class ParticlesDataType>
-	void initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, AccType> &n, const Vector &Y0) {
+	template<size_t n_species, typename Float, typename KeyType, class AccType, class Vector, class ParticlesDataType>
+	void initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, KeyType, AccType> &n, const Vector &Y0) {
 #ifdef USE_MPI
 		int size;
 		MPI_Comm_size(d.comm, &size);

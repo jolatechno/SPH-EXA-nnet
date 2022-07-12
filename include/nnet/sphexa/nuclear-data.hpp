@@ -1,14 +1,16 @@
 #pragma once
 
 #include "../CUDA/cuda.inl"
-#include "CUDA/nuclear-data-gpu.cuh"
 
 #include <vector>
 #include <array>
 #include <memory>
 #include <variant>
 
-#include "../nuclear-net.cuh"
+#ifdef COMPILE_DEVICE
+	#include "CUDA/nuclear-data-gpu.cuh"
+#endif
+
 #include "nuclear-io.hpp"
 
 #ifdef USE_MPI
@@ -16,46 +18,56 @@
 #endif
 #include "mpi/mpi-wrapper.hpp"
 
+#include "../nuclear-net.cuh"
+
 #include "sph/data_util.hpp"
 #include "sph/field_states.hpp"
+#include "sph/traits.hpp"
 
 #include "cstone/util/util.hpp"
 
 namespace sphexa::sphnnet {
+	template<size_t N, typename T, typename I>
+	class DeviceNuclearDataType;
+
 	/// nuclear data class for n_species nuclear network
 	/**
 	 * TODO
 	 */
-	template<size_t n_species, typename Float, class AccType>
-	struct NuclearDataType : public FieldStates<NuclearDataType<n_species, Float, AccType>> {
+	template<size_t n_species, typename Float, typename Int, class AccType>
+	struct NuclearDataType : public FieldStates<NuclearDataType<n_species, Float, Int, AccType>> {
 	public:
+    	template<class... Args>
+    	using DeviceNuclearData_t = DeviceNuclearDataType<n_species, Args...>;
+
 		// types
 		using RealType = Float;
-    	using KeyType  = size_t;
+    	using KeyType  = Int;
     	using AcceleratorType = AccType;
+		using DeviceData_t = typename sphexa::detail::AccelSwitchType<AcceleratorType, sphexa::DeviceDataFacade, DeviceNuclearData_t>::template type<Float, Int>;
 
-    	DeviceNuclearDataType<AccType, n_species, Float> devData;
+    	DeviceData_t devData;
 
     	size_t iteration{0};
 	    size_t numParticlesGlobal;
-	    Float ttot{0.0};
+	    RealType ttot{0.0};
 	    //! current and previous (global) time-steps
-	    Float minDt, minDt_m1;
+	    RealType minDt, minDt_m1;
 	    //! @brief gravitational constant
-	    Float g{0.0};
+	    RealType g{0.0};
 
 		/// hydro data
-		std::vector<Float> c, p, cv, u, dpdT, m, rho, temp, previous_rho; // drho_dt
+		std::vector<RealType> c, p, cv, u, dpdT, m, rho, temp, previous_rho; // drho_dt
 
 		/// nuclear abundances (vector of vector)
-		std::vector<util::array<Float, n_species>> Y;
+		std::vector<util::array<RealType, n_species>> Y;
 
 		/// timesteps
-		std::vector<Float> dt;
+		std::vector<RealType> dt;
 
 		// particle ID and nodeID
 		std::vector<int> node_id;
-		std::vector<size_t> particle_id;
+		std::vector<KeyType> particle_id;
 
 		/// mpi communicator
 #ifdef USE_MPI
@@ -123,10 +135,10 @@ namespace sphexa::sphnnet {
 	     */
 	    auto data() {
 	    	using FieldType = std::variant<
-	    		std::vector<util::array<Float, n_species>>*,
+	    		std::vector<util::array<RealType, n_species>>*,
 	    		std::vector<int>*,
-	    		std::vector<size_t>*,
-	    		std::vector<Float>*>;
+	    		std::vector<KeyType>*,
+	    		std::vector<RealType>*>;
 	    	
 			return util::array<FieldType, fieldNames.size()>{
 				&node_id, &particle_id, &dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &previous_rho, &Y
