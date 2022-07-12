@@ -35,9 +35,9 @@ int main() {
 	auto eos_struct = helm(                               Y.data(), 3e9, 1e9);
 	                  nnet::net87::compute_reaction_rates(Y.data(), 3e9, 1e9, eos_struct, BE.data(), rate.data(), drates.data());
 
-	"net14 <-> net87:\t";
+	std::cout << "net14 <-> net87:\n";
 	for (int i = 0; i < 14; ++i)
-		std::cout << i << " <-> " << nnet::net87::constants::net14_species_order[i] << ",\t";
+		std::cout << i << " <-> " << nnet::net87::constants::net14_species_order[i] << ", ";
 	std::cout << "\n\n";
 	
 	int num_special_reactions = 5, num_reactions = 157 - 5, num_reverse = 157 - 5;

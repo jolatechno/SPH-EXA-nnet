@@ -19,6 +19,15 @@ cmake ../.. -DCMAKE_CUDA_ARCHITECTURES=80
 make
 ```
 
+To compile with CUDA device code reallocation (not working but probably needed in the future):
+
+```bash
+cd test
+mkdir build && cd build
+cmake ../.. -DCUDA_SEPARABLE_COMPILATION=ON
+make
+```
+
 ## Including into SPH-EXA
 
 To build libraries and prepare import pass simply add to cmake:

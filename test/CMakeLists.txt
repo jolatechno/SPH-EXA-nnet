@@ -65,9 +65,12 @@ target_link_libraries(${nnet} PRIVATE ${MPI_CXX_LIBRARIES} OpenMP::OpenMP_CXX $<
 if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
 	add_executable(${nnet}-cuda hydro-mockup.cpp)
 
-	 set_target_properties(${nnet}-cuda PROPERTIES
-	 	CUDA_SEPARABLE_COMPILATION ON
- 	 	CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+	if(CUDA_SEPARABLE_COMPILATION)
+		set_target_properties(${nnet}-cuda PROPERTIES
+		 	CUDA_SEPARABLE_COMPILATION ON
+	 	 	CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+		target_compile_definitions(${nnet}-cuda PRIVATE CUDA_SEPARABLE_COMPILATION)
+	endif()
 
 	target_include_directories(${nnet}-cuda PRIVATE ${SPH_DIR})
 	target_include_directories(${nnet}-cuda PRIVATE ${CSTONE_DIR})

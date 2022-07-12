@@ -38,18 +38,9 @@ namespace nnet::net87::electrons {
 		// table size
 		static const int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
 
-	     /* DEVICE_DEFINE(static double, log_temp_ref[N_TEMP], ;)
-        	DEVICE_DEFINE(static double, log_rho_ref[N_RHO], ;)
-        	DEVICE_DEFINE(static double, electron_rate[N_TEMP][N_RHO][N_C], ;) */
-
-        	static double log_temp_ref[N_TEMP];
-        	static double log_rho_ref[N_RHO];
-        	static double electron_rate[N_TEMP][N_RHO][N_C];
-#ifdef COMPILE_DEVICE
-        	extern __device__ double dev_log_temp_ref[N_TEMP];
-        	extern __device__ double dev_log_rho_ref[N_RHO];
-        	extern __device__ double dev_electron_rate[N_TEMP][N_RHO][N_C];
-#endif
+		DEVICE_DEFINE_EXTERN(double, log_temp_ref[N_TEMP], ;)
+        	DEVICE_DEFINE_EXTERN(double, log_rho_ref[N_RHO], ;)
+        	DEVICE_DEFINE_EXTERN(double, electron_rate[N_TEMP][N_RHO][N_C], ;)
 
 		// read electron rate constants table
 		template<class AccType>

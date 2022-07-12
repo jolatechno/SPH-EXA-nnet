@@ -12,9 +12,12 @@ endif()
 if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
 	add_library(nuclear_gpu STATIC nuclear-net.cu nnet/sphexa/CUDA/nuclear-net.cu nnet/sphexa/CUDA/nuclear-data-gpu.cu)
 
-	set_target_properties(nuclear_gpu PROPERTIES
-		CUDA_SEPARABLE_COMPILATION ON
-		CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+	if(CUDA_SEPARABLE_COMPILATION)
+		set_target_properties(nuclear_gpu PROPERTIES
+			CUDA_SEPARABLE_COMPILATION ON
+			CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+		target_compile_definitions(nuclear_gpu PRIVATE CUDA_SEPARABLE_COMPILATION)
+	endif()
 
 	target_include_directories(nuclear_gpu PRIVATE ${SPH_DIR})
 	target_include_directories(nuclear_gpu PRIVATE ${CSTONE_DIR})
