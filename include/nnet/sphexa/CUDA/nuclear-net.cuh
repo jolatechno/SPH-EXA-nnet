@@ -13,17 +13,17 @@
 #include "cstone/util/util.hpp"
 #include "cstone/util/array.hpp"
 
-#include "../../nuclear-net.cuh"
+#include "../../nuclear-net.hpp"
 #include "../../CUDA/nuclear-net.hpp"
 
-#include "../../eos/helmholtz.cuh"
-#include "../util/algorithm.cuh"
+#include "../../eos/helmholtz.hpp"
+#include "../util/algorithm.hpp"
 
-#include "../../net14/net14.cuh"
-#include "../../net86/net86.cuh"
-#include "../../net87/net87.cuh"
-#include "../../eos/ideal_gas.cuh"
-#include "../../eos/helmholtz.cuh"
+#include "../../net14/net14.hpp"
+#include "../../net86/net86.hpp"
+#include "../../net87/net87.hpp"
+#include "../../eos/ideal_gas.hpp"
+#include "../../eos/helmholtz.hpp"
 
 #ifndef CUDA_NUM_ITERATION_PER_THREAD
 	#define CUDA_NUM_ITERATION_PER_THREAD 8

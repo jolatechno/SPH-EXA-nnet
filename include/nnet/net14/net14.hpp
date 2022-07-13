@@ -7,8 +7,8 @@
 
 #include <vector>
 
-#include "../nuclear-net.cuh"
-#include "net14-constants.cuh"
+#include "../nuclear-net.hpp"
+#include "net14-constants.hpp"
 
 #define BE_NET14 \
 	28.2970*constants::Mev_to_erg COMMA \

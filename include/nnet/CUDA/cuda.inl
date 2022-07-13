@@ -15,13 +15,6 @@
 	// void
 	#define DEVICE_DEFINE(type, symbol, definition) \
 		type symbol definition
-
-	// void
-	#define DEVICE_DEFINE_EXTERN(type, symbol, definition) \
-		static type symbol definition
-
-	// void
-	#define DEVICE_FINALIZE_EXTERN(type, symbol, definition)
 #endif
 
 

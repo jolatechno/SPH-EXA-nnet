@@ -10,9 +10,9 @@
 #define STRINGIFY(...) #__VA_ARGS__
 #define STR(...) STRINGIFY(__VA_ARGS__)
 
-#include "../eigen/eigen.cuh"
+#include "../eigen/eigen.hpp"
 
-#include "../sphexa/util/algorithm.cuh"
+#include "../sphexa/util/algorithm.hpp"
 
 #ifndef IMAX
 	#define IMAX 541

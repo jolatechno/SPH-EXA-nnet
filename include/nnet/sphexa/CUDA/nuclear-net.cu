@@ -15,7 +15,7 @@ namespace sphnnet {
 		const Float hydro_dt, const Float previous_dt,
 		const nnet::gpu_reaction_list *reactions, const func_type *construct_rates_BE, const func_eos *eos)
 	{
-	    const size_t block_begin =                               blockIdx.x*blockDim.x*constants::cuda_num_iteration_per_thread;
+	    const size_t block_begin =                         blockIdx.x*blockDim.x*constants::cuda_num_iteration_per_thread;
 	    const size_t block_end   = std::min((size_t)((blockIdx.x + 1)*blockDim.x*constants::cuda_num_iteration_per_thread), n_particles);
 	    const size_t block_size  = block_end - block_begin;
 

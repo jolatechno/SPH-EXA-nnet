@@ -5,9 +5,9 @@
 #include "sph/traits.hpp"
 #include "cstone/util/array.hpp"
 
-#include "nnet/nuclear-net.cuh"
-#include "nnet/net14/net14.cuh"
-#include "nnet/eos/helmholtz.cuh"
+#include "nnet/nuclear-net.hpp"
+#include "nnet/net14/net14.hpp"
+#include "nnet/eos/helmholtz.hpp"
 
 
 int main() {

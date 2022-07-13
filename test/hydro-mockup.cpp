@@ -7,10 +7,10 @@
 
 
 // physical parameters
-#include "nnet/net87/net87.cuh"
-#include "nnet/net14/net14.cuh"
-#include "nnet/eos/helmholtz.cuh"
-#include "nnet/eos/ideal_gas.cuh"
+#include "nnet/net87/net87.hpp"
+#include "nnet/net14/net14.hpp"
+#include "nnet/eos/helmholtz.hpp"
+#include "nnet/eos/ideal_gas.hpp"
 
 // base datatype
 #include "nnet/sphexa/nuclear-data.hpp"

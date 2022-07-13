@@ -2,7 +2,7 @@
 
 #include <cuda_runtime.h>
 #include <memory>
-#include "../nuclear-net.cuh"
+#include "../nuclear-net.hpp"
 #include "cuda-util.hpp"
 
 namespace nnet {

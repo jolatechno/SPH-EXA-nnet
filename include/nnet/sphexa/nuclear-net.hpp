@@ -18,16 +18,16 @@
 
 #include "nuclear-io.hpp"
 #include "nuclear-data.hpp"
-#include "../eos/helmholtz.cuh"
+#include "../eos/helmholtz.hpp"
 
-#include "../eigen/eigen.cuh"
-#include "util/algorithm.cuh"
+#include "../eigen/eigen.hpp"
+#include "util/algorithm.hpp"
 
 #include "mpi/mpi-wrapper.hpp"
 
 #include "sph/data_util.hpp"
 
-#include "../nuclear-net.cuh"
+#include "../nuclear-net.hpp"
 
 namespace sphexa::sphnnet {
 	/// function to compute nuclear reaction, either from NuclearData or ParticuleData if it includes Y.

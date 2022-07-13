@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../util/algorithm.cuh"
+#include "../util/algorithm.hpp"
 
 #ifdef USE_MPI
 	#include <mpi.h>

@@ -10,7 +10,7 @@
 #define STRINGIFY(...) #__VA_ARGS__
 #define STR(...) STRINGIFY(__VA_ARGS__)
 
-#include "../eigen/eigen.cuh"
+#include "../eigen/eigen.hpp"
 
 #ifndef N_TEMP
 	#define N_TEMP 41

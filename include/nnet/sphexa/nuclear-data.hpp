@@ -18,7 +18,7 @@
 #endif
 #include "mpi/mpi-wrapper.hpp"
 
-#include "../nuclear-net.cuh"
+#include "../nuclear-net.hpp"
 
 #include "sph/data_util.hpp"
 #include "sph/field_states.hpp"

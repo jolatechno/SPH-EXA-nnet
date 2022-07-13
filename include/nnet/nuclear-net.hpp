@@ -5,7 +5,7 @@
 	#include <cuda_runtime.h>
 #endif
 
-#include "eigen/eigen.cuh"
+#include "eigen/eigen.hpp"
 
 #include <iostream>
 
