@@ -83,13 +83,6 @@ if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
 		set_source_files_properties(hydro-mockup-cuda.cpp PROPERTIES LANGUAGE HIP)
 	endif()
 
-	if(CUDA_SEPARABLE_COMPILATION)
-		set_target_properties(${nnet}-cuda PROPERTIES
-		 	CUDA_SEPARABLE_COMPILATION ON
-	 	 	CUDA_RESOLVE_DEVICE_SYMBOLS ON)
-		target_compile_definitions(${nnet}-cuda PRIVATE CUDA_SEPARABLE_COMPILATION)
-	endif()
-
 	target_include_directories(${nnet}-cuda PRIVATE ${SPH_DIR})
 	target_include_directories(${nnet}-cuda PRIVATE ${CSTONE_DIR})
 	target_include_directories(${nnet}-cuda PRIVATE ${NNET_DIR})

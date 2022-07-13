@@ -44,7 +44,8 @@ namespace sphexa::sphnnet {
 
 		/// base fieldNames (without knowledge of nuclear species names)
 		inline static constexpr std::array fieldNames {
-			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y",
+			"nid", "pid",
+			"dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y",
 		};
 
 

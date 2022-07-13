@@ -91,44 +91,44 @@ namespace nnet::eos {
         const double esqu  =  qe*qe;
 
 
-        DEVICE_DEFINE_EXTERN(double, d[IMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, dd_sav[IMAX - 1], ;)
-        DEVICE_DEFINE_EXTERN(double, dd2_sav[IMAX - 1], ;)
-        DEVICE_DEFINE_EXTERN(double, ddi_sav[IMAX - 1], ;)
-        DEVICE_DEFINE_EXTERN(double, dd2i_sav[IMAX - 1], ;)
-        DEVICE_DEFINE_EXTERN(double, dd3i_sav[IMAX - 1], ;)
+        DEVICE_DEFINE(static double, d[IMAX], ;)
+        DEVICE_DEFINE(static double, dd_sav[IMAX - 1], ;)
+        DEVICE_DEFINE(static double, dd2_sav[IMAX - 1], ;)
+        DEVICE_DEFINE(static double, ddi_sav[IMAX - 1], ;)
+        DEVICE_DEFINE(static double, dd2i_sav[IMAX - 1], ;)
+        DEVICE_DEFINE(static double, dd3i_sav[IMAX - 1], ;)
 
-        DEVICE_DEFINE_EXTERN(double, t[JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, dt_sav[JMAX - 1], ;)
-        DEVICE_DEFINE_EXTERN(double, dt2_sav[JMAX - 1], ;)
-        DEVICE_DEFINE_EXTERN(double, dti_sav[JMAX - 1], ;)
-        DEVICE_DEFINE_EXTERN(double, dt2i_sav[JMAX - 1], ;)
-        DEVICE_DEFINE_EXTERN(double, dt3i_sav[JMAX - 1], ;)
+        DEVICE_DEFINE(static double, t[JMAX], ;)
+        DEVICE_DEFINE(static double, dt_sav[JMAX - 1], ;)
+        DEVICE_DEFINE(static double, dt2_sav[JMAX - 1], ;)
+        DEVICE_DEFINE(static double, dti_sav[JMAX - 1], ;)
+        DEVICE_DEFINE(static double, dt2i_sav[JMAX - 1], ;)
+        DEVICE_DEFINE(static double, dt3i_sav[JMAX - 1], ;)
 
-        DEVICE_DEFINE_EXTERN(double, f[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, fd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, ft[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, fdd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, ftt[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, fdt[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, fddt[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, fdtt[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, fddtt[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, f[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, fd[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, ft[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, fdd[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, ftt[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, fdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, fddt[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, fdtt[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, fddtt[IMAX][JMAX], ;)
 
-        DEVICE_DEFINE_EXTERN(double, dpdf[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, dpdfd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, dpdft[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, dpdfdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, dpdf[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, dpdfd[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, dpdft[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, dpdfdt[IMAX][JMAX], ;)
 
-        DEVICE_DEFINE_EXTERN(double, ef[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, efd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, eft[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, efdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, ef[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, efd[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, eft[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, efdt[IMAX][JMAX], ;)
 
-        DEVICE_DEFINE_EXTERN(double, xf[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, xfd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, xft[IMAX][JMAX], ;)
-        DEVICE_DEFINE_EXTERN(double, xfdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, xf[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, xfd[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, xft[IMAX][JMAX], ;)
+        DEVICE_DEFINE(static double, xfdt[IMAX][JMAX], ;)
 
 
 		// read helmholtz constants table
@@ -209,12 +209,6 @@ namespace nnet::eos {
 
 #ifdef COMPILE_DEVICE
 			if constexpr (sphexa::HaveGpu<AccType>{}) {
-				std::cerr << "init helmholtz_constants...\n";
-
-				size_t symbol_size;
-				gpuErrchk(cudaGetSymbolSize(&symbol_size, dev_d));
-				std::cerr << "\tsizeof(dev_d) = " << symbol_size << " =(?) sizeof(d) = " << sizeof(d) << "\n";
-
 		        // copy to device 
 		        gpuErrchk(cudaMemcpyToSymbol(dev_d,        d,              imax*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_dd_sav,   dd_sav,   (imax - 1)*sizeof(double)));
@@ -255,8 +249,6 @@ namespace nnet::eos {
 		        gpuErrchk(cudaMemcpyToSymbol(dev_xfd,  xfd,  imax*jmax*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_xft,  xft,  imax*jmax*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_xfdt, xfdt, imax*jmax*sizeof(double)));
-
-				std::cerr << "...init helmholtz_constants\n";
 		   	}
 #endif
 		};

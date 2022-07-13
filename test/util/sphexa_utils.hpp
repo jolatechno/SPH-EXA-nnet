@@ -13,6 +13,8 @@
 
 #include <iostream>
 
+#include "nnet/CUDA/cuda.inl"
+
 #ifdef COMPILE_DEVICE
     #include <thrust/device_vector.h>
 #endif

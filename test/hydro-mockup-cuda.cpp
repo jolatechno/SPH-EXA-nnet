@@ -409,7 +409,7 @@ int main(int argc, char* argv[]) {
 
 
 	// "warm-up" (first allocation etc...)
-	if (use_net87) {
+	/* if (use_net87) {
 		if (idealGas) {
 			step(rank,
 				first, last,
@@ -447,7 +447,7 @@ int main(int argc, char* argv[]) {
 				first, last,
 				particle_data, nuclear_data_14, 1e-10,
 				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14,
-				nnet::net14::BE.data());
+				nnet::net14::BE.data()); */
 
 
 

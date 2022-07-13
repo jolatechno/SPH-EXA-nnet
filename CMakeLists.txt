@@ -37,13 +37,6 @@ if(CMAKE_CUDA_COMPILER)
     find_package(CUDAToolkit)
     set(CMAKE_CUDA_STANDARD 17)
 
-    if(CUDA_SEPARABLE_COMPILATION)
-        message(STATUS "Using separable cuda compilation")
-        set(CUDA_RESOLVE_DEVICE_SYMBOLS ON)
-    else()
-        message(STATUS "Not using separable cuda compilation")
-    endif()
-
     if (DEFINED CMAKE_CUDA_ARCHITECTURES)
         set(CMAKE_CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
     else()

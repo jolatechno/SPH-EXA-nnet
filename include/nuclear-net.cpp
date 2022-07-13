@@ -1,6 +1,9 @@
 #include "nnet/net87/net87.cuh"
+#include "nnet/net86/net86.cuh"
 #include "nnet/net14/net14.cuh"
+
 #include "nnet/eos/helmholtz.cuh"
+#include "nnet/eos/ideal_gas.cuh"
 
 namespace nnet {
 	namespace net87 {
