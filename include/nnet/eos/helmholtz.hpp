@@ -405,7 +405,8 @@ namespace nnet::eos {
 	template<typename Float>
 	HOST_DEVICE_FUN helm_eos_output<Float> inline helmholtz(double abar_, double zbar_, const Float T, const Float rho) {
 		// coefs
-		Float fi[36];
+		// Float fi[36];
+		Float *fi = new Float[36];
 
 		Float abar = 1/abar_;
 		Float zbar = zbar_/abar_;
@@ -1100,6 +1101,8 @@ namespace nnet::eos {
 		res.dudYe = degasdz*abar;
 		res.p = pres;
 		res.u = ener;
+
+		delete[] fi;
 
 		return res;
 	}
