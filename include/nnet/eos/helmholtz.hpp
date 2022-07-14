@@ -91,44 +91,44 @@ namespace nnet::eos {
         const double esqu  =  qe*qe;
 
 
-        DEVICE_DEFINE(static double, d[IMAX], ;)
-        DEVICE_DEFINE(static double, dd_sav[IMAX - 1], ;)
-        DEVICE_DEFINE(static double, dd2_sav[IMAX - 1], ;)
-        DEVICE_DEFINE(static double, ddi_sav[IMAX - 1], ;)
-        DEVICE_DEFINE(static double, dd2i_sav[IMAX - 1], ;)
-        DEVICE_DEFINE(static double, dd3i_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, d[IMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, dd_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, dd2_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, ddi_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, dd2i_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, dd3i_sav[IMAX - 1], ;)
 
-        DEVICE_DEFINE(static double, t[JMAX], ;)
-        DEVICE_DEFINE(static double, dt_sav[JMAX - 1], ;)
-        DEVICE_DEFINE(static double, dt2_sav[JMAX - 1], ;)
-        DEVICE_DEFINE(static double, dti_sav[JMAX - 1], ;)
-        DEVICE_DEFINE(static double, dt2i_sav[JMAX - 1], ;)
-        DEVICE_DEFINE(static double, dt3i_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, t[JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, dt_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, dt2_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, dti_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, dt2i_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, dt3i_sav[JMAX - 1], ;)
 
-        DEVICE_DEFINE(static double, f[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, fd[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, ft[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, fdd[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, ftt[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, fdt[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, fddt[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, fdtt[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, fddtt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, f[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, fd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, ft[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, fdd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, ftt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, fdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, fddt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, fdtt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, fddtt[IMAX][JMAX], ;)
 
-        DEVICE_DEFINE(static double, dpdf[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, dpdfd[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, dpdft[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, dpdfdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, dpdf[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, dpdfd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, dpdft[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, dpdfdt[IMAX][JMAX], ;)
 
-        DEVICE_DEFINE(static double, ef[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, efd[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, eft[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, efdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, ef[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, efd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, eft[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, efdt[IMAX][JMAX], ;)
 
-        DEVICE_DEFINE(static double, xf[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, xfd[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, xft[IMAX][JMAX], ;)
-        DEVICE_DEFINE(static double, xfdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, xf[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, xfd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, xft[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, xfdt[IMAX][JMAX], ;)
 
 
 		// read helmholtz constants table
@@ -1057,41 +1057,41 @@ namespace nnet::eos {
 		helm_eos_output<Float> res;
 
 
-		Float zz            = pgas*rhoi;
-		Float zzi           = rho/pgas;
-		Float chit_gas      = T/pgas*dpgasdt;
-		Float chid_gas      = dpgasdd*zzi;
-		res.cv_gaz    = degasdt;
-		x             = zz*chit_gas/(T*res.cv_gaz);
-		Float gam3_gas      = x + 1.;
-		Float gam1_gas      = chit_gas*x + chid_gas;
-		Float nabad_gas     = x/gam1_gas;
-		Float gam2_gas      = 1./(1. - nabad_gas);
-		res.cp_gaz    = res.cv_gaz*gam1_gas/chid_gas;
-		z             = 1. + (egas + helmholtz_constants::clight*helmholtz_constants::clight)*zzi;
-		res.c_gaz = helmholtz_constants::clight*std::sqrt(gam1_gas/z);
+		Float zz        = pgas*rhoi;
+		Float zzi       = rho/pgas;
+		Float chit_gas  = T/pgas*dpgasdt;
+		Float chid_gas  = dpgasdd*zzi;
+		res.cv_gaz      = degasdt;
+		x               = zz*chit_gas/(T*res.cv_gaz);
+		Float gam3_gas  = x + 1.;
+		Float gam1_gas  = chit_gas*x + chid_gas;
+		Float nabad_gas = x/gam1_gas;
+		Float gam2_gas  = 1./(1. - nabad_gas);
+		res.cp_gaz      = res.cv_gaz*gam1_gas/chid_gas;
+		z               = 1. + (egas + helmholtz_constants::clight*helmholtz_constants::clight)*zzi;
+		res.c_gaz       = helmholtz_constants::clight*std::sqrt(gam1_gas/z);
 
 
 
 		// for the totals
-		zz    = pres*rhoi;
-		zzi   = rho/pres;
+		zz          = pres*rhoi;
+		zzi         = rho/pres;
 		Float chit  = T/pres*dpresdt;
 		Float chid  = dpresdd*zzi;
-		res.cv    = rhoerdt;
-		x     = zz*chit/(T*res.cv);
+		res.cv      = rhoerdt;
+		x           = zz*chit/(T*res.cv);
 		Float gam3  = x + 1.;
 		Float gam1  = chit*x + chid;
 		Float nabad = x/gam1;
 		Float gam2  = 1./(1. - nabad);
-		res.cp    = res.cv*gam1/chid;
-		z     = 1. + (ener + helmholtz_constants::clight*helmholtz_constants::clight)*zzi;
-		res.c = helmholtz_constants::clight*std::sqrt(gam1/z);
+		res.cp      = res.cv*gam1/chid;
+		z           = 1. + (ener + helmholtz_constants::clight*helmholtz_constants::clight)*zzi;
+		res.c       = helmholtz_constants::clight*std::sqrt(gam1/z);
 
 
 
 		// maxwell relations; each is zero if the consistency is perfect
-		x   = rho*rho;
+		x       = rho*rho;
 		res.dse = T*rhotrdt/rhoerdt - 1.;
 		res.dpe = (rhoerdd*x + T*dpresdt)/pres - 1.;
 		res.dsp = -rhotrdd*x/dpresdt - 1.;
@@ -1099,8 +1099,8 @@ namespace nnet::eos {
 		// Needed output
 		res.dpdT  = dpresdt;
 		res.dudYe = degasdz*abar;
-		res.p = pres;
-		res.u = ener;
+		res.p     = pres;
+		res.u     = ener;
 
 		delete[] fi;
 
