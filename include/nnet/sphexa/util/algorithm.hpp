@@ -8,7 +8,7 @@
 
 #include "cstone/util/array.hpp"
 
-#ifdef COMPILE_DEVICE
+#if COMPILE_DEVICE
 	#include <cuda_runtime.h>
 #endif
 #include "../../CUDA/cuda.inl"

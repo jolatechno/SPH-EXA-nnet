@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../CUDA/cuda.inl"
-#ifdef COMPILE_DEVICE
+#if COMPILE_DEVICE
 	#include "../CUDA/cuda-util.hpp"
 #endif
 
@@ -149,7 +149,7 @@ namespace nnet::net14 {
 
 
 			    	// debuging:
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 			    	if (debug) std::cout << "funcion[" << i << "]=" << funcion << (i == 13 ? "\n\n" : "\n");
 #endif
 
@@ -220,7 +220,7 @@ namespace nnet::net14 {
 					deff[i - 1] = eff[i - 1]*dcoefs[i - 4];
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) { std::cout << "dir(" << i << ")=" << eff[i - 1] << ", coef(" << i << ")=" << coefs[i - 4];
 								 std::cout << "\tddir(" << i << ")=" << deff[i - 1] << ", dcoef(" << i << ")=" << dcoefs[i - 4] << "\n"; }
 #endif
@@ -270,7 +270,7 @@ namespace nnet::net14 {
 
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) { std::cout << (i == 4 ? "\n" : "") << "inv(" << i << ")=" << l[i - 1];
 					             std::cout << "\tdinv(" << i << ")=" << dl[i - 1] << "\n"; }
 #endif
@@ -327,7 +327,7 @@ namespace nnet::net14 {
 
 
 			      	// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "\nr3a=" << eff[0] << ", rg3a=" << l[0] << "\n";
 #endif
 			    }
@@ -345,7 +345,7 @@ namespace nnet::net14 {
 
 
 		      		// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "r24=" << eff[13];
 #endif
 				}
@@ -368,7 +368,7 @@ namespace nnet::net14 {
 
 
 			        // debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << ", r1216=" << eff[14] << "\n";
 #endif
 				}
@@ -382,7 +382,7 @@ namespace nnet::net14 {
 
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "r32=" << eff[15] << "\n";
 #endif
 				}
@@ -406,7 +406,7 @@ namespace nnet::net14 {
 
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "rcag=" << eff[1] << ", roga=" << l[1] << "\n";
 #endif
 				}
@@ -427,7 +427,7 @@ namespace nnet::net14 {
 
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "roag=" << eff[2] << ", rnega=" << l[2] << "\n\n";
 #endif
 				}
@@ -488,7 +488,7 @@ namespace nnet::net14 {
 				    deff[0] =(2.90e-16*(dr2abe*rbeac + r2abe*drbeac) + 1.35e-8*std::exp(vA)*(-1.5*t9i52 + t9i32*dvA))*1.e-9;
 
 			      	// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "\ndr3a=" << deff[0] << "\n";
 #endif
 		      	}
@@ -516,7 +516,7 @@ namespace nnet::net14 {
 
 			      	// debuging :
 
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "drg3a=" << dl[0] << "\n";
 #endif
 				}
@@ -536,7 +536,7 @@ namespace nnet::net14 {
 				    deff[13] = 4.27e26*t9i32*std::exp(vB)*(std::pow(vA, -1./6.)*dvA*5./6. - 1.5*vA56*t9i + vA56*dvB)*1.e-9;
 
 		      		// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "dr24=" << deff[13] << "\n";
 #endif
 				}
@@ -565,7 +565,7 @@ namespace nnet::net14 {
 				    }
 
 			        // debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "dr1216=" << deff[14] << "\n";
 #endif
 				}
@@ -580,7 +580,7 @@ namespace nnet::net14 {
 					deff[15]=7.10e36*std::exp(vA)*t9i23*(-t9i*2./3. + dvA)*1.e-9;
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "dr32=" << deff[15] << "\n";
 #endif
 				}
@@ -611,7 +611,7 @@ namespace nnet::net14 {
 	       				+ 1.43e-2*std::exp(vG)*(5.*t94 + dvG*t95))*1.e-9;
 
 		      		// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "drcag=" << deff[1] << "\n";
 #endif
 		      	}
@@ -634,7 +634,7 @@ namespace nnet::net14 {
 					dl[1]=5.13e10*std::exp(vA)*(deff[1]*t932 + eff[1]*1.5*t912 + eff[1]*t932*dvA)*1.e-9;
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "droga=" << dl[1] << "\n";
 #endif
 
@@ -647,7 +647,7 @@ namespace nnet::net14 {
 	       				+ 13.*std::exp(vE)*(2.*t9 + t92*dvE))*1.e-9;
 
 		      		// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "droag=" << deff[2] << "\n";
 #endif
 				}
@@ -663,7 +663,7 @@ namespace nnet::net14 {
 
 
 					// debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "drnega=" << dl[2] << "\n\n";
 #endif
 				}
@@ -733,7 +733,7 @@ namespace nnet::net14 {
 			        deff[i] = deff[i]*EF - 2.*eff[i]*deltamukbt[i]/T;
 
 			        // debuging :
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 					if (debug) std::cout << "EF[" << i << "]=" << EF << ", deltamukbt[" << i << "]=" << deltamukbt[i] << ", mukbt[" << i << "]=" << mukbt[i] << (i == 15 ? "\n\n" : "\n");
 #endif
 				}

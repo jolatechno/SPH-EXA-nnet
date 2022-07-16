@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../CUDA/cuda.inl"
-#ifdef COMPILE_DEVICE
+#if COMPILE_DEVICE
 	#include "../CUDA/cuda-util.hpp"
 #endif
 

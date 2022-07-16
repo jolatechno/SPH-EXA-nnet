@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../CUDA/cuda.inl"
-#ifdef COMPILE_DEVICE
+#if COMPILE_DEVICE
 	#include "../CUDA/cuda-util.hpp"
 #endif
 
@@ -65,7 +65,7 @@ namespace nnet::net87::electrons {
 						rate_table >> electron_rate[i][j][k];
 
 			if constexpr (sphexa::HaveGpu<AccType>{}) {
-#ifdef COMPILE_DEVICE
+#if COMPILE_DEVICE
 			  	// copy to device 
 				gpuErrchk(cudaMemcpyToSymbol(dev_log_temp_ref,  log_temp_ref,  nTemp*sizeof(double)));
 			   	gpuErrchk(cudaMemcpyToSymbol(dev_log_rho_ref,   log_rho_ref,   nRho*sizeof(double)));

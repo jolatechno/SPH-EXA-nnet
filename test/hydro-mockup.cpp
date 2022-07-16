@@ -249,7 +249,7 @@ int main(int argc, char* argv[]) {
 #endif
 	
 
-#if defined(COMPILE_DEVICE) && defined(USE_MPI)
+#if COMPILE_DEVICE && defined(USE_MPI)
 	cuda_util::initCudaMpi(MPI_COMM_WORLD);
 #endif
 

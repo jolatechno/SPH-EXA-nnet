@@ -1,7 +1,7 @@
 #define COMMA ,
 
 #if defined(__CUDACC__) || defined(__HIPCC__)
-	#define COMPILE_DEVICE
+	#define COMPILE_DEVICE true
 
 	#define HOST_DEVICE_FUN __host__ __device__
 
@@ -15,6 +15,8 @@
 		           type       symbol definition     \
 		__device__ type dev_##symbol definition
 #else
+	#define COMPILE_DEVICE false
+
 	#define HOST_DEVICE_FUN
 
 	// void
@@ -28,11 +30,13 @@
 
 
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-	#define DEVICE_CODE
+	#define DEVICE_CODE true
 
 	// access device-defined variable
 	#define DEVICE_ACCESS(symbol) dev_##symbol
 #else
+	#define DEVICE_CODE false
+	
 	// access device-owned variable
 	#define DEVICE_ACCESS(symbol) symbol
 #endif

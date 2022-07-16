@@ -7,7 +7,7 @@
 #include <memory>
 #include <variant>
 
-#ifdef COMPILE_DEVICE
+#if COMPILE_DEVICE
 	#include "CUDA/nuclear-data-gpu.cuh"
 #endif
 

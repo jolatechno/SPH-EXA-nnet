@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../CUDA/cuda.inl"
-#ifdef COMPILE_DEVICE
+#if COMPILE_DEVICE
 	#include <device_launch_parameters.h>
 	#include <cuda.h>
 	#include <cuda_runtime_api.h>
@@ -33,7 +33,7 @@ namespace sphexa::sphnnet {
 		const size_t n_particles = n.temp.size();
 		const int dimension = n.Y[0].size();
 
-#ifdef COMPILE_DEVICE
+#if COMPILE_DEVICE
 		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && false /* NOT IMPLEMENTED */) {
 
 			/* TODO */

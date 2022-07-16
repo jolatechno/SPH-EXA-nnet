@@ -15,7 +15,7 @@
 
 #include "nnet/CUDA/cuda.inl"
 
-#ifdef COMPILE_DEVICE
+#if COMPILE_DEVICE
     #include <thrust/device_vector.h>
 #endif
 
@@ -64,7 +64,7 @@ namespace sphexa {
 	}
 
 
-#ifdef COMPILE_DEVICE
+#if COMPILE_DEVICE
     template<class ThrustVec>
     typename ThrustVec::value_type* rawPtr(ThrustVec& p)
     {
@@ -78,7 +78,7 @@ namespace sphexa {
         assert(p.size() && "cannot get pointer to unallocated device vector memory");
         return thrust::raw_pointer_cast(p.data());
     }
-    #endif
+#endif
 
 
 
@@ -97,7 +97,7 @@ namespace sphexa {
     template<class DataType, std::enable_if_t<HaveGpu<typename DataType::AcceleratorType>{}, int> = 0>
     void transferToDevice(DataType& d, size_t first, size_t last, const std::vector<std::string>& fields)
     {
-    #ifdef COMPILE_DEVICE
+#if COMPILE_DEVICE
         auto hostData = d.data();
         auto deviceData = d.devData.data();
 
@@ -125,13 +125,13 @@ namespace sphexa {
                 std::find(DataType::fieldNames.begin(), DataType::fieldNames.end(), field) - DataType::fieldNames.begin();
             std::visit(launchTransfer, hostData[fieldIdx], deviceData[fieldIdx]);
         }
-    #endif
+#endif
     }
 
     template<class DataType, std::enable_if_t<HaveGpu<typename DataType::AcceleratorType>{}, int> = 0>
     void transferToHost(DataType& d, size_t first, size_t last, const std::vector<std::string>& fields)
     {
-    #ifdef COMPILE_DEVICE
+#if COMPILE_DEVICE
         auto hostData   = d.data();
         auto deviceData = d.devData.data();
 
@@ -159,7 +159,7 @@ namespace sphexa {
                 std::find(DataType::fieldNames.begin(), DataType::fieldNames.end(), field) - DataType::fieldNames.begin();
             std::visit(launchTransfer, hostData[fieldIdx], deviceData[fieldIdx]);
         }
-    #endif
+#endif
     }
 
 } // namespace sphexa

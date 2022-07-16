@@ -1,9 +1,6 @@
 #pragma once
 
 #include "CUDA/cuda.inl"
-#ifdef COMPILE_DEVICE
-	#include <cuda_runtime.h>
-#endif
 
 #include "eigen/eigen.hpp"
 
@@ -452,7 +449,7 @@ First simple direct solver:
 	<=> DT*cv = value_1*(T + theta*DT) + DY.BE
 	<=> DT*(cv - theta*value_1) - DY.BE = value_1*T
 		------------------- */
-#ifndef DEVICE_CODE
+#if !DEVICE_CODE
 		if (dt == 0) {
 			std::string error = "Zero timestep in nuclear network\n";
 			error += "\tT=" + std::to_string(T) + ",\tTguess=" + std::to_string(T_guess) + "\n";
