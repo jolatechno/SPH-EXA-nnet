@@ -35,8 +35,7 @@
 	#define CUDA_NUM_THREAD_PER_BLOCK 32
 #endif
 
-namespace sphexa {
-namespace sphnnet {
+namespace sphexa::sphnnet {
 	namespace constants {
 		/// number of consecutive iteration per cuda thread
 		const int cuda_num_iteration_per_thread = CUDA_NUM_ITERATION_PER_THREAD;
@@ -57,5 +56,4 @@ namespace sphnnet {
 	extern void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,
 		const Float *temp_, const Float *rho_, const Float *Y_,
 		Float *u, Float *cv, Float *p, Float *c, Float *dpdT);
-}
 }

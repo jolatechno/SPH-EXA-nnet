@@ -98,7 +98,7 @@ namespace nnet::eos {
         DEVICE_DEFINE_DETAIL(static,, double, dd2i_sav[IMAX - 1], ;)
         DEVICE_DEFINE_DETAIL(static,, double, dd3i_sav[IMAX - 1], ;)
 
-        DEVICE_DEFINE_DETAIL(static,, double, t[JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static,, double, t_[JMAX], ;)
         DEVICE_DEFINE_DETAIL(static,, double, dt_sav[JMAX - 1], ;)
         DEVICE_DEFINE_DETAIL(static,, double, dt2_sav[JMAX - 1], ;)
         DEVICE_DEFINE_DETAIL(static,, double, dti_sav[JMAX - 1], ;)
@@ -150,7 +150,7 @@ namespace nnet::eos {
 			}
 			for (int j = 0; j < jmax; ++j) {
 				double tsav = tlo + j*tstp;
-				t[j] = std::pow(10., tsav);
+				t_[j] = std::pow(10., tsav);
 
 				for (int i = 0; i < imax; ++i) {
 					helm_table >> f[i][j] >> fd[i][j] >> ft[i][j] >>
@@ -179,7 +179,7 @@ namespace nnet::eos {
 
 			// construct the temperature and rhosity deltas and their inverses
 			for (int j = 0; j < jmax - 1; ++j) {
-				const double dth  = t[j + 1] - t[j];
+				const double dth  = t_[j + 1] - t_[j];
 				const double dt2  = dth*dth;
 				const double dti  = 1./dth;
 				const double dt2i = 1./dt2;
@@ -217,7 +217,7 @@ namespace nnet::eos {
 		        gpuErrchk(cudaMemcpyToSymbol(dev_dd2i_sav, dd2i_sav, (imax - 1)*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_dd3i_sav, dd3i_sav, (imax - 1)*sizeof(double)));
 
-		        gpuErrchk(cudaMemcpyToSymbol(dev_t,        t,              jmax*sizeof(double)));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_t_,       t_,             jmax*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_dt_sav,   dt_sav,   (jmax - 1)*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_dt2_sav,  dt2_sav,  (jmax - 1)*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_dti_sav,  dti_sav,  (jmax - 1)*sizeof(double)));
@@ -547,7 +547,7 @@ namespace nnet::eos {
 
 
 		// various differences
-		Float xt  = std::max( (T - helmholtz_constants::DEVICE_ACCESS(t)[jat])*helmholtz_constants::DEVICE_ACCESS(dti_sav)[jat], 0.);
+		Float xt  = std::max( (T - helmholtz_constants::DEVICE_ACCESS(t_)[jat])*helmholtz_constants::DEVICE_ACCESS(dti_sav)[jat], 0.);
 		Float xd  = std::max( (din - helmholtz_constants::DEVICE_ACCESS(d)[iat])*helmholtz_constants::DEVICE_ACCESS(ddi_sav)[iat], 0.);
 		Float mxt = 1. - xt;
 		Float mxd = 1. - xd;
@@ -555,7 +555,7 @@ namespace nnet::eos {
 
 		/* debug: */
 #ifndef DEVICE_CODE
-		if (debug) std::cout << "xt=" << xt << " = (T - t[" << jat << "]=" << helmholtz_constants::t[jat] << ")* dti_sav[" << jat << "]=" << helmholtz_constants::dti_sav[jat] << "\n";
+		if (debug) std::cout << "xt=" << xt << " = (T - t[" << jat << "]=" << helmholtz_constants::t_[jat] << ")* dti_sav[" << jat << "]=" << helmholtz_constants::dti_sav[jat] << "\n";
 #endif
 
 
@@ -1125,11 +1125,11 @@ namespace nnet::eos {
 	public:
 		using eos_type = helm_eos_output<Float>;
 
-		HOST_DEVICE_FUN helmholtz_functor() {}
+		helmholtz_functor() {}
 		helmholtz_functor(const Float  *Z_, int dimension_) : Z(Z_), dimension(dimension_) {
 #ifdef COMPILE_DEVICE
-			gpuErrchk(cudaMalloc(&dev_Z, dimension*sizeof(Float)));
-			gpuErrchk(cudaMemcpy(dev_Z, Z, dimension*sizeof(Float), cudaMemcpyHostToDevice));
+			gpuErrchk(cudaMalloc(&dev_Z,    dimension*sizeof(Float)));
+			gpuErrchk(cudaMemcpy( dev_Z, Z, dimension*sizeof(Float), cudaMemcpyHostToDevice));
 #endif
 		}
 		template<class Vector>
@@ -1145,7 +1145,7 @@ namespace nnet::eos {
 		template<size_t n>
 		helmholtz_functor(const std::array<Float, n> &Z_) : helmholtz_functor(Z_.data(), Z_.size()) {}
 
-		HOST_DEVICE_FUN ~helmholtz_functor() {
+		~helmholtz_functor() {
 #ifdef COMPILE_DEVICE
 			cudaFree(dev_Z);
 #endif
@@ -1153,7 +1153,7 @@ namespace nnet::eos {
 
 		HOST_DEVICE_FUN eos_type inline operator()(const Float *Y, const Float T, const Float rho) const {
 			// compute abar and zbar
-			double abar = algorithm::accumulate(Y, Y + dimension, (Float)0);
+			double abar = algorithm::accumulate(Y, Y + dimension, (double)0);
 			double zbar = eigen::dot(Y, Y + dimension, DEVICE_ACCESS(Z));
 
 			return helmholtz(abar, zbar, T, rho);

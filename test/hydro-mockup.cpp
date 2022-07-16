@@ -408,52 +408,6 @@ int main(int argc, char* argv[]) {
 
 
 
-	// "warm-up" (first allocation etc...)
-	/* if (use_net87) {
-		if (idealGas) {
-			step(rank,
-				first, last,
-				particle_data, nuclear_data_87, 1e-10,
-				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, idea_gas_eos,
-				nnet::net87::BE.data());
-		} else
-			step(rank,
-				first, last,
-				particle_data, nuclear_data_87, 1e-10,
-				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, helm_eos_87,
-				nnet::net87::BE.data());
-	} else if (use_net86) {
-		if (idealGas) {
-			step(rank,
-				first, last,
-				particle_data, nuclear_data_86, 1e-10,
-				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, idea_gas_eos,
-				nnet::net86::BE.data());
-		} else
-			step(rank,
-				first, last,
-				particle_data, nuclear_data_86, 1e-10,
-				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86,
-				nnet::net86::BE.data());
-	} else
-		if (idealGas) {
-			step(rank,
-				first, last,
-				particle_data, nuclear_data_14, 1e-10,
-				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, idea_gas_eos,
-				nnet::net14::BE.data());
-		} else
-			step(rank,
-				first, last,
-				particle_data, nuclear_data_14, 1e-10,
-				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14,
-				nnet::net14::BE.data()); */
-
-
-
-
-
-
 #ifdef USE_MPI
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
