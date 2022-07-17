@@ -54,7 +54,7 @@ namespace nnet::eos {
 		const double dstpi = 1./dstp;
 
 		// physical constants
-		const double pi = 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132000568127145263560827785771342757789609173637178721468440901224953430146549585371050792279689258923542019956112129021960864034418159813629774771309960518707211349999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420198938095257201065485863278865936153381827968230301952035301852968995773622599413891249721775283479131515574857242454150695950829533116861727855889075098381754637464939319;
+		const double pi      = 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132000568127145263560827785771342757789609173637178721468440901224953430146549585371050792279689258923542019956112129021960864034418159813629774771309960518707211349999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420198938095257201065485863278865936153381827968230301952035301852968995773622599413891249721775283479131515574857242454150695950829533116861727855889075098381754637464939319;
 		const double g       = 6.6742867e-8;
         const double h       = 6.6260689633e-27;
         const double hbar    = 0.5*h/pi;
@@ -146,11 +146,11 @@ namespace nnet::eos {
 			// read the helmholtz free energy and its derivatives
 			for (int i = 0; i < imax; ++i) {
 				double dsav = dlo + i*dstp;
-				d[i] = std::pow(10.,  dsav);
+				d[i] = std::pow((double)10.,  dsav);
 			}
 			for (int j = 0; j < jmax; ++j) {
 				double tsav = tlo + j*tstp;
-				t_[j] = std::pow(10., tsav);
+				t_[j] = std::pow((double)10., tsav);
 
 				for (int i = 0; i < imax; ++i) {
 					helm_table >> f[i][j] >> fd[i][j] >> ft[i][j] >>
@@ -209,45 +209,49 @@ namespace nnet::eos {
 
 #if COMPILE_DEVICE
 			if constexpr (sphexa::HaveGpu<AccType>{}) {
+				std::cerr << "copy to GPU helm...\n";
+
 		        // copy to device 
-		        gpuErrchk(cudaMemcpyToSymbol(dev_d,        d,              imax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dd_sav,   dd_sav,   (imax - 1)*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dd2_sav,  dd2_sav,  (imax - 1)*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_ddi_sav,  ddi_sav,  (imax - 1)*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dd2i_sav, dd2i_sav, (imax - 1)*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dd3i_sav, dd3i_sav, (imax - 1)*sizeof(double)));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_d,        d,              imax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_dd_sav,   dd_sav,   (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_dd2_sav,  dd2_sav,  (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_ddi_sav,  ddi_sav,  (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_dd2i_sav, dd2i_sav, (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_dd3i_sav, dd3i_sav, (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
 
-		        gpuErrchk(cudaMemcpyToSymbol(dev_t_,       t_,             jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dt_sav,   dt_sav,   (jmax - 1)*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dt2_sav,  dt2_sav,  (jmax - 1)*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dti_sav,  dti_sav,  (jmax - 1)*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dt2i_sav, dt2i_sav, (jmax - 1)*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dt3i_sav, dt3i_sav, (jmax - 1)*sizeof(double)));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_t_,       t_,             jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_dt_sav,   dt_sav,   (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_dt2_sav,  dt2_sav,  (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_dti_sav,  dti_sav,  (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_dt2i_sav, dt2i_sav, (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_dt3i_sav, dt3i_sav, (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
 
-		        gpuErrchk(cudaMemcpyToSymbol(dev_f,     f,     imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_fd,    fd,    imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_ft,    ft,    imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_fdd,   fdd,   imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_ftt,   ftt,   imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_fdt,   fdt,   imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_fddt,  fddt,  imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_fdtt,  fdtt,  imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_fddtt, fddtt, imax*jmax*sizeof(double)));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_f,     f,     imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_fd,    fd,    imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_ft,    ft,    imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_fdd,   fdd,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_ftt,   ftt,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_fdt,   fdt,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_fddt,  fddt,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_fdtt,  fdtt,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_fddtt, fddtt, imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
 
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dpdf,   dpdf,   imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dpdfd,  dpdfd,  imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dpdft,  dpdft,  imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dpdfdt, dpdfdt, imax*jmax*sizeof(double)));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_dpdf,   dpdf,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_dpdfd,  dpdfd,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_dpdft,  dpdft,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_dpdfdt, dpdfdt, imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
 
-		        gpuErrchk(cudaMemcpyToSymbol(dev_ef,   ef,   imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_efd,  efd,  imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_eft,  eft,  imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_efdt, efdt, imax*jmax*sizeof(double)));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_ef,   ef,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_efd,  efd,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_eft,  eft,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_efdt, efdt, imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
 
-		        gpuErrchk(cudaMemcpyToSymbol(dev_xf,   xf,   imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_xfd,  xfd,  imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_xft,  xft,  imax*jmax*sizeof(double)));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_xfdt, xfdt, imax*jmax*sizeof(double)));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_xf,   xf,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_xfd,  xfd,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_xft,  xft,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+		        gpuErrchk(cudaMemcpyToSymbol(dev_xfdt, xfdt, imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+
+				std::cerr << "\t...Ok(copy to GPU helm)\n";
 		   	}
 #endif
 		};
@@ -366,10 +370,10 @@ namespace nnet::eos {
 			const Float din = ye*rho;
 
 			jat = int((std::log10(temp) - tlo)*tstpi);
-			jat = std::max(1, std::min(jat, jmax - 2));
+			jat = std::max<int>(1, std::min<int>(jat, jmax - 2));
 
 			iat = int((std::log10(din) - dlo)*dstpi);
-			iat = std::max(1, std::min(iat, imax - 2));
+			iat = std::max<int>(1, std::min<int>(iat, imax - 2));
 		}
 	}
 
@@ -421,7 +425,7 @@ namespace nnet::eos {
 
 
 		Float ytot1 = 1/abar;
-		Float ye = std::max((Float)1e-16, zbar/abar);
+		Float ye = std::max<Float>((Float)1e-16, zbar/abar);
 		Float din = ye*rho;
 
 		// initialize
@@ -545,8 +549,8 @@ namespace nnet::eos {
 
 
 		// various differences
-		Float xt  = std::max( (temp - helmholtz_constants::DEVICE_ACCESS(t_)[jat])*helmholtz_constants::DEVICE_ACCESS(dti_sav)[jat], 0.);
-		Float xd  = std::max( (din - helmholtz_constants::DEVICE_ACCESS(d)[iat])*helmholtz_constants::DEVICE_ACCESS(ddi_sav)[iat], 0.);
+		Float xt  = std::max<Float>((temp - helmholtz_constants::DEVICE_ACCESS(t_)[jat])*helmholtz_constants::DEVICE_ACCESS(dti_sav)[jat], 0.);
+		Float xd  = std::max<Float>((din  - helmholtz_constants::DEVICE_ACCESS(d )[iat])*helmholtz_constants::DEVICE_ACCESS(ddi_sav)[iat], 0.);
 		Float mxt = 1. - xt;
 		Float mxd = 1. - xd;
 
@@ -570,15 +574,15 @@ namespace nnet::eos {
 
 
 		Float si0mt =  helmholtz_constants::psi0(mxt);
-		Float si1mt = -helmholtz_constants::psi1(mxt)*helmholtz_constants::DEVICE_ACCESS(dt_sav)[jat];
+		Float si1mt = -helmholtz_constants::psi1(mxt)*helmholtz_constants::DEVICE_ACCESS(dt_sav )[jat];
 		Float si2mt =  helmholtz_constants::psi2(mxt)*helmholtz_constants::DEVICE_ACCESS(dt2_sav)[jat];
 
 		Float si0d =   helmholtz_constants::psi0(xd);
-		Float si1d =   helmholtz_constants::psi1(xd)*helmholtz_constants::DEVICE_ACCESS(dd_sav)[iat];
+		Float si1d =   helmholtz_constants::psi1(xd)*helmholtz_constants::DEVICE_ACCESS(dd_sav )[iat];
 		Float si2d =   helmholtz_constants::psi2(xd)*helmholtz_constants::DEVICE_ACCESS(dd2_sav)[iat];
 
 		Float si0md =  helmholtz_constants::psi0(mxd);
-		Float si1md = -helmholtz_constants::psi1(mxd)*helmholtz_constants::DEVICE_ACCESS(dd_sav)[iat];
+		Float si1md = -helmholtz_constants::psi1(mxd)*helmholtz_constants::DEVICE_ACCESS(dd_sav )[iat];
 		Float si2md =  helmholtz_constants::psi2(mxd)*helmholtz_constants::DEVICE_ACCESS(dd2_sav)[iat];
 
 		// derivatives of the weight functions
@@ -600,11 +604,11 @@ namespace nnet::eos {
 
 		// second derivatives of the weight functions
 		Float ddsi0t =   helmholtz_constants::ddpsi0(xt)*helmholtz_constants::DEVICE_ACCESS(dt2i_sav)[jat];
-		Float ddsi1t =   helmholtz_constants::ddpsi1(xt)*helmholtz_constants::DEVICE_ACCESS(dti_sav)[jat];
+		Float ddsi1t =   helmholtz_constants::ddpsi1(xt)*helmholtz_constants::DEVICE_ACCESS(dti_sav )[jat];
 		Float ddsi2t =   helmholtz_constants::ddpsi2(xt);
 
 		Float ddsi0mt =  helmholtz_constants::ddpsi0(mxt)*helmholtz_constants::DEVICE_ACCESS(dt2i_sav)[jat];
-		Float ddsi1mt = -helmholtz_constants::ddpsi1(mxt)*helmholtz_constants::DEVICE_ACCESS(dti_sav)[jat];
+		Float ddsi1mt = -helmholtz_constants::ddpsi1(mxt)*helmholtz_constants::DEVICE_ACCESS(dti_sav )[jat];
 		Float ddsi2mt =  helmholtz_constants::ddpsi2(mxt);
 
 		// ddsi0d =   ddpsi0(xd)*dd2i_sav[iat];
@@ -654,17 +658,17 @@ namespace nnet::eos {
 		// now get the pressure derivative with rhosity, chemical potential, and
 		// electron positron number rhosities
 		// get the interpolation weight functions
-		si0t   =  helmholtz_constants::xpsi0(xt);
-		si1t   =  helmholtz_constants::xpsi1(xt)*helmholtz_constants::DEVICE_ACCESS(dt_sav)[jat];
+		si0t   = helmholtz_constants::xpsi0(xt);
+		si1t   = helmholtz_constants::xpsi1(xt)*helmholtz_constants::DEVICE_ACCESS(dt_sav)[jat];
 
 		si0mt  =  helmholtz_constants::xpsi0(mxt);
-		si1mt  =  -helmholtz_constants::xpsi1(mxt)*helmholtz_constants::DEVICE_ACCESS(dt_sav)[jat];
+		si1mt  = -helmholtz_constants::xpsi1(mxt)*helmholtz_constants::DEVICE_ACCESS(dt_sav)[jat];
 
-		si0d   =  helmholtz_constants::xpsi0(xd);
-		si1d   =  helmholtz_constants::xpsi1(xd)*helmholtz_constants::DEVICE_ACCESS(dd_sav)[iat];
+		si0d   = helmholtz_constants::xpsi0(xd);
+		si1d   = helmholtz_constants::xpsi1(xd)*helmholtz_constants::DEVICE_ACCESS(dd_sav)[iat];
 
 		si0md  =  helmholtz_constants::xpsi0(mxd);
-		si1md  =  -helmholtz_constants::xpsi1(mxd)*helmholtz_constants::DEVICE_ACCESS(dd_sav)[iat];
+		si1md  = -helmholtz_constants::xpsi1(mxd)*helmholtz_constants::DEVICE_ACCESS(dd_sav)[iat];
 
 
 		// derivatives of weight functions
@@ -672,13 +676,13 @@ namespace nnet::eos {
 		dsi1t  = helmholtz_constants::xdpsi1(xt);
 
 		dsi0mt = -helmholtz_constants::xdpsi0(mxt)*helmholtz_constants::DEVICE_ACCESS(dti_sav)[jat];
-		dsi1mt = helmholtz_constants::xdpsi1(mxt);
+		dsi1mt =  helmholtz_constants::xdpsi1(mxt);
 
 		dsi0d  = helmholtz_constants::xdpsi0(xd)*helmholtz_constants::DEVICE_ACCESS(ddi_sav)[iat];
 		dsi1d  = helmholtz_constants::xdpsi1(xd);
 
 		dsi0md = -helmholtz_constants::xdpsi0(mxd)*helmholtz_constants::DEVICE_ACCESS(ddi_sav)[iat];
-		dsi1md = helmholtz_constants::xdpsi1(mxd);
+		dsi1md =  helmholtz_constants::xdpsi1(mxd);
 
 
 
@@ -708,7 +712,7 @@ namespace nnet::eos {
 		Float dpepdd  = helmholtz_constants::h3(fi,
 			si0t,   si1t,   si0mt,   si1mt,
             si0d,   si1d,   si0md,   si1md);
-			dpepdd  = std::max(ye*dpepdd, (Float)1.e-30);
+		dpepdd        = std::max<Float>(ye*dpepdd, (Float)1.e-30);
 
 
 
@@ -793,7 +797,7 @@ namespace nnet::eos {
 		x = helmholtz_constants::h3(fi,
 			si0t,   si1t,   si0mt,   si1mt,
         	dsi0d,  dsi1d,  dsi0md,  dsi1md);
-		x = std::max(x, (Float)1e-30);
+		x = std::max<Float>(x, (Float)1e-30);
 		Float dxnedd   = ye*x;
 
 		// derivative with respect to temperature
@@ -866,7 +870,7 @@ namespace nnet::eos {
 #endif
 
 
-		Float lami     = std::pow(1./s, 1./3.);
+		Float lami     = std::pow((Float)1./s, (Float)1./3.);
 		Float inv_lami = 1./lami;
 		      z        = -lami/3;
 		Float lamidd   = z*dsdd/s;
@@ -892,7 +896,7 @@ namespace nnet::eos {
 
 		// yakovlev & shalybkov 1989 equations 82, 85, 86, 87
 		if (plasg >= 1.) {
-			x        = std::pow(plasg, 0.25);
+			x        = std::pow(plasg, (Float)0.25);
 			y        = helmholtz_constants::avo*ytot1*helmholtz_constants::kerg;
 			ecoul    = y*temp*(helmholtz_constants::a1*plasg + helmholtz_constants::b1*x + helmholtz_constants::c1/x + helmholtz_constants::d1);
 			pcoul    = rho*ecoul/3.;
@@ -927,7 +931,7 @@ namespace nnet::eos {
 		//yakovlev & shalybkov 1989 equations 102, 103, 104
 		} else if (plasg < 1.) {
 			x        = plasg*std::sqrt(plasg);
-			y        = std::pow(plasg, helmholtz_constants::b2);
+			y        = std::pow(plasg, (Float)helmholtz_constants::b2);
 			z        = helmholtz_constants::c2*x - helmholtz_constants::a2*y/3.;
 			pcoul    = -pion*z;
 			ecoul    = 3.0*pcoul/rho;
@@ -1102,11 +1106,10 @@ namespace nnet::eos {
 
 		delete[] fi;
 
-
 #ifdef DEBUG_HELM
-		res.cv   = rho;
-		res.u    = temp;
-		res.dpdT = zbar_;
+		res.cv   = helmholtz_constants::DEVICE_ACCESS(xf)[iat][jat]; // rho;  // (Float)iat
+		res.u    = helmholtz_constants::DEVICE_ACCESS(d )[iat];      // temp; // (Float)jat
+		res.dpdT = helmholtz_constants::DEVICE_ACCESS(t_)[jat];      // zbar_;
 #endif
 
 		return res;

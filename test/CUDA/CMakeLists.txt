@@ -21,4 +21,25 @@ if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
 	)
 
 	install(TARGETS ${nnet}-cuda RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+
+
+
+
+
+	add_executable(${nnet}-cpu ../hydro-mockup.cpp)
+
+	target_include_directories(${nnet}-cpu PRIVATE ${SPH_DIR})
+	target_include_directories(${nnet}-cpu PRIVATE ${CSTONE_DIR})
+	target_include_directories(${nnet}-cpu PRIVATE ${NNET_DIR})
+
+	target_include_directories(${nnet}-cpu PUBLIC ${MPI_CXX_INCLUDE_DIRS})
+
+	target_compile_definitions(${nnet}-cpu PRIVATE USE_MPI USE_CUDA CUDA_CPU_TEST)
+	target_link_libraries(${nnet}-cpu  PRIVATE
+		OpenMP::OpenMP_CXX ${MPI_CXX_LIBRARIES} CUDA::cudart
+		$<TARGET_OBJECTS:nuclear_gpu>
+	)
+
+	install(TARGETS ${nnet}-cpu RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

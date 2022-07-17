@@ -24,10 +24,20 @@
 
 
 #ifdef USE_CUDA
-	using AccType = cstone::GpuTag;
-#else
+	using InitAccType = cstone::GpuTag;
+
+#ifdef CUDA_CPU_TEST
 	using AccType = cstone::CpuTag;
+#else
+	using AccType = InitAccType;
 #endif
+#else
+	using InitAccType = cstone::CpuTag;
+	using AccType     = InitAccType;
+#endif
+
+
+
 
 
 
@@ -192,12 +202,12 @@ double totalInternalEnergy(Data const &n) {
 void printHelp(char* name, int rank);
 
 // mockup of the step function 
-template<class func_type, class func_eos, size_t n_species, typename Float, typename KeyType, class AccType>
+template<class func_type, class func_eos, class Zvector, size_t n_species, typename Float, typename KeyType, class AccType>
 void step(int rank,
 	size_t firstIndex, size_t lastIndex,
 	ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<n_species, Float, KeyType, AccType>  &n, const double dt,
 	const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
-	const Float *BE)
+	const Float *BE, const Zvector &Z)
 {
 	size_t n_nuclear_particles = n.Y.size();
 
@@ -213,7 +223,7 @@ void step(int rank,
 
 	sphexa::sphnnet::computeNuclearReactions(n, 0, n_nuclear_particles, dt, dt,
 		reactions, construct_rates_BE, eos);
-	sphexa::sphnnet::computeHelmEOS(n, 0, n_nuclear_particles, nnet::net14::constants::Z);
+	sphexa::sphnnet::computeHelmEOS(n, 0, n_nuclear_particles, Z);
 
 	sphexa::transferToHost(n, 0, n_nuclear_particles, {"temp",
 		"c", "p", "cv", "u", "dpdT"});
@@ -253,8 +263,8 @@ int main(int argc, char* argv[]) {
 	cuda_util::initCudaMpi(MPI_COMM_WORLD);
 #endif
 
-	nnet::eos::helmholtz_constants::read_table<AccType>();
-	nnet::net87::electrons::constants::read_table<AccType>();
+	nnet::eos::helmholtz_constants::read_table<InitAccType>();
+	nnet::net87::electrons::constants::read_table<InitAccType>();
 
 
 
@@ -433,39 +443,39 @@ int main(int argc, char* argv[]) {
 				first, last,
 				particle_data, nuclear_data_87, hydro_dt,
 				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, idea_gas_eos,
-				nnet::net87::BE.data());
+				nnet::net87::BE.data(), nnet::net87::constants::Z);
 		} else
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_87, hydro_dt,
 				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, helm_eos_87,
-				nnet::net87::BE.data());
+				nnet::net87::BE.data(), nnet::net87::constants::Z);
 	} else if (use_net86) {
 		if (idealGas) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_86, hydro_dt,
 				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, idea_gas_eos,
-				nnet::net86::BE.data());
+				nnet::net86::BE.data(), nnet::net86::constants::Z);
 		} else
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_86, hydro_dt,
 				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86,
-				nnet::net86::BE.data());
+				nnet::net86::BE.data(), nnet::net86::constants::Z);
 	} else
 		if (idealGas) {
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_14, hydro_dt,
 				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, idea_gas_eos,
-				nnet::net14::BE.data());
+				nnet::net14::BE.data(), nnet::net14::constants::Z);
 		} else
 			step(rank,
 				first, last,
 				particle_data, nuclear_data_14, hydro_dt,
 				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14,
-				nnet::net14::BE.data());
+				nnet::net14::BE.data(), nnet::net14::constants::Z);
 
 		t += hydro_dt;
 

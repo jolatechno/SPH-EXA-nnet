@@ -66,10 +66,14 @@ namespace nnet::net87::electrons {
 
 			if constexpr (sphexa::HaveGpu<AccType>{}) {
 #if COMPILE_DEVICE
+				std::cerr << "copy to GPU net87...\n";
+
 			  	// copy to device 
-				gpuErrchk(cudaMemcpyToSymbol(dev_log_temp_ref,  log_temp_ref,  nTemp*sizeof(double)));
-			   	gpuErrchk(cudaMemcpyToSymbol(dev_log_rho_ref,   log_rho_ref,   nRho*sizeof(double)));
-			   	gpuErrchk(cudaMemcpyToSymbol(dev_electron_rate, electron_rate, nTemp*nRho*nC*sizeof(double)));
+				gpuErrchk(cudaMemcpyToSymbol(dev_log_temp_ref,  log_temp_ref,          nTemp*sizeof(double), 0, cudaMemcpyHostToDevice));
+			   	gpuErrchk(cudaMemcpyToSymbol(dev_log_rho_ref,   log_rho_ref,            nRho*sizeof(double), 0, cudaMemcpyHostToDevice));
+			   	gpuErrchk(cudaMemcpyToSymbol(dev_electron_rate, electron_rate, nTemp*nRho*nC*sizeof(double), 0, cudaMemcpyHostToDevice));
+			   	
+				std::cerr << "\t...Ok(copy to GPU net87)\n";
 #endif
 			}
 		}

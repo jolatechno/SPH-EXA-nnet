@@ -15,9 +15,11 @@ namespace sphnnet {
 		const Float hydro_dt, const Float previous_dt,
 		const nnet::gpu_reaction_list *reactions, const func_type *construct_rates_BE, const func_eos *eos)
 	{
-	    const size_t block_begin =                         blockIdx.x*blockDim.x*constants::cuda_num_iteration_per_thread;
-	    const size_t block_end   = std::min((size_t)((blockIdx.x + 1)*blockDim.x*constants::cuda_num_iteration_per_thread), n_particles);
-	    const size_t block_size  = block_end - block_begin;
+	    size_t block_begin =                         blockIdx.x*blockDim.x*constants::cuda_num_iteration_per_thread;
+	    size_t block_end   = (blockIdx.x + 1)*blockDim.x*constants::cuda_num_iteration_per_thread;
+	    if (block_end > n_particles)
+	    	block_end = n_particles;
+	    size_t block_size  = block_end - block_begin;
 
 	    // satatus
 	    static const int free_status     = -2;
@@ -27,7 +29,7 @@ namespace sphnnet {
 	    // initialized shared array
 	    __shared__ int status[constants::cuda_num_thread_per_block*constants::cuda_num_iteration_per_thread];
 	     for (int i =                         constants::cuda_num_iteration_per_thread*threadIdx.x;
-	    		 i < std::min((size_t)(constants::cuda_num_iteration_per_thread*(threadIdx.x + 1)), block_size);
+	    		  i < constants::cuda_num_iteration_per_thread*(threadIdx.x + 1) && i < n_particles;
 	    	   ++i)
 	    {
 	     	status[i] = free_status;
