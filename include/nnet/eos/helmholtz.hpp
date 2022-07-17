@@ -91,44 +91,44 @@ namespace nnet::eos {
         const double esqu  =  qe*qe;
 
 
-        DEVICE_DEFINE_DETAIL(static,, double, d[IMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, dd_sav[IMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, dd2_sav[IMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, ddi_sav[IMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, dd2i_sav[IMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, dd3i_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, d[IMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, dd_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, dd2_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, ddi_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, dd2i_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, dd3i_sav[IMAX - 1], ;)
 
-        DEVICE_DEFINE_DETAIL(static,, double, t_[JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, dt_sav[JMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, dt2_sav[JMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, dti_sav[JMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, dt2i_sav[JMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, dt3i_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, t_[JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, dt_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, dt2_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, dti_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, dt2i_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, dt3i_sav[JMAX - 1], ;)
 
-        DEVICE_DEFINE_DETAIL(static,, double, f[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, fd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, ft[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, fdd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, ftt[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, fdt[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, fddt[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, fdtt[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, fddtt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, f[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, fd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, ft[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, fdd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, ftt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, fdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, fddt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, fdtt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, fddtt[IMAX][JMAX], ;)
 
-        DEVICE_DEFINE_DETAIL(static,, double, dpdf[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, dpdfd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, dpdft[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, dpdfdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, dpdf[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, dpdfd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, dpdft[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, dpdfdt[IMAX][JMAX], ;)
 
-        DEVICE_DEFINE_DETAIL(static,, double, ef[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, efd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, eft[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, efdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, ef[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, efd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, eft[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, efdt[IMAX][JMAX], ;)
 
-        DEVICE_DEFINE_DETAIL(static,, double, xf[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, xfd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, xft[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static,, double, xfdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, xf[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, xfd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, xft[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(static, static, double, xfdt[IMAX][JMAX], ;)
 
 
 		// read helmholtz constants table
@@ -243,7 +243,6 @@ namespace nnet::eos {
 		        gpuErrchk(cudaMemcpyToSymbol(dev_efd,  efd,  imax*jmax*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_eft,  eft,  imax*jmax*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_efdt, efdt, imax*jmax*sizeof(double)));
-
 
 		        gpuErrchk(cudaMemcpyToSymbol(dev_xf,   xf,   imax*jmax*sizeof(double)));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_xfd,  xfd,  imax*jmax*sizeof(double)));
@@ -362,17 +361,15 @@ namespace nnet::eos {
 
 		// get correspong table indices
 		template<typename Float>
-		HOST_DEVICE_FUN std::pair<int, int> inline get_table_indices(const Float T, const Float rho, const Float abar, const Float zbar) {
+		HOST_DEVICE_FUN void inline get_table_indices(int &iat, int &jat, const Float temp, const Float rho, const Float abar, const Float zbar) {
 			const Float ye = std::max((Float)1e-16, zbar/abar);
 			const Float din = ye*rho;
 
-			int jat = int((std::log10(T) - tlo)*tstpi);
+			jat = int((std::log10(temp) - tlo)*tstpi);
 			jat = std::max(1, std::min(jat, jmax - 2));
 
-			int iat = int((std::log10(din) - dlo)*dstpi);
+			iat = int((std::log10(din) - dlo)*dstpi);
 			iat = std::max(1, std::min(iat, imax - 2));
-
-			return {jat, iat};
 		}
 	}
 
@@ -403,7 +400,7 @@ namespace nnet::eos {
 	*...TODO
 	 */
 	template<typename Float>
-	HOST_DEVICE_FUN helm_eos_output<Float> inline helmholtz(double abar_, double zbar_, const Float T, const Float rho) {
+	HOST_DEVICE_FUN helm_eos_output<Float> inline helmholtz(double abar_, double zbar_, const Float temp, const Float rho) {
 		// coefs
 		// Float fi[36];
 		Float *fi = new Float[36];
@@ -414,12 +411,13 @@ namespace nnet::eos {
 
 		/* debug: */
 #if !DEVICE_CODE
-		if (debug) std::cout << "T=" << T << ", rho=" << rho << ", abar=" << abar << ", zbar=" << zbar << "\n";
+		if (debug) std::cout << "temp=" << temp << ", rho=" << rho << ", abar=" << abar << ", zbar=" << zbar << "\n";
 #endif
 
 
 		// compute polynoms rates
-		auto const [jat, iat] = helmholtz_constants::get_table_indices(T, rho, abar, zbar);
+		int iat, jat;
+		helmholtz_constants::get_table_indices(iat, jat, temp, rho, abar, zbar);
 
 
 		Float ytot1 = 1/abar;
@@ -428,13 +426,13 @@ namespace nnet::eos {
 
 		// initialize
 		Float rhoi    = 1./rho;
-		Float tempi   = 1./T;
-		Float kt      = helmholtz_constants::kerg*T;
+		Float tempi   = 1./temp;
+		Float kt      = helmholtz_constants::kerg*temp;
 		Float ktinv   = 1./kt;
 
 
 		// adiation section:
-		Float prad    = helmholtz_constants::asol*T*T*T*T/3;
+		Float prad    = helmholtz_constants::asol*temp*temp*temp*temp/3;
 		Float dpraddd = 0.;
 		Float dpraddt = 4.*prad*tempi;
 		Float dpradda = 0.;
@@ -476,7 +474,7 @@ namespace nnet::eos {
 		// sackur-tetrode equation for the ion entropy of
 		// a single ideal gas characterized by abar
 		      Float x = abar*abar*std::sqrt(abar)*rhoi/helmholtz_constants::avo;
-		Float s = helmholtz_constants::sioncon*T;
+		Float s = helmholtz_constants::sioncon*temp;
 		Float z = x*s*std::sqrt(s);
 		Float y = std::log(z);
 
@@ -547,7 +545,7 @@ namespace nnet::eos {
 
 
 		// various differences
-		Float xt  = std::max( (T - helmholtz_constants::DEVICE_ACCESS(t_)[jat])*helmholtz_constants::DEVICE_ACCESS(dti_sav)[jat], 0.);
+		Float xt  = std::max( (temp - helmholtz_constants::DEVICE_ACCESS(t_)[jat])*helmholtz_constants::DEVICE_ACCESS(dti_sav)[jat], 0.);
 		Float xd  = std::max( (din - helmholtz_constants::DEVICE_ACCESS(d)[iat])*helmholtz_constants::DEVICE_ACCESS(ddi_sav)[iat], 0.);
 		Float mxt = 1. - xt;
 		Float mxd = 1. - xd;
@@ -555,7 +553,7 @@ namespace nnet::eos {
 
 		/* debug: */
 #if !DEVICE_CODE
-		if (debug) std::cout << "xt=" << xt << " = (T - t[" << jat << "]=" << helmholtz_constants::t_[jat] << ")* dti_sav[" << jat << "]=" << helmholtz_constants::dti_sav[jat] << "\n";
+		if (debug) std::cout << "xt=" << xt << " = (temp - t[" << jat << "]=" << helmholtz_constants::t_[jat] << ")* dti_sav[" << jat << "]=" << helmholtz_constants::dti_sav[jat] << "\n";
 #endif
 
 
@@ -814,16 +812,16 @@ namespace nnet::eos {
 		// floating point limit of the subtraction of two large terms.
 		// since dpresdd doesn't enter the maxwell relations at all, use the
 		// bicubic interpolation done above instead of the formally correct expression
-		x       = din*din;
+		      x       = din*din;
 		Float pele    = x*df_d;
 		Float dpepdt  = x*df_dt;
 		// dpepdd  = ye*(x*df_dd + 2.0*din*df_d)
-		s       = dpepdd/ye - 2.0*din*df_d;
+		      s       = dpepdd/ye - 2.0*din*df_d;
 		Float dpepda  = -ytot1*(2.0*pele + s*din);
 		Float dpepdz  = rho*ytot1*(2.0*din*df_d  +  s);
 
 
-		x       = ye*ye;
+		      x       = ye*ye;
 		Float sele    = -df_t*ye;
 		Float dsepdt  = -df_tt*ye;
 		Float dsepdd  = -df_dt*x;
@@ -837,16 +835,16 @@ namespace nnet::eos {
 #endif
 
 
-		Float eele    = ye*free + T*sele;
-		Float deepdt  = T*dsepdt;
-		Float deepdd  = x*df_d + T*dsepdd;
-		Float deepda  = -ye*ytot1*(free +  df_d*din) + T*dsepda;
-		Float deepdz  = ytot1* (free + ye*df_d*rho) + T*dsepdz;
+		Float eele    = ye*free + temp*sele;
+		Float deepdt  = temp*dsepdt;
+		Float deepdd  = x*df_d + temp*dsepdd;
+		Float deepda  = -ye*ytot1*(free +  df_d*din) + temp*dsepda;
+		Float deepdz  = ytot1* (free + ye*df_d*rho) + temp*dsepdz;
 
 
 		/* debug: */
 #if !DEVICE_CODE
-		if (debug) std::cout << "deepdt=" << deepdt << " = dsepdt=" << dsepdt << " * T" << "\n";
+		if (debug) std::cout << "deepdt=" << deepdt << " = dsepdt=" << dsepdt << " * temp" << "\n";
 #endif
 
 
@@ -870,12 +868,12 @@ namespace nnet::eos {
 
 		Float lami     = std::pow(1./s, 1./3.);
 		Float inv_lami = 1./lami;
-		z              = -lami/3;
+		      z        = -lami/3;
 		Float lamidd   = z*dsdd/s;
 		Float lamida   = z*dsda/s;
 
 		Float plasg    = zbar*zbar*helmholtz_constants::esqu*ktinv*inv_lami;
-		z        = -plasg*inv_lami;
+		      z        = -plasg*inv_lami;
 		Float plasgdd  = z*lamidd;
 		Float plasgda  = z*lamida;
 		Float plasgdt  = -plasg*ktinv*helmholtz_constants::kerg;
@@ -896,20 +894,20 @@ namespace nnet::eos {
 		if (plasg >= 1.) {
 			x        = std::pow(plasg, 0.25);
 			y        = helmholtz_constants::avo*ytot1*helmholtz_constants::kerg;
-			ecoul    = y*T*(helmholtz_constants::a1*plasg + helmholtz_constants::b1*x + helmholtz_constants::c1/x + helmholtz_constants::d1);
+			ecoul    = y*temp*(helmholtz_constants::a1*plasg + helmholtz_constants::b1*x + helmholtz_constants::c1/x + helmholtz_constants::d1);
 			pcoul    = rho*ecoul/3.;
 			scoul    = -y*(3.0*helmholtz_constants::b1*x - 5.0*helmholtz_constants::c1/x + helmholtz_constants::d1*(std::log(plasg) - 1.) - helmholtz_constants::e1);
 
 			y        = helmholtz_constants::avo*ytot1*kt*(helmholtz_constants::a1 + 0.25/plasg*(helmholtz_constants::b1*x - helmholtz_constants::c1/x));
 			decouldd = y*plasgdd;
-			decouldt = y*plasgdt + ecoul/T;
+			decouldt = y*plasgdt + ecoul/temp;
 			decoulda = y*plasgda - ecoul/abar;
 			decouldz = y*plasgdz;
 
 
 			/* debug: */
 #if !DEVICE_CODE
-		if (debug) std::cout << "decouldt=" << decouldt << " = y=" << y << " * plasgdt=" << decouldt << " + ecoul=" << ecoul << " / T" << "\n";
+		if (debug) std::cout << "decouldt=" << decouldt << " = y=" << y << " * plasgdt=" << decouldt << " + ecoul=" << ecoul << " / temp" << "\n";
 #endif
 
 
@@ -1059,10 +1057,10 @@ namespace nnet::eos {
 
 		Float zz        = pgas*rhoi;
 		Float zzi       = rho/pgas;
-		Float chit_gas  = T/pgas*dpgasdt;
+		Float chit_gas  = temp/pgas*dpgasdt;
 		Float chid_gas  = dpgasdd*zzi;
 		res.cv_gaz      = degasdt;
-		x               = zz*chit_gas/(T*res.cv_gaz);
+		x               = zz*chit_gas/(temp*res.cv_gaz);
 		Float gam3_gas  = x + 1.;
 		Float gam1_gas  = chit_gas*x + chid_gas;
 		Float nabad_gas = x/gam1_gas;
@@ -1076,10 +1074,10 @@ namespace nnet::eos {
 		// for the totals
 		zz          = pres*rhoi;
 		zzi         = rho/pres;
-		Float chit  = T/pres*dpresdt;
+		Float chit  = temp/pres*dpresdt;
 		Float chid  = dpresdd*zzi;
 		res.cv      = rhoerdt;
-		x           = zz*chit/(T*res.cv);
+		x           = zz*chit/(temp*res.cv);
 		Float gam3  = x + 1.;
 		Float gam1  = chit*x + chid;
 		Float nabad = x/gam1;
@@ -1092,8 +1090,8 @@ namespace nnet::eos {
 
 		// maxwell relations; each is zero if the consistency is perfect
 		x       = rho*rho;
-		res.dse = T*rhotrdt/rhoerdt - 1.;
-		res.dpe = (rhoerdd*x + T*dpresdt)/pres - 1.;
+		res.dse = temp*rhotrdt/rhoerdt - 1.;
+		res.dpe = (rhoerdd*x + temp*dpresdt)/pres - 1.;
 		res.dsp = -rhotrdd*x/dpresdt - 1.;
 
 		// Needed output
@@ -1103,6 +1101,13 @@ namespace nnet::eos {
 		res.u     = ener;
 
 		delete[] fi;
+
+
+#ifdef DEBUG_HELM
+		res.cv   = rho;
+		res.u    = temp;
+		res.dpdT = zbar_;
+#endif
 
 		return res;
 	}
@@ -1151,12 +1156,12 @@ namespace nnet::eos {
 #endif
 		}
 
-		HOST_DEVICE_FUN eos_type inline operator()(const Float *Y, const Float T, const Float rho) const {
+		HOST_DEVICE_FUN eos_type inline operator()(const Float *Y, const Float temp, const Float rho) const {
 			// compute abar and zbar
-			double abar = algorithm::accumulate(Y, Y + dimension, (double)0);
+			double abar = algorithm::accumulate(Y, Y + dimension, (double)0.);
 			double zbar = eigen::dot(Y, Y + dimension, DEVICE_ACCESS(Z));
 
-			return helmholtz(abar, zbar, T, rho);
+			return helmholtz(abar, zbar, temp, rho);
 		}
 	};
 }

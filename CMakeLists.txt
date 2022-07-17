@@ -3,9 +3,8 @@ cmake_minimum_required(VERSION 3.17)
 project(nuclear-nets CXX C)
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS "-O3 --std=c++17")
-set(CMAKE_CUDA_FLAGS "-O3 --std=c++17 --expt-relaxed-constexpr")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s")  ## Strip binary
+set(CMAKE_CUDA_FLAGS "-O3 --std=c++17 --expt-relaxed-constexpr ${CMAKE_CUDA_FLAGS} ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-O3 --std=c++17 ${CMAKE_CXX_FLAGS}")
 
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
