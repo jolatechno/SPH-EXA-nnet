@@ -259,17 +259,6 @@ namespace sphnnet {
 		const Float *temp_, const Float *rho_, const Float *Y_,
 		Float *u, Float *cv, Float *p, Float *c, Float *dpdT)
 	{
-		size_t size; void *ptr;
-
-		gpuErrchk(cudaGetSymbolAddress(&ptr, nnet::eos::helmholtz_constants::dev_d));
-		gpuErrchk(cudaGetSymbolSize(&size, nnet::eos::helmholtz_constants::dev_d));
-		std::cerr << "\n\t(nuclear-net.cu): dev_d = " << std::hex << (size_t)ptr << std::dec << ", size = " << size << " (" << nnet::eos::helmholtz_constants::imax*sizeof(double) << ")\n";
-
-		gpuErrchk(cudaGetSymbolAddress(&ptr, nnet::eos::helmholtz_constants::dev_f));
-		gpuErrchk(cudaGetSymbolSize(&size, nnet::eos::helmholtz_constants::dev_f));
-		std::cerr << "\t(nuclear-net.cu): dev_f = " << std::hex << (size_t)ptr << std::dec << ", size = " << size << " (" << nnet::eos::helmholtz_constants::imax*nnet::eos::helmholtz_constants::jmax*sizeof(double) << ")\n\n";
-
-
 		// compute chunk sizes
 		int cuda_num_blocks = (n_particles + constants::cuda_num_thread_per_block - 1)/constants::cuda_num_thread_per_block;
 		

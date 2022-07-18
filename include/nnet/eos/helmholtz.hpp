@@ -91,44 +91,44 @@ namespace nnet::eos {
         const double esqu  =  qe*qe;
 
 
-        DEVICE_DEFINE_DETAIL(static, static, double, d[IMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, dd_sav[IMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, dd2_sav[IMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, ddi_sav[IMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, dd2i_sav[IMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, dd3i_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, d[IMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, dd_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, dd2_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, ddi_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, dd2i_sav[IMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, dd3i_sav[IMAX - 1], ;)
 
-        DEVICE_DEFINE_DETAIL(static, static, double, t_[JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, dt_sav[JMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, dt2_sav[JMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, dti_sav[JMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, dt2i_sav[JMAX - 1], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, dt3i_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, t_[JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, dt_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, dt2_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, dti_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, dt2i_sav[JMAX - 1], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, dt3i_sav[JMAX - 1], ;)
 
-        DEVICE_DEFINE_DETAIL(static, static, double, f[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, fd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, ft[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, fdd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, ftt[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, fdt[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, fddt[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, fdtt[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, fddtt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, f[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, fd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, ft[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, fdd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, ftt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, fdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, fddt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, fdtt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, fddtt[IMAX][JMAX], ;)
 
-        DEVICE_DEFINE_DETAIL(static, static, double, dpdf[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, dpdfd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, dpdft[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, dpdfdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, dpdf[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, dpdfd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, dpdft[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, dpdfdt[IMAX][JMAX], ;)
 
-        DEVICE_DEFINE_DETAIL(static, static, double, ef[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, efd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, eft[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, efdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, ef[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, efd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, eft[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, efdt[IMAX][JMAX], ;)
 
-        DEVICE_DEFINE_DETAIL(static, static, double, xf[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, xfd[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, xft[IMAX][JMAX], ;)
-        DEVICE_DEFINE_DETAIL(static, static, double, xfdt[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, xf[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, xfd[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, xft[IMAX][JMAX], ;)
+        DEVICE_DEFINE_DETAIL(extern, extern, double, xfdt[IMAX][JMAX], ;)
 
 
 		// read helmholtz constants table
@@ -209,18 +209,6 @@ namespace nnet::eos {
 
 #if COMPILE_DEVICE
 			if constexpr (sphexa::HaveGpu<AccType>{}) {
-				std::cerr << "copy to GPU helm...\n";
-
-				size_t size; void *ptr;
-
-				gpuErrchk(cudaGetSymbolAddress(&ptr, dev_d));
-				gpuErrchk(cudaGetSymbolSize(&size, dev_d));
-				std::cerr << "\n\t(helmholtz.hpp): dev_d = " << std::hex << (size_t)ptr << std::dec << ", size = " << size << " (" << imax*sizeof(double) << ")\n";
-
-				gpuErrchk(cudaGetSymbolAddress(&ptr, dev_f));
-				gpuErrchk(cudaGetSymbolSize(&size, dev_f));
-				std::cerr << "\t(helmholtz.hpp): dev_f = " << std::hex << (size_t)ptr << std::dec << ", size = " << size << " (" << imax*jmax*sizeof(double) << ")\n\n";
-
 		        // copy to device 
 		        gpuErrchk(cudaMemcpyToSymbol(dev_d,        d,              imax*sizeof(double), 0, cudaMemcpyHostToDevice));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_dd_sav,   dd_sav,   (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
@@ -260,8 +248,6 @@ namespace nnet::eos {
 		        gpuErrchk(cudaMemcpyToSymbol(dev_xfd,  xfd,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_xft,  xft,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_xfdt, xfdt, imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-
-				std::cerr << "\t...Ok(copy to GPU helm)\n";
 		   	}
 #endif
 		};
