@@ -268,6 +268,22 @@ int main(int argc, char* argv[]) {
 
 
 
+#if COMPILE_DEVICE
+	{
+		size_t size; void *ptr;
+
+		gpuErrchk(cudaGetSymbolAddress(&ptr, nnet::eos::helmholtz_constants::dev_d));
+		gpuErrchk(cudaGetSymbolSize(&size, nnet::eos::helmholtz_constants::dev_d));
+		std::cerr << "\n\t(hydro-mockup.cpp): dev_d = " << std::hex << (size_t)ptr << std::dec << ", size = " << size << " (" << nnet::eos::helmholtz_constants::imax*sizeof(double) << ")\n";
+
+		gpuErrchk(cudaGetSymbolAddress(&ptr, nnet::eos::helmholtz_constants::dev_f));
+		gpuErrchk(cudaGetSymbolSize(&size, nnet::eos::helmholtz_constants::dev_f));
+		std::cerr << "\t(hydro-mockup.cpp): dev_f = " << std::hex << (size_t)ptr << std::dec << ", size = " << size << " (" << nnet::eos::helmholtz_constants::imax*nnet::eos::helmholtz_constants::jmax*sizeof(double) << ")\n\n";
+	}
+#endif
+
+
+
 
 	const ArgParser parser(argc, argv);
     if (parser.exists("-h") || parser.exists("--h") || parser.exists("-help") || parser.exists("--help")) {

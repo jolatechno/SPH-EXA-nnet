@@ -32,13 +32,11 @@
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
 	#define DEVICE_CODE true
 
-		azeaz
-
 	// access device-defined variable
 	#define DEVICE_ACCESS(symbol) dev_##symbol
 #else
 	#define DEVICE_CODE false
-
+	
 	// access device-owned variable
 	#define DEVICE_ACCESS(symbol) symbol
 #endif

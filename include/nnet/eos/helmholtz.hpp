@@ -211,6 +211,16 @@ namespace nnet::eos {
 			if constexpr (sphexa::HaveGpu<AccType>{}) {
 				std::cerr << "copy to GPU helm...\n";
 
+				size_t size; void *ptr;
+
+				gpuErrchk(cudaGetSymbolAddress(&ptr, dev_d));
+				gpuErrchk(cudaGetSymbolSize(&size, dev_d));
+				std::cerr << "\n\t(helmholtz.hpp): dev_d = " << std::hex << (size_t)ptr << std::dec << ", size = " << size << " (" << imax*sizeof(double) << ")\n";
+
+				gpuErrchk(cudaGetSymbolAddress(&ptr, dev_f));
+				gpuErrchk(cudaGetSymbolSize(&size, dev_f));
+				std::cerr << "\t(helmholtz.hpp): dev_f = " << std::hex << (size_t)ptr << std::dec << ", size = " << size << " (" << imax*jmax*sizeof(double) << ")\n\n";
+
 		        // copy to device 
 		        gpuErrchk(cudaMemcpyToSymbol(dev_d,        d,              imax*sizeof(double), 0, cudaMemcpyHostToDevice));
 		        gpuErrchk(cudaMemcpyToSymbol(dev_dd_sav,   dd_sav,   (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
