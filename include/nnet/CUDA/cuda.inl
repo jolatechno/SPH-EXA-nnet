@@ -5,11 +5,6 @@
 
 	#define HOST_DEVICE_FUN __host__ __device__
 
-	// duplicate definition on device and host
-	#define DEVICE_DEFINE_DETAIL(host_class, dev_class, type, symbol, definition) \
-		           host_class type       symbol definition                        \
-		__device__ dev_class  type dev_##symbol definition
-
 	// simpler duplicate definition on device and host
 	#define DEVICE_DEFINE(type, symbol, definition) \
 		           type       symbol definition     \
@@ -18,10 +13,6 @@
 	#define COMPILE_DEVICE false
 
 	#define HOST_DEVICE_FUN
-
-	// void
-	#define DEVICE_DEFINE_DETAIL(host_class, dev_class, type, symbol, definition) \
-		host_class type symbol definition
 
 	// void
 	#define DEVICE_DEFINE(type, symbol, definition) \
