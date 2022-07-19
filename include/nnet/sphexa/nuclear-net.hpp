@@ -66,15 +66,19 @@ namespace sphexa::sphnnet {
 			
 
 			nnet::gpu_reaction_list dev_reactions = nnet::move_to_gpu(reactions);
+
+			Float* previous_rho_ptr = nullptr;
+			if (use_drhodt)
+				previous_rho_ptr = (Float*)thrust::raw_pointer_cast(n.devData.previous_rho.data() + firstIndex);
 			
 			// call the cuda kernel wrapper
 			cudaComputeNuclearReactions(lastIndex - firstIndex, dimension,
 				n.devData.buffer,
-		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()          + firstIndex),
-		(Float*)thrust::raw_pointer_cast(n.devData.previous_rho.data() + firstIndex),
-		(Float*)thrust::raw_pointer_cast(n.devData.Y.data()            + firstIndex),
-		(Float*)thrust::raw_pointer_cast(n.devData.temp.data()         + firstIndex),
-		(Float*)thrust::raw_pointer_cast(n.devData.dt.data()           + firstIndex),
+		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()  + firstIndex),
+		        previous_rho_ptr,
+		(Float*)thrust::raw_pointer_cast(n.devData.Y.data()    + firstIndex),
+		(Float*)thrust::raw_pointer_cast(n.devData.temp.data() + firstIndex),
+		(Float*)thrust::raw_pointer_cast(n.devData.dt.data()   + firstIndex),
 				hydro_dt, previous_dt,
 				dev_reactions, construct_rates_BE, eos,
 				use_drhodt);
