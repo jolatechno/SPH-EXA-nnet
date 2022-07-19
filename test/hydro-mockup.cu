@@ -185,7 +185,8 @@ void step(int rank,
 	sphexa::transferToDevice(n, 0, n_nuclear_particles, {"previous_rho", "rho", "temp"});
 
 	sphexa::sphnnet::computeNuclearReactions(n, 0, n_nuclear_particles, dt, dt,
-		reactions, construct_rates_BE, eos);
+		reactions, construct_rates_BE, eos,
+		/*considering expansion:*/true);
 	sphexa::sphnnet::computeHelmEOS(n, 0, n_nuclear_particles, Z);
 
 	sphexa::transferToHost(n, 0, n_nuclear_particles, {"temp",

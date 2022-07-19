@@ -37,6 +37,7 @@ namespace sphexa::sphnnet {
 	template<class Data, class func_type, class func_eos, typename Float, class nseFunction=void*>
 	void computeNuclearReactions(Data &n, size_t firstIndex, size_t lastIndex, const Float hydro_dt, const Float previous_dt,
 		const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		bool use_drhodt,
 		const nseFunction jumpToNse=NULL)
 	{
 		n.minDt_m1 = n.minDt;
@@ -54,6 +55,16 @@ namespace sphexa::sphnnet {
 			!!!!!!!!!!!!! */
 
 #if COMPILE_DEVICE
+			if (use_drhodt) {
+				int previous_rho_idx = std::distance(n.devData.fieldNames.begin(),
+					std::find(n.devData.fieldNames.begin(), n.devData.fieldNames.end(), "previous_rho"));
+				if (!n.devData.isAllocated(previous_rho_idx)) {
+					use_drhodt = false;
+					std::cerr << "disabeling using drho/dt because 'previous_rho' isn't alocated !\n";
+				}
+			}
+			
+
 			nnet::gpu_reaction_list dev_reactions = nnet::move_to_gpu(reactions);
 			
 			// call the cuda kernel wrapper
@@ -65,7 +76,8 @@ namespace sphexa::sphnnet {
 		(Float*)thrust::raw_pointer_cast(n.devData.temp.data()         + firstIndex),
 		(Float*)thrust::raw_pointer_cast(n.devData.dt.data()           + firstIndex),
 				hydro_dt, previous_dt,
-				dev_reactions, construct_rates_BE, eos);
+				dev_reactions, construct_rates_BE, eos,
+				use_drhodt);
 			
 			/* debuging: check for error */
 			gpuErrchk(cudaPeekAtLastError());
@@ -78,6 +90,15 @@ namespace sphexa::sphnnet {
 			/* !!!!!!!!!!!!!!!!!!!!!!!
 			simple CPU parallel solver
 			!!!!!!!!!!!!!!!!!!!!!!! */
+
+			if (use_drhodt) {
+				int previous_rho_idx = std::distance(n.fieldNames.begin(),
+					std::find(n.fieldNames.begin(), n.fieldNames.end(), "previous_rho"));
+				if (!n.isAllocated(previous_rho_idx)) {
+					use_drhodt = false;
+					std::cerr << "disabeling using drho/dt because 'previous_rho' isn't alocated !\n";
+				}
+			}
 
 			// buffers
 			std::vector<Float> rates(reactions.size());
@@ -94,7 +115,9 @@ namespace sphexa::sphnnet {
 			for (size_t i = firstIndex; i < lastIndex; ++i) 
 				if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp) {
 					// compute drho/dt
-					Float drho_dt = n.previous_rho[i] <= 0 ? 0. : (n.rho[i] - n.previous_rho[i])/previous_dt;
+					Float drho_dt = 0;
+					if (use_drhodt)
+						n.previous_rho[i] = (n.rho[i] - n.previous_rho[i])/previous_dt;
 
 					// solve
 					nnet::solve_system_substep(dimension,
