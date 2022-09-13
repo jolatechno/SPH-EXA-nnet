@@ -60,22 +60,24 @@
 	
 
 namespace nnet::net14 {
+	/*! @brief if true print debuging prints. */
 	extern bool debug;
 
+
 #ifdef NET14_NO_COULOMBIAN_DEBUG
-	/// if true ignore coulombian corrections
+	/*! @brief if true ignore coulombian corrections. */
 	const bool skip_coulombian_correction = true;
 #else
-	/// if true ignore coulombian corrections
+	/*! @brief if true ignore coulombian corrections. */
 	const bool skip_coulombian_correction = false;
 #endif
 
-	/// constant mass-excendent values
+	/*! @brief constant mass-excendent values */
 	DEVICE_DEFINE(inline static const std::array<double COMMA 14>, BE, = {
 		BE_NET14
 	};)
 
-	// constant list of ordered reaction
+	/*! @brief constant list of ordered reaction */
 	inline static const nnet::reaction_list reaction_list(std::vector<nnet::reaction>{
 		/* !!!!!!!!!!!!!!!!!!!!!!!!
 		   3He -> C fusion */
@@ -152,10 +154,20 @@ namespace nnet::net14 {
 		{{{13}}, {{0}, {12}}}  // Ni + He <- Zn
 	});
 
-	/// compute a list of reactions for net14
+	/*! @brief net14 functor */
 	struct compute_reaction_rates_functor {
 		compute_reaction_rates_functor() {}
 		
+		/*! @brief compute net14 rates 
+		 * 
+		 * @param Y              molar fractions
+		 * @param T             temperature
+		 * @param rho           density
+		 * @param eos_struct    eos struct to populate
+		 * @param corrected_BE  will be populated by binding energies, corrected by coulombien terms
+		 * @param rates         will be populated with reaction rates
+		 * @param drates        will be populated with the temperature derivatives of reaction rates
+		 */
 		template<typename Float, class eos>
 		HOST_DEVICE_FUN void inline operator()(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {
 			/*********************************************/

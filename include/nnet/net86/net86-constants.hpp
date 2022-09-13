@@ -54,7 +54,7 @@ namespace nnet::net86::constants {
 	const static double e2 = 2.306022645e-19;
 	const static double Mev_to_erg = 9.648529392e17;
 
-	/// constant atomic number values
+	/*! @brief constant atomic number values */
 	DEVICE_DEFINE(inline static const std::array<double COMMA 87>, Z, = {
 		 1 COMMA  0 COMMA  2 COMMA  6 COMMA  8 COMMA 10 COMMA 11 COMMA
 		12 COMMA 12 COMMA 10 COMMA 11 COMMA 12 COMMA 11 COMMA 10 COMMA
@@ -71,7 +71,7 @@ namespace nnet::net86::constants {
 		29 COMMA 28 COMMA /*Z=-1 for electrons*/-1
 	};)
 
-	/// constant number of masses values
+	/*! @brief constant number of masses values */
 	DEVICE_DEFINE(inline static const std::array<double COMMA 87>, A, = {
 		 1 COMMA  1 COMMA  4 COMMA 12 COMMA 16 COMMA 20 COMMA 21 COMMA
 		24 COMMA 23 COMMA 21 COMMA 23 COMMA 22 COMMA 22 COMMA 22 COMMA
@@ -88,7 +88,7 @@ namespace nnet::net86::constants {
 		58 COMMA 58 COMMA /*A=0 for electrons*/0
 	};)
 
-	/// order of nuclear species
+	/*! @brief order of nuclear species */
 	const std::vector<int> species_order = []() {
 		std::vector<int> species_order_(A.size());
 		std::iota(species_order_.begin(), species_order_.end(), 0);
@@ -105,7 +105,7 @@ namespace nnet::net86::constants {
 		return species_order_;
 	}();
 
-	/// nuclear species names
+	/*! @brief nuclear species names */
 	const std::vector<std::string> species_names = []() {
 		// unsorted nuclear species names
 		const std::vector<std::string> unsorted_species_names = {
@@ -132,7 +132,7 @@ namespace nnet::net86::constants {
 		return species_names_;
 	}();
 
-	/// nuclear species index corresponding to net14 species
+	/*! @brief nuclear species index corresponding to net14 species */
 	const std::vector<int> net14_species_order = []() {
 		const int net14_n_species = nnet::net14::constants::A.size();
 		const int net86_n_species = A.size();
@@ -155,7 +155,7 @@ namespace nnet::net86::constants {
 		return net14_species_order_;
 	}();
 
-	/// nuclear species index corresponding to net14 species
+	/*! @brief nuclear species index corresponding to net14 ordered species */
 	const std::vector<std::vector<int>> net14_accumulated_species_order = []() {
 		const int net14_n_species = nnet::net14::constants::A.size();
 		const int net86_n_species = A.size();
@@ -170,7 +170,7 @@ namespace nnet::net86::constants {
 		return net14_accumulated_species_order_;
 	}();
 
-	/// function for coulombian correction
+	// function for coulombian correction
 	template<typename Float>
 	HOST_DEVICE_FUN Float inline ggt1(const Float x) {
 		const Float a1 = -.898004;
@@ -181,7 +181,7 @@ namespace nnet::net86::constants {
 		Float sqroot2x = std::sqrt(std::sqrt(x));
 		return a1*x + b1*sqroot2x + c1/sqroot2x + d1;
 	}
-	/// function for coulombian correction
+	// function for coulombian correction
 	template<typename Float>
 	HOST_DEVICE_FUN Float inline glt1(const Float x) {
 		const Float a1 = -.5*std::sqrt(3.);
@@ -192,7 +192,7 @@ namespace nnet::net86::constants {
 	}
 
 
-    // reactant and products
+    // reactant and products indices
 	DEVICE_DEFINE(static const inline int, main_reactant[157], = { // (-1 applied)
 		 3 COMMA  3 COMMA  4 COMMA  0 COMMA  2 COMMA  3 COMMA  4 COMMA
 		 5 COMMA  8 COMMA 11 COMMA  5 COMMA 12 COMMA  6 COMMA  6 COMMA  9 COMMA  7 COMMA 16 COMMA 19 COMMA  7 COMMA 20 COMMA 14 COMMA 14 COMMA 17 COMMA

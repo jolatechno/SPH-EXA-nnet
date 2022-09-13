@@ -46,17 +46,17 @@ namespace nnet::net14::constants {
 	const static double e2 = 2.306022645e-19;
 	const static double Mev_to_erg = 9.648529392e17;
 
-	/// constant atomic number values
+	/*! @brief constant atomic number values */
 	DEVICE_DEFINE(inline static const std::array<double COMMA 14>, Z, = {
 		2 COMMA 6 COMMA 8 COMMA 10 COMMA 12 COMMA 14 COMMA 16 COMMA 18 COMMA 20 COMMA 22 COMMA 24 COMMA 26 COMMA 28 COMMA 30
 	};)
 
-	/// constant number of masses values
+	/*! @brief constant number of masses values */
 	DEVICE_DEFINE(inline static const std::array<double COMMA 14>, A, = {
 		4 COMMA 12 COMMA 16 COMMA 20 COMMA 24 COMMA 28 COMMA 32 COMMA 36 COMMA 40 COMMA 44 COMMA 48 COMMA 52 COMMA 56 COMMA 60
 	};)
 
-	/// order of nuclear species
+	/*! @brief order of nuclear species */
 	const std::vector<double> species_order = []() {
 		std::vector<double> species_order_(A.size());
 		std::iota(species_order_.begin(), species_order_.end(), 0);
@@ -73,13 +73,13 @@ namespace nnet::net14::constants {
 		return species_order_;
 	}();
 
-	/// nuclear species names
+	/*! @brief nuclear species names */
 	const std::vector<std::string> species_names = {
 		"4He", "12C", "16O", "20Ne", "24Mg", "28Si", "32S", "36Ar", "40Ca", "44Ti", "48Cr", "52Fe", "56Ni", "60Zn"
 	};
 
 
-	/// function for coulombian correction
+	// function for coulombian correction
 	template<typename Float>
 	HOST_DEVICE_FUN Float inline ggt1(const Float x) {
 		const Float a1 = -.898004;
@@ -90,7 +90,7 @@ namespace nnet::net14::constants {
 		const Float sqroot2x = std::sqrt(std::sqrt(x));
 		return a1*x + b1*sqroot2x + c1/sqroot2x + d1;
 	}
-	/// function for coulombian correction
+	// function for coulombian correction
 	template<typename Float>
 	HOST_DEVICE_FUN Float inline glt1(const Float x) {
 		const Float a1 = -.5*std::sqrt(3.);

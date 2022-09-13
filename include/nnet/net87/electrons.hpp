@@ -67,14 +67,14 @@
 
 namespace nnet::net87::electrons {
 	namespace constants {
-		// table size
+		/*! @brief table sizes */
 		static const int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
 
 		DEVICE_DEFINE(extern double, log_temp_ref[N_TEMP], ;)
         DEVICE_DEFINE(extern double, log_rho_ref[N_RHO], ;)
         DEVICE_DEFINE(extern double, electron_rate[N_TEMP][N_RHO][N_C], ;)
 
-		// read electron rate constants table
+		/*! @brief read electron rate constants table for net87 */
 		template<class AccType>
 		void read_table() {
 			// read table
@@ -108,9 +108,11 @@ namespace nnet::net87::electrons {
 	}
 
 
-	/// interpolate electron rate
-	/**
-	 * TODO
+	/*! @brief interpolate electronic parameters
+	 * 
+	 * @param temp     temperature
+	 * @param rhoElec  electron density
+	 * @param rate     electronic parameters to be populated
 	 */
 	template<typename Float>
 	HOST_DEVICE_FUN void inline interpolate(Float temp, Float rhoElec, std::array<Float, constants::nC> &rate) {

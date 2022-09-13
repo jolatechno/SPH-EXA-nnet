@@ -47,13 +47,13 @@
 namespace nnet::net87 {
 	namespace constants = nnet::net86::constants;
 
-	/// constant mass-excendent values
+	/*! @brief constant mass-excendent values */
 	DEVICE_DEFINE(inline static const std::array<double COMMA 87>, BE, = {
 		BE_NET86 COMMA
 		0.782*constants::Mev_to_erg
 	};)
 
-	/// constant list of ordered reaction
+	/*! @brief constant list of ordered reaction */
 	inline static const nnet::reaction_list reaction_list = []() {
 		nnet::reaction_list reactions = nnet::net86::reaction_list;
 
@@ -64,7 +64,7 @@ namespace nnet::net87 {
 		return reactions;
 	}();
 
-	/// compute a list of rates for net87
+	/*! @brief net87 functor */
 	class compute_reaction_rates_functor {
 	private:
 		nnet::net86::compute_reaction_rates_functor net86_compute_reaction_rates;
@@ -72,6 +72,16 @@ namespace nnet::net87 {
 	public:
 		compute_reaction_rates_functor() {}
 
+		/*! @brief compute net87 rates 
+		 * 
+		 * @param Y              molar fractions
+		 * @param T             temperature
+		 * @param rho           density
+		 * @param eos_struct    eos struct to populate
+		 * @param corrected_BE  will be populated by binding energies, corrected by coulombien terms
+		 * @param rates         will be populated with reaction rates
+		 * @param drates        will be populated with the temperature derivatives of reaction rates
+		 */
 		template<typename Float, class eos>
 		HOST_DEVICE_FUN void inline operator()(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!

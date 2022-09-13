@@ -133,24 +133,24 @@
 	506.460*constants::Mev_to_erg
 
 namespace nnet::net86 {
+	/*! @brief if true print debuging prints */
 	extern bool debug;
 
-
 #ifdef NET86_NO_COULOMBIAN_DEBUG
-	/// if true ignore coulombian corrections
+	/*! @brief if true ignore coulombian corrections */
 	const bool skip_coulombian_correction = true;
 #else
-	/// if true ignore coulombian corrections
+	/*! @briefif true ignore coulombian corrections */
 	const bool skip_coulombian_correction = false;
 #endif
 
-	/// constant mass-excendent values
+	/*! @brief constant mass-excendent values */
 	DEVICE_DEFINE(inline static const std::array<double COMMA 86>, BE, = {
 		BE_NET86
 	};)
 	
 
-	/// constant list of ordered reaction
+	/*! @brief constant list of ordered reaction */
 	inline static const nnet::reaction_list reaction_list = []() {
 		nnet::reaction_list reactions;
 
@@ -218,10 +218,20 @@ namespace nnet::net86 {
 
 
 
-	/// compute a list of rates for net86
+	/*! @brief net86 functor */
 	struct compute_reaction_rates_functor {
 		compute_reaction_rates_functor() {}
 		
+		/*! @brief compute net86 rates 
+		 * 
+		 * @param Y              molar fractions
+		 * @param T             temperature
+		 * @param rho           density
+		 * @param eos_struct    eos struct to populate
+		 * @param corrected_BE  will be populated by binding energies, corrected by coulombien terms
+		 * @param rates         will be populated with reaction rates
+		 * @param drates        will be populated with the temperature derivatives of reaction rates
+		 */
 		template<typename Float, class eos>
 		HOST_DEVICE_FUN void inline operator()(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {
 			/*********************************************/
