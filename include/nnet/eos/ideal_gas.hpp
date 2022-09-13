@@ -41,10 +41,9 @@ namespace nnet::eos {
 		const static double R  = 8.317e7;
 	}
 
-	/// helmholtz eos structure
-	/**
-	 * TODO
-	 */
+
+
+	/*! @brief Ideal gas EOS output struct */
 	template<typename Float>
 	struct ideal_gas_eos_output {
 		HOST_DEVICE_FUN ideal_gas_eos_output() {}
@@ -56,10 +55,9 @@ namespace nnet::eos {
 		Float dudYe = 0;
 	};
 
-	/// helmholtz eos functor
-	/**
-	*...TODO
-	 */
+
+
+	/*! @brief Ideal gas functor class */
 	class ideal_gas_functor {
 	private:
 		double mu;
@@ -70,6 +68,14 @@ namespace nnet::eos {
 		HOST_DEVICE_FUN  ideal_gas_functor() {}
 		HOST_DEVICE_FUN ~ideal_gas_functor() {}
 
+		/*! @brief Ideal gas EOS for nuclear networks.
+		 *
+		 * @param Y    molar proportions
+		 * @param T    temperature
+		 * @param rho  density
+		 *
+		 * Returns ideal gas EOS output struct.
+		 */
 		template<typename Float>
 		HOST_DEVICE_FUN ideal_gas_eos_output<Float> inline operator()(const Float *Y, const Float T, const Float rho) const {
 			ideal_gas_eos_output<Float> res;

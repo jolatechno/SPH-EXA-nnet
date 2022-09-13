@@ -41,7 +41,7 @@
 #include <cmath>
 #include <tuple>
 
-// base implementations
+
 namespace eigen {
 #if COMPILE_DEVICE
 	// forward declarations
@@ -53,7 +53,7 @@ namespace eigen {
 	}
 #endif
 
-	/// custom fixed-size matrix type
+	/*! @brief Custom fixed-size matrix type */
 	template<typename Type, int n, int m>
 	class fixed_size_matrix {
 	private:
@@ -96,7 +96,7 @@ namespace eigen {
 		}
 	};
 
-	/// custom fixed-size matrix type
+	/*! @brief Custom fixed-size matrix type */
 	template<typename Type, int n>
 	class fixed_size_array {
 	private:
@@ -131,12 +131,12 @@ namespace eigen {
 		}
 	};
 
-	/// vector type
+	/*! @brief Vector type */
 	template<typename Type>
 	using Vector = std::vector<Type>;
 
 
-	/// custom matrix type
+	/*! @brief Custom matrix type */
 	template<typename Type>
 	class Matrix {
 	private:
@@ -170,7 +170,14 @@ namespace eigen {
 	};
 
 
-	/// dot product function
+	/*! @brief Dot product function
+	 * 
+	 * @param X_begin  begin of the first buffer
+	 * @param X_end    end of the first buffer
+	 * @param Y_begin  begin of the second buffer
+	 * 
+	 * Returns the dot product of both buffer.
+	 */
 	template<class it1, class it2>
 	HOST_DEVICE_FUN double dot(it1 const X_begin, it1 const X_end, it2 const Y_begin) {
 		double res = 0;
@@ -183,7 +190,16 @@ namespace eigen {
 	}
 
 
-	/// custom analytical solver
+	/*! @brief Custom analytical solver using Gaussian elimination.
+	 * 
+	 * @param M        system matrix buffer
+	 * @param RHS      right hand side buffer
+	 * @param X        output result
+	 * @param n        system size
+	 * @param epsilon  small tolerence value such that any value x |x|<epsilon is considered equal to zero.
+	 * 
+	 * Returns the dot product of both buffer.
+	 */
 	template<typename Float>
 	HOST_DEVICE_FUN void solve(Float *M, Float *RHS, Float *X, const int n, Float epsilon=0) {
 		// reduce into upper triangular

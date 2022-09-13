@@ -39,6 +39,10 @@
 	#include <mpi.h>
 #endif
 
+/*! @brief manage CUDA error.
+ *
+ * @param code    CUDA error code.
+ */
 void inline gpuErrchk(cudaError_t code) {
 	if (code != cudaSuccess) {
 #ifdef CUDA_ERROR_FATAL
@@ -54,9 +58,10 @@ void inline gpuErrchk(cudaError_t code) {
 }
 
 namespace cuda_util {
-	/// function to move a buffer to the GPU
-	/**
-	 * TODO
+	/*! @brief Function to move buffer to device
+	 * 
+	 * @param ptr        buffer to copy
+	 * @param dimension  buffer size to copy
 	 */
 	template<class T>
 	T inline *move_to_gpu(const T* const ptr, int dimension) {
@@ -68,9 +73,10 @@ namespace cuda_util {
 		return dev_ptr;
 	}
 
-	/// function to free a from GPU
-	/**
-	 * TODO
+	
+	/*! @brief Function to free buffer from device
+	 * 
+	 * @param dev_ptr  device buffer to free
 	 */
 	template<class T>
 	void inline free_from_gpu(const T *dev_ptr) {
@@ -79,9 +85,9 @@ namespace cuda_util {
 
 
 #ifdef USE_MPI
-	/// function to set a single CUDA device per local MPI rank
-	/**
-	 * TODO
+	/*! @brief function to set a single CUDA device per local MPI rank
+	 * 
+	 * @param comm  MPI communicator to split into local ranks with a single different assigned GPU each.
 	 */
 	void inline initCudaMpi(MPI_Comm comm) {
 		MPI_Comm localComm;

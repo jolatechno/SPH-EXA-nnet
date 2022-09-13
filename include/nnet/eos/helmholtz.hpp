@@ -163,7 +163,7 @@ namespace nnet::eos {
         DEVICE_DEFINE(extern double, xfdt[IMAX][JMAX], ;)
 
 
-		// read helmholtz constants table
+		/*! @brief Read helmholtz constant table. */
 		template<class AccType>
 		void read_table() {
 			// read table
@@ -407,10 +407,7 @@ namespace nnet::eos {
 
 
 
-	/// helmholtz eos structure
-	/**
-	 * TODO
-	 */
+	/*! @brief Helmholtz EOS output struct. */
 	template<typename Float>
 	struct helm_eos_output {
 		HOST_DEVICE_FUN helm_eos_output() {}
@@ -427,9 +424,14 @@ namespace nnet::eos {
 
 
 
-	/// helmholtz eos
-	/**
-	*...TODO
+	/*! @brief Helmholtz EOS
+	 *
+	 * @param abar_ average A (number of mass)
+	 * @param zbar_ average Z (number of charge)
+	 * @param temp  temperature
+	 * @param rho   density
+	 *
+	 * Returns Helmholtz EOS output struct.
 	 */
 	template<typename Float>
 	HOST_DEVICE_FUN helm_eos_output<Float> inline helmholtz(double abar_, double zbar_, const Float temp, const Float rho) {
@@ -1145,10 +1147,7 @@ namespace nnet::eos {
 
 
 
-	/// helmholtz eos functor
-	/**
-	*...TODO
-	 */
+	/*! @brief Helmholtz functor class */
 	template<typename Float>
 	class helmholtz_functor {
 	private:
@@ -1187,6 +1186,14 @@ namespace nnet::eos {
 #endif
 		}
 
+		/*! @brief Ideal gas EOS for nuclear networks.
+		 *
+		 * @param Y    molar proportions
+		 * @param temp temperature
+		 * @param rho  density
+		 *
+		 * Returns Helmholtz EOS output struct.
+		 */
 		HOST_DEVICE_FUN eos_type inline operator()(const Float *Y, const Float temp, const Float rho) const {
 			// compute abar and zbar
 			double abar = algorithm::accumulate(Y, Y + dimension, (double)0.);

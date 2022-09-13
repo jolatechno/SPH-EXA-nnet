@@ -38,10 +38,7 @@
 #include "cuda-util.hpp"
 
 namespace nnet {
-	/// class for reactions on gpu
-	/**
-	 * TODO
-	 */
+	/*! @brief Class for reaction list on GPU. */
 	class gpu_reaction_list : public ptr_reaction_list {
 	private:
 		friend gpu_reaction_list move_to_gpu(const ptr_reaction_list &reactions);
@@ -53,9 +50,11 @@ namespace nnet {
 	};
 
 
-	/// function to move reactions to the GPU
-	/**
-	 * TODO
+	/*! @brief copy CPU reaction list to GPU.
+	 *
+	 * @param reactions CPU reaction list to copy to GPU.
+	 * 
+	 * Returns a GPU reaction list copied from CPU.
 	 */
 	gpu_reaction_list inline move_to_gpu(const ptr_reaction_list &reactions) {
 		gpu_reaction_list dev_reactions;
@@ -69,9 +68,9 @@ namespace nnet {
 	} 
 
 
-	/// function to free reactions
-	/**
-	 * TODO
+	/*! @brief free GPU reaction list from GPU memory.
+	 *
+	 * @param reactions GPU reaction lists
 	 */
 	void inline free(gpu_reaction_list &reactions) {
 		gpuErrchk(cudaFree((void*)reactions.reactant_product));
