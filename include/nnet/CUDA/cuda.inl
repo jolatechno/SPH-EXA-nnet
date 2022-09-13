@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief CUDA inline preprocessor definition (used to avoid code duplication).
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

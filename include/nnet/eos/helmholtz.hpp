@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief Helmholtz EOS definition.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

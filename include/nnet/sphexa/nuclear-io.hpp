@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief Utility function to interface nuclear networks with SPH-EXA IO module.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

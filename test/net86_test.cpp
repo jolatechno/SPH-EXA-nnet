@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief Simple single-particle test for net86.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 #include <iostream>

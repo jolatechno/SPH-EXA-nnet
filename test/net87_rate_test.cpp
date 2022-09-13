@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief Simply prints out rates for net86/87.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 #include <iostream>

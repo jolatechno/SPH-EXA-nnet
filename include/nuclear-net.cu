@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief Initialization of variables, and main nuclear-net cuda library file.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

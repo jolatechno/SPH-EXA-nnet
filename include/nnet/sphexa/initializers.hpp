@@ -26,6 +26,8 @@
 
 /*! @file
  * @brief Initializer functions for nuclear data.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

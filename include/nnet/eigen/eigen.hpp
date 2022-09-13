@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief "Eigen" (linear algebra) custom utility functions.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief net86 constants definition.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

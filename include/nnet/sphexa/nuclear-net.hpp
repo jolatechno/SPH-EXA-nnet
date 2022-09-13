@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief Observables for nuclear networks (mainly energy).
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

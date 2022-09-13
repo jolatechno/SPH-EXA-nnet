@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief net87 definitions.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief Main nuclear-net header, containing utility and integration functions.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

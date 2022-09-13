@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief Definition of the main data class for nuclear networks, similar to the particuleData class in SPH-EXA.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

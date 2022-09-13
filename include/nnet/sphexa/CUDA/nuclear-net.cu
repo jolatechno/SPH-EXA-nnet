@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief Definition of CUDA integration functions.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

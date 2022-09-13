@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief Mockup of full SPH-EXA + nuclear-nets multi-particle simulation (net14/86/87).
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

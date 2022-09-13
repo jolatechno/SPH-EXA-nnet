@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief Interface definition for CUDA integration functions.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

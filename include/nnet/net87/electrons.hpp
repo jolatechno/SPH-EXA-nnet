@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief electron data reading and functions for net87.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

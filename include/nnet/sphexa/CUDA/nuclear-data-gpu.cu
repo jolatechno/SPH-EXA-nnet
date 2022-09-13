@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief Definition of CUDA functions for CUDA GPU data.
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 

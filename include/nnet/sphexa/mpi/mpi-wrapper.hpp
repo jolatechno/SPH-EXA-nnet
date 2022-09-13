@@ -25,6 +25,8 @@
 
 /*! @file
  * @brief MPI utility functions, and wrapper for "distributed data".
+ *
+ * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
 
