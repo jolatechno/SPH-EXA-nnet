@@ -41,7 +41,7 @@ namespace sphnnet {
 
 	/*! @brief kernel that integrate nuclear reaction over a given timestep in parallel on device
 	 * 
-	 * called in cudaComputeNuclearReactions, should not be directly accessed by user.
+	 * called in cudaComputeNuclearReactions, should not be directly accessed by user
 	 */
 	template<class func_type, class func_eos, typename Float>
 	__global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, const int dimension,
@@ -175,7 +175,7 @@ namespace sphnnet {
 
 	/*! @brief function that integrate nuclear reaction over a given timestep in parallel on device
 	 * 
-	 * used in include/nnet/sphexa/nuclear-net.hpp, should not be directly accessed by user.
+	 * used in include/nnet/sphexa/nuclear-net.hpp, should not be directly accessed by user
 	 */
 	template<class func_type, class func_eos, typename Float>
 	void cudaComputeNuclearReactions(const size_t n_particles, const int dimension,
@@ -290,7 +290,7 @@ namespace sphnnet {
 
 	/*! @brief kernel that computes helmholtz EOS in parallel on device
 	 * 
-	 * called in cudaComputeHelmholtz, should not be directly accessed by user.
+	 * called in cudaComputeHelmholtz, should not be directly accessed by user
 	 */
 	template<typename Float /*, class func_eos*/>
 	__global__ void cudaKernelComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,
@@ -316,7 +316,7 @@ namespace sphnnet {
 
 	/*! @brief function that computes helmholtz EOS in parallel on device
 	 * 
-	 * used in include/nnet/sphexa/nuclear-net.hpp, should not be directly accessed by user.
+	 * used in include/nnet/sphexa/nuclear-net.hpp, should not be directly accessed by user
 	 */
 	template<typename Float>
 	void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,

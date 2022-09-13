@@ -49,58 +49,58 @@ namespace nnet {
 constants :
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 	namespace constants {
-		/// initial nuclear timestep
+		//! initial nuclear timestep
 		const double initial_dt = 1e-5;
 
-		/// theta for the implicit method
+		//! theta for the implicit method
 		const double theta = 0.8;
 
-		/// minimum temperature at which we compute the nuclear network
+		//! minimum temperature at which we compute the nuclear network
 		const double min_temp = 1e8;
-		/// minimum density at which we compute the nuclear network
+		//! minimum density at which we compute the nuclear network
 		const double min_rho = 1e5;
 
-		/// maximum timestep
+		//! maximum timestep
 		const double max_dt = 1e-2;
-		/// maximum timestep evolution
+		//! maximum timestep evolution
 		const double max_dt_step = 2;
-		/// maximum negative timestep evolution
+		//! maximum negative timestep evolution
 		const double min_dt_step = 1e-2;
-		/// timestep jump when a nan is in the solution
+		//! timestep jump when a nan is in the solution
 		const double nan_dt_step = 2e-1;
 
-		/// relative temperature variation target of the implicit solver
+		//! relative temperature variation target of the implicit solver
 		const double dT_T_target = 4e-3;
-		/// relative temperature variation tolerance of the implicit solver
+		//! relative temperature variation tolerance of the implicit solver
 		const double dT_T_tol = 4;
 
-		/// the value that is considered null inside a system
+		//! the value that is considered null inside a system
 		const double epsilon_system = 1e-40;
-		/// the value that is considered null inside a state
+		//! the value that is considered null inside a state
 		const double epsilon_vector = 1e-16;
 
 		namespace NR {
-			/// maximum timestep
+			//! maximum timestep
 			const double max_dt = 1e-2;
 
-			/// relative temperature variation target of the implicit solver
+			//! relative temperature variation target of the implicit solver
 			const double dT_T_target = 1e-2;
-			/// relative temperature variation tolerance of the implicit solver
+			//! relative temperature variation tolerance of the implicit solver
 			const double dT_T_tol = 4;
 
-			/// minimum number of newton raphson iterations
+			//! minimum number of newton raphson iterations
 			const int min_it = 1;
-			/// maximum number of newton raphson iterations
+			//! maximum number of newton raphson iterations
 			const int max_it = 11;
-			/// tolerance for the correction to break out of the newton raphson loop
+			//! tolerance for the correction to break out of the newton raphson loop
 			const double it_tol = 1e-7;
 		}
 
 		namespace substep {
-			/// timestep tolerance for substepping
+			//! timestep tolerance for substepping
 			const double dt_tol = 1e-6;
 
-			/// ratio of the nuclear timestep and "super timestep" to jump to NSE
+			//! ratio of the nuclear timestep and "super timestep" to jump to NSE
 			const double dt_nse_tol = 0; //1e-8; // !!!! useless for now
 		}
 	}
@@ -113,19 +113,16 @@ constants :
 	
 
 
-	/// reaction class
-	/**
-	 * ...TODO
-	 */
+	/*! @brief reaction class */
 	struct reaction {
-		/// class representing a product or reactant
+		/*! @brief class representing a product or reactant */
 		struct reactant_product {
 			int species_id, n_consumed = 1;
 		};
 
 		std::vector<reactant_product> reactants, products;
 
-		/// reaction class print operator
+		// reaction class print operator
 		friend std::ostream& operator<<(std::ostream& os, const reaction& r);
 	};
 
@@ -140,11 +137,11 @@ constants :
 
 
 
-	/// class referencing a reaction
+	/*! @brief class referencing a reaction */
 	struct reaction_reference {
 		HOST_DEVICE_FUN reaction_reference() {}
 
-		/// class simulating a vector from a pointer
+		/*! @brief class simulating a vector from a pointer */
 		template<class T>
 		class vector_reference {
 		private:
@@ -169,7 +166,7 @@ constants :
 
 		vector_reference<reaction::reactant_product> reactants, products;
 
-		/// reaction class print operator
+		// reaction class print operator
 		friend std::ostream& operator<<(std::ostream& os, const reaction_reference& r);
 	};
 
@@ -183,10 +180,7 @@ constants :
 
 
 
-	/// reaction pointer class (pointer to contigous buffers rather then a vector of reaction)
-	/**
-	 * ...TODO
-	 */
+	/*! @brief reaction pointer class (pointer to contigous buffers rather then a vector of reaction) */
 	class reaction_list {
 	private:
 		// pointer to each reaction
@@ -206,6 +200,7 @@ constants :
 				push_back(Reaction);
 		}
 
+		/*! @brief push back reaction to list */
 		void inline push_back(reaction const &Reaction) {
 			reactant_product.insert(reactant_product.end(), Reaction.reactants.begin(), Reaction.reactants.end());
 			reactant_product.insert(reactant_product.end(), Reaction.products.begin(),  Reaction.products.end());
@@ -214,6 +209,7 @@ constants :
 			reactant_begin.push_back(product_begin.back()  + Reaction.products.size());
 		}
 
+		/*! @brief access reaction from reacton list */
 		reaction_reference inline operator[](int i) const {
 			reaction_reference Reaction;
 
@@ -223,6 +219,7 @@ constants :
 			return Reaction;
 		}
 
+		/*! @brief access reaction list size */
 		size_t inline size() const {
 			return product_begin.size();
 		}
@@ -236,13 +233,10 @@ constants :
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 
-
+	// forward declaration
 	class gpu_reaction_list;
 
-	/// reaction pointer class (pointer to contigous buffers rather then a vector of reaction)
-	/**
-	 * ...TODO
-	 */
+	/*! @brief reaction pointer class (pointer to contigous buffers rather then a vector of reaction) */
 	class ptr_reaction_list {
 	protected:
 		// pointer to each reaction
@@ -265,6 +259,7 @@ constants :
 			reactant_product = other.reactant_product.data();
 		}
 
+		/*! @brief access reaction from reacton list */
 		HOST_DEVICE_FUN reaction_reference inline operator[](int i) const {
 			reaction_reference Reaction;
 
@@ -274,6 +269,7 @@ constants :
 			return Reaction;
 		}
 
+		/*! @brief access reaction list size */
 		HOST_DEVICE_FUN size_t inline size() const {
 			return num_reactions;
 		}
@@ -287,7 +283,7 @@ print functions:
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 
-
+	// print reaction reference
 	std::ostream inline &operator<<(std::ostream& os, const reaction_reference& r) {
 		// print reactant
 		for (auto [reactant_id, n_reactant_consumed] : r.reactants)
@@ -301,7 +297,7 @@ print functions:
 	    return os;
 	}
 
-
+	// print reaction
 	std::ostream inline &operator<<(std::ostream& os, const reaction& r) {
 		// print reactant
 		for (auto [reactant_id, n_reactant_consumed] : r.reactants)
@@ -323,10 +319,11 @@ utils functions:
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 	namespace util {
-		/// clip the values in a Vector
-		/**
-		 * clip the values in a Vector, to make 0 any negative value, or values smaller than a tolerance epsilon
-		 * ...TODO
+		/*! @brief clip the values in a Vector
+		 * 
+		 * @param X          buffer to be cliped
+		 * @param dimension  size of buffer to be cliped
+		 * @param epsilon    small tolerence value such that any value x |x|<epsilon is considered equal to zero
 		 */
 		template<typename Float>
 		HOST_DEVICE_FUN void inline clip(Float *X, const int dimension, const Float epsilon) {
@@ -338,9 +335,11 @@ utils functions:
 
 
 
-		/// function to check if there is a nan in both temperature and abundances
-		/**
-		 * ...TODO
+		/*! @brief function to check if there is a nan in both temperature and abundances
+		 * 
+		 * @param T          temperature to be checked for nan
+		 * @param Y          buffer to be checked for nan
+		 * @param dimension  size of buffer to be checked for nan
 		 */
 		template<typename Float>
 		HOST_DEVICE_FUN bool inline contain_nan(const Float T, const Float *Y, const int dimension) {
@@ -357,10 +356,16 @@ utils functions:
 
 
 
-		/// create a first order system from a list of reaction.
-		/**
-		 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y.
-		 * ...TODO
+		/*! @brief create a first order system from a list of reaction
+		 * 
+		 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y
+		 * 
+		 * @param reactions  reaction list
+		 * @param rates      reaction rates
+		 * @param rho        density
+		 * @param Y          abundances
+		 * @param dY         temporal derivative of abundances to be populated
+		 * @param dimension  number of nuclear species
 		 */
 		template<typename Float>
 		HOST_DEVICE_FUN void inline derivatives_from_reactions(const ptr_reaction_list &reactions, const Float *rates, const Float rho, const Float *Y, Float *dY, const int dimension) {
@@ -399,10 +404,16 @@ utils functions:
 
 
 
-		/// create a first order system from a list of reaction.
-		/**
-		 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y.
-		 * ...TODO
+		/*! @brief create a first order system from a list of reaction
+		 * 
+		 * creates a first order system from a list of reactions represented by a matrix M such that dY/dt = M*Y
+		 * 
+		 * @param reactions  reaction list
+		 * @param rates      reaction rates
+		 * @param rho        density
+		 * @param Y          abundances
+		 * @param M          matrix to be populated
+		 * @param dimension  number of nuclear species
 		 */
 		template<typename Float>
 		HOST_DEVICE_FUN void inline order_1_dY_from_reactions(const ptr_reaction_list &reactions, const Float *rates, const Float rho,
@@ -458,9 +469,9 @@ First simple direct solver:
 
 
 
-	/// generate the system to be solve (with rates computed at a specific "guess") 
-	/**
-	 * TODO
+	/*! @brief generate the system to be solve (with rates computed at a specific "guess") 
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 */
 	template<class eos_type, class func_type, typename Float>
 	HOST_DEVICE_FUN void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS, Float *rates,
@@ -554,10 +565,9 @@ First simple direct solver:
 
 
 
-
-	/// second part after solving the system (generated in "prepare_system_from_guess")
-	/**
-	 * TODO
+	/*! @brief second part after solving the system (generated in "prepare_system_from_guess")
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 */
 	template<typename Float>
 	HOST_DEVICE_FUN void inline finalize_system(const int dimension, const Float *Y, const Float T, Float *next_Y, Float &next_T, const Float *DY_T) {
@@ -571,11 +581,11 @@ First simple direct solver:
 
 
 
-	/* actual solver: */
-	/// solves a system non-iteratively (with rates computed at a specific "guess").
-	/**
-	 *  solves non-iteratively and partialy implicitly the system represented by M (computed at a specific "guess").
-	 * ...TODO
+	// actual solver:
+	/*! @brief solves a system non-iteratively (with rates computed at a specific "guess")
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
+	 * solves non-iteratively and partialy implicitly the system represented by M (computed at a specific "guess")
 	 */
 	template<class func_type, class eos_type, typename Float>
 	void inline solve_system_from_guess(const int dimension,
@@ -608,11 +618,11 @@ First simple direct solver:
 
 
 
-	/* actual solver: */
-	/// solves a system non-iteratively.
-	/**
-	 *  solves non-iteratively and partialy implicitly the system represented by M.
-	 * ...TODO
+	// actual solver:
+	/*! @brief solves a system non-iteratively.
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
+	 * solves non-iteratively and partialy implicitly the system represented by M
 	 */
 	template<class func_type, typename Float>
 	void inline solve_system(
@@ -643,9 +653,9 @@ Iterative solver:
 
 
 
-	/// generate the system to be solve for the iterative solver
-	/**
-	 * TODO
+	/*! @brief generate the system to be solve for the iterative solver
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 */
 	template<class func_type, class func_eos, typename Float>
 	HOST_DEVICE_FUN void inline prepare_system_NR(const int dimension, 
@@ -681,9 +691,9 @@ Iterative solver:
 
 
 
-	/// second part after solving the system (generated in "prepare_system_NR")
-	/**
-	 * TODO
+	/*! @brief second part after solving the system (generated in "prepare_system_NR")
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 */
 	template<typename Float>
 	HOST_DEVICE_FUN bool inline finalize_system_NR(const int dimension,
@@ -751,11 +761,11 @@ Iterative solver:
 
 
 
-	/* actual solver: */
-	/// solve with  newton raphson
-	/**
-	 * iterative solver.
-	 * ...TODO
+	// actual solver:
+	/*! @brief solve with newton raphson
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
+	 * iterative solver
 	 */
 	template<class func_type, class func_eos, typename Float>
 	Float inline solve_system_NR(const int dimension,
@@ -797,11 +807,11 @@ Iterative solver:
 
 
 
-	/* actual solver: */
-	/// solve with  newton raphson
-	/**
-	 * iterative solver.
-	 * ...TODO
+	// actual solver:
+	/*! @brief solve with newton raphson
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
+	 * iterative solver
 	 */
 	template<class func_type, class func_eos, typename Float>
 	Float inline solve_system_NR(const int dimension,
@@ -830,9 +840,9 @@ Substeping solver
 
 
 
-	/// generate the system to be solve for the substepping solver
-	/**
-	 * TODO
+	/*! @brief generate the system to be solve for the substepping solver
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 */
 	template<class func_type, class func_eos, typename Float, class nseFunction=void*>
 	HOST_DEVICE_FUN void inline prepare_system_substep(const int dimension,
@@ -874,9 +884,9 @@ Substeping solver
 
 
 
-	/// second part after solving the system (generated in "prepare_system_from_guess")
-	/**
-	 * TODO
+	/*! @brief second part after solving the system (generated in "prepare_system_from_guess")
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 */
 	template<typename Float>
 	HOST_DEVICE_FUN bool inline finalize_system_substep(const int dimension,
@@ -923,11 +933,11 @@ Substeping solver
 
 
 
-	/* actual substepping solver: */
-	/// function to supperstep (can include jumping to NSE)
-	/**
-	 * Superstepping using solve_system_NR, might move it to SPH-EXA
-	 * ...TODO
+	// actual substepping solver:
+	/*! @brief function to supperstep (can include jumping to NSE)
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
+	 * Superstepping using solve_system_NR
 	 */
 	template<class func_type, class func_eos, typename Float, class nseFunction=void*>
 	HOST_DEVICE_FUN void inline solve_system_substep(const int dimension,
@@ -972,11 +982,11 @@ Substeping solver
 
 
 
-	/* actual substepping solver: */
-	/// function to supperstep (can include jumping to NSE)
-	/**
-	 * Superstepping using solve_system_NR, might move it to SPH-EXA
-	 * ...TODO
+	// actual substepping solver:
+	/*! @brief function to supperstep (can include jumping to NSE)
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp, should not be directly accessed by user
+	 * Superstepping using solve_system_NR
 	 */
 	template<class func_type, class func_eos, typename Float, class nseFunction=void*>
 	void inline solve_system_substep(const int dimension,

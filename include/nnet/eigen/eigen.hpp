@@ -196,7 +196,7 @@ namespace eigen {
 	 * @param RHS      right hand side buffer
 	 * @param X        output result
 	 * @param n        system size
-	 * @param epsilon  small tolerence value such that any value x |x|<epsilon is considered equal to zero.
+	 * @param epsilon  small tolerence value such that any value x |x|<epsilon is considered equal to zero
 	 * 
 	 * Returns the dot product of both buffer.
 	 */
