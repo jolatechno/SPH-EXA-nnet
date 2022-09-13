@@ -43,10 +43,7 @@
 #include <algorithm>
 
 namespace sphexa::mpi {
-	/// class correlating particles to detached data
-	/**
-	 * TODO
-	 */
+	/*! @brief class correlating particles to detached data */
 	struct mpi_partition {
 		// references to pointers
 		const std::vector<int>             *node_id;
@@ -84,9 +81,15 @@ namespace sphexa::mpi {
 	};
 
 
-	/// function that create a mpi partition from particle detached data pointer
-	/**
-	 * TODO
+	/*! @brief function that create a mpi partition from particle detached data pointer
+	 * 
+	 * @param firstIndex   index of the first considered particle (included) in the node_id and particle_id vectors
+	 * @param lastIndex    index of the last considered particle (excluded) in the node_id and particle_id vectors
+	 * @param node_id      id of the node owning the corresponding detached data
+	 * @param particle_id  id of the local "detached particle" owned by the corresponding "node_id"
+	 * @param comm         MPI communicator
+	 * 
+	 * Returns mpi_partition correlating the detached data and attached data
 	 */
 	mpi_partition partitionFromPointers(size_t firstIndex, size_t lastIndex, const std::vector<int> &node_id, const std::vector<std::size_t> &particle_id, MPI_Comm comm)
 	{
@@ -138,9 +141,13 @@ namespace sphexa::mpi {
 
 
 #ifdef USE_MPI
-	/// initialize pointers:
-	/**
-	 * TODO
+	/*! @brief function that initialize node_id and particle_id for "maximal mixing".
+	 * 
+	 * @param firstIndex   index of the first particle to be considered (included) when populating the node_id and particle_id vectors
+	 * @param lastIndex    index of the last particle to be considered (excluded)  when populating the node_id and particle_id vectors
+	 * @param node_id      node id vector to be populated
+	 * @param particle_id  particle id vector to be populated
+	 * @param comm         MPI communicator
 	 */
 	void initializePointers(size_t firstIndex, size_t lastIndex, std::vector<int> &node_id, std::vector<std::size_t> &particle_id, MPI_Comm comm) {
 		int rank, size;
@@ -167,9 +174,13 @@ namespace sphexa::mpi {
 
 
 #ifdef USE_MPI
-	/// function that sync data to detached data
-	/**
-	 * TODO
+	/*! @brief function that sync attached to detached data
+	 * 
+	 * @param partition    MPI partition
+	 * @param send_vector  buffer to be sent (from attached to detached data)
+	 * @param recv_vector  receive buffer
+	 * @param datatype     MPI datatype of data to be sent/received
+	 * @param comm         MPI communicator
 	 */
 	template<typename T>
 	void syncDataToStaticPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
@@ -219,9 +230,13 @@ namespace sphexa::mpi {
 		throw std::runtime_error("Type mismatch in syncDataToStaticPartition\n");
 	}
 
-	/// function that sync data from detached data
-	/**
-	 * TODO
+	/*! @brief function that sync detached data to attached data
+	 * 
+	 * @param partition    MPI partition
+	 * @param send_vector  buffer to be sent (from detached data to attached data)
+	 * @param recv_vector  receive buffer
+	 * @param datatype     MPI datatype of data to be sent/received
+	 * @param comm         MPI communicator
 	 */
 	template<typename T>
 	void syncDataFromStaticPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
@@ -276,9 +291,11 @@ namespace sphexa::mpi {
 
 
 
-	/// function sending requiered hydro data from ParticlesDataType to NuclearDataType
-	/**
-	 * TODO
+	/*! @brief function sending requiered hydro data from ParticlesDataType (attached data) to NuclearDataType (detached data)
+	 * 
+	 * @param d            ParticlesDataType (attached data)
+	 * @param n            NuclearDataType (detached data)
+	 * @param sync_fields  names of field to be synced
 	 */
 	template<class ParticlesDataType, class nuclearDataType>
 	void syncDataToStaticPartition(ParticlesDataType &d, nuclearDataType &n, const std::vector<std::string> &sync_fields) {
@@ -309,9 +326,11 @@ namespace sphexa::mpi {
 
 
 
-	/// sending back hydro data from NuclearDataType to ParticlesDataType
-	/**
-	 * TODO
+	/*! @brief function sending requiered hydro data from NuclearDataType (detached data) to ParticlesDataType (attached data)
+	 * 
+	 * @param d            ParticlesDataType (attached data)
+	 * @param n            NuclearDataType (detached data)
+	 * @param sync_fields  names of field to be synced
 	 */
 	template<class ParticlesDataType, class nuclearDataType>
 	void syncDataFromStaticPartition(ParticlesDataType &d, nuclearDataType &n, const std::vector<std::string> &sync_fields) {

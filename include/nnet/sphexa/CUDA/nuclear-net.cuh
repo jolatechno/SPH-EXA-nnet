@@ -69,11 +69,11 @@
 
 namespace sphexa::sphnnet {
 	namespace constants {
-		/// number of consecutive iteration per cuda thread
+		//! number of consecutive iteration per cuda thread
 		const int cuda_num_iteration_per_thread = CUDA_NUM_ITERATION_PER_THREAD;
-		/// number of thread per cuda thread block for nuclear network
+		//! number of thread per cuda thread block for nuclear network
 		const int cuda_num_thread_per_block_nnet = CUDA_NUM_THREAD_PER_BLOCK_NNET;
-		/// number of thread per cuda thread block
+		//! number of thread per cuda thread block
 		const int cuda_num_thread_per_block = CUDA_NUM_THREAD_PER_BLOCK;
 	}
 

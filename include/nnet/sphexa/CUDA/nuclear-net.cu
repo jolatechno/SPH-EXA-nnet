@@ -39,7 +39,10 @@ namespace sphnnet {
 	/***********************************************/
 
 
-
+	/*! @brief kernel that integrate nuclear reaction over a given timestep in parallel on device
+	 * 
+	 * called in cudaComputeNuclearReactions, should not be directly accessed by user.
+	 */
 	template<class func_type, class func_eos, typename Float>
 	__global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, const int dimension,
 		Float *global_buffer,
@@ -169,6 +172,11 @@ namespace sphnnet {
 		}
 	}
 
+
+	/*! @brief function that integrate nuclear reaction over a given timestep in parallel on device
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp, should not be directly accessed by user.
+	 */
 	template<class func_type, class func_eos, typename Float>
 	void cudaComputeNuclearReactions(const size_t n_particles, const int dimension,
 		thrust::device_vector<Float> &buffer,
@@ -220,7 +228,7 @@ namespace sphnnet {
 	}
 
 
-
+	// used templates:
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
 		thrust::device_vector<double>&, double*, double*, double*, double*, double*, const double, const double,
 		nnet::gpu_reaction_list const&, nnet::net87::compute_reaction_rates_functor const&, nnet::eos::ideal_gas_functor const&,
@@ -280,7 +288,10 @@ namespace sphnnet {
 	/************************************************************/
 
 
-
+	/*! @brief kernel that computes helmholtz EOS in parallel on device
+	 * 
+	 * called in cudaComputeHelmholtz, should not be directly accessed by user.
+	 */
 	template<typename Float /*, class func_eos*/>
 	__global__ void cudaKernelComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,
 		const Float *temp_, const Float *rho_, const Float *Y_, 
@@ -303,6 +314,10 @@ namespace sphnnet {
 	}
 
 
+	/*! @brief function that computes helmholtz EOS in parallel on device
+	 * 
+	 * used in include/nnet/sphexa/nuclear-net.hpp, should not be directly accessed by user.
+	 */
 	template<typename Float>
 	void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,
 		const Float *temp_, const Float *rho_, const Float *Y_,
@@ -318,7 +333,7 @@ namespace sphnnet {
 	}
 
 
-
+	// used templates:
 	template void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const double *Z,
 		const double *temp_, const double *rho_, const double *Y_,
 		double *u, double *cv, double *p, double *c, double *dpdT);

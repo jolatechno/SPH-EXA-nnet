@@ -50,6 +50,7 @@ namespace sphexa {
 	        }
 		}
 
+		// used templates:
 	    template class DeviceNuclearDataType<14, double, size_t>;
 	    template class DeviceNuclearDataType<86, double, size_t>;
 	    template class DeviceNuclearDataType<87, double, size_t>;

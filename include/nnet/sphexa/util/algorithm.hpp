@@ -25,6 +25,7 @@
 
 /*! @file
  * @brief Utility functions.
+ * Mostly stolen from jolatechno/QuIDS (https://github.com/jolatechno/QuIDS).
  *
  * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
@@ -45,13 +46,9 @@
 #endif
 #include "../../CUDA/cuda.inl"
 
-/*
-Simple utilities
-stolen from QuIDS (https://github.com/jolatechno/QuIDS)
-*/
 
 namespace algorithm {
-	/// equivalent to std::accumulate
+	/*! @brief equivalent to std::accumulate but from scratch for potential device use */
 	template<typename Float, class it>
 	HOST_DEVICE_FUN Float inline accumulate(const it begin, const it end, Float x) {
 		for (it i = begin; i != end; ++i)
@@ -60,7 +57,7 @@ namespace algorithm {
 		return x;
 	}
 
-	/// equivalent to std::swap
+	/*! @brief equivalent to std::swap but from scratch for potential device use */
 	template<typename Float>
 	HOST_DEVICE_FUN void inline swap(Float &x, Float &y) {
 		Float buffer = x;
@@ -68,7 +65,7 @@ namespace algorithm {
 		y = buffer;
 	}
 
-	/// equivalent to std::fill
+	/*! @brief equivalent to std::fill but from scratch for potential device use */
 	template<typename Float, class it>
 	HOST_DEVICE_FUN void inline fill(it begin, it end, Float x) {
 		for (it i = begin; i != end; ++i)
@@ -78,7 +75,7 @@ namespace algorithm {
 
 
 namespace util {
-	/// scheduling batch size
+	/*! @brief scheduling batch size according to an empirical rule */
 	int inline dynamic_batch_size(size_t N, int P) {
 		static const float phi = 1.61803398875; // golden ratio
 
@@ -92,7 +89,7 @@ namespace util {
 
 
 
-	/// parallel iota
+	/*! @brief parallel iota */
 	template <class iteratorType, class valueType>
 	void parallel_iota(iteratorType begin, iteratorType end, const valueType value_begin) {
 		size_t distance = std::distance(begin, end);
@@ -107,7 +104,7 @@ namespace util {
 				begin[i] = value_begin + i;
 	}
 
-	/// linear partitioning algorithm into n partitions without an initialized index list in parallel
+	/*! @brief linear partitioning algorithm into n partitions without an initialized index list in parallel */
 	template <class idIteratorType, class countIteratorType, class functionType>
 	void parallel_generalized_partition_from_iota(idIteratorType idx_in, idIteratorType idx_in_end, long long int const iotaOffset,
 		countIteratorType offset, countIteratorType offset_end,
