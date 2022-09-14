@@ -56,9 +56,12 @@
 #include "sph/data_util.hpp"
 
 namespace sphexa::sphnnet {
-	/// function to compute the total nuclear energy
-	/**
-	 * TODO
+	/*! @brief function to compute the total nuclear energy
+	 * 
+	 * @param n   nuclearDataType containing a list of magnitude (named Y, being a vector of array)
+	 * @param BE  binding energy vector used to compute nuclear energy
+	 * 
+	 * Returns the total nuclear binding energy (negative).
 	 */
 	template<class Data, typename Float>
 	Float totalNuclearEnergy(Data const &n, const Float *BE) {

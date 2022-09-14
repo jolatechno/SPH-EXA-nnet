@@ -39,9 +39,13 @@
 #include "mpi/mpi-wrapper.hpp"
 
 namespace sphexa::sphnnet {
-	/// intialize nuclear data, from a function of positions:
-	/**
-	 * TODO
+	/*! @brief intialize nuclear data, from a function of positions. Also initializes the partition correleating attached and detached data.
+	 * 
+	 * @param firstIndex   first (included) particle considered in d
+	 * @param lastIndex    last (excluded) particle considered in d
+	 * @param d            ParticlesDataType (contains positions) 
+	 * @param n            nuclearDataType (to be populated)
+	 * @param initializer  function initializing nuclear abundances from position
 	 */
 	template<size_t n_species, typename Float, typename KeyType, class AccType, class initFunc, class ParticlesDataType>
 	void initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, KeyType, AccType> &n, const initFunc initializer) {
@@ -76,9 +80,14 @@ namespace sphexa::sphnnet {
 			n.Y[i] = initializer(x[i], y[i], z[i]);
 	}
 
-	/// intialize nuclear data, from a function of radius:
-	/**
-	 * TODO
+
+	/*! @brief intialize nuclear data, from a function of radius. Also initializes the partition correleating attached and detached data.
+	 * 
+	 * @param firstIndex   first (included) particle considered in d
+	 * @param lastIndex    last (excluded) particle considered in d
+	 * @param d            ParticlesDataType (contains positions) 
+	 * @param n            nuclearDataType (to be populated)
+	 * @param initializer  function initializing nuclear abundances from radius
 	 */
 	template<size_t n_species, typename Float, typename KeyType, class AccType, class initFunc, class ParticlesDataType>
 	void initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, KeyType, AccType> &n, const initFunc initializer) {
@@ -116,9 +125,14 @@ namespace sphexa::sphnnet {
 			n.Y[i] = initializer(r[i]);
 	}
 
-	/// intialize nuclear data, from a function of density:
-	/**
-	 * TODO
+
+	/*! @brief intialize nuclear data, from a function of density. Also initializes the partition correleating attached and detached data.
+	 * 
+	 * @param firstIndex   first (included) particle considered in d
+	 * @param lastIndex    last (excluded) particle considered in d
+	 * @param d            ParticlesDataType (contains density) 
+	 * @param n            nuclearDataType (to be populated)
+	 * @param initializer  function initializing nuclear abundances from radius
 	 */
 	template<size_t n_species, typename Float, typename KeyType, class AccType, class initFunc, class ParticlesDataType>
 	void initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, KeyType, AccType> &n, const initFunc initializer) {
@@ -148,9 +162,13 @@ namespace sphexa::sphnnet {
 	}
 
 
-		/// intialize nuclear data as a constant:
-	/**
-	 * TODO
+	/*! @brief intialize nuclear data, from a function of density. Also initializes the partition correleating attached and detached data.
+	 * 
+	 * @param firstIndex  first (included) particle considered in d
+	 * @param lastIndex   last (excluded) particle considered in d
+	 * @param d           ParticlesDataType (not used) 
+	 * @param n           nuclearDataType (to be populated)
+	 * @param Y0          constant abundances vector to be copied
 	 */
 	template<size_t n_species, typename Float, typename KeyType, class AccType, class Vector, class ParticlesDataType>
 	void initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, KeyType, AccType> &n, const Vector &Y0) {

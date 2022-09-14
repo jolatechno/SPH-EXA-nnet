@@ -42,12 +42,24 @@ namespace sphexa::sphnnet::io {
 	std::vector<int>         outputFieldIndices;
 	std::vector<std::string> outputFieldNames;
 
+	/*! @brief function used to set the outputnames of nuclear data
+	 * 
+	 * Simply names the ith species "i" and its abundance "Y(i)"
+	 * 
+	 * @param num_species  number of nuclear species
+	 */
 	void setOutputFieldsNames(const int num_species) {
 		outputFieldNames.resize(num_species);
 		for (int i = 0; i < num_species; ++i) 
 			outputFieldNames[i] = "Y(" + std::to_string(i) + ")";
 	}
 
+	/*! @brief function used to set the outputnames of nuclear data
+	 * 
+	 * Simply names the abundance of a species named "X" "Y(X)"
+	 * 
+	 * @param species_names  vector of species name
+	 */
 	void setOutputFieldsNames(const std::vector<std::string> &species_names) {
     	const int num_species = species_names.size();
 		outputFieldNames.resize(num_species);
@@ -55,6 +67,10 @@ namespace sphexa::sphnnet::io {
 			outputFieldNames[i] = "Y(" + species_names[i] + ")";
 	}
 
+	/*! @brief function used to set the nuclear data to be outputed. Note that this list of species is global.
+	 * 
+	 * @param outFields  vector of species name to be outputed
+	 */
 	std::vector<std::string> setOutputFields(const std::vector<std::string>& outFields) {
 		std::vector<std::string> nuclearOutFields, hydroOutFields = outFields;
 
@@ -69,10 +85,16 @@ namespace sphexa::sphnnet::io {
 		return hydroOutFields;
     }
 
-    /// allow writing lines of float for HDF5 part
-	/**
-	 * TODO
-	 */
+    /*! @brief function used to right abundances as lines
+     * 
+     * Used un HDF5 part in SPH-EXA
+     * 
+     * @param Y            vector of array represneting abundances of particles
+     * @param n_particles  number of particles for which the abundances should be righten
+     * @param write_func   function used to right a line (taking a pointer to the floating point data, and a fieldname)
+     * 
+     * Returns the last output of write_func.
+     */
 	template<typename T, size_t n, class writter_function>
 	auto write_lines(const util::array<T, n> *Y, size_t n_particles, const writter_function &write_func) {
 		std::vector<T> buffer(n_particles);
@@ -93,10 +115,7 @@ namespace sphexa::sphnnet::io {
 	}
 }
 
-/// overwritten output operator for nuclear array
-/**
- * TODO
- */
+// overwritten print operator for nuclear abundances array
 template<typename T, size_t n>
 std::ofstream& operator<<(std::ofstream& os, const util::array<T, n>& Y) {
 	for (int idx : sphexa::sphnnet::io::outputFieldIndices)
