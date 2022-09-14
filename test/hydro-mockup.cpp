@@ -400,7 +400,7 @@ int main(int argc, char* argv[]) {
 
 
 	std::vector<std::string> hydroOutFields   = {"nid", "pid", "temp", "rho"};
-	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y(4He)", "Y(12C)", "Y(16O)"};
+	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y(4He)", "Y(16O)", "Y(12C)"};
 	particle_data.setOutputFields(hydroOutFields);
 	if (use_net87) {
 		nuclear_data_87.setOutputFields(nuclearOutFields, nnet::net87::constants::species_names);

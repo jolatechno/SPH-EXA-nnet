@@ -62,10 +62,19 @@
 #include "../nuclear-net.hpp"
 
 namespace sphexa::sphnnet {
-	/// function to compute nuclear reaction, either from NuclearData or ParticuleData if it includes Y.
-	/**
-	 * TODO
-	 */
+	/*! @brief function to compute nuclear reaction, either from NuclearData or ParticuleData if it includes Y
+	 * 
+	 * @param n                   nuclearDataType including a field of nuclear abundances "Y"
+     * @param firstIndex          first (included) particle considered in n
+	 * @param lastIndex           last (excluded) particle considered in n
+     * @param hydro_dt            integration timestep
+     * @param previous_dt         previous integration timestep
+     * @param reactions           reaction list
+     * @param construct_rates_BE  function constructing rates, rate derivatives and binding energies
+     * @param eos                 equation of state
+     * @param use_drhodt          if true considers drho/dt in eos
+     * @param jumpToNse           function to jump to nuclear statistical equilibrium
+     */
 	template<class Data, class func_type, class func_eos, typename Float, class nseFunction=void*>
 	void computeNuclearReactions(Data &n, size_t firstIndex, size_t lastIndex, const Float hydro_dt, const Float previous_dt,
 		const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
@@ -166,9 +175,13 @@ namespace sphexa::sphnnet {
 		}
 	}
 
-	/// function to copute the helmholtz eos
-	/**
-	 * TODO
+
+	/*! @brief function to copute the helmholtz eos
+	 * 
+	 * @param n           nuclearDataType including a field of nuclear abundances "Y"
+     * @param firstIndex  first (included) particle considered in n
+	 * @param lastIndex   last (excluded) particle considered in n
+	 * @param Z           vector of number of charge (used in eos)
 	 */
 	template<class Data, class Vector>
 	void computeHelmEOS(Data &n, size_t firstIndex, size_t lastIndex, const Vector &Z) {
@@ -227,9 +240,13 @@ namespace sphexa::sphnnet {
 		}
 	}
 
-	/// function initializing the partition of NuclearDataType from 
-	/**
-	 * TODO
+
+	/*! @brief function initializing the partition of NuclearDataType using "maximal mixing"
+	 * 
+	 * @param firstIndex  first (included) particle considered in d
+	 * @param lastIndex   last (excluded) particle considered in d
+	 * @param d           ParticlesDataType (contains node_id and particle_id to be populated)
+	 * @param n           nuclearDataType (contains mpi_partition to be populated)
 	 */
 	template<class ParticlesDataType,class nuclearDataType>
 	void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, nuclearDataType &n) {

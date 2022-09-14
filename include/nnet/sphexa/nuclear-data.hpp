@@ -62,10 +62,7 @@ namespace sphexa::sphnnet {
 	template<size_t N, typename T, typename I>
 	class DeviceNuclearDataType;
 
-	/// nuclear data class for n_species nuclear network
-	/**
-	 * TODO
-	 */
+	/*! @brief nuclear data class for n_species nuclear network */
 	template<size_t n_species, typename Float, typename Int, class AccType>
 	struct NuclearDataType : public FieldStates<NuclearDataType<n_species, Float, Int, AccType>> {
 	public:
@@ -88,26 +85,30 @@ namespace sphexa::sphnnet {
 	    //! @brief gravitational constant
 	    RealType g{0.0};
 
-		/// hydro data
+		//! hydro data
 		std::vector<RealType> c, p, cv, u, dpdT, m, rho, temp, previous_rho; // drho_dt
 
-		/// nuclear abundances (vector of vector)
+		//! nuclear abundances (vector of vector)
 		std::vector<util::array<RealType, n_species>> Y;
 
-		/// timesteps
+		//! timesteps
 		std::vector<RealType> dt;
 
-		// particle ID and nodeID
+		//! particle ID
 		std::vector<int> node_id;
+		//! node ID
 		std::vector<KeyType> particle_id;
 
-		/// mpi communicator
+		//! mpi communicator
 #ifdef USE_MPI
     	MPI_Comm comm=MPI_COMM_WORLD;
     	sphexa::mpi::mpi_partition partition;
 #endif
 
-		/// resize the number of particules
+		/*! @brief resize the number of particules
+		 * 
+		 * @param size  number of particle to be hold by the class
+		 */
 		void resize(size_t size) {
 	        double growthRate = 1;
 	        auto   data_      = data();
@@ -154,7 +155,7 @@ namespace sphexa::sphnnet {
 	    }
 
 
-		/// base fieldNames (without knowledge of nuclear species names)
+		//! base fieldNames (without knowledge of nuclear species names)
 		inline static constexpr std::array fieldNames {
 			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y",
 		};
@@ -177,6 +178,10 @@ namespace sphexa::sphnnet {
 			};
 	    }
 
+	    /*! @brief sets the field to be outputed
+	     * 
+	     * @param outFields  vector of the names of fields to be outputed (including abundances names "Y(i)" for the ith species)
+	     */
 	    void setOutputFields(const std::vector<std::string>& outFields) {
 	    	int rank = 0;
 #ifdef USE_MPI
@@ -197,6 +202,11 @@ namespace sphexa::sphnnet {
 	        outputFieldIndices = sphexa::fieldStringsToInt(fieldNames, hydroOutFields);
     	}
 
+    	/*! @brief sets the field to be outputed
+	     * 
+	     * @param outFields      vector of the names of fields to be outputed (including abundances names "Y(X)" for the species named "X")
+	     * @param species_names  vector of species names
+	     */
     	void setOutputFields(const std::vector<std::string>& outFields, const std::vector<std::string> &species_names) {
     		outputFieldNames = outFields;
 
@@ -212,7 +222,7 @@ namespace sphexa::sphnnet {
 	        outputFieldIndices = sphexa::fieldStringsToInt(fieldNames, hydroOutFields);
     	}
 
-		//! @brief particle fields selected for file output
+		// particle fields selected for file output
 		std::vector<int>         outputFieldIndices;
 		std::vector<std::string> outputFieldNames;
 	};

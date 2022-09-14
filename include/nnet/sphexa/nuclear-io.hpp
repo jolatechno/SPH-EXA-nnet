@@ -85,13 +85,13 @@ namespace sphexa::sphnnet::io {
 		return hydroOutFields;
     }
 
-    /*! @brief function used to right abundances as lines
+    /*! @brief function used to outputed abundances as lines
      * 
      * Used un HDF5 part in SPH-EXA
      * 
      * @param Y            vector of array represneting abundances of particles
-     * @param n_particles  number of particles for which the abundances should be righten
-     * @param write_func   function used to right a line (taking a pointer to the floating point data, and a fieldname)
+     * @param n_particles  number of particles for which the abundances should be outputed
+     * @param write_func   function used to write a line (taking a pointer to the floating point data, and a fieldname)
      * 
      * Returns the last output of write_func.
      */
@@ -100,7 +100,7 @@ namespace sphexa::sphnnet::io {
 		std::vector<T> buffer(n_particles);
 		for (int i = 0;; ++i) {
 			const         int  fieldIdx  = outputFieldIndices[i];
-			const std::string& fieldName = outputFieldNames[  i];
+			const std::string& fieldName = outputFieldNames[fieldIdx];
 
 			// move to buffer
 			for (size_t j = 0; j < n_particles; ++j)
