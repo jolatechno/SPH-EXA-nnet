@@ -43,8 +43,6 @@
 	#include "CUDA/nuclear-data-gpu.cuh"
 #endif
 
-#include "nuclear-io.hpp"
-
 #ifdef USE_MPI
 	#include <mpi.h>
 #endif
@@ -89,7 +87,8 @@ namespace sphexa::sphnnet {
 		std::vector<RealType> c, p, cv, u, dpdT, m, rho, temp, previous_rho; // drho_dt
 
 		//! nuclear abundances (vector of vector)
-		std::vector<util::array<RealType, n_species>> Y;
+		//std::vector<util::array<RealType, n_species>> Y;
+		util::array<std::vector<RealType>, n_species> Y;
 
 		//! timesteps
 		std::vector<RealType> dt;
@@ -111,7 +110,7 @@ namespace sphexa::sphnnet {
 		 */
 		void resize(size_t size) {
 	        double growthRate = 1;
-	        auto   data_      = data();
+	        auto   data_      = legacyData();
 
 			if constexpr (HaveGpu<AcceleratorType>{})
 	        	devData.resize(size);
@@ -120,11 +119,13 @@ namespace sphexa::sphnnet {
 	            if (this->isAllocated(i)) {
 	            	// actually resize
 	                std::visit([&](auto& arg) { 
-	                	size_t previous_size = arg->size();
-	                	reallocate(*arg, size, growthRate); 
-
 	                	using T = decltype((*arg)[0]);
 	                	if constexpr (std::is_convertible<T, int>::value) {
+	                		size_t previous_size = arg->size();
+
+	                		// reallocate
+	                		reallocate(*arg, size, growthRate);
+
 	                		// fill node_id
 			                if ((void*)arg == (void*)(&node_id)) {
 		        				int rank = 0;
@@ -148,17 +149,62 @@ namespace sphexa::sphnnet {
 			                else if ((void*)arg == (void*)(&dt)) {
 			                	std::fill(dt.begin() + previous_size, dt.end(), nnet::constants::initial_dt);
 			                }
-			            }
+			            } else
+			            	// resize every Y field if asked to
+			            	for (auto &y : *arg)
+			            		reallocate(y, size, growthRate);
 	                }, data_[i]);
 	            }
 	        }
 	    }
 
 
-		//! base fieldNames (without knowledge of nuclear species names)
+		//! base hydro fieldNames (without knowledge of nuclear species names)
 		inline static constexpr std::array fieldNames {
-			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y",
+			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y"
 		};
+
+		//! base fieldNames (contains individual species). Initialized by setOutputFieldsNames
+		std::array<std::string, fieldNames.size()-1 + n_species> fieldNamesNuclear = {
+			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho"
+		};
+
+		/*! @brief access and modifies "fieldNames" to account for nuclear species names
+	     *
+	     * @param species_names  vector of species name
+		 */
+		void setOutputFieldsNames(const std::vector<std::string> &species_names) {
+			for (int i = 0; i < fieldNames.size()-1; ++i) 
+				fieldNamesNuclear[i] = fieldNames[i];
+			for (int i = 0; i < n_species; ++i) 
+				fieldNamesNuclear[fieldNames.size()-1 + i] = "Y(" + species_names[i] + ")";
+		}
+
+		/*! @brief access and modifies "fieldNames" without nowing species names (the ith species is named i, and its field named "Y(i)") */
+		void setOutputFieldsNames() {
+			for (int i = 0; i < fieldNames.size()-1; ++i) 
+				fieldNamesNuclear[i] = fieldNames[i];
+			for (int i = 0; i < n_species; ++i) 
+				fieldNamesNuclear[fieldNames.size()-1 + i] = "Y(" + std::to_string(i) + ")";
+		}
+
+
+		/*! @brief data defined for compatibility with SPH base class
+	     *
+	     * We implement this by returning an rvalue to prevent having to store pointers and avoid
+	     * non-trivial copy/move constructors.
+	     */
+	    auto legacyData() {
+	    	using FieldType = std::variant<
+	    		util::array<std::vector<RealType>, n_species>*,
+	    		std::vector<int>*,
+	    		std::vector<KeyType>*,
+	    		std::vector<RealType>*>;
+	    	
+			return util::array<FieldType, fieldNames.size()> {
+				&node_id, &particle_id, &dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &previous_rho, &Y
+			};
+	    }
 
 
 		/*! @brief return a vector of pointers to field vectors
@@ -168,14 +214,29 @@ namespace sphexa::sphnnet {
 	     */
 	    auto data() {
 	    	using FieldType = std::variant<
-	    		std::vector<util::array<RealType, n_species>>*,
 	    		std::vector<int>*,
 	    		std::vector<KeyType>*,
 	    		std::vector<RealType>*>;
 	    	
-			return util::array<FieldType, fieldNames.size()>{
-				&node_id, &particle_id, &dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &previous_rho, &Y
-			};
+			util::array<FieldType, fieldNames.size()-1 + n_species> data;
+
+			data[0] = &node_id;
+			data[1] = &particle_id;
+			data[2] = &dt;
+			data[3] = &c;
+			data[4] = &p;
+			data[5] = &cv;
+			data[6] = &u;
+			data[7] = &dpdT;
+			data[8] = &m;
+			data[9] = &temp;
+			data[10] = &rho;
+			data[11] = &previous_rho;
+
+			for (int i = 0; i < n_species; ++i) 
+				data[fieldNames.size()-1 + i] = &Y[i];
+
+			return data;
 	    }
 
 	    /*! @brief sets the field to be outputed
@@ -183,43 +244,8 @@ namespace sphexa::sphnnet {
 	     * @param outFields  vector of the names of fields to be outputed (including abundances names "Y(i)" for the ith species)
 	     */
 	    void setOutputFields(const std::vector<std::string>& outFields) {
-	    	int rank = 0;
-#ifdef USE_MPI
-			MPI_Comm_rank(comm, &rank);
-#endif
-
 	        outputFieldNames = outFields;
-
-			// separate nuclear fields from hydro fields
-			io::setOutputFieldsNames(n_species);
-			std::vector<std::string> hydroOutFields = io::setOutputFields(outFields);
-
-			// add output field
-			bool print_nuclear = hydroOutFields.size() < outFields.size();
-	        if (print_nuclear && !std::count(hydroOutFields.begin(), hydroOutFields.end(), "Y"))
-	        	hydroOutFields.push_back("Y");
-
-	        outputFieldIndices = sphexa::fieldStringsToInt(fieldNames, hydroOutFields);
-    	}
-
-    	/*! @brief sets the field to be outputed
-	     * 
-	     * @param outFields      vector of the names of fields to be outputed (including abundances names "Y(X)" for the species named "X")
-	     * @param species_names  vector of species names
-	     */
-    	void setOutputFields(const std::vector<std::string>& outFields, const std::vector<std::string> &species_names) {
-    		outputFieldNames = outFields;
-
-			// separate nuclear fields from hydro fields
-			io::setOutputFieldsNames(species_names);
-	        std::vector<std::string> hydroOutFields = io::setOutputFields(outFields);
-
-	        // add output field
-			bool print_nuclear = hydroOutFields.size() < outFields.size();
-	        if (print_nuclear && !std::count(hydroOutFields.begin(), hydroOutFields.end(), "Y"))
-	        	hydroOutFields.push_back("Y");
-
-	        outputFieldIndices = sphexa::fieldStringsToInt(fieldNames, hydroOutFields);
+	        outputFieldIndices = sphexa::fieldStringsToInt(fieldNamesNuclear, outFields);
     	}
 
 		// particle fields selected for file output

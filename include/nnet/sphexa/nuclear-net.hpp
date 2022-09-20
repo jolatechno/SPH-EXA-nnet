@@ -48,7 +48,6 @@
 #include <numeric>
 #include <omp.h>
 
-#include "nuclear-io.hpp"
 #include "nuclear-data.hpp"
 #include "../eos/helmholtz.hpp"
 
@@ -87,9 +86,9 @@ namespace sphexa::sphnnet {
 		++n.iteration;
 
 		const size_t n_particles = n.temp.size();
-		const int dimension = n.Y[0].size();
+		const int dimension = n.Y.size();
 		
-		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE) {
+		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE && /*!!!! needs reworking !!!! */ false) {
 
 			/* !!!!!!!!!!!!!
 			GPU non-batch solver
@@ -147,7 +146,7 @@ namespace sphexa::sphnnet {
 
 			// buffers
 			std::vector<Float> rates(reactions.size());
-			eigen::Vector<Float> RHS(dimension + 1), DY_T(dimension + 1), Y_buffer(dimension);
+			eigen::Vector<Float> RHS(dimension + 1), DY_T(dimension + 1), Y_buffer(dimension), Y(dimension);
 			eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
 
 			int num_threads;
@@ -156,9 +155,13 @@ namespace sphexa::sphnnet {
 			num_threads = omp_get_num_threads();
 			int omp_batch_size = util::dynamic_batch_size(n_particles, num_threads);
 
-			#pragma omp parallel for firstprivate(Mp, RHS, DY_T, rates, Y_buffer, reactions/*, construct_rates_BE, eos*/) schedule(dynamic, omp_batch_size)
-			for (size_t i = firstIndex; i < lastIndex; ++i) 
+			#pragma omp parallel for firstprivate(Y, Mp, RHS, DY_T, rates, Y_buffer, reactions/*, construct_rates_BE, eos*/) schedule(dynamic, omp_batch_size)
+			for (size_t i = firstIndex; i < lastIndex; ++i)
 				if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp) {
+					// copy to local vector
+					for (int j = 0; j < dimension; ++j)
+						Y[j] = n.Y[j][i];
+
 					// compute drho/dt
 					Float drho_dt = 0;
 					if (use_drhodt)
@@ -168,9 +171,13 @@ namespace sphexa::sphnnet {
 					nnet::solve_system_substep(dimension,
 						Mp.data(), RHS.data(), DY_T.data(), rates.data(),
 						reactions, construct_rates_BE, eos,
-						n.Y[i].data(), n.temp[i], Y_buffer.data(),
+						Y.data(), n.temp[i], Y_buffer.data(),
 						n.rho[i], drho_dt, hydro_dt, n.dt[i],
 						jumpToNse);
+
+					// copy from local vector
+					for (int j = 0; j < dimension; ++j)
+						n.Y[j][i] = Y[j];
 				}
 		}
 	}
@@ -185,10 +192,10 @@ namespace sphexa::sphnnet {
 	 */
 	template<class Data, class Vector>
 	void computeHelmEOS(Data &n, size_t firstIndex, size_t lastIndex, const Vector &Z) {
-		const int dimension = n.Y[0].size();
+		const int dimension = n.Y.size();
 		using Float = typename std::remove_reference<decltype(n.cv[0])>::type;
 
-		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE) {
+		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE && /*!!!! needs reworking !!!! */ false) {
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			simple GPU application of the eos
@@ -222,12 +229,17 @@ namespace sphexa::sphnnet {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			simple CPU parallel application of the eos
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+			std::vector<Float> Y(dimension);
 
-			#pragma omp parallel for schedule(static)
+			#pragma omp parallel for firstprivate(Y) schedule(static)
 			for (size_t i = firstIndex; i < lastIndex; ++i) {
+				// copy to local vector
+				for (int j = 0; j < dimension; ++j)
+					Y[j] = n.Y[j][i];
+
 				// compute abar and zbar
-				double abar = std::accumulate(n.Y[i].begin(), n.Y[i].end(), (double)0.);
-				double zbar = eigen::dot(n.Y[i].begin(), n.Y[i].end(), Z);
+				double abar = std::accumulate(Y.data(), Y.data() + dimension, (double)0.);
+				double zbar =      eigen::dot(Y.data(), Y.data() + dimension, Z);
 
 				auto eos_struct = nnet::eos::helmholtz(abar, zbar, n.temp[i], n.rho[i]);
 

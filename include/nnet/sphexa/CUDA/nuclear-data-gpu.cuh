@@ -59,7 +59,7 @@ namespace sphexa::sphnnet {
 		thrust::device_vector<RealType> c, p, cv, dpdT, u, m, rho, temp, previous_rho;
 
 		//!  @brief nuclear abundances (vector of vector)
-		thrust::device_vector<util::array<RealType, n_species>> Y;
+		util::array<thrust::device_vector<RealType>, n_species> Y;
 
 		//! @brief timesteps
 		thrust::device_vector<RealType> dt;
@@ -84,7 +84,7 @@ namespace sphexa::sphnnet {
 	     */
 	    auto data() {
 	    	using FieldType = std::variant<
-		    	thrust::device_vector<util::array<RealType, n_species>>*,
+		    	util::array<thrust::device_vector<RealType>, n_species>*,
 		    	thrust::device_vector<RealType>*>;
 
 			return util::array<FieldType, fieldNames.size()>{

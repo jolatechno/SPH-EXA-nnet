@@ -66,7 +66,7 @@ namespace sphexa::sphnnet {
 	template<class Data, typename Float>
 	Float totalNuclearEnergy(Data const &n, const Float *BE) {
 		const size_t n_particles = n.temp.size();
-		const int dimension = n.Y[0].size();
+		const int dimension = n.Y.size();
 
 #if COMPILE_DEVICE
 		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && false /* NOT IMPLEMENTED */) {
@@ -76,10 +76,17 @@ namespace sphexa::sphnnet {
 			return 0.0;
 		}
 #endif
+		std::vector<Float> Y(dimension);
+
 		Float total_energy = 0;
-		#pragma omp parallel for schedule(static) reduction(+:total_energy)
-		for (size_t i = 0; i < n_particles; ++i)
-			total_energy += -eigen::dot(n.Y[i].data(), n.Y[i].data() + dimension, BE)*n.m[i];
+		#pragma omp parallel for firstprivate(Y) schedule(static) reduction(+:total_energy)
+		for (size_t i = 0; i < n_particles; ++i) {
+			// copy to local vector
+			for (int j = 0; j < dimension; ++j)
+				Y[j] = n.Y[j][i];
+
+			total_energy += -eigen::dot(Y.data(), Y.data() + dimension, BE)*n.m[i];
+		}
 
 #ifdef USE_MPI
 		double mpi_buffer_total_energy = (double)total_energy;

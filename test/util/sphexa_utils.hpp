@@ -19,9 +19,6 @@
     #include <thrust/device_vector.h>
 #endif
 
-template<typename T, size_t n>
-std::ofstream& operator<<(std::ofstream& os, const util::array<T, n>& Y);
-
 namespace sphexa {
 	namespace fileutils {
 		/*! @brief write fields as columns to an ASCII file

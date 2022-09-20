@@ -74,10 +74,15 @@ namespace sphexa::sphnnet {
 		std::vector<Float> &x = d.x, &y = d.y, &z = d.z;
 #endif
 
+		util::array<Float, n_species> Y;
+
 		// intialize nuclear data
-		#pragma omp parallel for schedule(dynamic)
-		for (size_t i = 0; i < local_nuclear_n_particles; ++i)
-			n.Y[i] = initializer(x[i], y[i], z[i]);
+		#pragma omp parallel for firstprivate(Y) schedule(dynamic)
+		for (size_t i = 0; i < local_nuclear_n_particles; ++i) {
+			Y = initializer(x[i], y[i], z[i]);
+			for (int j = 0; j < n_species; ++j)
+				n.Y[j][i] = Y[j];
+		}
 	}
 
 
@@ -119,10 +124,15 @@ namespace sphexa::sphnnet {
 		sphexa::mpi::syncDataToStaticPartition(n.partition, send_r.data(), r.data(), d.comm);
 #endif
 
+		util::array<Float, n_species> Y;
+
 		// intialize nuclear data
-		#pragma omp parallel for schedule(dynamic)
-		for (size_t i = 0; i < local_nuclear_n_particles; ++i)
-			n.Y[i] = initializer(r[i]);
+		#pragma omp parallel for firstprivate(Y) schedule(dynamic)
+		for (size_t i = 0; i < local_nuclear_n_particles; ++i) {
+			Y = initializer(r[i]);
+			for (int j = 0; j < n_species; ++j)
+				n.Y[j][i] = Y[j];
+		}
 	}
 
 
@@ -155,10 +165,15 @@ namespace sphexa::sphnnet {
 		n.rho = d.rho;
 #endif
 
+		util::array<Float, n_species> Y;
+
 		// intialize nuclear data
-		#pragma omp parallel for schedule(dynamic)
-		for (size_t i = 0; i < local_nuclear_n_particles; ++i)
-			n.Y[i] = initializer(n.rho[i]);
+		#pragma omp parallel for firstprivate(Y) schedule(dynamic)
+		for (size_t i = 0; i < local_nuclear_n_particles; ++i) {
+			Y = initializer(n.rho[i]);
+			for (int j = 0; j < n_species; ++j)
+				n.Y[j][i] = Y[j];
+		}
 	}
 
 
@@ -187,10 +202,10 @@ namespace sphexa::sphnnet {
 		n.resize(local_nuclear_n_particles);
 
 		// intialize nuclear data
-		const int dimension = n.Y[0].size();
+		const int dimension = n.Y.size();
 		#pragma omp parallel for schedule(dynamic)
 		for (size_t i = 0; i < local_nuclear_n_particles; ++i)
-			for (int j = 0; j < dimension; ++j)
-				n.Y[i][j] = Y0[j];
+			for (int j = 0; j < n_species; ++j)
+				n.Y[j][i] = Y0[j];
 	}
 }

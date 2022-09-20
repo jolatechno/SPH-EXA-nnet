@@ -39,12 +39,18 @@ namespace sphexa {
 	        double growthRate = 1;
 	        auto   data_      = data();
 
+	        using vectType = decltype(temp);
 	        for (size_t i = 0; i < data_.size(); ++i) {
 	            if (this->isAllocated(i)) {
 	            	// actually resize
-	                std::visit([&](auto& arg) { 
-	                	size_t previous_size = arg->size();
-	                	reallocate(*arg, size, growthRate); 
+	                std::visit([&](auto& arg) {
+	        			using T = decltype(*arg);
+
+	        			if constexpr (std::is_convertible<T, vectType>::value) {
+	                		reallocate(*arg, size, growthRate); 
+	        			} else
+	        				for (auto &y : *arg)
+	                			reallocate(y, size, growthRate);
 	                }, data_[i]);
 	            }
 	        }

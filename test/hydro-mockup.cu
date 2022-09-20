@@ -204,7 +204,7 @@ void step(int rank,
 	const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 	const Float *BE, const Zvector &Z)
 {
-	size_t n_nuclear_particles = n.Y.size();
+	size_t n_nuclear_particles = n.temp.size();
 
 	// domain redecomposition
 
@@ -369,7 +369,7 @@ int main(int argc, char* argv[]) {
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_87, Y0_87);
 
-		n_nuclear_particles = nuclear_data_87.Y.size();
+		n_nuclear_particles = nuclear_data_87.temp.size();
 		sphexa::transferToDevice(nuclear_data_87, 0, n_nuclear_particles, {"Y", "dt"});
 
 		std::fill(nuclear_data_87.m.begin(), nuclear_data_87.m.end(), 1.);
@@ -380,7 +380,7 @@ int main(int argc, char* argv[]) {
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_86, Y0_87);
 
-		n_nuclear_particles = nuclear_data_86.Y.size();
+		n_nuclear_particles = nuclear_data_86.temp.size();
 		sphexa::transferToDevice(nuclear_data_86, 0, n_nuclear_particles, {"Y", "dt"});
 
 		std::fill(nuclear_data_86.m.begin(), nuclear_data_86.m.end(), 1.);
@@ -391,7 +391,7 @@ int main(int argc, char* argv[]) {
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_14, Y0_14);
 
-		n_nuclear_particles = nuclear_data_14.Y.size();
+		n_nuclear_particles = nuclear_data_14.temp.size();
 		sphexa::transferToDevice(nuclear_data_14, 0, n_nuclear_particles, {"Y", "dt"});
 
 		std::fill(nuclear_data_14.m.begin(), nuclear_data_14.m.end(), 1.);
@@ -403,11 +403,14 @@ int main(int argc, char* argv[]) {
 	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y(4He)", "Y(16O)", "Y(12C)"};
 	particle_data.setOutputFields(hydroOutFields);
 	if (use_net87) {
-		nuclear_data_87.setOutputFields(nuclearOutFields, nnet::net87::constants::species_names);
+		nuclear_data_87.setOutputFieldsNames(nnet::net87::constants::species_names);
+		nuclear_data_87.setOutputFields(nuclearOutFields);
 	} else if (use_net86) {
-		nuclear_data_86.setOutputFields(nuclearOutFields, nnet::net86::constants::species_names);
+		nuclear_data_86.setOutputFieldsNames(nnet::net86::constants::species_names);
+		nuclear_data_86.setOutputFields(nuclearOutFields);
 	} else
-		nuclear_data_14.setOutputFields(nuclearOutFields, nnet::net14::constants::species_names);
+		nuclear_data_14.setOutputFieldsNames(nnet::net14::constants::species_names);
+		nuclear_data_14.setOutputFields(nuclearOutFields);
 
 
 

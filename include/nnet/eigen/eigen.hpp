@@ -181,9 +181,8 @@ namespace eigen {
 	template<class it1, class it2>
 	HOST_DEVICE_FUN double dot(it1 const X_begin, it1 const X_end, it2 const Y_begin) {
 		double res = 0;
-		const int n = std::distance(X_begin, X_end);
 
-		for (int i = 0; i < n; ++i)
+		for (int i = 0; X_begin + i != X_end; ++i)
 			res += X_begin[i]*Y_begin[i];
 
 		return res;

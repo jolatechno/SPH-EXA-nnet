@@ -16,9 +16,7 @@ namespace sphexa {
     auto getOutputArrays(Dataset& dataset)
     {
         auto fieldPointers = dataset.data();
-        using FieldType    = std::variant<float*, double*, int*, unsigned*, uint64_t*,
-            util::array<double, 14>*, util::array<double, 86>*, util::array<double, 87>*,
-            util::array<float,  14>*, util::array<float,  86>*, util::array<float,  87>*>;
+        using FieldType    = std::variant<float*, double*, int*, unsigned*, uint64_t*>;
 
         std::vector<FieldType> outputFields;
         outputFields.reserve(dataset.outputFieldIndices.size());

@@ -30,7 +30,11 @@ endif()
 include(CTest)
 include(CheckLanguage)
 
-check_language(CUDA)
+if (NOT NO_CUDA)
+    check_language(CUDA)
+else()
+    set(CMAKE_CUDA_COMPILER false)
+endif()
 
 if(CMAKE_CUDA_COMPILER)
     SET(CUDA_SEPARABLE_COMPILATION ON)
