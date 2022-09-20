@@ -251,5 +251,9 @@ namespace sphexa::sphnnet {
 		// particle fields selected for file output
 		std::vector<int>         outputFieldIndices;
 		std::vector<std::string> outputFieldNames;
+
+		bool isAllocated(int i) {
+			return FieldStates<NuclearDataType<n_species, Float, Int, AccType>>::isAllocated(std::max(i, (int)(fieldNames.size()-1)));
+		}
 	};
 }
