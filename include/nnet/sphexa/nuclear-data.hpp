@@ -220,16 +220,16 @@ namespace sphexa::sphnnet {
 	    	
 			util::array<FieldType, fieldNames.size()-1 + n_species> data;
 
-			data[0] = &node_id;
-			data[1] = &particle_id;
-			data[2] = &dt;
-			data[3] = &c;
-			data[4] = &p;
-			data[5] = &cv;
-			data[6] = &u;
-			data[7] = &dpdT;
-			data[8] = &m;
-			data[9] = &temp;
+			data[0]  = &node_id;
+			data[1]  = &particle_id;
+			data[2]  = &dt;
+			data[3]  = &c;
+			data[4]  = &p;
+			data[5]  = &cv;
+			data[6]  = &u;
+			data[7]  = &dpdT;
+			data[8]  = &m;
+			data[9]  = &temp;
 			data[10] = &rho;
 			data[11] = &previous_rho;
 
@@ -253,7 +253,7 @@ namespace sphexa::sphnnet {
 		std::vector<std::string> outputFieldNames;
 
 		bool isAllocated(int i) {
-			return FieldStates<NuclearDataType<n_species, Float, Int, AccType>>::isAllocated(std::max(i, (int)(fieldNames.size()-1)));
+			return FieldStates<NuclearDataType<n_species, Float, Int, AccType>>::isAllocated(std::min(i, (int)(fieldNames.size()-1)));
 		}
 	};
 }
