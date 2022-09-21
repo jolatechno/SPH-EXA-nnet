@@ -47,20 +47,9 @@ namespace sphexa {
 
 	        			if constexpr (std::is_convertible<typename T::value_type, int>::value) { // check for "normal" vectors (AKA not Y)
 	                		reallocate(*arg, size, growthRate); 
-	        			} else { // resize Y
-	        				std::vector<Float*> Y_raw_ptr(n_species);
-
-	        				for (int i = 0; i < n_species; ++i) {
-	        					// reallocate Y
-	                			reallocate(Y[i], size, growthRate);
-
-	                			// store Y raw pointer to CPU
-	                			Y_raw_ptr[i] = (Float*)thrust::raw_pointer_cast(Y[i].data());
-	        				}
-
-	        				// copy raw pointer to GPU
-	        				Y_dev_ptr = Y_raw_ptr;
-	        			}
+	        			} else // reallocate vectors of vectors (AKA Y)
+	        				for (auto &y : *arg)
+	                			reallocate(y, size, growthRate);
 	                }, data_[i]);
 	            }
 	        }

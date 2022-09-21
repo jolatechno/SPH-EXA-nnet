@@ -46,7 +46,7 @@ namespace sphnnet {
 	template<class func_type, class func_eos, typename Float>
 	__global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, const int dimension,
 		Float *global_buffer,
-		Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
+		Float *rho_, Float *previous_rho_, Float **Y_, Float *temp_, Float *dt_,
 		const Float hydro_dt, const Float previous_dt,
 		const nnet::gpu_reaction_list *reactions, const func_type *construct_rates_BE, const func_eos *eos,
 		bool use_drhodt)
@@ -72,6 +72,7 @@ namespace sphnnet {
 	    }
 
 	    // buffer sizes
+	    const int Y_size        = dimension;
 	    const int Mp_size       = (dimension + 1)*(dimension + 1);
 	    const int RHS_size      =  dimension + 1;
 	    const int DY_T_size     =  dimension + 1;
@@ -80,18 +81,31 @@ namespace sphnnet {
 
 	    // allocate local buffer
 	    Float T_buffer;
-	    Float *Buffer    = global_buffer + (Mp_size + RHS_size + DY_T_size + Y_buffer_size + rates_size)*(blockIdx.x*blockDim.x + threadIdx.x);
-    	Float *Mp        = Buffer;
-		Float *RHS       = Buffer + Mp_size;
-		Float *DY_T      = Buffer + Mp_size + RHS_size;
-		Float *Y_buffer  = Buffer + Mp_size + RHS_size + DY_T_size;
-		Float *rates     = Buffer + Mp_size + RHS_size + DY_T_size + Y_buffer_size;
+	    Float *Buffer    = global_buffer + (Y_size + Mp_size + RHS_size + DY_T_size + Y_buffer_size + rates_size)*(blockIdx.x*blockDim.x + threadIdx.x);
+	    Float *Y         = Buffer;
+    	Float *Mp        = Buffer + Y_size;
+		Float *RHS       = Buffer + Y_size + Mp_size;
+		Float *DY_T      = Buffer + Y_size + Mp_size + RHS_size;
+		Float *Y_buffer  = Buffer + Y_size + Mp_size + RHS_size + DY_T_size;
+		Float *rates     = Buffer + Y_size + Mp_size + RHS_size + DY_T_size + Y_buffer_size;
 
-		// run simulation 
+		// initial condition
 		int iter = 1;
-		int shared_idx = -1;
 		Float elapsed = 0.0;
 		bool did_not_find = false;
+		int shared_idx = threadIdx.x;
+		if (shared_idx >= block_size) { // limit condition
+			shared_idx = -1;
+		} else {
+			status[shared_idx] = threadIdx.x; // update status
+
+			// copy Y to buffer
+			const size_t idx = block_begin + shared_idx;
+			for (int j = 0; j < dimension; ++j)
+				Y[j] = Y_[j][idx];
+		}
+
+		// run simulation
 		while (true) {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			       work sharing
@@ -114,6 +128,12 @@ namespace sphnnet {
 						// acquire n-th free ttask
 						if (num_free == thread_id + 1) {
 							shared_idx = i;
+
+							// copy Y to buffer
+							const size_t idx = block_begin + shared_idx;
+							for (int j = 0; j < dimension; ++j)
+								Y[j] = Y_[j][idx];
+
 							break;
 						}
 					} else if (status[i] >= running_status) {
@@ -146,7 +166,7 @@ namespace sphnnet {
 				nnet::prepare_system_substep(dimension,
 					Mp, RHS, rates,
 					*reactions, *construct_rates_BE, *eos,
-					Y_ + dimension*idx, temp_[idx], Y_buffer, T_buffer,
+					*Y_ + dimension*idx, temp_[idx], Y_buffer, T_buffer,
 					rho_[idx], drho_dt,
 					hydro_dt, elapsed, dt_[idx], iter);
 
@@ -155,11 +175,15 @@ namespace sphnnet {
 
 				// finalize
 				if(nnet::finalize_system_substep(dimension,
-					Y_ + dimension*idx, temp_[idx],
+					Y + dimension*idx, temp_[idx],
 					Y_buffer, T_buffer,
 					DY_T, hydro_dt, elapsed,
 					dt_[idx], iter))
 				{
+					// copy Y "buffer" back to actual storage
+					for (int j = 0; j < dimension; ++j)
+						Y_[j][idx] = Y[j];
+
 					// reset
 					status[shared_idx] = finished_status;
 					iter = 0;
@@ -180,7 +204,7 @@ namespace sphnnet {
 	template<class func_type, class func_eos, typename Float>
 	void cudaComputeNuclearReactions(const size_t n_particles, const int dimension,
 		thrust::device_vector<Float> &buffer,
-		Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
+		Float *rho_, Float *previous_rho_, Float **Y_, Float *temp_, Float *dt_,
 		const Float hydro_dt, const Float previous_dt,
 		const nnet::gpu_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		bool use_drhodt)
@@ -203,13 +227,14 @@ namespace sphnnet {
 		int cuda_num_blocks = (num_threads + constants::cuda_num_thread_per_block_nnet - 1)/constants::cuda_num_thread_per_block_nnet;
 
 		// buffer sizes
+		const int Y_size        = dimension;
 	    const int Mp_size       = (dimension + 1)*(dimension + 1);
 	    const int RHS_size      =  dimension + 1;
 	    const int DY_T_size     =  dimension + 1;
 	    const int Y_buffer_size =  dimension;
 	    const int rates_size    =  reactions.size();
 		// allocate global buffer
-	    const size_t buffer_size = (Mp_size + RHS_size + DY_T_size + Y_buffer_size + rates_size)*cuda_num_blocks*constants::cuda_num_thread_per_block_nnet;
+	    const size_t buffer_size = (Y_size + Mp_size + RHS_size + DY_T_size + Y_buffer_size + rates_size)*cuda_num_blocks*constants::cuda_num_thread_per_block_nnet;
 		if (buffer.size() < buffer_size)
 			buffer.resize(buffer_size);
 
@@ -230,54 +255,54 @@ namespace sphnnet {
 
 	// used templates:
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
-		thrust::device_vector<double>&, double*, double*, double*, double*, double*, const double, const double,
+		thrust::device_vector<double>&, double*, double*, double**, double*, double*, const double, const double,
 		nnet::gpu_reaction_list const&, nnet::net87::compute_reaction_rates_functor const&, nnet::eos::ideal_gas_functor const&,
 		bool);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
-		thrust::device_vector<double>&, double*, double*, double*, double*, double*, const double, const double,
+		thrust::device_vector<double>&, double*, double*, double**, double*, double*, const double, const double,
 		nnet::gpu_reaction_list const&, nnet::net86::compute_reaction_rates_functor const&, nnet::eos::ideal_gas_functor const&,
 		bool);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
-		thrust::device_vector<double>&, double*, double*, double*, double*, double*, const double, const double,
+		thrust::device_vector<double>&, double*, double*, double**, double*, double*, const double, const double,
 		nnet::gpu_reaction_list const&, nnet::net14::compute_reaction_rates_functor const&, nnet::eos::ideal_gas_functor const&,
 		bool);
 
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
-		thrust::device_vector<double>&, double*, double*, double*, double*, double*, const double, const double,
+		thrust::device_vector<double>&, double*, double*, double**, double*, double*, const double, const double,
 		nnet::gpu_reaction_list const&, nnet::net87::compute_reaction_rates_functor const&, nnet::eos::helmholtz_functor<double> const&,
 		bool);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
-		thrust::device_vector<double>&, double*, double*, double*, double*, double*, const double, const double,
+		thrust::device_vector<double>&, double*, double*, double**, double*, double*, const double, const double,
 		nnet::gpu_reaction_list const&, nnet::net86::compute_reaction_rates_functor const&, nnet::eos::helmholtz_functor<double> const&,
 		bool);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
-		thrust::device_vector<double>&, double*, double*, double*, double*, double*, const double, const double,
+		thrust::device_vector<double>&, double*, double*, double**, double*, double*, const double, const double,
 		nnet::gpu_reaction_list const&, nnet::net14::compute_reaction_rates_functor const&, nnet::eos::helmholtz_functor<double> const&,
 		bool);
 
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
-		thrust::device_vector<float>&, float*, float*, float*, float*, float*, const float, const float,
+		thrust::device_vector<float>&, float*, float*, float**, float*, float*, const float, const float,
 		nnet::gpu_reaction_list const&, nnet::net87::compute_reaction_rates_functor const&, nnet::eos::ideal_gas_functor const&,
 		bool);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
-		thrust::device_vector<float>&, float*, float*, float*, float*, float*, const float, const float,
+		thrust::device_vector<float>&, float*, float*, float**, float*, float*, const float, const float,
 		nnet::gpu_reaction_list const&, nnet::net86::compute_reaction_rates_functor const&, nnet::eos::ideal_gas_functor const&,
 		bool);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
-		thrust::device_vector<float>&, float*, float*, float*, float*, float*, const float, const float,
+		thrust::device_vector<float>&, float*, float*, float**, float*, float*, const float, const float,
 		nnet::gpu_reaction_list const&, nnet::net14::compute_reaction_rates_functor const&, nnet::eos::ideal_gas_functor const&,
 		bool);
 
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
-		thrust::device_vector<float>&, float*, float*, float*, float*, float*, const float, const float,
+		thrust::device_vector<float>&, float*, float*, float**, float*, float*, const float, const float,
 		nnet::gpu_reaction_list const&, nnet::net87::compute_reaction_rates_functor const&, nnet::eos::helmholtz_functor<float> const&,
 		bool);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
-		thrust::device_vector<float>&, float*, float*, float*, float*, float*, const float, const float,
+		thrust::device_vector<float>&, float*, float*, float**, float*, float*, const float, const float,
 		nnet::gpu_reaction_list const&, nnet::net86::compute_reaction_rates_functor const&, nnet::eos::helmholtz_functor<float> const&,
 		bool);
 	template void cudaComputeNuclearReactions(const unsigned long, const int,
-		thrust::device_vector<float>&, float*, float*, float*, float*, float*, const float, const float,
+		thrust::device_vector<float>&, float*, float*, float**, float*, float*, const float, const float,
 		nnet::gpu_reaction_list const&, nnet::net14::compute_reaction_rates_functor const&, nnet::eos::helmholtz_functor<float> const&,
 		bool);
 
@@ -294,14 +319,17 @@ namespace sphnnet {
 	 */
 	template<typename Float /*, class func_eos*/>
 	__global__ void cudaKernelComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,
-		const Float *temp_, const Float *rho_, const Float *Y_, 
+		const Float *temp_, const Float *rho_, Float *const* Y_, 
 		Float *u, Float *cv, Float *p, Float *c, Float *dpdT)
 	{
 		size_t thread = blockIdx.x*blockDim.x + threadIdx.x;
 		if (thread < n_particles) {
 			// compute abar and zbar
-			double abar = algorithm::accumulate(Y_ + thread*dimension, Y_ + (thread + 1)*dimension, (double)0.);
-			double zbar = eigen::dot(Y_ + thread*dimension, Y_ + (thread + 1)*dimension, Z);
+			double abar = 0, zbar = 0;
+			for (int i = 0; i < dimension; ++i) {
+				abar += Y_[i][thread];
+				zbar += Y_[i][thread]*Z[i];
+			}
 
 			auto eos_struct = nnet::eos::helmholtz(abar, zbar, temp_[thread], rho_[thread]);
 
@@ -320,7 +348,7 @@ namespace sphnnet {
 	 */
 	template<typename Float>
 	void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,
-		const Float *temp_, const Float *rho_, const Float *Y_,
+		const Float *temp_, const Float *rho_, Float *const* Y_,
 		Float *u, Float *cv, Float *p, Float *c, Float *dpdT)
 	{
 		// compute chunk sizes
@@ -335,10 +363,10 @@ namespace sphnnet {
 
 	// used templates:
 	template void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const double *Z,
-		const double *temp_, const double *rho_, const double *Y_,
+		const double *temp_, const double *rho_, double *const* Y_,
 		double *u, double *cv, double *p, double *c, double *dpdT);
 	template void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const float *Z,
-		const float *temp_, const float *rho_, const float *Y_,
+		const float *temp_, const float *rho_, float *const* Y_,
 		float *u, float *cv, float *p, float *c, float *dpdT);
-}
+	}
 }

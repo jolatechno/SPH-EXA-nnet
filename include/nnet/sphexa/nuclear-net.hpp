@@ -88,7 +88,7 @@ namespace sphexa::sphnnet {
 		const size_t n_particles = n.temp.size();
 		const int dimension = n.Y.size();
 		
-		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE && /*!!!! needs reworking !!!! */ false) {
+		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE) {
 
 			/* !!!!!!!!!!!!!
 			GPU non-batch solver
@@ -110,13 +110,18 @@ namespace sphexa::sphnnet {
 			Float* previous_rho_ptr = nullptr;
 			if (use_drhodt)
 				previous_rho_ptr = (Float*)thrust::raw_pointer_cast(n.devData.previous_rho.data() + firstIndex);
+
+			std::vector<Float*> Y_raw_ptr(dimension);
+			for (int i = 0; i < dimension; ++i)
+	            Y_raw_ptr[i] = (Float*)thrust::raw_pointer_cast(n.devData.Y[i].data()) + firstIndex; // store Y raw pointer to CPU
+	        n.devData.Y_dev_ptr = Y_raw_ptr; // copy raw pointer to GPU
 			
 			// call the cuda kernel wrapper
 			cudaComputeNuclearReactions(lastIndex - firstIndex, dimension,
 				n.devData.buffer,
 		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()  + firstIndex),
 		        previous_rho_ptr,
-		(Float*)thrust::raw_pointer_cast(n.devData.Y.data()    + firstIndex),
+	   (Float**)thrust::raw_pointer_cast(n.devData.Y_dev_ptr.data()),
 		(Float*)thrust::raw_pointer_cast(n.devData.temp.data() + firstIndex),
 		(Float*)thrust::raw_pointer_cast(n.devData.dt.data()   + firstIndex),
 				hydro_dt, previous_dt,
@@ -195,7 +200,7 @@ namespace sphexa::sphnnet {
 		const int dimension = n.Y.size();
 		using Float = typename std::remove_reference<decltype(n.cv[0])>::type;
 
-		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE && /*!!!! needs reworking !!!! */ false) {
+		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE) {
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			simple GPU application of the eos
@@ -207,12 +212,17 @@ namespace sphexa::sphnnet {
 			gpuErrchk(cudaMalloc((void**)&Z_dev, dimension*sizeof(Float)));
 			gpuErrchk(cudaMemcpy((void*)Z_dev, (void*)Z.data(), dimension*sizeof(Float), cudaMemcpyHostToDevice));
 
+			std::vector<Float*> Y_raw_ptr(dimension);
+			for (int i = 0; i < dimension; ++i)
+	            Y_raw_ptr[i] = (Float*)thrust::raw_pointer_cast(n.devData.Y[i].data()) + firstIndex; // store Y raw pointer to CPU
+	        n.devData.Y_dev_ptr = Y_raw_ptr; // copy raw pointer to GPU
+
 			// call the cuda kernel wrapper
 			cudaComputeHelmholtz(lastIndex - firstIndex, dimension, Z_dev,
 				// read buffers:
 		(Float*)thrust::raw_pointer_cast(n.devData.temp.data() + firstIndex),
 		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()  + firstIndex),
-		(Float*)thrust::raw_pointer_cast(n.devData.Y.data()    + firstIndex),
+      (Float **)thrust::raw_pointer_cast(n.devData.Y_dev_ptr.data()),
 				// write buffers:
 		(Float*)thrust::raw_pointer_cast(n.devData.u.data()    + firstIndex),
 		(Float*)thrust::raw_pointer_cast(n.devData.cv.data()   + firstIndex),

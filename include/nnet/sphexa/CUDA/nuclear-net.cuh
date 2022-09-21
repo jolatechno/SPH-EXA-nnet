@@ -80,13 +80,13 @@ namespace sphexa::sphnnet {
 	template<class func_type, class func_eos, typename Float>
 	extern void cudaComputeNuclearReactions(const size_t n_particles, const int dimension,
 		thrust::device_vector<Float> &buffer,
-		Float *rho_, Float *previous_rho_, Float *Y_, Float *temp_, Float *dt_,
+		Float *rho_, Float *previous_rho_, Float **Y_, Float *temp_, Float *dt_,
 		const Float hydro_dt, const Float previous_dt,
 		const nnet::gpu_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		bool use_drhodt);
 
 	template<typename Float>
 	extern void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const Float *Z,
-		const Float *temp_, const Float *rho_, const Float *Y_,
+		const Float *temp_, const Float *rho_, Float *const* Y_,
 		Float *u, Float *cv, Float *p, Float *c, Float *dpdT);
 }
