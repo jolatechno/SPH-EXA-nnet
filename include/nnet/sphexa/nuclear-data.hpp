@@ -87,7 +87,6 @@ namespace sphexa::sphnnet {
 		std::vector<RealType> c, p, cv, u, dpdT, m, rho, temp, previous_rho; // drho_dt
 
 		//! nuclear abundances (vector of vector)
-		//std::vector<util::array<RealType, n_species>> Y;
 		util::array<std::vector<RealType>, n_species> Y;
 
 		//! timesteps

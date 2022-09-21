@@ -39,18 +39,28 @@ namespace sphexa {
 	        double growthRate = 1;
 	        auto   data_      = data();
 
-	        using vectType = decltype(temp);
 	        for (size_t i = 0; i < data_.size(); ++i) {
 	            if (this->isAllocated(i)) {
 	            	// actually resize
 	                std::visit([&](auto& arg) {
-	        			using T = decltype(*arg);
+	        			using T = std::decay_t<decltype(*arg)>;
 
-	        			if constexpr (std::is_convertible<T, vectType>::value) {
+	        			if constexpr (std::is_convertible<typename T::value_type, int>::value) { // check for "normal" vectors (AKA not Y)
 	                		reallocate(*arg, size, growthRate); 
-	        			} else
-	        				for (auto &y : *arg)
-	                			reallocate(y, size, growthRate);
+	        			} else { // resize Y
+	        				std::vector<Float*> Y_raw_ptr(n_species);
+
+	        				for (int i = 0; i < n_species; ++i) {
+	        					// reallocate Y
+	                			reallocate(Y[i], size, growthRate);
+
+	                			// store Y raw pointer to CPU
+	                			Y_raw_ptr[i] = (Float*)thrust::raw_pointer_cast(Y[i].data());
+	        				}
+
+	        				// copy raw pointer to GPU
+	        				Y_dev_ptr = Y_raw_ptr;
+	        			}
 	                }, data_[i]);
 	            }
 	        }
