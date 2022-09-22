@@ -54,6 +54,7 @@ namespace sphexa::sphnnet {
 	public:
 		// types
 		using RealType = Float;
+    	using KeyType  = Int;
 
 		//!  @brief hydro data
 		thrust::device_vector<RealType> c, p, cv, dpdT, u, m, rho, temp, previous_rho;
@@ -72,11 +73,19 @@ namespace sphexa::sphnnet {
 		//!  resize the number of particules
 		void resize(size_t size);
 
-		//!  base fieldNames (without knowledge of nuclear species names)
-		inline static constexpr std::array fieldNames {
-			"nid", "pid",
-			"dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y",
+		//! base hydro fieldNames (withoutnuclear species names)
+		inline static constexpr std::array baseFieldNames {
+			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho",
 		};
+		//! base hydro fieldNames (every nuclear species is named "Y")
+		inline static constexpr auto fieldNames = []{
+			std::array<std::string_view, baseFieldNames.size()+n_species> fieldNames;
+			for (int i = 0; i < baseFieldNames.size(); ++i)
+				fieldNames[i] = baseFieldNames[i];
+			for (int i = baseFieldNames.size(); i < fieldNames.size(); ++i)
+				fieldNames[i] = "Y";
+		    return fieldNames;
+		}();
 
 
 		/*! @brief return a vector of pointers to field vectors
@@ -86,13 +95,19 @@ namespace sphexa::sphnnet {
 	     */
 	    auto data() {
 	    	using FieldType = std::variant<
-		    	util::array<thrust::device_vector<RealType>, n_species>*,
-		    	thrust::device_vector<RealType>*>;
+	    		thrust::device_vector<int>*,
+	    		thrust::device_vector<KeyType>*,
+	    		thrust::device_vector<RealType>*>;
 
-			return util::array<FieldType, fieldNames.size()>{
-				(thrust::device_vector<RealType>*)nullptr, (thrust::device_vector<RealType>*)nullptr,
-				&dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &previous_rho, &Y
+			util::array<FieldType, fieldNames.size()> data = {
+				(thrust::device_vector<int>*)nullptr, (thrust::device_vector<KeyType>*)nullptr,
+				&dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &previous_rho
 			};
+
+			for (int i = 0; i < n_species; ++i) 
+				data[baseFieldNames.size() + i] = &Y[i];
+
+			return data;
 	    }
 	 };
 }

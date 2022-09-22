@@ -119,7 +119,6 @@ namespace sphexa::sphnnet {
 	            if (this->isAllocated(i)) {
 	            	// actually resize
 	                std::visit([&](auto& arg) { 
-	                	using T = decltype((*arg)[0]);
 	                	size_t previous_size = arg->size();
 
                 		// reallocate
@@ -201,20 +200,10 @@ namespace sphexa::sphnnet {
 	    		std::vector<KeyType>*,
 	    		std::vector<RealType>*>;
 	    	
-			util::array<FieldType, fieldNames.size()> data;
-
-			data[0]  = &node_id;
-			data[1]  = &particle_id;
-			data[2]  = &dt;
-			data[3]  = &c;
-			data[4]  = &p;
-			data[5]  = &cv;
-			data[6]  = &u;
-			data[7]  = &dpdT;
-			data[8]  = &m;
-			data[9]  = &temp;
-			data[10] = &rho;
-			data[11] = &previous_rho;
+			util::array<FieldType, fieldNames.size()> data = {
+				&node_id, &particle_id, 
+				&dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &previous_rho
+			};
 
 			for (int i = 0; i < n_species; ++i) 
 				data[baseFieldNames.size() + i] = &Y[i];
