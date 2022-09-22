@@ -93,7 +93,7 @@ namespace sphnnet {
 		int iter = 1;
 		Float elapsed = 0.0;
 		bool did_not_find = false;
-		int shared_idx = threadIdx.x;
+		int shared_idx = -1; /*threadIdx.x;
 		if (shared_idx >= block_size) { // limit condition
 			shared_idx = -1;
 		} else {
@@ -103,8 +103,7 @@ namespace sphnnet {
 			const size_t idx = block_begin + shared_idx;
 			for (int j = 0; j < dimension; ++j)
 				Y[j] = Y_[j][idx];
-		}
-
+		}*/
 		// run simulation
 		while (true) {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
