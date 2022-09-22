@@ -111,27 +111,35 @@ namespace sphexa::sphnnet {
 			if (use_drhodt)
 				previous_rho_ptr = (Float*)thrust::raw_pointer_cast(n.devData.previous_rho.data() + firstIndex);
 
+
+			// copy pointers to GPU
 			std::vector<Float*> Y_raw_ptr(dimension);
+			Float **Y_dev_ptr;
+			gpuErrchk(cudaMalloc((void**)&Y_dev_ptr, dimension*sizeof(Float)));
 			for (int i = 0; i < dimension; ++i)
-	            Y_raw_ptr[i] = (Float*)thrust::raw_pointer_cast(n.devData.Y[i].data()) + firstIndex; // store Y raw pointer to CPU
-	        n.devData.Y_dev_ptr = Y_raw_ptr; // copy raw pointer to GPU
-			
+	            Y_raw_ptr[i] = (Float*)thrust::raw_pointer_cast(n.devData.Y[i].data() + firstIndex); // store Y raw pointer to CPU
+	        gpuErrchk(cudaMemcpy((void*)Y_dev_ptr, (void*)Y_raw_ptr.data(), dimension*sizeof(Float*), cudaMemcpyHostToDevice));
+
+
 			// call the cuda kernel wrapper
 			cudaComputeNuclearReactions(lastIndex - firstIndex, dimension,
 				n.devData.buffer,
 		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()  + firstIndex),
 		        previous_rho_ptr,
-	   (Float**)thrust::raw_pointer_cast(n.devData.Y_dev_ptr.data()),
+		        Y_dev_ptr,
 		(Float*)thrust::raw_pointer_cast(n.devData.temp.data() + firstIndex),
 		(Float*)thrust::raw_pointer_cast(n.devData.dt.data()   + firstIndex),
 				hydro_dt, previous_dt,
 				dev_reactions, construct_rates_BE, eos,
 				use_drhodt);
 			
-			/* debuging: check for error */
+			
+			// debuging: check for error
 			gpuErrchk(cudaPeekAtLastError());
 			gpuErrchk(cudaDeviceSynchronize()); 
 
+			// free cuda buffer
+			gpuErrchk(cudaFree((void*)Y_dev_ptr));
 			free(dev_reactions);
 #endif
 		} else {
@@ -207,22 +215,26 @@ namespace sphexa::sphnnet {
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 #if COMPILE_DEVICE
-			// copy data to the gpu
+			// copy data to the GPU
 			Float *Z_dev;
 			gpuErrchk(cudaMalloc((void**)&Z_dev, dimension*sizeof(Float)));
 			gpuErrchk(cudaMemcpy((void*)Z_dev, (void*)Z.data(), dimension*sizeof(Float), cudaMemcpyHostToDevice));
 
+			// copy pointers to GPU
 			std::vector<Float*> Y_raw_ptr(dimension);
+			Float **Y_dev_ptr;
+			gpuErrchk(cudaMalloc((void**)&Y_dev_ptr, dimension*sizeof(Float)));
 			for (int i = 0; i < dimension; ++i)
-	            Y_raw_ptr[i] = (Float*)thrust::raw_pointer_cast(n.devData.Y[i].data()) + firstIndex; // store Y raw pointer to CPU
-	        n.devData.Y_dev_ptr = Y_raw_ptr; // copy raw pointer to GPU
+	            Y_raw_ptr[i] = (Float*)thrust::raw_pointer_cast(n.devData.Y[i].data() + firstIndex); // store Y raw pointer to CPU
+	        gpuErrchk(cudaMemcpy((void*)Y_dev_ptr, (void*)Y_raw_ptr.data(), dimension*sizeof(Float*), cudaMemcpyHostToDevice));
+
 
 			// call the cuda kernel wrapper
 			cudaComputeHelmholtz(lastIndex - firstIndex, dimension, Z_dev,
 				// read buffers:
 		(Float*)thrust::raw_pointer_cast(n.devData.temp.data() + firstIndex),
 		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()  + firstIndex),
-      (Float **)thrust::raw_pointer_cast(n.devData.Y_dev_ptr.data()),
+				Y_dev_ptr,
 				// write buffers:
 		(Float*)thrust::raw_pointer_cast(n.devData.u.data()    + firstIndex),
 		(Float*)thrust::raw_pointer_cast(n.devData.cv.data()   + firstIndex),
@@ -230,9 +242,14 @@ namespace sphexa::sphnnet {
 		(Float*)thrust::raw_pointer_cast(n.devData.c.data()    + firstIndex),
 		(Float*)thrust::raw_pointer_cast(n.devData.dpdT.data() + firstIndex));
 
-			/* debuging: check for error */
+
+			// debuging: check for error
 			gpuErrchk(cudaPeekAtLastError());
 			gpuErrchk(cudaDeviceSynchronize()); 
+
+			// free cuda buffer
+			gpuErrchk(cudaFree((void*)Z_dev));
+			gpuErrchk(cudaFree((void*)Y_dev_ptr));
 #endif
 		} else {
 

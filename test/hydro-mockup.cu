@@ -364,7 +364,6 @@ int main(int argc, char* argv[]) {
 #endif
 	if (use_net87) {
 		nuclear_data_87.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y");
-			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
 		nuclear_data_87.devData.setDependent("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_87, Y0_87);
@@ -375,7 +374,6 @@ int main(int argc, char* argv[]) {
 		std::fill(nuclear_data_87.m.begin(), nuclear_data_87.m.end(), 1.);
 	} else if (use_net86) {
 		nuclear_data_86.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y");
-			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
 		nuclear_data_86.devData.setDependent("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_86, Y0_87);
@@ -386,7 +384,6 @@ int main(int argc, char* argv[]) {
 		std::fill(nuclear_data_86.m.begin(), nuclear_data_86.m.end(), 1.);
 	} else {
 		nuclear_data_14.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y", "dt");
-			//"nid", "pid", "temp", "rho", "previous_rho", "Y");
 		nuclear_data_14.devData.setDependent("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_14, Y0_14);

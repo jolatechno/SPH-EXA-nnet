@@ -61,8 +61,6 @@ namespace sphexa::sphnnet {
 
 		//!  @brief nuclear abundances (vector of vector)
 		util::array<thrust::device_vector<RealType>, n_species> Y;
-		//! device pointers to nuclear abundances vectors
-		thrust::device_vector<RealType*> Y_dev_ptr;
 
 		//! @brief timesteps
 		thrust::device_vector<RealType> dt;
