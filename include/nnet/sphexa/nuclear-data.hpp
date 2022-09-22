@@ -56,6 +56,7 @@
 
 #include "cstone/util/util.hpp"
 
+
 namespace sphexa::sphnnet {
 	template<size_t N, typename T, typename I>
 	class DeviceNuclearDataType;
@@ -109,7 +110,7 @@ namespace sphexa::sphnnet {
 		 */
 		void resize(size_t size) {
 	        double growthRate = 1;
-	        auto   data_      = legacyData();
+	        auto   data_      = data();
 
 			if constexpr (HaveGpu<AcceleratorType>{})
 	        	devData.resize(size);
@@ -119,91 +120,74 @@ namespace sphexa::sphnnet {
 	            	// actually resize
 	                std::visit([&](auto& arg) { 
 	                	using T = decltype((*arg)[0]);
-	                	if constexpr (std::is_convertible<T, int>::value) {
-	                		size_t previous_size = arg->size();
+	                	size_t previous_size = arg->size();
 
-	                		// reallocate
-	                		reallocate(*arg, size, growthRate);
+                		// reallocate
+                		reallocate(*arg, size, growthRate);
 
-	                		// fill node_id
-			                if ((void*)arg == (void*)(&node_id)) {
-		        				int rank = 0;
+                		// fill node_id
+		                if ((void*)arg == (void*)(&node_id)) {
+	        				int rank = 0;
 #ifdef USE_MPI
-								MPI_Comm_rank(comm, &rank);
+							MPI_Comm_rank(comm, &rank);
 #endif
-								std::fill(node_id.begin() + previous_size, node_id.end(), rank);
-			                }
+							std::fill(node_id.begin() + previous_size, node_id.end(), rank);
+		                }
 
-			                // fill particle ID
-			                else if ((void*)arg == (void*)(&particle_id)) {
-			                	std::iota(particle_id.begin() + previous_size, particle_id.end(), previous_size);
-			                }
+		                // fill particle ID
+		                else if ((void*)arg == (void*)(&particle_id)) {
+		                	std::iota(particle_id.begin() + previous_size, particle_id.end(), previous_size);
+		                }
 
-			                // fill rho or previous_rho
-			                else if ((void*)arg == (void*)(&rho) || (void*)arg == (void*)(&previous_rho)) {
-			                	std::fill(arg->begin() + previous_size, arg->end(), 0.);
-			                }
+		                // fill rho or previous_rho
+		                else if ((void*)arg == (void*)(&rho) || (void*)arg == (void*)(&previous_rho)) {
+		                	std::fill(arg->begin() + previous_size, arg->end(), 0.);
+		                }
 
-			    			// fill dt
-			                else if ((void*)arg == (void*)(&dt)) {
-			                	std::fill(dt.begin() + previous_size, dt.end(), nnet::constants::initial_dt);
-			                }
-			            } else
-			            	// resize every Y field if asked to
-			            	for (auto &y : *arg)
-			            		reallocate(y, size, growthRate);
+		    			// fill dt
+		                else if ((void*)arg == (void*)(&dt)) {
+		                	std::fill(dt.begin() + previous_size, dt.end(), nnet::constants::initial_dt);
+		                }
 	                }, data_[i]);
 	            }
 	        }
 	    }
 
 
-		//! base hydro fieldNames (without knowledge of nuclear species names)
-		inline static constexpr std::array fieldNames {
-			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y"
+		//! base hydro fieldNames (withoutnuclear species names)
+		inline static constexpr std::array baseFieldNames {
+			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho",
 		};
+		//! base hydro fieldNames (every nuclear species is named "Y")
+		inline static constexpr auto fieldNames = []{
+			std::array<std::string_view, baseFieldNames.size()+n_species> fieldNames;
+			for (int i = 0; i < baseFieldNames.size(); ++i)
+				fieldNames[i] = baseFieldNames[i];
+			for (int i = baseFieldNames.size(); i < fieldNames.size(); ++i)
+				fieldNames[i] = "Y";
+		    return fieldNames;
+		}();
+
 
 		//! base fieldNames (contains individual species). Initialized by setOutputFieldsNames
-		std::array<std::string, fieldNames.size()-1 + n_species> fieldNamesNuclear = {
-			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho"
-		};
+		std::array<std::string, fieldNames.size()> outputableFieldNames = [] {
+			std::array<std::string, fieldNames.size()> outputableFieldNames;
+			for (int i = 0; i < baseFieldNames.size(); ++i)
+				outputableFieldNames[i] = baseFieldNames[i];
+			for (int i = 0; i < n_species; ++i) 
+				outputableFieldNames[baseFieldNames.size() + i] = "Y(" + std::to_string(i) + ")";
+			return outputableFieldNames;
+		}();
+
 
 		/*! @brief access and modifies "fieldNames" to account for nuclear species names
 	     *
 	     * @param species_names  vector of species name
 		 */
 		void setOutputFieldsNames(const std::vector<std::string> &species_names) {
-			for (int i = 0; i < fieldNames.size()-1; ++i) 
-				fieldNamesNuclear[i] = fieldNames[i];
 			for (int i = 0; i < n_species; ++i) 
-				fieldNamesNuclear[fieldNames.size()-1 + i] = "Y(" + species_names[i] + ")";
+				outputableFieldNames[baseFieldNames.size() + i] = "Y(" + species_names[i] + ")";
 		}
-
-		/*! @brief access and modifies "fieldNames" without nowing species names (the ith species is named i, and its field named "Y(i)") */
-		void setOutputFieldsNames() {
-			for (int i = 0; i < fieldNames.size()-1; ++i) 
-				fieldNamesNuclear[i] = fieldNames[i];
-			for (int i = 0; i < n_species; ++i) 
-				fieldNamesNuclear[fieldNames.size()-1 + i] = "Y(" + std::to_string(i) + ")";
-		}
-
-
-		/*! @brief data defined for compatibility with SPH base class
-	     *
-	     * We implement this by returning an rvalue to prevent having to store pointers and avoid
-	     * non-trivial copy/move constructors.
-	     */
-	    auto legacyData() {
-	    	using FieldType = std::variant<
-	    		util::array<std::vector<RealType>, n_species>*,
-	    		std::vector<int>*,
-	    		std::vector<KeyType>*,
-	    		std::vector<RealType>*>;
-	    	
-			return util::array<FieldType, fieldNames.size()> {
-				&node_id, &particle_id, &dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &previous_rho, &Y
-			};
-	    }
 
 
 		/*! @brief return a vector of pointers to field vectors
@@ -217,7 +201,7 @@ namespace sphexa::sphnnet {
 	    		std::vector<KeyType>*,
 	    		std::vector<RealType>*>;
 	    	
-			util::array<FieldType, fieldNames.size()-1 + n_species> data;
+			util::array<FieldType, fieldNames.size()> data;
 
 			data[0]  = &node_id;
 			data[1]  = &particle_id;
@@ -233,7 +217,7 @@ namespace sphexa::sphnnet {
 			data[11] = &previous_rho;
 
 			for (int i = 0; i < n_species; ++i) 
-				data[fieldNames.size()-1 + i] = &Y[i];
+				data[baseFieldNames.size() + i] = &Y[i];
 
 			return data;
 	    }
@@ -244,15 +228,11 @@ namespace sphexa::sphnnet {
 	     */
 	    void setOutputFields(const std::vector<std::string>& outFields) {
 	        outputFieldNames = outFields;
-	        outputFieldIndices = sphexa::fieldStringsToInt(fieldNamesNuclear, outFields);
+	        outputFieldIndices = sphexa::fieldStringsToInt(outputableFieldNames, outFields);
     	}
 
 		// particle fields selected for file output
 		std::vector<int>         outputFieldIndices;
 		std::vector<std::string> outputFieldNames;
-
-		bool isAllocated(int i) {
-			return FieldStates<NuclearDataType<n_species, Float, Int, AccType>>::isAllocated(std::min(i, (int)(fieldNames.size()-1)));
-		}
 	};
 }

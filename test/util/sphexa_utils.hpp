@@ -105,40 +105,33 @@ namespace sphexa {
             assert(hostField->size() > 0);
             assert(deviceField->size() > 0);
             
-            if constexpr (std::is_convertible<typename Type1::value_type, int>::value) {
-                if constexpr (std::is_same_v<typename Type1::value_type, typename Type2::value_type>) {
-                    size_t transferSize = (last - first) * sizeof(typename Type1::value_type);
-                    // CHECK_CUDA_ERR(
-                    gpuErrchk(
-                        cudaMemcpy(
-                        rawPtr(*deviceField) + first, hostField->data() + first, transferSize, cudaMemcpyHostToDevice));
-                } else 
-                    throw std::runtime_error("Field type mismatch between CPU and GPU in copy to device");
-            } else {
-                using type1 = std::decay_t<decltype((*hostField)[0])>;
-                using type2 = std::decay_t<decltype((*deviceField)[0])>;
-                
-                if constexpr (std::is_same_v<typename type1::value_type, typename type2::value_type>) {
-                    assert(hostField->size() == deviceField->size());
-
-                    for (int i = 0; i < hostField->size(); ++i) {
-                        size_t transferSize = (last - first) * sizeof(typename type1::value_type);
-                        // CHECK_CUDA_ERR(
-                        gpuErrchk(
-                            cudaMemcpy(
-                            rawPtr((*deviceField)[i]) + first, (*hostField)[i].data() + first, transferSize, cudaMemcpyHostToDevice));
-                    }
-                } else 
-                    throw std::runtime_error("Field type mismatch between CPU and GPU in copy to device");
-            }
+            if constexpr (std::is_same_v<typename Type1::value_type, typename Type2::value_type>) {
+                size_t transferSize = (last - first) * sizeof(typename Type1::value_type);
+                // CHECK_CUDA_ERR(
+                gpuErrchk(
+                    cudaMemcpy(
+                    rawPtr(*deviceField) + first, hostField->data() + first, transferSize, cudaMemcpyHostToDevice));
+            } else 
+                throw std::runtime_error("Field type mismatch between CPU and GPU in copy to device");
         };
 
+        for (const auto& field : fields)
+        {
+            for (auto it = DataType::fieldNames.begin(); it != DataType::fieldNames.end(); ++it) 
+                if (*it == field) {
+                    int fieldIdx = std::distance(DataType::fieldNames.begin(), it);
+                    std::visit(launchTransfer, hostData[fieldIdx], deviceData[fieldIdx]);
+                }
+        }
+        // replacing :
+        /*
         for (const auto& field : fields)
         {
             int fieldIdx =
                 std::find(DataType::fieldNames.begin(), DataType::fieldNames.end(), field) - DataType::fieldNames.begin();
             std::visit(launchTransfer, hostData[fieldIdx], deviceData[fieldIdx]);
         }
+        */
 #endif
     }
 
@@ -155,41 +148,34 @@ namespace sphexa {
 
             assert(hostField->size() > 0);
             assert(deviceField->size() > 0);
-            
-            if constexpr (std::is_convertible<typename Type1::value_type, int>::value) {
-                if constexpr (std::is_same_v<typename Type1::value_type, typename Type2::value_type>) {
-                    size_t transferSize = (last - first) * sizeof(typename Type1::value_type);
-                    // CHECK_CUDA_ERR(
-                    gpuErrchk(
-                        cudaMemcpy(
-                        hostField->data() + first, rawPtr(*deviceField) + first, transferSize, cudaMemcpyDeviceToHost));
-                } else 
-                    throw std::runtime_error("Field type mismatch between CPU and GPU in copy to device");
-            } else {
-                using type1 = std::decay_t<decltype((*hostField)[0])>;
-                using type2 = std::decay_t<decltype((*deviceField)[0])>;
-
-                if constexpr (std::is_same_v<typename type1::value_type, typename type2::value_type>) {
-                    assert(hostField->size() == deviceField->size());
-
-                    for (int i = 0; i < hostField->size(); ++i) {
-                        size_t transferSize = (last - first) * sizeof(typename type1::value_type);
-                        // CHECK_CUDA_ERR(
-                        gpuErrchk(
-                            cudaMemcpy(
-                            (*hostField)[i].data() + first, rawPtr((*deviceField)[i]) + first, transferSize, cudaMemcpyDeviceToHost));
-                    }
-                } else 
-                    throw std::runtime_error("Field type mismatch between CPU and GPU in copy to device");
-            } 
+        
+            if constexpr (std::is_same_v<typename Type1::value_type, typename Type2::value_type>) {
+                size_t transferSize = (last - first) * sizeof(typename Type1::value_type);
+                // CHECK_CUDA_ERR(
+                gpuErrchk(
+                    cudaMemcpy(
+                    hostField->data() + first, rawPtr(*deviceField) + first, transferSize, cudaMemcpyDeviceToHost));
+            } else 
+                throw std::runtime_error("Field type mismatch between CPU and GPU in copy to device");
         };
 
+         for (const auto& field : fields)
+        {
+            for (auto it = DataType::fieldNames.begin(); it != DataType::fieldNames.end(); ++it) 
+                if (*it == field) {
+                    int fieldIdx = std::distance(DataType::fieldNames.begin(), it);
+                    std::visit(launchTransfer, hostData[fieldIdx], deviceData[fieldIdx]);
+                }
+        }
+        // replacing :
+        /*
         for (const auto& field : fields)
         {
             int fieldIdx =
                 std::find(DataType::fieldNames.begin(), DataType::fieldNames.end(), field) - DataType::fieldNames.begin();
             std::visit(launchTransfer, hostData[fieldIdx], deviceData[fieldIdx]);
         }
+        */
 #endif
     }
 

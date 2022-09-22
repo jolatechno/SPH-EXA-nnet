@@ -90,10 +90,22 @@ private:
 
     void releaseOne(const std::string& field)
     {
+        for (auto it = DataType::fieldNames.begin(); it != DataType::fieldNames.end(); ++it) 
+            if (*it == field) {
+                int fieldIdx = std::distance(DataType::fieldNames.begin(), it);
+                releaseOne(fieldIdx);
+            }
+    }
+    // replacing :
+    /*
+    void releaseOne(const std::string& field)
+    {
         int fieldIdx =
             std::find(DataType::fieldNames.begin(), DataType::fieldNames.end(), field) - DataType::fieldNames.begin();
         releaseOne(fieldIdx);
     }
+    */
+
 
     void releaseOne(int idx)
     {
@@ -109,10 +121,23 @@ private:
     template<class FieldPointers>
     void acquireOne(FieldPointers& data_, const std::string& field)
     {
+        for (auto it = DataType::fieldNames.begin(); it != DataType::fieldNames.end(); ++it) 
+            if (*it == field) {
+                int fieldIdx = std::distance(DataType::fieldNames.begin(), it);
+                acquireOne(data_, fieldIdx);
+            }
+    }
+    // replacing :
+    /*
+    template<class FieldPointers>
+    void acquireOne(FieldPointers& data_, const std::string& field)
+    {
         int fieldIdx =
             std::find(DataType::fieldNames.begin(), DataType::fieldNames.end(), field) - DataType::fieldNames.begin();
         acquireOne(data_, fieldIdx);
     }
+    */
+
 
     template<class FieldPointers>
     void acquireOne(FieldPointers& data_, int fieldIdx)
@@ -155,12 +180,25 @@ private:
                                  ". No suitable field available");
     }
 
+
+    void setState(const std::string& field, State state)
+    {
+        for (auto it = DataType::fieldNames.begin(); it != DataType::fieldNames.end(); ++it) 
+            if (*it == field) {
+                int fieldIdx = std::distance(DataType::fieldNames.begin(), it);
+                fieldStates_[fieldIdx] = state;
+            }
+    }
+    // replacing :
+    /*
     void setState(const std::string& field, State state)
     {
         int idx =
             std::find(DataType::fieldNames.begin(), DataType::fieldNames.end(), field) - DataType::fieldNames.begin();
         fieldStates_[idx] = state;
     }
+    */
+
 
     //! @brief current state of each field
     std::vector<State> fieldStates_;

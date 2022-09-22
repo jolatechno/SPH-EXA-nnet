@@ -408,10 +408,10 @@ int main(int argc, char* argv[]) {
 	} else if (use_net86) {
 		nuclear_data_86.setOutputFieldsNames(nnet::net86::constants::species_names);
 		nuclear_data_86.setOutputFields(nuclearOutFields);
-	} else
+	} else {
 		nuclear_data_14.setOutputFieldsNames(nnet::net14::constants::species_names);
 		nuclear_data_14.setOutputFields(nuclearOutFields);
-
+	}
 
 
 
