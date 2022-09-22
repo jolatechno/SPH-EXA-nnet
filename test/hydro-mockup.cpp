@@ -214,7 +214,7 @@ void step(int rank,
 
 	std::swap(n.rho, n.previous_rho);
 	sphexa::mpi::syncDataToStaticPartition(d, n, {"rho", "temp"});
-	sphexa::transferToDevice(n, 0, n_nuclear_particles, {"previous_rho", "rho", "temp"});
+	sphexa::transferToDevice(n, 0, n_nuclear_particles, {"previous_rho", "rho", "temp", "Y"});
 
 	sphexa::sphnnet::computeNuclearReactions(n, 0, n_nuclear_particles, dt, dt,
 		reactions, construct_rates_BE, eos,

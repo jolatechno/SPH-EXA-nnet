@@ -93,9 +93,10 @@ namespace sphnnet {
 		int iter = 1;
 		Float elapsed = 0.0;
 		bool did_not_find = false;
-		int shared_idx = -1; /*threadIdx.x;
-		if (shared_idx >= block_size) { // limit condition
+		int shared_idx = -1; /* threadIdx.x;
+		if (shared_idx >= block_size) {       // limit condition
 			shared_idx = -1;
+			did_not_find = true;
 		} else {
 			status[shared_idx] = threadIdx.x; // update status
 
@@ -103,7 +104,7 @@ namespace sphnnet {
 			const size_t idx = block_begin + shared_idx;
 			for (int j = 0; j < dimension; ++j)
 				Y[j] = Y_[j][idx];
-		}*/
+		} */
 		// run simulation
 		while (true) {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -126,7 +127,10 @@ namespace sphnnet {
 
 						// acquire n-th free ttask
 						if (num_free == thread_id + 1) {
+							// acquire index
 							shared_idx = i;
+							// set status
+							status[shared_idx] = threadIdx.x;
 
 							// copy Y to buffer
 							const size_t idx = block_begin + shared_idx;
@@ -153,7 +157,6 @@ namespace sphnnet {
 			     actual simulation
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			if (shared_idx >= 0) {
-				status[shared_idx] = threadIdx.x;
 				const size_t idx = block_begin + shared_idx;
 
 				// compute drho/dt
@@ -165,7 +168,7 @@ namespace sphnnet {
 				nnet::prepare_system_substep(dimension,
 					Mp, RHS, rates,
 					*reactions, *construct_rates_BE, *eos,
-					*Y_ + dimension*idx, temp_[idx], Y_buffer, T_buffer,
+					Y, temp_[idx], Y_buffer, T_buffer,
 					rho_[idx], drho_dt,
 					hydro_dt, elapsed, dt_[idx], iter);
 
@@ -174,7 +177,7 @@ namespace sphnnet {
 
 				// finalize
 				if(nnet::finalize_system_substep(dimension,
-					Y + dimension*idx, temp_[idx],
+					Y, temp_[idx],
 					Y_buffer, T_buffer,
 					DY_T, hydro_dt, elapsed,
 					dt_[idx], iter))
