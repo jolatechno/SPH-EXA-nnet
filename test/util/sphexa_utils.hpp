@@ -159,7 +159,7 @@ namespace sphexa {
                 throw std::runtime_error("Field type mismatch between CPU and GPU in copy to device");
         };
 
-         for (const auto& field : fields)
+        for (const auto& field : fields)
         {
             for (auto it = DataType::fieldNames.begin(); it != DataType::fieldNames.end(); ++it) 
                 if (*it == field) {

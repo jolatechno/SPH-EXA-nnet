@@ -43,13 +43,7 @@ namespace sphexa {
 	            if (this->isAllocated(i)) {
 	            	// actually resize
 	                std::visit([&](auto& arg) {
-	        			using T = std::decay_t<decltype(*arg)>;
-
-	        			if constexpr (std::is_convertible<typename T::value_type, int>::value) { // check for "normal" vectors (AKA not Y)
-	                		reallocate(*arg, size, growthRate); 
-	        			} else // reallocate vectors of vectors (AKA Y)
-	        				for (auto &y : *arg)
-	                			reallocate(y, size, growthRate);
+	        			reallocate(*arg, size, growthRate);
 	                }, data_[i]);
 	            }
 	        }

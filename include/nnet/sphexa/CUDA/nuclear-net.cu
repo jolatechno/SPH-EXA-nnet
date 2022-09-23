@@ -72,7 +72,7 @@ namespace sphnnet {
 	    }
 
 	    // buffer sizes
-	    const int Y_size        = dimension;
+	    const int Y_size        =  dimension;
 	    const int Mp_size       = (dimension + 1)*(dimension + 1);
 	    const int RHS_size      =  dimension + 1;
 	    const int DY_T_size     =  dimension + 1;

@@ -202,10 +202,8 @@ namespace sphexa::sphnnet {
 		n.resize(local_nuclear_n_particles);
 
 		// intialize nuclear data
-		const int dimension = n.Y.size();
 		#pragma omp parallel for schedule(dynamic)
-		for (size_t i = 0; i < local_nuclear_n_particles; ++i)
-			for (int j = 0; j < n_species; ++j)
-				n.Y[j][i] = Y0[j];
+		for (int j = 0; j < n_species; ++j)
+			std::fill(n.Y[j].begin(), n.Y[j].end(), Y0[j]);
 	}
 }
