@@ -58,7 +58,7 @@
 #include "../../eos/helmholtz.hpp"
 
 #ifndef CUDA_NUM_ITERATION_PER_THREAD
-	#define CUDA_NUM_ITERATION_PER_THREAD 8
+	#define CUDA_NUM_ITERATION_PER_THREAD 4
 #endif
 #ifndef CUDA_NUM_THREAD_PER_BLOCK
 	#define CUDA_NUM_THREAD_PER_BLOCK 32
@@ -66,15 +66,20 @@
 #ifndef CUDA_NUM_THREAD_PER_BLOCK_NNET
 	#define CUDA_NUM_THREAD_PER_BLOCK_NNET CUDA_NUM_THREAD_PER_BLOCK
 #endif
+#ifndef CUDA_ITERATION_BETWEEN_WORK_RESHARING
+	#define CUDA_ITERATION_BETWEEN_WORK_RESHARING 4
+#endif
 
 namespace sphexa::sphnnet {
 	namespace constants {
 		//! number of consecutive iteration per cuda thread
-		const int cuda_num_iteration_per_thread = CUDA_NUM_ITERATION_PER_THREAD;
+		const int cuda_num_iteration_per_thread         = CUDA_NUM_ITERATION_PER_THREAD;
 		//! number of thread per cuda thread block for nuclear network
-		const int cuda_num_thread_per_block_nnet = CUDA_NUM_THREAD_PER_BLOCK_NNET;
+		const int cuda_num_thread_per_block_nnet        = CUDA_NUM_THREAD_PER_BLOCK_NNET;
 		//! number of thread per cuda thread block
-		const int cuda_num_thread_per_block = CUDA_NUM_THREAD_PER_BLOCK;
+		const int cuda_num_thread_per_block             = CUDA_NUM_THREAD_PER_BLOCK;
+		//! number of "unguided" iteration bewteen two work re-sharing
+		const int cuda_iteration_between_work_resharing = CUDA_ITERATION_BETWEEN_WORK_RESHARING;
 	}
 
 	template<class func_type, class func_eos, typename Float>

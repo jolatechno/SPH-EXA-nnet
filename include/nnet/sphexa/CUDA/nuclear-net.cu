@@ -58,18 +58,26 @@ namespace sphnnet {
 	    size_t block_size  = block_end - block_begin;
 
 	    // task status
-	    static const int task_free_status     = -2;
+	    static const int task_free_status     = -3;
+	    static const int task_loading_status  = -2;
 	    static const int task_finished_status = -1;
 	    static const int task_running_status  =  0;
+	    // thread status
+	    static const int thread_seaking_status = -1;
+	    static const int thread_running_status =  0;
 
-	    // initialized shared array
-	    __shared__ int status[constants::cuda_num_thread_per_block*constants::cuda_num_iteration_per_thread];
-	     for (int i =                         constants::cuda_num_iteration_per_thread*threadIdx.x;
-	    		  i < constants::cuda_num_iteration_per_thread*(threadIdx.x + 1) && i < n_particles;
-	    	   ++i)
+	    // allocating shared array
+	    __shared__ int task_status[constants::cuda_num_thread_per_block_nnet*constants::cuda_num_iteration_per_thread];
+	    __shared__ int thread_status[constants::cuda_num_thread_per_block_nnet];
+	    __shared__ bool exit;
+	    // assigning shared array
+	    for (int i =       threadIdx.x*constants::cuda_num_iteration_per_thread;
+	    	     i < (threadIdx.x + 1)*constants::cuda_num_iteration_per_thread;
+	    	     ++i)
 	    {
-	     	status[i] = task_free_status;
+	    	task_status[i] = task_free_status;
 	    }
+	    thread_status[threadIdx.x] = thread_seaking_status;
 
 	    // buffer sizes
 	    const size_t Y_size        =  dimension;
@@ -81,109 +89,108 @@ namespace sphnnet {
 
 	    // allocate local buffer
 	    Float T_buffer;
-	    Float *Buffer    = global_buffer + (Y_size + Mp_size + RHS_size + DY_T_size + Y_buffer_size + rates_size)*(blockIdx.x*blockDim.x + threadIdx.x);
-	    Float *Y         = Buffer;
-    	Float *Mp        = Buffer + Y_size;
-		Float *RHS       = Buffer + Y_size + Mp_size;
-		Float *DY_T      = Buffer + Y_size + Mp_size + RHS_size;
-		Float *Y_buffer  = Buffer + Y_size + Mp_size + RHS_size + DY_T_size;
-		Float *rates     = Buffer + Y_size + Mp_size + RHS_size + DY_T_size + Y_buffer_size;
+	    Float *Y         = global_buffer + (Y_size + Mp_size + RHS_size + DY_T_size + Y_buffer_size + rates_size)*(blockIdx.x*blockDim.x + threadIdx.x);
+    	Float *Mp        = Y        + Y_size;
+		Float *RHS       = Mp       + Mp_size;
+		Float *DY_T      = RHS      + RHS_size;
+		Float *Y_buffer  = DY_T     + DY_T_size;
+		Float *rates     = Y_buffer + Y_buffer_size;
 
 		// initial condition
 		int iter = 1;
 		Float elapsed = 0.0;
-		int shared_idx = -1;
 		// run simulation
 		while (true) {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			       work sharing
 			!!!!!!!!!!!!!!!!!!!!!!!! */
+
 			__syncthreads();
-			if (shared_idx == -1) {
-				bool exit = true;
-				int offset = threadIdx.x;
 
-				// assign work
-				for (int i = 0; i < block_size - offset; ++i)
-					if (status[i] == task_free_status) {
-						// work not done on all threads, can't exit
+			if (threadIdx.x == 0) {
+				exit = true;
+				int task_idx = 0;
+				for (int thread_idx = 0; thread_idx < constants::cuda_num_thread_per_block_nnet; ++thread_idx)
+					if (thread_status[thread_idx] == thread_seaking_status) {
+						// find next free task
+						for (; task_idx < block_size; ++task_idx)
+							if (task_status[task_idx] == task_free_status) {
+								// assign task
+								thread_status[thread_idx] = task_idx;
+								task_status[task_idx]     = task_loading_status;
+
+								// increase task_idx
+								++task_idx;
+								// can't exit as a task is still running
+								exit = false;
+
+								// exit loop
+								break;
+							}
+					} else {
+						// can't exit as a task is still running
 						exit = false;
-
-						// acquire n-th free ttask
-						if (offset == 0) {
-							// acquire index
-							shared_idx = i;
-							// set status
-							status[i] = threadIdx.x;
-
-							// copy Y to buffer
-							const size_t idx = block_begin + shared_idx;
-							for (size_t j = 0; j < dimension; ++j)
-								Y[j] = Y_[j][idx];
-
-							// exit loop
-							break;
-						}
-						
-						// update offset (decrease because free work encountered)
-						--offset;
-					} else if (status[i] >= task_running_status) {
-						// work not done on all threads, can't exit
-						exit = false;
-
-						// update offset (reduced because previous thread already assigned)
-						if (status[i] < threadIdx.x)
-							--offset;
 					}
-
-				// exit condition
-				if (exit)
-					break;
 			}
+
 			__syncthreads();
+
+			if (exit)
+				break;
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			     actual simulation
 			!!!!!!!!!!!!!!!!!!!!!!!! */
-			if (shared_idx >= 0) {
-				const size_t idx = block_begin + shared_idx;
 
-				// compute drho/dt
-				Float drho_dt = 0;
-				if (use_drhodt)
-					previous_rho_[idx] = (rho_[idx] - previous_rho_[idx])/previous_dt;
 
-				// generate system
-				nnet::prepare_system_substep(dimension,
-					Mp, RHS, rates,
-					*reactions, *construct_rates_BE, *eos,
-					Y, temp_[idx], Y_buffer, T_buffer,
-					rho_[idx], drho_dt,
-					hydro_dt, elapsed, dt_[idx], iter);
+			for (int i = 0; i < constants::cuda_iteration_between_work_resharing; ++i)
+				if (thread_status[threadIdx.x] >= thread_running_status) {
+					const int shared_idx = thread_status[threadIdx.x];
+					const size_t idx = block_begin + shared_idx;
 
-				// solve M*D{T, Y} = RHS
-				eigen::solve(Mp, RHS, DY_T, dimension + 1, (Float)nnet::constants::epsilon_system);
+					// copy Y to local buffer
+					if (task_status[shared_idx] == task_loading_status) {
+						for (int j = 0; j < dimension; ++j)
+							Y[j] = Y_[j][idx];
+						task_status[shared_idx] = task_running_status;
+					}
 
-				// finalize
-				if(nnet::finalize_system_substep(dimension,
-					Y, temp_[idx],
-					Y_buffer, T_buffer,
-					DY_T, hydro_dt, elapsed,
-					dt_[idx], iter))
-				{
-					// copy Y "buffer" back to actual storage
-					for (size_t j = 0; j < dimension; ++j)
-						Y_[j][idx] = Y[j];
+					// compute drho/dt
+					Float drho_dt = 0;
+					if (use_drhodt)
+						previous_rho_[idx] = (rho_[idx] - previous_rho_[idx])/previous_dt;
 
-					// reset
-					status[shared_idx] = task_finished_status;
-					iter = 0;
-					shared_idx = -1;
-					elapsed = 0.0;
+					// generate system
+					nnet::prepare_system_substep(dimension,
+						Mp, RHS, rates,
+						*reactions, *construct_rates_BE, *eos,
+						Y, temp_[idx], Y_buffer, T_buffer,
+						rho_[idx], drho_dt,
+						hydro_dt, elapsed, dt_[idx], iter);
+
+					// solve M*D{T, Y} = RHS
+					eigen::solve(Mp, RHS, DY_T, dimension + 1, (Float)nnet::constants::epsilon_system);
+
+					// finalize
+					if(nnet::finalize_system_substep(dimension,
+						Y, temp_[idx],
+						Y_buffer, T_buffer,
+						DY_T, hydro_dt, elapsed,
+						dt_[idx], iter))
+					{
+						// copy Y "buffer" back to actual storage
+						for (int j = 0; j < dimension; ++j)
+							Y_[j][idx] = Y[j];
+
+						// reset
+						task_status[shared_idx]    = task_finished_status;
+						thread_status[threadIdx.x] = thread_seaking_status;
+						iter = 0;
+						elapsed = 0.0;
+					}
+
+					++iter;
 				}
-
-				++iter;
-			}
 		}
 	}
 
