@@ -157,8 +157,8 @@ namespace sphnnet {
 
 					// compute drho/dt
 					Float drho_dt = 0;
-					if (use_drhodt)
-						previous_rho_[idx] = (rho_[idx] - previous_rho_[idx])/previous_dt;
+					if (use_drhodt && previous_rho_[idx] != 0)
+						drho_dt = (rho_[idx] - previous_rho_[idx])/previous_dt;
 
 					// generate system
 					nnet::prepare_system_substep(dimension,
