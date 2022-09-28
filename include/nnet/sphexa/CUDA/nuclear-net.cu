@@ -51,147 +51,65 @@ namespace sphnnet {
 		const nnet::gpu_reaction_list *reactions, const func_type *construct_rates_BE, const func_eos *eos,
 		bool use_drhodt)
 	{
-	    size_t block_begin =                         blockIdx.x*blockDim.x*constants::cuda_num_iteration_per_thread;
-	    size_t block_end   = (blockIdx.x + 1)*blockDim.x*constants::cuda_num_iteration_per_thread;
-	    if (block_end > n_particles)
-	    	block_end = n_particles;
-	    size_t block_size  = block_end - block_begin;
+	    size_t thread = blockIdx.x*blockDim.x + threadIdx.x;
+	    if (thread < n_particles) {
+	    	// buffer sizes
+		    const size_t Y_size        =  dimension;
+		    const size_t Mp_size       = (dimension + 1)*(dimension + 1);
+		    const size_t RHS_size      =  dimension + 1;
+		    const size_t DY_T_size     =  dimension + 1;
+		    const size_t Y_buffer_size =  dimension;
+		    const size_t rates_size    =  reactions->size();
 
-	    // task status
-	    static const int task_free_status     = -3;
-	    static const int task_loading_status  = -2;
-	    static const int task_finished_status = -1;
-	    static const int task_running_status  =  0;
-	    // thread status
-	    static const int thread_seaking_status = -1;
-	    static const int thread_running_status =  0;
+		    // allocate local buffer
+		    Float T_buffer;
+		    Float *Y         = global_buffer + (Y_size + Mp_size + RHS_size + DY_T_size + Y_buffer_size + rates_size)*(blockIdx.x*blockDim.x + threadIdx.x);
+	    	Float *Mp        = Y        + Y_size;
+			Float *RHS       = Mp       + Mp_size;
+			Float *DY_T      = RHS      + RHS_size;
+			Float *Y_buffer  = DY_T     + DY_T_size;
+			Float *rates     = Y_buffer + Y_buffer_size;
 
-	    // allocating shared array
-	    __shared__ int task_status[constants::cuda_num_thread_per_block_nnet*constants::cuda_num_iteration_per_thread];
-	    __shared__ int thread_status[constants::cuda_num_thread_per_block_nnet];
-	    __shared__ bool exit;
-	    // assigning shared array
-	    for (int i =       threadIdx.x*constants::cuda_num_iteration_per_thread;
-	    	     i < (threadIdx.x + 1)*constants::cuda_num_iteration_per_thread;
-	    	     ++i)
-	    {
-	    	task_status[i] = task_free_status;
-	    }
-	    thread_status[threadIdx.x] = thread_seaking_status;
+	    	 // copy Y to local buffer
+			for (int j = 0; j < dimension; ++j)
+				Y[j] = Y_[j][thread];
 
-	    // buffer sizes
-	    const size_t Y_size        =  dimension;
-	    const size_t Mp_size       = (dimension + 1)*(dimension + 1);
-	    const size_t RHS_size      =  dimension + 1;
-	    const size_t DY_T_size     =  dimension + 1;
-	    const size_t Y_buffer_size =  dimension;
-	    const size_t rates_size    =  reactions->size();
+			// compute drho/dt
+			Float drho_dt = 0;
+			if (use_drhodt)
+				drho_dt = (rho_[thread] - previous_rho_[thread])/previous_dt;
 
-	    // allocate local buffer
-	    Float T_buffer;
-	    Float *Y         = global_buffer + (Y_size + Mp_size + RHS_size + DY_T_size + Y_buffer_size + rates_size)*(blockIdx.x*blockDim.x + threadIdx.x);
-    	Float *Mp        = Y        + Y_size;
-		Float *RHS       = Mp       + Mp_size;
-		Float *DY_T      = RHS      + RHS_size;
-		Float *Y_buffer  = DY_T     + DY_T_size;
-		Float *rates     = Y_buffer + Y_buffer_size;
+			// initial condition
+			Float elapsed = 0.0;
+			// run simulation
+			for (int iter = 1;; ++iter) {
+				// generate system
+				nnet::prepare_system_substep(dimension,
+					Mp, RHS, rates,
+					*reactions, *construct_rates_BE, *eos,
+					Y, temp_[thread], Y_buffer, T_buffer,
+					rho_[thread], drho_dt,
+					hydro_dt, elapsed, dt_[thread], iter);
 
-		// initial condition
-		int iter = 1;
-		Float elapsed = 0.0;
-		// run simulation
-		while (true) {
-			/* !!!!!!!!!!!!!!!!!!!!!!!!
-			       work sharing
-			!!!!!!!!!!!!!!!!!!!!!!!! */
+				// solve M*D{T, Y} = RHS
+				eigen::solve(Mp, RHS, DY_T, dimension + 1, (Float)nnet::constants::epsilon_system);
 
-			__syncthreads();
+				// finalize
+				if(nnet::finalize_system_substep(dimension,
+					Y, temp_[thread],
+					Y_buffer, T_buffer,
+					DY_T, hydro_dt, elapsed,
+					dt_[thread], iter))
+				{
+					// copy Y "buffer" back to actual storage
+					for (int j = 0; j < dimension; ++j)
+						Y_[j][thread] = Y[j];
 
-			if (threadIdx.x == 0) {
-				exit = true;
-				int task_idx = 0;
-				for (int thread_idx = 0; thread_idx < constants::cuda_num_thread_per_block_nnet; ++thread_idx)
-					if (thread_status[thread_idx] == thread_seaking_status) {
-						// find next free task
-						for (; task_idx < block_size; ++task_idx)
-							if (task_status[task_idx] == task_free_status) {
-								// assign task
-								thread_status[thread_idx] = task_idx;
-								task_status[task_idx]     = task_loading_status;
-
-								// increase task_idx
-								++task_idx;
-								// can't exit as a task is still running
-								exit = false;
-
-								// exit loop
-								break;
-							}
-					} else {
-						// can't exit as a task is still running
-						exit = false;
-					}
-			}
-
-			__syncthreads();
-
-			if (exit)
-				break;
-
-			/* !!!!!!!!!!!!!!!!!!!!!!!!
-			     actual simulation
-			!!!!!!!!!!!!!!!!!!!!!!!! */
-
-
-			for (int i = 0; i < constants::cuda_iteration_between_work_resharing; ++i)
-				if (thread_status[threadIdx.x] >= thread_running_status) {
-					const int shared_idx = thread_status[threadIdx.x];
-					const size_t idx = block_begin + shared_idx;
-
-					// copy Y to local buffer
-					if (task_status[shared_idx] == task_loading_status) {
-						for (int j = 0; j < dimension; ++j)
-							Y[j] = Y_[j][idx];
-						task_status[shared_idx] = task_running_status;
-					}
-
-					// compute drho/dt
-					Float drho_dt = 0;
-					if (use_drhodt)
-						previous_rho_[idx] = (rho_[idx] - previous_rho_[idx])/previous_dt;
-
-					// generate system
-					nnet::prepare_system_substep(dimension,
-						Mp, RHS, rates,
-						*reactions, *construct_rates_BE, *eos,
-						Y, temp_[idx], Y_buffer, T_buffer,
-						rho_[idx], drho_dt,
-						hydro_dt, elapsed, dt_[idx], iter);
-
-					// solve M*D{T, Y} = RHS
-					eigen::solve(Mp, RHS, DY_T, dimension + 1, (Float)nnet::constants::epsilon_system);
-
-					// finalize
-					if(nnet::finalize_system_substep(dimension,
-						Y, temp_[idx],
-						Y_buffer, T_buffer,
-						DY_T, hydro_dt, elapsed,
-						dt_[idx], iter))
-					{
-						// copy Y "buffer" back to actual storage
-						for (int j = 0; j < dimension; ++j)
-							Y_[j][idx] = Y[j];
-
-						// reset
-						task_status[shared_idx]    = task_finished_status;
-						thread_status[threadIdx.x] = thread_seaking_status;
-						iter = 0;
-						elapsed = 0.0;
-					}
-
-					++iter;
+					// exit
+					break;
 				}
-		}
+			}
+	    }
 	}
 
 
@@ -221,8 +139,7 @@ namespace sphnnet {
 		gpuErrchk(cudaMemcpy(dev_eos,                &eos,                sizeof(func_eos),                cudaMemcpyHostToDevice));
 
 		// compute chunk sizes
-		int num_threads     = (n_particles + constants::cuda_num_iteration_per_thread  - 1)/constants::cuda_num_iteration_per_thread;
-		int cuda_num_blocks = (num_threads + constants::cuda_num_thread_per_block_nnet - 1)/constants::cuda_num_thread_per_block_nnet;
+		int cuda_num_blocks = (n_particles + constants::cuda_num_thread_per_block_nnet - 1)/constants::cuda_num_thread_per_block_nnet;
 
 		// buffer sizes
 		const size_t Y_size        =  dimension;
@@ -232,7 +149,7 @@ namespace sphnnet {
 	    const size_t Y_buffer_size =  dimension;
 	    const size_t rates_size    =  reactions.size();
 		// allocate global buffer
-	    const size_t buffer_size = (Y_size + Mp_size + RHS_size + DY_T_size + Y_buffer_size + rates_size)*cuda_num_blocks*constants::cuda_num_thread_per_block_nnet;
+	    const size_t buffer_size = (Y_size + Mp_size + RHS_size + DY_T_size + Y_buffer_size + rates_size)*n_particles;
 		if (buffer.size() < buffer_size)
 			buffer.resize(buffer_size);
 
