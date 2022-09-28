@@ -172,7 +172,7 @@ namespace sphexa::sphnnet {
 
 					// compute drho/dt
 					Float drho_dt = 0;
-					if (use_drhodt)
+					if (use_drhodt && n.previous_rho[i] != 0)
 						n.previous_rho[i] = (n.rho[i] - n.previous_rho[i])/previous_dt;
 
 					// solve

@@ -76,7 +76,7 @@ namespace sphnnet {
 
 			// compute drho/dt
 			Float drho_dt = 0;
-			if (use_drhodt)
+			if (use_drhodt && previous_rho_[thread] != 0)
 				drho_dt = (rho_[thread] - previous_rho_[thread])/previous_dt;
 
 			// initial condition
