@@ -57,10 +57,10 @@ namespace sphnnet {
 	    	block_end = n_particles;
 	    size_t block_size  = block_end - block_begin;
 
-	    // satatus
-	    static const int free_status     = -2;
-	    static const int finished_status = -1;
-	    static const int running_status  =  0;
+	    // task status
+	    static const int task_free_status     = -2;
+	    static const int task_finished_status = -1;
+	    static const int task_running_status  =  0;
 
 	    // initialized shared array
 	    __shared__ int status[constants::cuda_num_thread_per_block*constants::cuda_num_iteration_per_thread];
@@ -68,16 +68,16 @@ namespace sphnnet {
 	    		  i < constants::cuda_num_iteration_per_thread*(threadIdx.x + 1) && i < n_particles;
 	    	   ++i)
 	    {
-	     	status[i] = free_status;
+	     	status[i] = task_free_status;
 	    }
 
 	    // buffer sizes
-	    const int Y_size        =  dimension;
-	    const int Mp_size       = (dimension + 1)*(dimension + 1);
-	    const int RHS_size      =  dimension + 1;
-	    const int DY_T_size     =  dimension + 1;
-	    const int Y_buffer_size =  dimension;
-	    const int rates_size    =  reactions->size();
+	    const size_t Y_size        =  dimension;
+	    const size_t Mp_size       = (dimension + 1)*(dimension + 1);
+	    const size_t RHS_size      =  dimension + 1;
+	    const size_t DY_T_size     =  dimension + 1;
+	    const size_t Y_buffer_size =  dimension;
+	    const size_t rates_size    =  reactions->size();
 
 	    // allocate local buffer
 	    Float T_buffer;
@@ -92,65 +92,54 @@ namespace sphnnet {
 		// initial condition
 		int iter = 1;
 		Float elapsed = 0.0;
-		bool did_not_find = false;
-		int shared_idx = -1; /* threadIdx.x;
-		if (shared_idx >= block_size) {       // limit condition
-			shared_idx = -1;
-			did_not_find = true;
-		} else {
-			status[shared_idx] = threadIdx.x; // update status
-
-			// copy Y to buffer
-			const size_t idx = block_begin + shared_idx;
-			for (int j = 0; j < dimension; ++j)
-				Y[j] = Y_[j][idx];
-		} */
+		int shared_idx = -1;
 		// run simulation
 		while (true) {
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
 			       work sharing
 			!!!!!!!!!!!!!!!!!!!!!!!! */
 			__syncthreads();
-			bool exit = shared_idx == -1;
-			if (did_not_find) {
-				for (int i = 0; i < block_size; ++i)
-					if (status[i] != finished_status) {
+			if (shared_idx == -1) {
+				bool exit = true;
+				int offset = threadIdx.x;
+
+				// assign work
+				for (int i = 0; i < block_size - offset; ++i)
+					if (status[i] == task_free_status) {
+						// work not done on all threads, can't exit
 						exit = false;
-						break;
-					}
-			} else if (shared_idx == -1) {
-				int num_free = 0, thread_id = threadIdx.x;
-				for (int i = 0; i < block_size; ++i)
-					if (status[i] == free_status) {
-						exit = false;
-						++num_free;
 
 						// acquire n-th free ttask
-						if (num_free == thread_id + 1) {
+						if (offset == 0) {
 							// acquire index
 							shared_idx = i;
 							// set status
-							status[shared_idx] = threadIdx.x;
+							status[i] = threadIdx.x;
 
 							// copy Y to buffer
 							const size_t idx = block_begin + shared_idx;
-							for (int j = 0; j < dimension; ++j)
+							for (size_t j = 0; j < dimension; ++j)
 								Y[j] = Y_[j][idx];
 
+							// exit loop
 							break;
 						}
-					} else if (status[i] >= running_status) {
+						
+						// update offset (decrease because free work encountered)
+						--offset;
+					} else if (status[i] >= task_running_status) {
+						// work not done on all threads, can't exit
 						exit = false;
 
+						// update offset (reduced because previous thread already assigned)
 						if (status[i] < threadIdx.x)
-							--thread_id;
+							--offset;
 					}
-				if (shared_idx == -1)
-					did_not_find = true;
+
+				// exit condition
+				if (exit)
+					break;
 			}
-			// exit condition
-			if (exit)
-				break;
 			__syncthreads();
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!
@@ -183,11 +172,11 @@ namespace sphnnet {
 					dt_[idx], iter))
 				{
 					// copy Y "buffer" back to actual storage
-					for (int j = 0; j < dimension; ++j)
+					for (size_t j = 0; j < dimension; ++j)
 						Y_[j][idx] = Y[j];
 
 					// reset
-					status[shared_idx] = finished_status;
+					status[shared_idx] = task_finished_status;
 					iter = 0;
 					shared_idx = -1;
 					elapsed = 0.0;
@@ -229,16 +218,17 @@ namespace sphnnet {
 		int cuda_num_blocks = (num_threads + constants::cuda_num_thread_per_block_nnet - 1)/constants::cuda_num_thread_per_block_nnet;
 
 		// buffer sizes
-		const int Y_size        = dimension;
-	    const int Mp_size       = (dimension + 1)*(dimension + 1);
-	    const int RHS_size      =  dimension + 1;
-	    const int DY_T_size     =  dimension + 1;
-	    const int Y_buffer_size =  dimension;
-	    const int rates_size    =  reactions.size();
+		const size_t Y_size        =  dimension;
+	    const size_t Mp_size       = (dimension + 1)*(dimension + 1);
+	    const size_t RHS_size      =  dimension + 1;
+	    const size_t DY_T_size     =  dimension + 1;
+	    const size_t Y_buffer_size =  dimension;
+	    const size_t rates_size    =  reactions.size();
 		// allocate global buffer
 	    const size_t buffer_size = (Y_size + Mp_size + RHS_size + DY_T_size + Y_buffer_size + rates_size)*cuda_num_blocks*constants::cuda_num_thread_per_block_nnet;
 		if (buffer.size() < buffer_size)
 			buffer.resize(buffer_size);
+
 
 		// launch kernel
 	    cudaKernelComputeNuclearReactions<<<cuda_num_blocks, constants::cuda_num_thread_per_block_nnet>>>(n_particles, dimension,
@@ -247,6 +237,11 @@ namespace sphnnet {
 			hydro_dt, previous_dt,
 			dev_reactions, dev_construct_rates_BE, dev_eos,
 			use_drhodt);
+
+
+		// debuging: check for error
+		gpuErrchk(cudaPeekAtLastError());
+		gpuErrchk(cudaDeviceSynchronize());
 
 	    // free cuda classes
 	    gpuErrchk(cudaFree(dev_reactions));
@@ -333,8 +328,12 @@ namespace sphnnet {
 				zbar += Y_[i][thread]*Z[i];
 			}
 
+
+			// actually compute helmholtz eos
 			auto eos_struct = nnet::eos::helmholtz(abar, zbar, temp_[thread], rho_[thread]);
 
+
+			// copy results to buffers
 			u[thread]    = eos_struct.u;
 			cv[thread]   = eos_struct.cv;
 			p[thread]    = eos_struct.p;

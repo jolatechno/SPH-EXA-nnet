@@ -95,6 +95,8 @@ namespace sphexa::sphnnet {
 			!!!!!!!!!!!!! */
 
 #if COMPILE_DEVICE
+			// check for drho/dt allocation
+			Float* previous_rho_ptr = nullptr;
 			if (use_drhodt) {
 				int previous_rho_idx = std::distance(n.devData.fieldNames.begin(),
 					std::find(n.devData.fieldNames.begin(), n.devData.fieldNames.end(), "previous_rho"));
@@ -103,14 +105,11 @@ namespace sphexa::sphnnet {
 					std::cerr << "disabeling using drho/dt because 'previous_rho' isn't alocated !\n";
 				}
 			}
-			
-
-			nnet::gpu_reaction_list dev_reactions = nnet::move_to_gpu(reactions);
-
-			Float* previous_rho_ptr = nullptr;
 			if (use_drhodt)
 				previous_rho_ptr = (Float*)thrust::raw_pointer_cast(n.devData.previous_rho.data() + firstIndex);
 
+			// reactions to GPU
+			nnet::gpu_reaction_list dev_reactions = nnet::move_to_gpu(reactions);
 
 			// copy pointers to GPU
 			std::vector<Float*> Y_raw_ptr(dimension);
@@ -132,11 +131,7 @@ namespace sphexa::sphnnet {
 				hydro_dt, previous_dt,
 				dev_reactions, construct_rates_BE, eos,
 				use_drhodt);
-			
-			
-			// debuging: check for error
-			gpuErrchk(cudaPeekAtLastError());
-			gpuErrchk(cudaDeviceSynchronize()); 
+
 
 			// free cuda buffer
 			gpuErrchk(cudaFree((void*)Y_dev_ptr));
