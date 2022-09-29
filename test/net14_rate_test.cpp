@@ -36,10 +36,10 @@
 #include "sph/traits.hpp"
 #include "cstone/util/array.hpp"
 
-#include "nnet/nuclear-net.hpp"
-#include "nnet/net14/net14.hpp"
-#include "nnet/eos/helmholtz.hpp"
+#include "nnet/parameterization/net14/net14.hpp"
+#include "nnet/parameterization/eos/helmholtz.hpp"
 
+#include "nnet/nuclear-net.hpp"
 
 int main() {
 	std::cout << "A.size = " << nnet::net14::constants::A.size() << "\n";

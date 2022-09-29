@@ -48,14 +48,14 @@
 #include "../../nuclear-net.hpp"
 #include "../../CUDA/nuclear-net.hpp"
 
-#include "../../eos/helmholtz.hpp"
-#include "../util/algorithm.hpp"
+#include "../../parameterization/eos/helmholtz.hpp"
+#include "../../parameterization/eos/ideal_gas.hpp"
 
-#include "../../net14/net14.hpp"
-#include "../../net86/net86.hpp"
-#include "../../net87/net87.hpp"
-#include "../../eos/ideal_gas.hpp"
-#include "../../eos/helmholtz.hpp"
+#include "../../parameterization/net14/net14.hpp"
+#include "../../parameterization/net86/net86.hpp"
+#include "../../parameterization/net87/net87.hpp"
+
+#include "../util/algorithm.hpp"
 
 #ifndef CUDA_NUM_THREAD_PER_BLOCK
 	#define CUDA_NUM_THREAD_PER_BLOCK 32

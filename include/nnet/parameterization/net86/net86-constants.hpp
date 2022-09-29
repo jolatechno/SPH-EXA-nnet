@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "../CUDA/cuda.inl"
+#include "../../CUDA/cuda.inl"
 
 #include <vector>
 #include <algorithm>

@@ -30,12 +30,12 @@
  */
 
 
-#include "nnet/net87/net87.hpp"
-#include "nnet/net86/net86.hpp"
-#include "nnet/net14/net14.hpp"
+#include "nnet/parameterization/net87/net87.hpp"
+#include "nnet/parameterization/net86/net86.hpp"
+#include "nnet/parameterization/net14/net14.hpp"
 
-#include "nnet/eos/helmholtz.hpp"
-#include "nnet/eos/ideal_gas.hpp"
+#include "nnet/parameterization/eos/helmholtz.hpp"
+#include "nnet/parameterization/eos/ideal_gas.hpp"
 
 namespace nnet {
 	namespace net87 {

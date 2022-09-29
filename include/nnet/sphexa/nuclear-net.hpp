@@ -48,8 +48,7 @@
 #include <numeric>
 #include <omp.h>
 
-#include "nuclear-data.hpp"
-#include "../eos/helmholtz.hpp"
+#include "../nuclear-net.hpp"
 
 #include "../eigen/eigen.hpp"
 #include "util/algorithm.hpp"
@@ -58,7 +57,7 @@
 
 #include "sph/data_util.hpp"
 
-#include "../nuclear-net.hpp"
+#include "../parameterization/eos/helmholtz.hpp"
 
 namespace sphexa::sphnnet {
 	/*! @brief function to compute nuclear reaction, either from NuclearData or ParticuleData if it includes Y
