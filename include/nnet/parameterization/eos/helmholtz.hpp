@@ -42,7 +42,7 @@
 #define STRINGIFY(...) #__VA_ARGS__
 #define STR(...) STRINGIFY(__VA_ARGS__)
 
-#include "../../eigen/eigen.hpp"
+#include "../../../util/eigen.hpp"
 
 #include "../../../util/algorithm.hpp"
 

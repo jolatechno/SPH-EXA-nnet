@@ -52,7 +52,7 @@
 
 #include "../nuclear-net.hpp"
 
-#include "../eigen/eigen.hpp"
+#include "../../util/eigen.hpp"
 #include "../../util/algorithm.hpp"
 
 #include "sph/data_util.hpp"

@@ -34,7 +34,7 @@
 
 #include "../util/CUDA/cuda.inl"
 
-#include "eigen/eigen.hpp"
+#include "../util/eigen.hpp"
 
 #include <iostream>
 

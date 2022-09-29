@@ -47,7 +47,7 @@
 #include <numeric>
 #include <omp.h>
 
-#include "../eigen/eigen.hpp"
+#include "../../util/eigen.hpp"
 #include "../../util/algorithm.hpp"
 
 #include "mpi/mpi-wrapper.hpp"
