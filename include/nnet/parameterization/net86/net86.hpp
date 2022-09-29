@@ -43,7 +43,7 @@
 #include "net86-constants.hpp"
 
 #include "../../nuclear-net.hpp"
-#include "../../sphexa/util/algorithm.hpp"
+#include "../../../util/algorithm.hpp"
 
 #define BE_NET86 \
 	0 COMMA 0 COMMA \

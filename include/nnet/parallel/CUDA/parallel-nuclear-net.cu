@@ -30,10 +30,9 @@
  */
 
 
-#include "nuclear-net.cuh"
+#include "parallel-nuclear-net.cuh"
 
-namespace sphexa {
-namespace sphnnet {
+namespace nnet::parallel_nnet {
 	/***********************************************/
 	/* code to compute nuclear reaction on the GPU */
 	/***********************************************/
@@ -293,5 +292,4 @@ namespace sphnnet {
 	template void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const float *Z,
 		const float *temp_, const float *rho_, float *const* Y_,
 		float *u, float *cv, float *p, float *c, float *dpdT);
-	}
 }

@@ -42,14 +42,13 @@
 	#include <thrust/device_vector.h>
 
 	#include "../CUDA/nuclear-net.hpp"
-	#include "CUDA/nuclear-net.cuh"
 #endif
 
 #include <numeric>
 #include <omp.h>
 
 #include "../eigen/eigen.hpp"
-#include "util/algorithm.hpp"
+#include "../../util/algorithm.hpp"
 
 #include "mpi/mpi-wrapper.hpp"
 

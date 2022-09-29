@@ -55,7 +55,7 @@
 #include "../../parameterization/net86/net86.hpp"
 #include "../../parameterization/net87/net87.hpp"
 
-#include "../util/algorithm.hpp"
+#include "../../../util/algorithm.hpp"
 
 #ifndef CUDA_NUM_THREAD_PER_BLOCK
 	#define CUDA_NUM_THREAD_PER_BLOCK 32
@@ -64,7 +64,7 @@
 	#define CUDA_NUM_THREAD_PER_BLOCK_NNET CUDA_NUM_THREAD_PER_BLOCK
 #endif
 
-namespace sphexa::sphnnet {
+namespace nnet::parallel_nnet {
 	namespace constants {
 		//! number of thread per cuda thread block for nuclear network
 		const int cuda_num_thread_per_block_nnet = CUDA_NUM_THREAD_PER_BLOCK_NNET;

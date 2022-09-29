@@ -44,7 +44,7 @@
 
 #include "../../eigen/eigen.hpp"
 
-#include "../../sphexa/util/algorithm.hpp"
+#include "../../../util/algorithm.hpp"
 
 #ifndef IMAX
 	#define IMAX 541
