@@ -35,7 +35,7 @@
 #include <cuda_runtime.h>
 #include <memory>
 #include "../nuclear-net.hpp"
-#include "cuda-util.hpp"
+#include "../../util/CUDA/cuda-util.hpp"
 
 namespace nnet {
 	/*! @brief Class for reaction list on GPU. */

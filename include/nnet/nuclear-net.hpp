@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "CUDA/cuda.inl"
+#include "../util/CUDA/cuda.inl"
 
 #include "eigen/eigen.hpp"
 

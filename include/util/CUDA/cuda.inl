@@ -85,4 +85,3 @@
      */
 	#define DEVICE_ACCESS(symbol) symbol
 #endif
-

@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "../CUDA/cuda.inl"
+#include "../../util/CUDA/cuda.inl"
 #if COMPILE_DEVICE
 	#include <device_launch_parameters.h>
 	#include <cuda.h>
@@ -41,7 +41,7 @@
 
 	#include <thrust/device_vector.h>
 
-	#include "../CUDA/nuclear-net.hpp"
+	#include "../CUDA/nuclear-net.cuh"
 #endif
 
 #include <numeric>

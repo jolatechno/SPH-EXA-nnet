@@ -32,9 +32,9 @@
 
 #pragma once
 
-#include "../../CUDA/cuda.inl"
+#include "../../../util/CUDA/cuda.inl"
 #if COMPILE_DEVICE
-	#include "../../CUDA/cuda-util.hpp"
+	#include "../../../util/CUDA/cuda-util.hpp"
 #endif
 
 #include <vector>

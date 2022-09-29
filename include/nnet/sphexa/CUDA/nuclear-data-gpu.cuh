@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include "../../../util/CUDA/cuda.inl"
+
 #include <vector>
 #include <array>
 #include <memory>
@@ -44,7 +46,6 @@
 #include "cstone/util/util.hpp"
 #include "cstone/util/array.hpp"
 
-#include "../../CUDA/cuda.inl"
 #include <thrust/device_vector.h>
 
 namespace sphexa::sphnnet {

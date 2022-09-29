@@ -41,10 +41,10 @@
 
 #include "cstone/util/array.hpp"
 
+#include "CUDA/cuda.inl"
 #if COMPILE_DEVICE
 	#include <cuda_runtime.h>
 #endif
-#include "../nnet/CUDA/cuda.inl"
 
 
 namespace algorithm {

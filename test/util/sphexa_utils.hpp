@@ -13,7 +13,7 @@
 
 #include <iostream>
 
-#include "nnet/CUDA/cuda.inl"
+#include "nnet/../util/CUDA/cuda.inl"
 
 #if COMPILE_DEVICE
     #include <thrust/device_vector.h>

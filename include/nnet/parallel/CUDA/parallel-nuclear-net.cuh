@@ -46,7 +46,7 @@
 #include "cstone/util/array.hpp"
 
 #include "../../nuclear-net.hpp"
-#include "../../CUDA/nuclear-net.hpp"
+#include "../../CUDA/nuclear-net.cuh"
 
 #include "../../parameterization/eos/helmholtz.hpp"
 #include "../../parameterization/eos/ideal_gas.hpp"
