@@ -75,7 +75,7 @@ namespace nnet::parallel_nnet {
 	template<class func_type, class func_eos, typename Float>
 	extern void cudaComputeNuclearReactions(const size_t n_particles, const int dimension,
 		thrust::device_vector<Float> &buffer,
-		Float *rho_, Float *previous_rho_, Float **Y_, Float *temp_, Float *dt_,
+		Float *rho_, Float *rho_m1_, Float **Y_, Float *temp_, Float *dt_,
 		const Float hydro_dt, const Float previous_dt,
 		const nnet::gpu_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		bool use_drhodt);

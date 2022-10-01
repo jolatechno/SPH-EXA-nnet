@@ -75,7 +75,7 @@ namespace nnet::parallel_nnet {
      * 
      * The minimum requierment for n (of type Data) are :
  	 *  - A field "Y" containing a vector of vector
-	 *  - Fields "temp", "rho" and "previous_rho"
+	 *  - Fields "temp", "rho" and "rho_m1"
 	 *  - "isAllocated()" function (see SPH-EXA)
 	 *  - "fieldNames" list of field names
 	 *  - A "AcceleratorType" template (that results in "true" from sphexa::HaveGpu<AcceleratorType> for GPU acceleration and false for CPU computation).
@@ -104,17 +104,17 @@ namespace nnet::parallel_nnet {
 
 #if COMPILE_DEVICE
 			// check for drho/dt allocation
-			Float* previous_rho_ptr = nullptr;
+			Float* rho_m1_ptr = nullptr;
 			if (use_drhodt) {
-				int previous_rho_idx = std::distance(n.devData.fieldNames.begin(),
-					std::find(n.devData.fieldNames.begin(), n.devData.fieldNames.end(), "previous_rho"));
-				if (!n.devData.isAllocated(previous_rho_idx)) {
+				int rho_m1_idx = std::distance(n.devData.fieldNames.begin(),
+					std::find(n.devData.fieldNames.begin(), n.devData.fieldNames.end(), "rho_m1"));
+				if (!n.devData.isAllocated(rho_m1_idx)) {
 					use_drhodt = false;
-					std::cerr << "disabeling using drho/dt because 'previous_rho' isn't alocated !\n";
+					std::cerr << "disabeling using drho/dt because 'rho_m1' isn't alocated !\n";
 				}
 			}
 			if (use_drhodt)
-				previous_rho_ptr = (Float*)thrust::raw_pointer_cast(n.devData.previous_rho.data() + firstIndex);
+				rho_m1_ptr = (Float*)thrust::raw_pointer_cast(n.devData.rho_m1.data() + firstIndex);
 
 			// reactions to GPU
 			nnet::gpu_reaction_list dev_reactions = nnet::move_to_gpu(reactions);
@@ -132,7 +132,7 @@ namespace nnet::parallel_nnet {
 			cudaComputeNuclearReactions(lastIndex - firstIndex, dimension,
 				n.devData.buffer,
 		(Float*)thrust::raw_pointer_cast(n.devData.rho.data()  + firstIndex),
-		        previous_rho_ptr,
+		        rho_m1_ptr,
 		        Y_dev_ptr,
 		(Float*)thrust::raw_pointer_cast(n.devData.temp.data() + firstIndex),
 		(Float*)thrust::raw_pointer_cast(n.devData.dt.data()   + firstIndex),
@@ -152,11 +152,11 @@ namespace nnet::parallel_nnet {
 			!!!!!!!!!!!!!!!!!!!!!!! */
 
 			if (use_drhodt) {
-				int previous_rho_idx = std::distance(n.fieldNames.begin(),
-					std::find(n.fieldNames.begin(), n.fieldNames.end(), "previous_rho"));
-				if (!n.isAllocated(previous_rho_idx)) {
+				int rho_m1_idx = std::distance(n.fieldNames.begin(),
+					std::find(n.fieldNames.begin(), n.fieldNames.end(), "rho_m1"));
+				if (!n.isAllocated(rho_m1_idx)) {
 					use_drhodt = false;
-					std::cerr << "disabeling using drho/dt because 'previous_rho' isn't alocated !\n";
+					std::cerr << "disabeling using drho/dt because 'rho_m1' isn't alocated !\n";
 				}
 			}
 
@@ -180,8 +180,8 @@ namespace nnet::parallel_nnet {
 
 					// compute drho/dt
 					Float drho_dt = 0;
-					if (use_drhodt && n.previous_rho[i] != 0)
-						n.previous_rho[i] = (n.rho[i] - n.previous_rho[i])/previous_dt;
+					if (use_drhodt && n.rho_m1[i] != 0)
+						n.rho_m1[i] = (n.rho[i] - n.rho_m1[i])/previous_dt;
 
 					// solve
 					nnet::solve_system_substep(dimension,

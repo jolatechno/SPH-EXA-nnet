@@ -56,9 +56,14 @@ namespace sphexa::sphnnet {
 		// types
 		using RealType = Float;
     	using KeyType  = Int;
+	    using Tmass    = float;
+	    using XM1Type  = float;
 
+		// could replace rho_m1 -> drho_dt
 		//!  @brief hydro data
-		thrust::device_vector<RealType> c, p, cv, dpdT, u, m, rho, temp, previous_rho;
+		thrust::device_vector<RealType> c, p, cv, dpdT, u, rho, temp, rho_m1;
+		//!  @brief particle mass (lower precision)
+		thrust::device_vector<Tmass> m;
 
 		//!  @brief nuclear abundances (vector of vector)
 		util::array<thrust::device_vector<RealType>, n_species> Y;
@@ -74,7 +79,7 @@ namespace sphexa::sphnnet {
 
 		//! base hydro fieldNames (withoutnuclear species names)
 		inline static constexpr std::array baseFieldNames {
-			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho",
+			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1",
 		};
 		//! base hydro fieldNames (every nuclear species is named "Y")
 		inline static constexpr auto fieldNames = []{
@@ -95,12 +100,14 @@ namespace sphexa::sphnnet {
 	    auto data() {
 	    	using FieldType = std::variant<
 	    		thrust::device_vector<int>*,
-	    		thrust::device_vector<KeyType>*,
-	    		thrust::device_vector<RealType>*>;
+	    		thrust::device_vector<unsigned>*,
+	    		thrust::device_vector<uint64_t>*,
+	    		thrust::device_vector<float>*,
+	    		thrust::device_vector<double>*>;
 
 			util::array<FieldType, fieldNames.size()> data = {
 				(thrust::device_vector<int>*)nullptr, (thrust::device_vector<KeyType>*)nullptr,
-				&dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &previous_rho
+				&dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &rho_m1
 			};
 
 			for (int i = 0; i < n_species; ++i) 

@@ -45,7 +45,7 @@ namespace nnet::parallel_nnet {
 	template<class func_type, class func_eos, typename Float>
 	__global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, const int dimension,
 		Float *global_buffer,
-		Float *rho_, Float *previous_rho_, Float **Y_, Float *temp_, Float *dt_,
+		Float *rho_, Float *rho_m1_, Float **Y_, Float *temp_, Float *dt_,
 		const Float hydro_dt, const Float previous_dt,
 		const nnet::gpu_reaction_list *reactions, const func_type *construct_rates_BE, const func_eos *eos,
 		bool use_drhodt)
@@ -75,8 +75,8 @@ namespace nnet::parallel_nnet {
 
 			// compute drho/dt
 			Float drho_dt = 0;
-			if (use_drhodt && previous_rho_[thread] != 0)
-				drho_dt = (rho_[thread] - previous_rho_[thread])/previous_dt;
+			if (use_drhodt && rho_m1_[thread] != 0)
+				drho_dt = (rho_[thread] - rho_m1_[thread])/previous_dt;
 
 			// initial condition
 			Float elapsed = 0.0;
@@ -119,7 +119,7 @@ namespace nnet::parallel_nnet {
 	template<class func_type, class func_eos, typename Float>
 	void cudaComputeNuclearReactions(const size_t n_particles, const int dimension,
 		thrust::device_vector<Float> &buffer,
-		Float *rho_, Float *previous_rho_, Float **Y_, Float *temp_, Float *dt_,
+		Float *rho_, Float *rho_m1_, Float **Y_, Float *temp_, Float *dt_,
 		const Float hydro_dt, const Float previous_dt,
 		const nnet::gpu_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 		bool use_drhodt)
@@ -156,7 +156,7 @@ namespace nnet::parallel_nnet {
 		// launch kernel
 	    cudaKernelComputeNuclearReactions<<<cuda_num_blocks, constants::cuda_num_thread_per_block_nnet>>>(n_particles, dimension,
 	(Float*)thrust::raw_pointer_cast(buffer.data()),
-			rho_, previous_rho_, Y_, temp_, dt_,
+			rho_, rho_m1_, Y_, temp_, dt_,
 			hydro_dt, previous_dt,
 			dev_reactions, dev_construct_rates_BE, dev_eos,
 			use_drhodt);

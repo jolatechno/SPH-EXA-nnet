@@ -212,9 +212,9 @@ void step(int rank,
 
 	// do hydro stuff
 
-	std::swap(n.rho, n.previous_rho);
+	std::swap(n.rho, n.rho_m1);
 	sphexa::mpi::syncDataToStaticPartition(d, n, {"rho", "temp"});
-	sphexa::transferToDevice(n, 0, n_nuclear_particles, {"previous_rho", "rho", "temp"});
+	sphexa::transferToDevice(n, 0, n_nuclear_particles, {"rho_m1", "rho", "temp"});
 
 	sphexa::sphnnet::computeNuclearReactions(n, 0, n_nuclear_particles, dt, dt,
 		reactions, construct_rates_BE, eos,
@@ -363,8 +363,8 @@ int main(int argc, char* argv[]) {
 	sphexa::mpi::initializePointers(first, last, particle_data.node_id, particle_data.particle_id, particle_data.comm);
 #endif
 	if (use_net87) {
-		nuclear_data_87.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_87.devData.setDependent("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
+		nuclear_data_87.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1", "Y");
+		nuclear_data_87.devData.setDependent("temp", "rho", "rho_m1", "Y", "dt", "c", "p", "cv", "u", "dpdT");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_87, Y0_87);
 
@@ -373,8 +373,8 @@ int main(int argc, char* argv[]) {
 
 		std::fill(nuclear_data_87.m.begin(), nuclear_data_87.m.end(), 1.);
 	} else if (use_net86) {
-		nuclear_data_86.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y");
-		nuclear_data_86.devData.setDependent("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
+		nuclear_data_86.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1", "Y");
+		nuclear_data_86.devData.setDependent("temp", "rho", "rho_m1", "Y", "dt", "c", "p", "cv", "u", "dpdT");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_86, Y0_87);
 
@@ -383,8 +383,8 @@ int main(int argc, char* argv[]) {
 
 		std::fill(nuclear_data_86.m.begin(), nuclear_data_86.m.end(), 1.);
 	} else {
-		nuclear_data_14.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho", "Y", "dt");
-		nuclear_data_14.devData.setDependent("temp", "rho", "previous_rho", "Y", "dt", "c", "p", "cv", "u", "dpdT");
+		nuclear_data_14.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1", "Y", "dt");
+		nuclear_data_14.devData.setDependent("temp", "rho", "rho_m1", "Y", "dt", "c", "p", "cv", "u", "dpdT");
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_14, Y0_14);
 

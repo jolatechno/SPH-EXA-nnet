@@ -69,10 +69,12 @@ namespace sphexa::sphnnet {
     	using DeviceNuclearData_t = DeviceNuclearDataType<n_species, Args...>;
 
 		// types
-		using RealType = Float;
-    	using KeyType  = Int;
+		using RealType        = Float;
+    	using KeyType         = Int;
+	    using Tmass           = float;
+	    using XM1Type         = float;
     	using AcceleratorType = AccType;
-		using DeviceData_t = typename sphexa::detail::AccelSwitchType<AcceleratorType, sphexa::DeviceDataFacade, DeviceNuclearData_t>::template type<Float, Int>;
+		using DeviceData_t    = typename sphexa::detail::AccelSwitchType<AcceleratorType, sphexa::DeviceDataFacade, DeviceNuclearData_t>::template type<Float, Int>;
 
     	DeviceData_t devData;
 
@@ -84,8 +86,11 @@ namespace sphexa::sphnnet {
 	    //! @brief gravitational constant
 	    RealType g{0.0};
 
-		//! hydro data
-		std::vector<RealType> c, p, cv, u, dpdT, m, rho, temp, previous_rho; // drho_dt
+		// could replace rho_m1 -> drho_dt
+		//!  @brief hydro data
+		std::vector<RealType> c, p, cv, u, dpdT, rho, temp, rho_m1;
+		//!  @brief particle mass (lower precision)
+		std::vector<Tmass> m;
 
 		//! nuclear abundances (vector of vector)
 		util::array<std::vector<RealType>, n_species> Y;
@@ -138,8 +143,8 @@ namespace sphexa::sphnnet {
 		                	std::iota(particle_id.begin() + previous_size, particle_id.end(), previous_size);
 		                }
 
-		                // fill rho or previous_rho
-		                else if ((void*)arg == (void*)(&rho) || (void*)arg == (void*)(&previous_rho)) {
+		                // fill rho or rho_m1
+		                else if ((void*)arg == (void*)(&rho) || (void*)arg == (void*)(&rho_m1)) {
 		                	std::fill(arg->begin() + previous_size, arg->end(), 0.);
 		                }
 
@@ -155,7 +160,7 @@ namespace sphexa::sphnnet {
 
 		//! base hydro fieldNames (withoutnuclear species names)
 		inline static constexpr std::array baseFieldNames {
-			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "previous_rho",
+			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1",
 		};
 		//! base hydro fieldNames (every nuclear species is named "Y")
 		inline static constexpr auto fieldNames = []{
@@ -197,12 +202,14 @@ namespace sphexa::sphnnet {
 	    auto data() {
 	    	using FieldType = std::variant<
 	    		std::vector<int>*,
-	    		std::vector<KeyType>*,
-	    		std::vector<RealType>*>;
+	    		std::vector<unsigned>*,
+	    		std::vector<uint64_t>*,
+	    		std::vector<float>*,
+	    		std::vector<double>*>;
 	    	
 			util::array<FieldType, fieldNames.size()> data = {
 				&node_id, &particle_id, 
-				&dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &previous_rho
+				&dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &rho_m1
 			};
 
 			for (int i = 0; i < n_species; ++i) 
