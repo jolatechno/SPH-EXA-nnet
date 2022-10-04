@@ -103,7 +103,7 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType>
 	void computeNuclearPartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d) {
-		initializePartition(firstIndex, lastIndex, d, d.nuclearData);
+		computePartition(firstIndex, lastIndex, d, d.nuclearData);
 	}
 
 

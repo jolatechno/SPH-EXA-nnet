@@ -128,3 +128,79 @@ if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
 
 	install(TARGETS ${nnet}-cpu RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
+
+
+
+
+
+
+set(net14-hydro-mockup net14-hydro-mockup)
+add_executable(${net14-hydro-mockup} net14-hydro-mockup.cpp)
+
+target_include_directories(${net14-hydro-mockup} PRIVATE ${SPH_DIR})
+target_include_directories(${net14-hydro-mockup} PRIVATE ${CSTONE_DIR})
+target_include_directories(${net14-hydro-mockup} PRIVATE ${NNET_DIR})
+
+target_include_directories(${net14-hydro-mockup} PUBLIC ${MPI_CXX_INCLUDE_DIRS})
+
+target_compile_definitions(${net14-hydro-mockup} PRIVATE USE_MPI)
+target_link_libraries(${net14-hydro-mockup} PRIVATE ${MPI_CXX_LIBRARIES} OpenMP::OpenMP_CXX
+	nuclear)
+
+install(TARGETS ${net14-hydro-mockup} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+
+
+
+
+
+if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
+	if(CMAKE_HIP_COMPILER)
+		set_property(SOURCE net14-hydro-mockup.cu PROPERTY LANGUAGE HIP)
+	endif()
+
+
+
+
+
+	add_executable(${net14-hydro-mockup}-cuda net14-hydro-mockup.cu)
+
+   	set_target_properties(${net14-hydro-mockup}-cuda PROPERTIES
+   		CUDA_SEPARABLE_COMPILATION ON
+    )
+
+	target_include_directories(${net14-hydro-mockup}-cuda PRIVATE ${SPH_DIR})
+	target_include_directories(${net14-hydro-mockup}-cuda PRIVATE ${CSTONE_DIR})
+	target_include_directories(${net14-hydro-mockup}-cuda PRIVATE ${NNET_DIR})
+
+	target_include_directories(${net14-hydro-mockup}-cuda PUBLIC ${MPI_CXX_INCLUDE_DIRS})
+
+	target_compile_definitions(${net14-hydro-mockup}-cuda PRIVATE USE_MPI USE_CUDA)
+	target_link_libraries(${net14-hydro-mockup}-cuda PRIVATE OpenMP::OpenMP_CXX ${MPI_CXX_LIBRARIES} CUDA::cudart
+		nuclear_gpu)
+
+	install(TARGETS ${net14-hydro-mockup}-cuda RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+
+
+
+
+
+	add_executable(${net14-hydro-mockup}-cpu net14-hydro-mockup.cu)
+
+   	set_target_properties(${net14-hydro-mockup}-cpu PROPERTIES
+   		CUDA_SEPARABLE_COMPILATION ON
+    )
+
+	target_include_directories(${net14-hydro-mockup}-cpu PRIVATE ${SPH_DIR})
+	target_include_directories(${net14-hydro-mockup}-cpu PRIVATE ${CSTONE_DIR})
+	target_include_directories(${net14-hydro-mockup}-cpu PRIVATE ${NNET_DIR})
+
+	target_include_directories(${net14-hydro-mockup}-cpu PUBLIC ${MPI_CXX_INCLUDE_DIRS})
+
+	target_compile_definitions(${net14-hydro-mockup}-cpu PRIVATE USE_MPI USE_CUDA CUDA_CPU_TEST)
+	target_link_libraries(${net14-hydro-mockup}-cpu PRIVATE OpenMP::OpenMP_CXX ${MPI_CXX_LIBRARIES} CUDA::cudart
+		nuclear_gpu)
+
+	install(TARGETS ${net14-hydro-mockup}-cpu RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()

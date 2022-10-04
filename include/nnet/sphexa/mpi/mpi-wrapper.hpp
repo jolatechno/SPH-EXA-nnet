@@ -36,6 +36,9 @@
 
 #ifdef USE_MPI
 	#include <mpi.h>
+#else
+	struct mpi_comm {};
+	typedef mpi_comm MPI_Comm;
 #endif
 
 #include <vector>
@@ -93,12 +96,12 @@ namespace sphexa::mpi {
 	 */
 	mpi_partition partitionFromPointers(size_t firstIndex, size_t lastIndex, const std::vector<int> &node_id, const std::vector<std::size_t> &particle_id, MPI_Comm comm)
 	{
+		mpi_partition partition(node_id, particle_id);
+
 #ifdef USE_MPI
 		int rank, size;
 		MPI_Comm_size(comm, &size);
 		MPI_Comm_rank(comm, &rank);
-
-		mpi_partition partition(node_id, particle_id);
 
 		// prepare vector sizes
 		const int n_particles = lastIndex - firstIndex;
@@ -133,9 +136,9 @@ namespace sphexa::mpi {
 		// send particle id
 		MPI_Alltoallv(&send_buffer[0],              &partition.send_count[0], &partition.send_disp[0], MPI_UNSIGNED_LONG_LONG,
 					  &partition.recv_partition[0], &partition.recv_count[0], &partition.recv_disp[0], MPI_UNSIGNED_LONG_LONG, comm);
+#endif
 
 		return partition;
-#endif
 	}
 
 
