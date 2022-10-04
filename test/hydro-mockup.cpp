@@ -138,7 +138,6 @@ public:
 		x.resize(N);
 		y.resize(N);
 		z.resize(N);
-		z.resize(N);
 
 		rho.resize(N);
 		temp.resize(N);
@@ -430,45 +429,45 @@ int main(int argc, char* argv[]) {
 #endif
 		auto start_it = std::chrono::high_resolution_clock::now();
 
-	if (use_net87) {
-		if (idealGas) {
-			step(rank,
-				first, last,
-				particle_data, nuclear_data_87, hydro_dt,
-				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, idea_gas_eos,
-				nnet::net87::BE.data(), nnet::net87::constants::Z);
+		if (use_net87) {
+			if (idealGas) {
+				step(rank,
+					first, last,
+					particle_data, nuclear_data_87, hydro_dt,
+					nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, idea_gas_eos,
+					nnet::net87::BE.data(), nnet::net87::constants::Z);
+			} else
+				step(rank,
+					first, last,
+					particle_data, nuclear_data_87, hydro_dt,
+					nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, helm_eos_87,
+					nnet::net87::BE.data(), nnet::net87::constants::Z);
+		} else if (use_net86) {
+			if (idealGas) {
+				step(rank,
+					first, last,
+					particle_data, nuclear_data_86, hydro_dt,
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, idea_gas_eos,
+					nnet::net86::BE.data(), nnet::net86::constants::Z);
+			} else
+				step(rank,
+					first, last,
+					particle_data, nuclear_data_86, hydro_dt,
+					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86,
+					nnet::net86::BE.data(), nnet::net86::constants::Z);
 		} else
-			step(rank,
-				first, last,
-				particle_data, nuclear_data_87, hydro_dt,
-				nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, helm_eos_87,
-				nnet::net87::BE.data(), nnet::net87::constants::Z);
-	} else if (use_net86) {
-		if (idealGas) {
-			step(rank,
-				first, last,
-				particle_data, nuclear_data_86, hydro_dt,
-				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, idea_gas_eos,
-				nnet::net86::BE.data(), nnet::net86::constants::Z);
-		} else
-			step(rank,
-				first, last,
-				particle_data, nuclear_data_86, hydro_dt,
-				nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos_86,
-				nnet::net86::BE.data(), nnet::net86::constants::Z);
-	} else
-		if (idealGas) {
-			step(rank,
-				first, last,
-				particle_data, nuclear_data_14, hydro_dt,
-				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, idea_gas_eos,
-				nnet::net14::BE.data(), nnet::net14::constants::Z);
-		} else
-			step(rank,
-				first, last,
-				particle_data, nuclear_data_14, hydro_dt,
-				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14,
-				nnet::net14::BE.data(), nnet::net14::constants::Z);
+			if (idealGas) {
+				step(rank,
+					first, last,
+					particle_data, nuclear_data_14, hydro_dt,
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, idea_gas_eos,
+					nnet::net14::BE.data(), nnet::net14::constants::Z);
+			} else
+				step(rank,
+					first, last,
+					particle_data, nuclear_data_14, hydro_dt,
+					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14,
+					nnet::net14::BE.data(), nnet::net14::constants::Z);
 
 		t += hydro_dt;
 

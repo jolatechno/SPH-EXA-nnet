@@ -217,7 +217,7 @@ namespace sphexa::sphnnet {
 	 * @param initializer  function initializing nuclear abundances from position
 	 */
 	template<class initFunc, class ParticlesDataType>
-	void initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
+	void inline initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
 		initNuclearDataFromPos(firstIndex, lastIndex, d, d.nuclearData, initializer);
 	}
 
@@ -229,7 +229,7 @@ namespace sphexa::sphnnet {
 	 * @param initializer  function initializing nuclear abundances from radius
 	 */
 	template<class initFunc, class ParticlesDataType>
-	void initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
+	void inline initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
 		initNuclearDataFromRadius(firstIndex, lastIndex, d, d.nuclearData, initializer);
 	}
 
@@ -241,7 +241,7 @@ namespace sphexa::sphnnet {
 	 * @param initializer  function initializing nuclear abundances from radius
 	 */
 	template<class initFunc, class ParticlesDataType>
-	void initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
+	void inline initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
 		initNuclearDataFromRadius(firstIndex, lastIndex, d, d.nuclearData, initializer);
 	}
 
@@ -253,7 +253,7 @@ namespace sphexa::sphnnet {
 	 * @param initializer  function initializing nuclear abundances from radius
 	 */
 	template<class Vector, class ParticlesDataType>
-	void initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const Vector &Y0) {
+	void inline initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const Vector &Y0) {
 		initNuclearDataFromConst(firstIndex, lastIndex, d, d.nuclearData, Y0);
 	}
 }

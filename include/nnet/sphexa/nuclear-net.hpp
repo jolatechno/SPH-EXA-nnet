@@ -88,7 +88,7 @@ namespace sphexa::sphnnet {
 	 * @param n           nuclearDataType (contains mpi_partition to be populated)
 	 */
 	template<class ParticlesDataType,class nuclearDataType>
-	void computePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, nuclearDataType &n) {
+	void inline computePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, nuclearDataType &n) {
 #ifdef USE_MPI
 		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
 #endif
@@ -102,7 +102,7 @@ namespace sphexa::sphnnet {
 	 * @param d           ParticlesDataType, where d.nuclearData is the nuclear data container
 	 */
 	template<class ParticlesDataType>
-	void computeNuclearPartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d) {
+	void inline computeNuclearPartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d) {
 		computePartition(firstIndex, lastIndex, d, d.nuclearData);
 	}
 
@@ -114,7 +114,7 @@ namespace sphexa::sphnnet {
 	 * @param d           ParticlesDataType (contains node_id and particle_id to be populated)
 	 */
 	template<class ParticlesDataType>
-	void initializeNuclearPointers(size_t firstIndex, size_t lastIndex, ParticlesDataType &d) {
+	void inline initializeNuclearPointers(size_t firstIndex, size_t lastIndex, ParticlesDataType &d) {
 #ifdef USE_MPI
 		sphexa::mpi::initializePointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
 #endif
@@ -145,7 +145,7 @@ namespace sphexa::sphnnet {
 			std::visit(
 				[&d, &n](auto&& send, auto &&recv){
 #ifdef USE_MPI
-					syncDataToStaticPartition(n.partition, send->data(), recv->data(), d.comm);
+					sphexa::mpi::syncDataToStaticPartition(n.partition, send->data(), recv->data(), d.comm);
 #else
 					if constexpr (std::is_same<decltype(send), decltype(recv)>::value)
 						*recv = *send;
@@ -160,7 +160,7 @@ namespace sphexa::sphnnet {
 	 * @param sync_fields  names of field to be synced
 	 */
 	template<class ParticlesDataType>
-	void syncHydroToNuclear(ParticlesDataType &d, const std::vector<std::string> &sync_fields) {
+	void inline syncHydroToNuclear(ParticlesDataType &d, const std::vector<std::string> &sync_fields) {
 		syncDataToStaticPartition(d, d.nuclearData, sync_fields);
 	}
 
@@ -187,7 +187,7 @@ namespace sphexa::sphnnet {
 			std::visit(
 				[&d, &n](auto&& send, auto &&recv){
 #ifdef USE_MPI
-					syncDataFromStaticPartition(n.partition, send->data(), recv->data(), d.comm);
+					sphexa::mpi::syncDataFromStaticPartition(n.partition, send->data(), recv->data(), d.comm);
 #else
 					if constexpr (std::is_same<decltype(send), decltype(recv)>::value)
 						*recv = *send;
@@ -202,7 +202,7 @@ namespace sphexa::sphnnet {
 	 * @param sync_fields  names of field to be synced
 	 */
 	template<class ParticlesDataType>
-	void syncNuclearToHydro(ParticlesDataType &d, const std::vector<std::string> &sync_fields) {
+	void inline syncNuclearToHydro(ParticlesDataType &d, const std::vector<std::string> &sync_fields) {
 		syncDataFromStaticPartition(d, d.nuclearData, sync_fields);
 	}
 }

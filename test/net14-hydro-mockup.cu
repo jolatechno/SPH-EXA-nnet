@@ -39,7 +39,6 @@
 
 
 // physical parameters
-#include "nnet/parameterization/net87/net87.hpp"
 #include "nnet/parameterization/net14/net14.hpp"
 #include "nnet/parameterization/eos/helmholtz.hpp"
 #include "nnet/parameterization/eos/ideal_gas.hpp"
@@ -140,7 +139,6 @@ public:
 
 		x.resize(N);
 		y.resize(N);
-		z.resize(N);
 		z.resize(N);
 
 		rho.resize(N);
@@ -375,18 +373,18 @@ int main(int argc, char* argv[]) {
 #endif
 		auto start_it = std::chrono::high_resolution_clock::now();
 
-	if (idealGas) {
-		step(rank,
-			first, last,
-			particle_data, hydro_dt,
-			nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, idea_gas_eos,
-			nnet::net14::BE.data(), nnet::net14::constants::Z);
-	} else
-		step(rank,
-			first, last,
-			particle_data, hydro_dt,
-			nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14,
-			nnet::net14::BE.data(), nnet::net14::constants::Z);
+		if (idealGas) {
+			step(rank,
+				first, last,
+				particle_data, hydro_dt,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, idea_gas_eos,
+				nnet::net14::BE.data(), nnet::net14::constants::Z);
+		} else
+			step(rank,
+				first, last,
+				particle_data, hydro_dt,
+				nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos_14,
+				nnet::net14::BE.data(), nnet::net14::constants::Z);
 
 		t += hydro_dt;
 
