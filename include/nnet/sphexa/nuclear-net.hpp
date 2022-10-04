@@ -80,7 +80,7 @@ namespace sphexa::sphnnet {
 	}
 
 
-	/*! @brief function initializing the partition of NuclearDataType using "maximal mixing"
+	/*! @brief function that updates the nuclear partition
 	 * 
 	 * @param firstIndex  first (included) particle considered in d
 	 * @param lastIndex   last (excluded) particle considered in d
@@ -88,12 +88,121 @@ namespace sphexa::sphnnet {
 	 * @param n           nuclearDataType (contains mpi_partition to be populated)
 	 */
 	template<class ParticlesDataType,class nuclearDataType>
-	void initializePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, nuclearDataType &n) {
+	void computePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, nuclearDataType &n) {
 #ifdef USE_MPI
 		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
-
-		size_t n_particles = lastIndex - firstIndex;
-		MPI_Allreduce(&n_particles, &n.numParticlesGlobal, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, n.comm);
 #endif
+	}
+
+
+	/*! @brief function that updates the nuclear partition
+	 * 
+	 * @param firstIndex  first (included) particle considered in d
+	 * @param lastIndex   last (excluded) particle considered in d
+	 * @param d           ParticlesDataType, where d.nuclearData is the nuclear data container
+	 */
+	template<class ParticlesDataType>
+	void computeNuclearPartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d) {
+		initializePartition(firstIndex, lastIndex, d, d.nuclearData);
+	}
+
+
+	/*! @brief function that initialize node_id and particle_id for "maximal mixing".
+	 * 
+	 * @param firstIndex  index of the first particle to be considered (included) when populating the node_id and particle_id vectors
+	 * @param lastIndex   index of the last particle to be considered (excluded)  when populating the node_id and particle_id vectors
+	 * @param d           ParticlesDataType (contains node_id and particle_id to be populated)
+	 */
+	template<class ParticlesDataType>
+	void initializeNuclearPointers(size_t firstIndex, size_t lastIndex, ParticlesDataType &d) {
+#ifdef USE_MPI
+		sphexa::mpi::initializePointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
+#endif
+	}
+
+
+	/*! @brief function sending requiered hydro data from ParticlesDataType (attached data) to NuclearDataType (detached data)
+	 * 
+	 * @param d            ParticlesDataType (attached data)
+	 * @param n            NuclearDataType (detached data)
+	 * @param sync_fields  names of field to be synced
+	 */
+	template<class ParticlesDataType, class nuclearDataType>
+	void syncDataToStaticPartition(ParticlesDataType &d, nuclearDataType &n, const std::vector<std::string> &sync_fields) {
+		// get data
+		auto nuclearData  = n.data();
+		auto particleData = d.data();
+
+		// send fields
+		for (auto field : sync_fields) {
+			// find field
+			int nuclearFieldIdx = std::distance(n.fieldNames.begin(), 
+				std::find(n.fieldNames.begin(), n.fieldNames.end(), field));
+			int particleFieldIdx = std::distance(d.fieldNames.begin(), 
+				std::find(d.fieldNames.begin(), d.fieldNames.end(), field));
+
+			// send
+			std::visit(
+				[&d, &n](auto&& send, auto &&recv){
+#ifdef USE_MPI
+					syncDataToStaticPartition(n.partition, send->data(), recv->data(), d.comm);
+#else
+					if constexpr (std::is_same<decltype(send), decltype(recv)>::value)
+						*recv = *send;
+#endif
+				}, particleData[particleFieldIdx], nuclearData[nuclearFieldIdx]);
+		}
+	}
+
+	/*! @brief function sending requiered hydro data from ParticlesDataType (attached data) to NuclearDataType (detached data)
+	 * 
+	 * @param d            ParticlesDataType, where d.nuclearData is the nuclear data container
+	 * @param sync_fields  names of field to be synced
+	 */
+	template<class ParticlesDataType>
+	void syncHydroToNuclear(ParticlesDataType &d, const std::vector<std::string> &sync_fields) {
+		syncDataToStaticPartition(d, d.nuclearData, sync_fields);
+	}
+
+
+	/*! @brief function sending requiered hydro data from NuclearDataType (detached data) to ParticlesDataType (attached data)
+	 * 
+	 * @param d            ParticlesDataType (attached data)
+	 * @param n            NuclearDataType (detached data)
+	 * @param sync_fields  names of field to be synced
+	 */
+	template<class ParticlesDataType, class nuclearDataType>
+	void syncDataFromStaticPartition(ParticlesDataType &d, nuclearDataType &n, const std::vector<std::string> &sync_fields) {
+		auto nuclearData  = n.data();
+		auto particleData = d.data();
+
+		// send fields
+		for (auto field : sync_fields) {
+			// find field
+			int nuclearFieldIdx = std::distance(n.fieldNames.begin(), 
+				std::find(n.fieldNames.begin(), n.fieldNames.end(), field));
+			int particleFieldIdx = std::distance(d.fieldNames.begin(), 
+				std::find(d.fieldNames.begin(), d.fieldNames.end(), field));
+
+			std::visit(
+				[&d, &n](auto&& send, auto &&recv){
+#ifdef USE_MPI
+					syncDataFromStaticPartition(n.partition, send->data(), recv->data(), d.comm);
+#else
+					if constexpr (std::is_same<decltype(send), decltype(recv)>::value)
+						*recv = *send;
+#endif
+				}, nuclearData[nuclearFieldIdx], particleData[particleFieldIdx]);
+		}
+	}
+
+	/*! @brief function sending requiered hydro data from NuclearDataType (detached data) to ParticlesDataType (attached data)
+	 * 
+	 * @param d            ParticlesDataType, where d.nuclearData is the nuclear data container
+	 * @param sync_fields  names of field to be synced
+	 */
+	template<class ParticlesDataType>
+	void syncNuclearToHydro(ParticlesDataType &d, const std::vector<std::string> &sync_fields) {
+		syncDataFromStaticPartition(d, d.nuclearData, sync_fields);
 	}
 }

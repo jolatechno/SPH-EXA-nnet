@@ -208,12 +208,12 @@ void step(int rank,
 
 	// domain redecomposition
 
-	sphexa::sphnnet::initializePartition(firstIndex, lastIndex, d, n);
+	sphexa::sphnnet::computePartition(firstIndex, lastIndex, d, n);
 
 	// do hydro stuff
 
 	std::swap(n.rho, n.rho_m1);
-	sphexa::mpi::syncDataToStaticPartition(d, n, {"rho", "temp"});
+	sphexa::sphnnet::syncDataToStaticPartition(d, n, {"rho", "temp"});
 	sphexa::transferToDevice(n, 0, n_nuclear_particles, {"rho_m1", "rho", "temp"});
 
 	sphexa::sphnnet::computeNuclearReactions(n, 0, n_nuclear_particles, dt, dt,
@@ -223,7 +223,7 @@ void step(int rank,
 
 	sphexa::transferToHost(n, 0, n_nuclear_particles, {"temp",
 		"c", "p", "cv", "u", "dpdT"});
-	sphexa::mpi::syncDataFromStaticPartition(d, n, {"temp"});
+	sphexa::sphnnet::syncDataFromStaticPartition(d, n, {"temp"});
 	
 	// do hydro stuff
 
@@ -359,9 +359,7 @@ int main(int argc, char* argv[]) {
 	initialize nuclear data
 	!!!!!!!!!!!! */
 	size_t n_nuclear_particles;
-#ifdef USE_MPI
-	sphexa::mpi::initializePointers(first, last, particle_data.node_id, particle_data.particle_id, particle_data.comm);
-#endif
+	sphexa::sphnnet::initializeNuclearPointers(first, last, particle_data);
 	if (use_net87) {
 		nuclear_data_87.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1", "Y");
 		nuclear_data_87.devData.setDependent("temp", "rho", "rho_m1", "Y", "dt", "c", "p", "cv", "u", "dpdT");
