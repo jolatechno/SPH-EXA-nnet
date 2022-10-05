@@ -260,6 +260,8 @@ int main(int argc, char* argv[]) {
 	cuda_util::initCudaMpi(MPI_COMM_WORLD);
 #endif
 	
+	nnet::eos::helmholtz_constants::read_table<InitAccType>();
+	
 
 
 	const ArgParser parser(argc, argv);
