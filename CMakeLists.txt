@@ -30,7 +30,7 @@ endif()
 include(CTest)
 include(CheckLanguage)
 
-if (NOT NO_CUDA)
+if (CUDA)
     check_language(CUDA)
 else()
     set(CMAKE_CUDA_COMPILER false)

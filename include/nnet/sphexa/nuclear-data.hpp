@@ -54,8 +54,10 @@
 
 #include "cstone/fields/field_states.hpp"
 #include "cstone/fields/data_util.hpp"
+#include "cstone/fields/enumerate.hpp"
+#include "cstone/fields/concatenate.hpp"
 
-#include "cstone/util/util.hpp"
+#include "cstone/util/reallocate.hpp"
 
 
 namespace sphexa::sphnnet {

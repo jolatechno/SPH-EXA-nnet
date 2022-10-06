@@ -42,8 +42,10 @@
 #include "sph/traits.hpp"
 
 #include "cstone/fields/field_states.hpp"
+#include "cstone/fields/enumerate.hpp"
+#include "cstone/fields/concatenate.hpp"
 
-#include "cstone/util/util.hpp"
+#include "cstone/util/reallocate.hpp"
 #include "cstone/util/array.hpp"
 
 #include <thrust/device_vector.h>
