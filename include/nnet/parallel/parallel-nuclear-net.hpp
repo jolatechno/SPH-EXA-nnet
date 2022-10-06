@@ -92,7 +92,7 @@ namespace nnet::parallel_nnet {
 		++n.iteration;
 
 		const size_t n_particles = n.temp.size();
-		const int dimension = n.Y.size();
+		const int dimension = n.numSpecies;
 		
 		if constexpr (sphexa::HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE) {
 
@@ -215,7 +215,7 @@ namespace nnet::parallel_nnet {
 	 */
 	template<class Data, class Vector>
 	void computeHelmEOS(Data &n, size_t firstIndex, size_t lastIndex, const Vector &Z) {
-		const int dimension = n.Y.size();
+		const int dimension = n.numSpecies;
 		using Float = typename std::remove_reference<decltype(n.cv[0])>::type;
 
 		if constexpr (sphexa::HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE) {

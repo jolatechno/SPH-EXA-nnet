@@ -68,6 +68,11 @@ namespace sphexa::sphnnet {
 	template<size_t n_species, typename Float, typename Int, class AccType>
 	struct NuclearDataType : public cstone::FieldStates<NuclearDataType<n_species, Float, Int, AccType>> {
 	public:
+		//! maximum number of nuclear species
+		static const int maxNumSpecies = 100;
+		//! actual number of nuclear species
+		int numSpecies = n_species;
+
     	template<class... Args>
     	using DeviceNuclearData_t = DeviceNuclearDataType<n_species, Args...>;
 
@@ -96,7 +101,7 @@ namespace sphexa::sphnnet {
 		std::vector<Tmass> m;
 
 		//! nuclear abundances (vector of vector)
-		util::array<std::vector<RealType>, n_species> Y;
+		util::array<std::vector<RealType>, maxNumSpecies> Y;
 
 		//! timesteps
 		std::vector<RealType> dt;
@@ -161,40 +166,10 @@ namespace sphexa::sphnnet {
 	    }
 
 
-		//! base hydro fieldNames (withoutnuclear species names)
-		inline static constexpr std::array baseFieldNames {
+		//! base hydro fieldNames (every nuclear species is named "Yn")
+		inline static constexpr auto fieldNames = concat(enumerateFieldNames<"Y", maxNumSpecies>(), std::array<const char*, 12>{
 			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1",
-		};
-		//! base hydro fieldNames (every nuclear species is named "Y")
-		inline static constexpr auto fieldNames = []{
-			std::array<std::string_view, baseFieldNames.size()+n_species> fieldNames;
-			for (int i = 0; i < baseFieldNames.size(); ++i)
-				fieldNames[i] = baseFieldNames[i];
-			for (int i = baseFieldNames.size(); i < fieldNames.size(); ++i)
-				fieldNames[i] = "Y";
-		    return fieldNames;
-		}();
-
-
-		//! base fieldNames (contains individual species). Initialized by setOutputFieldsNames
-		std::array<std::string, fieldNames.size()> outputableFieldNames = [] {
-			std::array<std::string, fieldNames.size()> outputableFieldNames;
-			for (int i = 0; i < baseFieldNames.size(); ++i)
-				outputableFieldNames[i] = baseFieldNames[i];
-			for (int i = 0; i < n_species; ++i) 
-				outputableFieldNames[baseFieldNames.size() + i] = "Y(" + std::to_string(i) + ")";
-			return outputableFieldNames;
-		}();
-
-
-		/*! @brief access and modifies "fieldNames" to account for nuclear species names
-	     *
-	     * @param species_names  vector of species name
-		 */
-		void setOutputFieldsNames(const std::vector<std::string> &species_names) {
-			for (int i = 0; i < n_species; ++i) 
-				outputableFieldNames[baseFieldNames.size() + i] = "Y(" + species_names[i] + ")";
-		}
+		});
 
 
 		/*! @brief return a vector of pointers to field vectors
@@ -209,14 +184,24 @@ namespace sphexa::sphnnet {
 	    		std::vector<uint64_t>*,
 	    		std::vector<float>*,
 	    		std::vector<double>*>;
-	    	
-			util::array<FieldType, fieldNames.size()> data = {
-				&node_id, &particle_id, 
-				&dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &rho_m1
-			};
 
-			for (int i = 0; i < n_species; ++i) 
-				data[baseFieldNames.size() + i] = &Y[i];
+			util::array<FieldType, fieldNames.size()> data;
+
+			for (int i = 0; i < maxNumSpecies; ++i) 
+				data[i] = &Y[i];
+
+			data[maxNumSpecies]      = &node_id;
+			data[maxNumSpecies + 1]  = &particle_id;
+			data[maxNumSpecies + 2]  = &dt;
+			data[maxNumSpecies + 3]  = &c;
+			data[maxNumSpecies + 4]  = &p;
+			data[maxNumSpecies + 5]  = &cv;
+			data[maxNumSpecies + 6]  = &u;
+			data[maxNumSpecies + 7]  = &dpdT;
+			data[maxNumSpecies + 8]  = &m;
+			data[maxNumSpecies + 9]  = &temp;
+			data[maxNumSpecies + 10] = &rho;
+			data[maxNumSpecies + 11] = &rho_m1;
 
 			return data;
 	    }
@@ -227,7 +212,7 @@ namespace sphexa::sphnnet {
 	     */
 	    void setOutputFields(const std::vector<std::string>& outFields) {
 	        outputFieldNames = outFields;
-	        outputFieldIndices = cstone::fieldStringsToInt(outFields, outputableFieldNames);
+	        outputFieldIndices = cstone::fieldStringsToInt(outFields, fieldNames);
     	}
 
 		// particle fields selected for file output

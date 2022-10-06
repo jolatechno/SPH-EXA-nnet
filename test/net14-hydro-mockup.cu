@@ -324,15 +324,19 @@ int main(int argc, char* argv[]) {
 	/* !!!!!!!!!!!!
 	initialize nuclear data
 	!!!!!!!!!!!! */
-	size_t n_nuclear_particles;
 	sphexa::sphnnet::initializeNuclearPointers(first, last, particle_data);
 
-	particle_data.nuclearData.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1", "Y", "dt");
-	particle_data.nuclearData.devData.setDependent("temp", "rho", "rho_m1", "Y", "dt", "c", "p", "cv", "u", "dpdT");
+	particle_data.nuclearData.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1", "dt");
+	particle_data.nuclearData.devData.setDependent("temp", "rho", "rho_m1", "dt", "c", "p", "cv", "u", "dpdT");
+
+	for (int i = 0; i < 14; ++i) {
+		particle_data.nuclearData.setDependent("Y" + std::to_string(i));
+		particle_data.nuclearData.devData.setDependent("Y" + std::to_string(i));
+	}
 
 	sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, Y0_14);
 
-	n_nuclear_particles = particle_data.nuclearData.temp.size();
+	size_t n_nuclear_particles = particle_data.nuclearData.temp.size();
 	sphexa::transferToDevice(particle_data.nuclearData, 0, n_nuclear_particles, {"Y", "dt"});
 
 	std::fill(particle_data.nuclearData.m.begin(), particle_data.nuclearData.m.end(), 1.);
@@ -341,11 +345,8 @@ int main(int argc, char* argv[]) {
 
 
 	std::vector<std::string> hydroOutFields   = {"nid", "pid", "temp", "rho"};
-	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y(4He)", "Y(16O)", "Y(12C)"};
-
+	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y0", "Y2", "Y1"};
 	particle_data.setOutputFields(hydroOutFields);
-
-	particle_data.nuclearData.setOutputFieldsNames(nnet::net14::constants::species_names);
 	particle_data.nuclearData.setOutputFields(nuclearOutFields);
 
 

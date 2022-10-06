@@ -355,9 +355,14 @@ int main(int argc, char* argv[]) {
 	size_t n_nuclear_particles;
 	sphexa::sphnnet::initializeNuclearPointers(first, last, particle_data);
 	if (use_net87) {
-		nuclear_data_87.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1", "Y");
-		nuclear_data_87.devData.setDependent("temp", "rho", "rho_m1", "Y", "dt", "c", "p", "cv", "u", "dpdT");
+		nuclear_data_87.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1");
+		nuclear_data_87.devData.setDependent("temp", "rho", "rho_m1", "dt", "c", "p", "cv", "u", "dpdT");
 
+		for (int i = 0; i < 87; ++i) {
+			nuclear_data_87.setDependent("Y" + std::to_string(i));
+			nuclear_data_87.devData.setDependent("Y" + std::to_string(i));
+		}
+		
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_87, Y0_87);
 
 		n_nuclear_particles = nuclear_data_87.temp.size();
@@ -365,8 +370,13 @@ int main(int argc, char* argv[]) {
 
 		std::fill(nuclear_data_87.m.begin(), nuclear_data_87.m.end(), 1.);
 	} else if (use_net86) {
-		nuclear_data_86.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1", "Y");
-		nuclear_data_86.devData.setDependent("temp", "rho", "rho_m1", "Y", "dt", "c", "p", "cv", "u", "dpdT");
+		nuclear_data_86.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1");
+		nuclear_data_86.devData.setDependent("temp", "rho", "rho_m1", "dt", "c", "p", "cv", "u", "dpdT");
+
+		for (int i = 0; i < 86; ++i) {
+			nuclear_data_86.setDependent("Y" + std::to_string(i));
+			nuclear_data_86.devData.setDependent("Y" + std::to_string(i));
+		}
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_86, Y0_87);
 
@@ -375,8 +385,13 @@ int main(int argc, char* argv[]) {
 
 		std::fill(nuclear_data_86.m.begin(), nuclear_data_86.m.end(), 1.);
 	} else {
-		nuclear_data_14.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1", "Y", "dt");
-		nuclear_data_14.devData.setDependent("temp", "rho", "rho_m1", "Y", "dt", "c", "p", "cv", "u", "dpdT");
+		nuclear_data_14.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1");
+		nuclear_data_14.devData.setDependent("temp", "rho", "rho_m1", "dt", "c", "p", "cv", "u", "dpdT");
+
+		for (int i = 0; i < 14; ++i) {
+			nuclear_data_14.setDependent("Y" + std::to_string(i));
+			nuclear_data_14.devData.setDependent("Y" + std::to_string(i));
+		}
 
 		sphexa::sphnnet::initNuclearDataFromConst(first, last, particle_data, nuclear_data_14, Y0_14);
 
@@ -388,17 +403,14 @@ int main(int argc, char* argv[]) {
 
 
 
-	std::vector<std::string> hydroOutFields   = {"nid", "pid", "temp", "rho"};
-	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y(4He)", "Y(16O)", "Y(12C)"};
+std::vector<std::string> hydroOutFields   = {"nid", "pid", "temp", "rho"};
+	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y0", "Y2", "Y1"};
 	particle_data.setOutputFields(hydroOutFields);
 	if (use_net87) {
-		nuclear_data_87.setOutputFieldsNames(nnet::net87::constants::species_names);
 		nuclear_data_87.setOutputFields(nuclearOutFields);
 	} else if (use_net86) {
-		nuclear_data_86.setOutputFieldsNames(nnet::net86::constants::species_names);
 		nuclear_data_86.setOutputFields(nuclearOutFields);
 	} else {
-		nuclear_data_14.setOutputFieldsNames(nnet::net14::constants::species_names);
 		nuclear_data_14.setOutputFields(nuclearOutFields);
 	}
 

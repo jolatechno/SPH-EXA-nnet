@@ -65,7 +65,7 @@ namespace sphexa::sphnnet {
 	template<class Data, typename Float>
 	Float totalNuclearEnergy(Data const &n, const Float *BE) {
 		const size_t n_particles = n.temp.size();
-		const int dimension = n.Y.size();
+		const int dimension = n.numSpecies;
 
 #if COMPILE_DEVICE
 		if constexpr (HaveGpu<typename Data::AcceleratorType>{} && false /* NOT IMPLEMENTED */) {

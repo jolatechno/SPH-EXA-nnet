@@ -55,6 +55,11 @@ namespace sphexa::sphnnet {
 	template<size_t n_species, typename Float, typename Int>
 	class DeviceNuclearDataType : public cstone::FieldStates<DeviceNuclearDataType<n_species, Float, Int>> {
 	public:
+		//! maximum number of nuclear species
+		static const int maxNumSpecies = 100;
+		//! actual number of nuclear species
+		int numSpecies = n_species;
+
 		// types
 		using RealType = Float;
     	using KeyType  = Int;
@@ -68,7 +73,7 @@ namespace sphexa::sphnnet {
 		thrust::device_vector<Tmass> m;
 
 		//!  @brief nuclear abundances (vector of vector)
-		util::array<thrust::device_vector<RealType>, n_species> Y;
+		util::array<thrust::device_vector<RealType>, maxNumSpecies> Y;
 
 		//! @brief timesteps
 		thrust::device_vector<RealType> dt;
@@ -79,20 +84,11 @@ namespace sphexa::sphnnet {
 		//!  resize the number of particules
 		void resize(size_t size);
 
-		//! base hydro fieldNames (withoutnuclear species names)
-		inline static constexpr std::array baseFieldNames {
-			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1",
-		};
-		//! base hydro fieldNames (every nuclear species is named "Y")
-		inline static constexpr auto fieldNames = []{
-			std::array<std::string_view, baseFieldNames.size()+n_species> fieldNames;
-			for (int i = 0; i < baseFieldNames.size(); ++i)
-				fieldNames[i] = baseFieldNames[i];
-			for (int i = baseFieldNames.size(); i < fieldNames.size(); ++i)
-				fieldNames[i] = "Y";
-		    return fieldNames;
-		}();
 
+		//! base hydro fieldNames (every nuclear species is named "Yn")
+		inline static constexpr auto fieldNames = concat(enumerateFieldNames<"Y", maxNumSpecies>(), std::array<const char*, 12>{
+			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1",
+		});
 
 		/*! @brief return a vector of pointers to field vectors
 	     *
@@ -107,13 +103,23 @@ namespace sphexa::sphnnet {
 	    		thrust::device_vector<float>*,
 	    		thrust::device_vector<double>*>;
 
-			util::array<FieldType, fieldNames.size()> data = {
-				(thrust::device_vector<int>*)nullptr, (thrust::device_vector<KeyType>*)nullptr,
-				&dt, &c, &p, &cv, &u, &dpdT, &m, &temp, &rho, &rho_m1
-			};
+			util::array<FieldType, fieldNames.size()> data;
 
-			for (int i = 0; i < n_species; ++i) 
-				data[baseFieldNames.size() + i] = &Y[i];
+			for (int i = 0; i < maxNumSpecies; ++i) 
+				data[i] = &Y[i];
+
+			data[maxNumSpecies]      = &node_id;
+			data[maxNumSpecies + 1]  = &particle_id;
+			data[maxNumSpecies + 2]  = &dt;
+			data[maxNumSpecies + 3]  = &c;
+			data[maxNumSpecies + 4]  = &p;
+			data[maxNumSpecies + 5]  = &cv;
+			data[maxNumSpecies + 6]  = &u;
+			data[maxNumSpecies + 7]  = &dpdT;
+			data[maxNumSpecies + 8]  = &m;
+			data[maxNumSpecies + 9]  = &temp;
+			data[maxNumSpecies + 10] = &rho;
+			data[maxNumSpecies + 11] = &rho_m1;
 
 			return data;
 	    }
