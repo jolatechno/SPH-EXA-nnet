@@ -37,8 +37,6 @@
 	#include "../../../util/CUDA/cuda-util.hpp"
 #endif
 
-#include "sph/traits.hpp"
-
 #define STRINGIFY(...) #__VA_ARGS__
 #define STR(...) STRINGIFY(__VA_ARGS__)
 
@@ -75,8 +73,7 @@ namespace nnet::net87::electrons {
         DEVICE_DEFINE(extern double, electron_rate[N_TEMP][N_RHO][N_C], ;)
 
 		/*! @brief read electron rate constants table for net87 */
-		template<class AccType>
-		void read_table() {
+		bool inline read_cpu_table() {
 			// read table
 			const std::string electron_rate_table = { 
 				#include ELECTRON_TABLE_PATH
@@ -96,14 +93,17 @@ namespace nnet::net87::electrons {
 					for (int k = 0; k < nC; ++k)
 						rate_table >> electron_rate[i][j][k];
 
-			if constexpr (sphexa::HaveGpu<AccType>{}) {
+			return true;
+		}
+
+		bool inline copy_table_to_gpu() {
 #if COMPILE_DEVICE
-			  	// copy to device 
-				gpuErrchk(cudaMemcpyToSymbol(dev_log_temp_ref,  log_temp_ref,          nTemp*sizeof(double), 0, cudaMemcpyHostToDevice));
-			   	gpuErrchk(cudaMemcpyToSymbol(dev_log_rho_ref,   log_rho_ref,            nRho*sizeof(double), 0, cudaMemcpyHostToDevice));
-			   	gpuErrchk(cudaMemcpyToSymbol(dev_electron_rate, electron_rate, nTemp*nRho*nC*sizeof(double), 0, cudaMemcpyHostToDevice));
+		  	// copy to device 
+			gpuErrchk(cudaMemcpyToSymbol(dev_log_temp_ref,  log_temp_ref,          nTemp*sizeof(double), 0, cudaMemcpyHostToDevice));
+		   	gpuErrchk(cudaMemcpyToSymbol(dev_log_rho_ref,   log_rho_ref,            nRho*sizeof(double), 0, cudaMemcpyHostToDevice));
+		   	gpuErrchk(cudaMemcpyToSymbol(dev_electron_rate, electron_rate, nTemp*nRho*nC*sizeof(double), 0, cudaMemcpyHostToDevice));
 #endif
-			}
+		   	return true;
 		}
 	}
 

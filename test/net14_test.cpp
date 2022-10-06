@@ -32,7 +32,6 @@
 #include <iostream>
 #include <chrono>
 
-#include "sph/traits.hpp"
 #include "cstone/util/array.hpp"
 
 #include "nnet/parameterization/net14/net14.hpp"
@@ -75,9 +74,6 @@ int main(int argc, char* argv[]) {
         printHelp(argv[0]);
         return 0;
     }
-
-
-    nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
 
 
     const int n_max                         = parser.get("-n", 1000);

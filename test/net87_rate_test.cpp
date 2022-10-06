@@ -33,7 +33,6 @@
 
 #define NET86_DEBUG
 
-#include "sph/traits.hpp"
 #include "cstone/util/array.hpp"
 
 #include "nnet/parameterization/net87/net87.hpp"
@@ -45,9 +44,6 @@ int main() {
 	std::cout << "A.size = " << nnet::net87::constants::A.size() << "\n";
 	std::cout << "Z.size = " << nnet::net87::constants::Z.size() << "\n";
 	std::cout << "BE.size = " << nnet::net87::BE.size() << "\n\n";
-
-	nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
-	nnet::net87::electrons::constants::read_table<cstone::CpuTag>();
 
 #if DEBUG
 	nnet::net86::debug = nnet::eos::debug = true;

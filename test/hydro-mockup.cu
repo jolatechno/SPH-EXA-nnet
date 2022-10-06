@@ -55,17 +55,10 @@
 
 
 
-#ifdef USE_CUDA
-	using InitAccType = cstone::GpuTag;
-
-#ifdef CUDA_CPU_TEST
+#if !defined(CUDA_CPU_TEST) && defined(USE_CUDA)
+	using AccType = cstone::GpuTag;
+#else
 	using AccType = cstone::CpuTag;
-#else
-	using AccType = InitAccType;
-#endif
-#else
-	using InitAccType = cstone::CpuTag;
-	using AccType     = InitAccType;
 #endif
 
 
@@ -258,8 +251,10 @@ int main(int argc, char* argv[]) {
 	cuda_util::initCudaMpi(MPI_COMM_WORLD);
 #endif
 
-	nnet::eos::helmholtz_constants::read_table<InitAccType>();
-	nnet::net87::electrons::constants::read_table<InitAccType>();
+#if !defined(CUDA_CPU_TEST) && defined(USE_CUDA)
+	nnet::eos::helmholtz_constants::copy_table_to_gpu();
+	nnet::net87::electrons::constants::copy_table_to_gpu();
+#endif
 	
 
 

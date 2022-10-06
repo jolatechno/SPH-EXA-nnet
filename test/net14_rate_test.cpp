@@ -33,7 +33,6 @@
 
 #define NET14_DEBUG
 
-#include "sph/traits.hpp"
 #include "cstone/util/array.hpp"
 
 #include "nnet/parameterization/net14/net14.hpp"
@@ -46,7 +45,6 @@ int main() {
 	std::cout << "Z.size = " << nnet::net14::constants::Z.size() << "\n";
 	std::cout << "BE.size = " << nnet::net14::BE.size() << "\n\n";
 
-	nnet::eos::helmholtz_constants::read_table<cstone::CpuTag>();
 
 #if DEBUG
 	nnet::net14::debug = nnet::eos::debug = true;

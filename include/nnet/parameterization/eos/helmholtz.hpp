@@ -37,8 +37,6 @@
 	#include "../../../util/CUDA/cuda-util.hpp"
 #endif
 
-#include "sph/traits.hpp"
-
 #define STRINGIFY(...) #__VA_ARGS__
 #define STR(...) STRINGIFY(__VA_ARGS__)
 
@@ -65,8 +63,6 @@
 #include <vector>
 #include <tuple>
 #include <math.h>
-
-// #include "sph/data_util.hpp"
 
 namespace nnet::eos {
 	/*! @brief if true print debuging prints */
@@ -166,8 +162,7 @@ namespace nnet::eos {
 
 
 		/*! @brief Read helmholtz constant table. */
-		template<class AccType>
-		void read_table() {
+		bool inline read_cpu_table() {
 			// read table
 			const std::string helmolt_table = { 
 				#include HELM_TABLE_PATH
@@ -241,49 +236,52 @@ namespace nnet::eos {
 				dd3i_sav[i] = dd3i;
 			}
 
+			return true;
+		}
+
+		bool inline copy_table_to_gpu() {
 #if COMPILE_DEVICE
-			if constexpr (sphexa::HaveGpu<AccType>{}) {
-		        // copy to device 
-		        gpuErrchk(cudaMemcpyToSymbol(dev_d,        d,              imax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dd_sav,   dd_sav,   (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dd2_sav,  dd2_sav,  (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_ddi_sav,  ddi_sav,  (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dd2i_sav, dd2i_sav, (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dd3i_sav, dd3i_sav, (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        // copy to device 
+	        gpuErrchk(cudaMemcpyToSymbol(dev_d,        d,              imax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_dd_sav,   dd_sav,   (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_dd2_sav,  dd2_sav,  (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_ddi_sav,  ddi_sav,  (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_dd2i_sav, dd2i_sav, (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_dd3i_sav, dd3i_sav, (imax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
 
-		        gpuErrchk(cudaMemcpyToSymbol(dev_t_,       t_,             jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dt_sav,   dt_sav,   (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dt2_sav,  dt2_sav,  (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dti_sav,  dti_sav,  (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dt2i_sav, dt2i_sav, (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dt3i_sav, dt3i_sav, (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_t_,       t_,             jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_dt_sav,   dt_sav,   (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_dt2_sav,  dt2_sav,  (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_dti_sav,  dti_sav,  (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_dt2i_sav, dt2i_sav, (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_dt3i_sav, dt3i_sav, (jmax - 1)*sizeof(double), 0, cudaMemcpyHostToDevice));
 
-		        gpuErrchk(cudaMemcpyToSymbol(dev_f,     f,     imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_fd,    fd,    imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_ft,    ft,    imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_fdd,   fdd,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_ftt,   ftt,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_fdt,   fdt,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_fddt,  fddt,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_fdtt,  fdtt,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_fddtt, fddtt, imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_f,     f,     imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_fd,    fd,    imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_ft,    ft,    imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_fdd,   fdd,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_ftt,   ftt,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_fdt,   fdt,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_fddt,  fddt,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_fdtt,  fdtt,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_fddtt, fddtt, imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
 
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dpdf,   dpdf,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dpdfd,  dpdfd,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dpdft,  dpdft,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_dpdfdt, dpdfdt, imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_dpdf,   dpdf,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_dpdfd,  dpdfd,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_dpdft,  dpdft,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_dpdfdt, dpdfdt, imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
 
-		        gpuErrchk(cudaMemcpyToSymbol(dev_ef,   ef,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_efd,  efd,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_eft,  eft,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_efdt, efdt, imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_ef,   ef,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_efd,  efd,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_eft,  eft,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_efdt, efdt, imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
 
-		        gpuErrchk(cudaMemcpyToSymbol(dev_xf,   xf,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_xfd,  xfd,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_xft,  xft,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		        gpuErrchk(cudaMemcpyToSymbol(dev_xfdt, xfdt, imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
-		   	}
+	        gpuErrchk(cudaMemcpyToSymbol(dev_xf,   xf,   imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_xfd,  xfd,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_xft,  xft,  imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
+	        gpuErrchk(cudaMemcpyToSymbol(dev_xfdt, xfdt, imax*jmax*sizeof(double), 0, cudaMemcpyHostToDevice));
 #endif
+	        return true;
 		};
 
 		// quintic hermite polynomial statement functions
