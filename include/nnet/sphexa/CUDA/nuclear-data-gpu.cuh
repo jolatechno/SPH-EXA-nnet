@@ -51,14 +51,14 @@
 #include <thrust/device_vector.h>
 
 namespace sphexa::sphnnet {
-	/*! @brief device nuclear data class for n_species nuclear network */
-	template<size_t n_species, typename Float, typename Int>
-	class DeviceNuclearDataType : public cstone::FieldStates<DeviceNuclearDataType<n_species, Float, Int>> {
+	/*! @brief device nuclear data class for nuclear network */
+	template<typename Float, typename Int>
+	class DeviceNuclearDataType : public cstone::FieldStates<DeviceNuclearDataType<Float, Int>> {
 	public:
 		//! maximum number of nuclear species
 		static const int maxNumSpecies = 100;
 		//! actual number of nuclear species
-		int numSpecies = n_species;
+		int numSpecies = 0;
 
 		// types
 		using RealType = Float;

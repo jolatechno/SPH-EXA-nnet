@@ -35,7 +35,6 @@
 
 #include <numeric>
 
-#include "nuclear-data.hpp"
 #include "mpi/mpi-wrapper.hpp"
 
 namespace sphexa::sphnnet {
@@ -47,8 +46,11 @@ namespace sphexa::sphnnet {
 	 * @param n            nuclearDataType (to be populated)
 	 * @param initializer  function initializing nuclear abundances from position
 	 */
-	template<size_t n_species, typename Float, typename KeyType, class AccType, class initFunc, class ParticlesDataType>
-	void initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, KeyType, AccType> &n, const initFunc initializer) {
+	template<class NuclearDataType, class ParticlesDataType, class initFunc>
+	void initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType &n, const initFunc initializer) {
+		const int dimension = n.numSpecies;
+		using Float = typename std::remove_reference<decltype(n.Y[0][0])>::type;
+
 #ifdef USE_MPI
 		int size;
 		MPI_Comm_size(d.comm, &size);
@@ -74,13 +76,13 @@ namespace sphexa::sphnnet {
 		std::vector<Float> &x = d.x, &y = d.y, &z = d.z;
 #endif
 
-		util::array<Float, n_species> Y;
+		std::vector<Float> Y(dimension);
 
 		// intialize nuclear data
 		#pragma omp parallel for firstprivate(Y) schedule(dynamic)
 		for (size_t i = 0; i < local_nuclear_n_particles; ++i) {
 			Y = initializer(x[i], y[i], z[i]);
-			for (int j = 0; j < n_species; ++j)
+			for (int j = 0; j < dimension; ++j)
 				n.Y[j][i] = Y[j];
 		}
 	}
@@ -94,8 +96,11 @@ namespace sphexa::sphnnet {
 	 * @param n            nuclearDataType (to be populated)
 	 * @param initializer  function initializing nuclear abundances from radius
 	 */
-	template<size_t n_species, typename Float, typename KeyType, class AccType, class initFunc, class ParticlesDataType>
-	void initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, KeyType, AccType> &n, const initFunc initializer) {
+	template<class NuclearDataType, class ParticlesDataType, class initFunc>
+	void initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType &n, const initFunc initializer) {
+		const int dimension = n.numSpecies;
+		using Float = typename std::remove_reference<decltype(n.Y[0][0])>::type;
+
 #ifdef USE_MPI
 		int size;
 		MPI_Comm_size(d.comm, &size);
@@ -124,13 +129,13 @@ namespace sphexa::sphnnet {
 		sphexa::sphnnet::syncDataToStaticPartition(n.partition, send_r.data(), r.data(), d.comm);
 #endif
 
-		util::array<Float, n_species> Y;
+		std::vector<Float> Y(dimension);
 
 		// intialize nuclear data
 		#pragma omp parallel for firstprivate(Y) schedule(dynamic)
 		for (size_t i = 0; i < local_nuclear_n_particles; ++i) {
 			Y = initializer(r[i]);
-			for (int j = 0; j < n_species; ++j)
+			for (int j = 0; j < dimension; ++j)
 				n.Y[j][i] = Y[j];
 		}
 	}
@@ -144,8 +149,11 @@ namespace sphexa::sphnnet {
 	 * @param n            nuclearDataType (to be populated)
 	 * @param initializer  function initializing nuclear abundances from radius
 	 */
-	template<size_t n_species, typename Float, typename KeyType, class AccType, class initFunc, class ParticlesDataType>
-	void initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, KeyType, AccType> &n, const initFunc initializer) {
+	template<class NuclearDataType, class ParticlesDataType, class initFunc>
+	void initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType &n, const initFunc initializer) {
+		const int dimension = n.numSpecies;
+		using Float = typename std::remove_reference<decltype(n.Y[0][0])>::type;
+
 #ifdef USE_MPI
 		int size;
 		MPI_Comm_size(d.comm, &size);
@@ -165,13 +173,13 @@ namespace sphexa::sphnnet {
 		n.rho = d.rho;
 #endif
 
-		util::array<Float, n_species> Y;
+		std::vector<Float> Y(dimension);
 
 		// intialize nuclear data
 		#pragma omp parallel for firstprivate(Y) schedule(dynamic)
 		for (size_t i = 0; i < local_nuclear_n_particles; ++i) {
 			Y = initializer(n.rho[i]);
-			for (int j = 0; j < n_species; ++j)
+			for (int j = 0; j < dimension; ++j)
 				n.Y[j][i] = Y[j];
 		}
 	}
@@ -185,8 +193,10 @@ namespace sphexa::sphnnet {
 	 * @param n           nuclearDataType (to be populated)
 	 * @param Y0          constant abundances vector to be copied
 	 */
-	template<size_t n_species, typename Float, typename KeyType, class AccType, class Vector, class ParticlesDataType>
-	void initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType<n_species, Float, KeyType, AccType> &n, const Vector &Y0) {
+	template<class NuclearDataType, class ParticlesDataType, class Vector>
+	void initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, NuclearDataType &n, const Vector &Y0) {
+		const int dimension = n.numSpecies;
+
 #ifdef USE_MPI
 		int size;
 		MPI_Comm_size(d.comm, &size);
@@ -203,7 +213,7 @@ namespace sphexa::sphnnet {
 
 		// intialize nuclear data
 		#pragma omp parallel for schedule(dynamic)
-		for (int j = 0; j < n_species; ++j)
+		for (int j = 0; j < dimension; ++j)
 			std::fill(n.Y[j].begin(), n.Y[j].end(), Y0[j]);
 	}
 

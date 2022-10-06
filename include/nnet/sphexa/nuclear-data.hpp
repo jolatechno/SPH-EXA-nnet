@@ -61,20 +61,20 @@
 
 
 namespace sphexa::sphnnet {
-	template<size_t N, typename T, typename I>
+	template<typename T, typename I>
 	class DeviceNuclearDataType;
 
-	/*! @brief nuclear data class for n_species nuclear network */
-	template<size_t n_species, typename Float, typename Int, class AccType>
-	struct NuclearDataType : public cstone::FieldStates<NuclearDataType<n_species, Float, Int, AccType>> {
+	/*! @brief nuclear data class for nuclear network */
+	template<typename Float, typename Int, class AccType>
+	struct NuclearDataType : public cstone::FieldStates<NuclearDataType<Float, Int, AccType>> {
 	public:
 		//! maximum number of nuclear species
 		static const int maxNumSpecies = 100;
 		//! actual number of nuclear species
-		int numSpecies = n_species;
+		int numSpecies = 0;
 
     	template<class... Args>
-    	using DeviceNuclearData_t = DeviceNuclearDataType<n_species, Args...>;
+    	using DeviceNuclearData_t = DeviceNuclearDataType<Args...>;
 
 		// types
 		using RealType        = Float;

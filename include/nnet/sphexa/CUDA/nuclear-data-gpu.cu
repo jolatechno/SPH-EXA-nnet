@@ -33,8 +33,8 @@
 #include "nuclear-data-gpu.cuh"
 
 namespace sphexa::sphnnet {
-	template<size_t n_species, typename Float, typename Int>
-	void DeviceNuclearDataType<n_species, Float, Int>::resize(size_t size) {
+	template<typename Float, typename Int>
+	void DeviceNuclearDataType<Float, Int>::resize(size_t size) {
         double growthRate = 1;
         auto   data_      = data();
 
@@ -49,11 +49,6 @@ namespace sphexa::sphnnet {
 	}
 
 	// used templates:
-    template class DeviceNuclearDataType<14, double, size_t>;
-    template class DeviceNuclearDataType<86, double, size_t>;
-    template class DeviceNuclearDataType<87, double, size_t>;
-
-    template class DeviceNuclearDataType<14, float, size_t>;
-    template class DeviceNuclearDataType<86, float, size_t>;
-    template class DeviceNuclearDataType<87, float, size_t>;
+    template class DeviceNuclearDataType<double, size_t>;
+    template class DeviceNuclearDataType<float, size_t>;
 }

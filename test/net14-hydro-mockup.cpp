@@ -108,10 +108,10 @@ void dump(Dataset& d, size_t firstIndex, size_t lastIndex, /*const cstone::Box<t
 
 
 // mockup of the ParticlesDataType
-	template<size_t n_species, typename Float, typename Int, class AccType>
+	template<typename Float, typename Int, class AccType>
 class ParticlesDataType {
 public:
-	sphexa::sphnnet::NuclearDataType<n_species, Float, Int, AccType> nuclearData;
+	sphexa::sphnnet::NuclearDataType<Float, Int, AccType> nuclearData;
 
 #ifdef USE_MPI
 	// communicator
@@ -191,10 +191,10 @@ double totalInternalEnergy(Data const &n) {
 void printHelp(char* name, int rank);
 
 // mockup of the step function 
-template<class func_type, class func_eos, class Zvector, size_t n_species, typename Float, typename KeyType, class AccType>
+template<class func_type, class func_eos, class Zvector, typename Float, typename KeyType, class AccType>
 void step(int rank,
 	size_t firstIndex, size_t lastIndex,
-	ParticlesDataType<n_species, Float, KeyType, AccType> &d, const double dt,
+	ParticlesDataType<Float, KeyType, AccType> &d, const double dt,
 	const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 	const Float *BE, const Zvector &Z)
 {
@@ -302,7 +302,9 @@ int main(int argc, char* argv[]) {
 	/* !!!!!!!!!!!!
 	initialize the hydro state
 	!!!!!!!!!!!! */
-	ParticlesDataType<14, double, size_t, AccType> particle_data;
+	ParticlesDataType<double, size_t, AccType> particle_data;
+	particle_data.nuclearData.numSpecies = 14;
+	
 	const size_t n_particles = total_n_particles*(rank + 1)/size - total_n_particles*rank/size;
 	const size_t offset = 10*rank;
 	const size_t first = offset, last = n_particles + offset;

@@ -189,10 +189,10 @@ double totalInternalEnergy(Data const &n) {
 void printHelp(char* name, int rank);
 
 // mockup of the step function 
-template<class func_type, class func_eos, class Zvector, size_t n_species, typename Float, typename KeyType, class AccType>
+template<class func_type, class func_eos, class Zvector, typename Float, typename KeyType, class AccType>
 void step(int rank,
 	size_t firstIndex, size_t lastIndex,
-	ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<n_species, Float, KeyType, AccType>  &n, const double dt,
+	ParticlesDataType &d, sphexa::sphnnet::NuclearDataType<Float, KeyType, AccType>  &n, const double dt,
 	const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
 	const Float *BE, const Zvector &Z)
 {
@@ -345,9 +345,12 @@ int main(int argc, char* argv[]) {
 	const nnet::eos::helmholtz_functor helm_eos_14  = nnet::eos::helmholtz_functor(nnet::net14::constants::Z);
 
 
-	sphexa::sphnnet::NuclearDataType<87, double, size_t, AccType> nuclear_data_87;
-	sphexa::sphnnet::NuclearDataType<86, double, size_t, AccType> nuclear_data_86;
-	sphexa::sphnnet::NuclearDataType<14, double, size_t, AccType> nuclear_data_14;
+	sphexa::sphnnet::NuclearDataType<double, size_t, AccType> nuclear_data_87;
+	nuclear_data_87.numSpecies = 87;
+	sphexa::sphnnet::NuclearDataType<double, size_t, AccType> nuclear_data_86;
+	nuclear_data_86.numSpecies = 86;
+	sphexa::sphnnet::NuclearDataType<double, size_t, AccType> nuclear_data_14;
+	nuclear_data_14.numSpecies = 14;
 
 	/* !!!!!!!!!!!!
 	initialize nuclear data
@@ -403,14 +406,19 @@ int main(int argc, char* argv[]) {
 
 
 
-std::vector<std::string> hydroOutFields   = {"nid", "pid", "temp", "rho"};
-	std::vector<std::string> nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y0", "Y2", "Y1"};
+	std::vector<std::string> nuclearOutFields, hydroOutFields   = {"nid", "pid", "temp", "rho"};
 	particle_data.setOutputFields(hydroOutFields);
 	if (use_net87) {
+		nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y2", "Y4", "Y3"};
+
 		nuclear_data_87.setOutputFields(nuclearOutFields);
 	} else if (use_net86) {
+		nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y2", "Y4", "Y3"};
+
 		nuclear_data_86.setOutputFields(nuclearOutFields);
 	} else {
+		nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y0", "Y2", "Y1"};
+
 		nuclear_data_14.setOutputFields(nuclearOutFields);
 	}
 
