@@ -55,8 +55,6 @@
 #include "../../util/eigen.hpp"
 #include "../../util/algorithm.hpp"
 
-#include "sph/data_util.hpp"
-
 #include "../parameterization/eos/helmholtz.hpp"
 
 namespace nnet::parallel_nnet {

@@ -36,7 +36,7 @@
 
 #include "mpi/mpi-wrapper.hpp"
 
-#include "sph/data_util.hpp"
+#include "cstone/fields/data_util.hpp"
 
 #include "../../util/algorithm.hpp"
 

@@ -39,9 +39,9 @@
 #include <memory>
 #include <variant>
 
-#include "sph/data_util.hpp"
-#include "sph/field_states.hpp"
 #include "sph/traits.hpp"
+
+#include "cstone/fields/field_states.hpp"
 
 #include "cstone/util/util.hpp"
 #include "cstone/util/array.hpp"
@@ -51,7 +51,7 @@
 namespace sphexa::sphnnet {
 	/*! @brief device nuclear data class for n_species nuclear network */
 	template<size_t n_species, typename Float, typename Int>
-	class DeviceNuclearDataType : public FieldStates<DeviceNuclearDataType<n_species, Float, Int>> {
+	class DeviceNuclearDataType : public cstone::FieldStates<DeviceNuclearDataType<n_species, Float, Int>> {
 	public:
 		// types
 		using RealType = Float;

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
 
 project(nuclear-nets LANGUAGES CXX C)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CUDA_STANDARD 17)
 
 set(CMAKE_CUDA_FLAGS "-O3 --std=c++${CMAKE_CUDA_STANDARD} --expt-relaxed-constexpr ${CMAKE_CUDA_FLAGS} ${CMAKE_CXX_FLAGS}")

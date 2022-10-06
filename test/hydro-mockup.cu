@@ -92,7 +92,7 @@ void dump(Dataset& d, size_t firstIndex, size_t lastIndex, /*const cstone::Box<t
         {
             try
             {
-                auto fieldPointers = sphexa::getOutputArrays(d);
+                auto fieldPointers = cstone::getOutputArrays(d);
 
                 bool append = rank != 0;
                 sphexa::fileutils::writeAscii(firstIndex, lastIndex, path, append, fieldPointers, separator);
@@ -164,7 +164,7 @@ public:
 
 	void setOutputFields(const std::vector<std::string>& outFields) {
 	    outputFieldNames   = fieldNames;
-		outputFieldIndices = sphexa::fieldStringsToInt(outputFieldNames, outFields);
+		outputFieldIndices = cstone::fieldStringsToInt(outFields, outputFieldNames);
     }
 
     bool isAllocated(int i) const {

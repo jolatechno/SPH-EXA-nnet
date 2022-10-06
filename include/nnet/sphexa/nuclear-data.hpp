@@ -50,9 +50,10 @@
 
 #include "../nuclear-net.hpp"
 
-#include "sph/data_util.hpp"
-#include "sph/field_states.hpp"
 #include "sph/traits.hpp"
+
+#include "cstone/fields/field_states.hpp"
+#include "cstone/fields/data_util.hpp"
 
 #include "cstone/util/util.hpp"
 
@@ -63,7 +64,7 @@ namespace sphexa::sphnnet {
 
 	/*! @brief nuclear data class for n_species nuclear network */
 	template<size_t n_species, typename Float, typename Int, class AccType>
-	struct NuclearDataType : public FieldStates<NuclearDataType<n_species, Float, Int, AccType>> {
+	struct NuclearDataType : public cstone::FieldStates<NuclearDataType<n_species, Float, Int, AccType>> {
 	public:
     	template<class... Args>
     	using DeviceNuclearData_t = DeviceNuclearDataType<n_species, Args...>;
@@ -224,7 +225,7 @@ namespace sphexa::sphnnet {
 	     */
 	    void setOutputFields(const std::vector<std::string>& outFields) {
 	        outputFieldNames = outFields;
-	        outputFieldIndices = sphexa::fieldStringsToInt(outputableFieldNames, outFields);
+	        outputFieldIndices = cstone::fieldStringsToInt(outFields, outputableFieldNames);
     	}
 
 		// particle fields selected for file output

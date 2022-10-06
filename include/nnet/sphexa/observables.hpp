@@ -52,7 +52,7 @@
 
 #include "mpi/mpi-wrapper.hpp"
 
-#include "sph/data_util.hpp"
+#include "cstone/fields/data_util.hpp"
 
 namespace sphexa::sphnnet {
 	/*! @brief function to compute the total nuclear energy

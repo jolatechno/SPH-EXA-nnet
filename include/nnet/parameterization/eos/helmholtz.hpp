@@ -66,7 +66,7 @@
 #include <tuple>
 #include <math.h>
 
-#include "sph/data_util.hpp"
+// #include "sph/data_util.hpp"
 
 namespace nnet::eos {
 	/*! @brief if true print debuging prints */
