@@ -97,7 +97,8 @@ if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
 
 
 
-	add_executable(${nnet}-cuda hydro-mockup.cu)
+    add_executable(${nnet}-cuda hydro-mockup.cu)
+  # add_executable(${nnet}-cuda hydro-mockup.cpp)
 
    	set_target_properties(${nnet}-cuda PROPERTIES
    		CUDA_SEPARABLE_COMPILATION ON
@@ -120,7 +121,8 @@ if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
 
 
 
-	add_executable(${nnet}-cpu hydro-mockup.cu)
+    add_executable(${nnet}-cpu hydro-mockup.cu)
+  # add_executable(${nnet}-cpu hydro-mockup.cu)
 
    	set_target_properties(${nnet}-cpu PROPERTIES
    		CUDA_SEPARABLE_COMPILATION ON

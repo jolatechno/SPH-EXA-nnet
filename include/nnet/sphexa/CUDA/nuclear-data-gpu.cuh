@@ -79,6 +79,8 @@ namespace sphexa::sphnnet {
 		DevVector<Tmass> m;                                // mass
 		DevVector<RealType> dt;                            // timesteps
 		util::array<DevVector<RealType>, maxNumSpecies> Y; // vector of nuclear abundances
+		DevVector<int> node_id;                            // node ids
+		DevVector<KeyType> particle_id;                    // particle id
 		mutable thrust::device_vector<RealType> buffer;    // solver buffer
 
 		//! base hydro fieldNames (every nuclear species is named "Yn")
@@ -104,7 +106,7 @@ namespace sphexa::sphnnet {
 	     */
 	    auto data() {
 	        using FieldType =
-	            std::DevVector<FieldVector<float>*, FieldVector<double>*, FieldVector<unsigned>*, FieldVector<int>*, FieldVector<uint64_t>*>;
+	            std::variant<FieldVector<float>*, FieldVector<double>*, FieldVector<unsigned>*, FieldVector<int>*, FieldVector<uint64_t>*>;
 
 	        return std::apply([](auto&... fields) { return std::array<FieldType, sizeof...(fields)>{&fields...}; },
 	                          dataTuple());
