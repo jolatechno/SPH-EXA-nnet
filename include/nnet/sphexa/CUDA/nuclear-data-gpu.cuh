@@ -37,7 +37,6 @@
 #include <vector>
 #include <array>
 #include <memory>
-#include <variant>
 
 #include "sph/traits.hpp"
 
@@ -60,26 +59,56 @@ namespace sphexa::sphnnet {
 		//! actual number of nuclear species
 		int numSpecies = 0;
 
+	    template<class FType>
+	    using DevVector = thrust::device_vector<FType>;
+
 		// types
 		using RealType = Float;
     	using KeyType  = Int;
 	    using Tmass    = float;
 	    using XM1Type  = float;
 
-		// could replace rho_m1 -> drho_dt
-		//!  @brief hydro data
-		thrust::device_vector<RealType> c, p, cv, dpdT, u, rho, temp, rho_m1;
-		//!  @brief particle mass (lower precision)
-		thrust::device_vector<Tmass> m;
+		DevVector<RealType> c;                             // speed of sound
+		DevVector<RealType> p;                             // pressure
+		DevVector<RealType> cv;                            // cv
+		DevVector<RealType> u;                             // internal energy
+		DevVector<RealType> dpdT;                          // dP/dT
+		DevVector<RealType> rho;                           // density
+		DevVector<RealType> temp;                          // temperature
+		DevVector<RealType> rho_m1;                        // previous density
+		DevVector<Tmass> m;                                // mass
+		DevVector<RealType> dt;                            // timesteps
+		util::array<DevVector<RealType>, maxNumSpecies> Y; // vector of nuclear abundances
+		mutable thrust::device_vector<RealType> buffer;    // solver buffer
 
-		//!  @brief nuclear abundances (vector of vector)
-		util::array<thrust::device_vector<RealType>, maxNumSpecies> Y;
+		//! base hydro fieldNames (every nuclear species is named "Yn")
+		inline static constexpr auto fieldNames = concat(enumerateFieldNames<"Y", maxNumSpecies>(), std::array<const char*, 12>{
+			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1",
+		});
 
-		//! @brief timesteps
-		thrust::device_vector<RealType> dt;
+		/*! @brief return a tuple of field references
+	     *
+	     * Note: this needs to be in the same order as listed in fieldNames
+	     */
+		auto dataTuple() { 
+			return std::tuple_cat(
+				dataTuple_helper(std::make_index_sequence<maxNumSpecies>{}),
+				std::tie(node_id, particle_id, dt, c, p, cv, u, dpdT, m, temp, rho, rho_m1)
+			); 
+		}
 
-		//! solver buffer
-		mutable thrust::device_vector<RealType> buffer;
+		/*! @brief return a vector of pointers to field vectors
+	     *
+	     * We implement this by returning an rvalue to prevent having to store pointers and avoid
+	     * non-trivial copy/move constructors.
+	     */
+	    auto data() {
+	        using FieldType =
+	            std::DevVector<FieldVector<float>*, FieldVector<double>*, FieldVector<unsigned>*, FieldVector<int>*, FieldVector<uint64_t>*>;
+
+	        return std::apply([](auto&... fields) { return std::array<FieldType, sizeof...(fields)>{&fields...}; },
+	                          dataTuple());
+	    }
 
 		//!  resize the number of particules
 		void resize(size_t size) {
@@ -96,43 +125,10 @@ namespace sphexa::sphnnet {
 	        }
 		}
 
-		//! base hydro fieldNames (every nuclear species is named "Yn")
-		inline static constexpr auto fieldNames = concat(enumerateFieldNames<"Y", maxNumSpecies>(), std::array<const char*, 12>{
-			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1",
-		});
-
-		/*! @brief return a vector of pointers to field vectors
-	     *
-	     * We implement this by returning an rvalue to prevent having to store pointers and avoid
-	     * non-trivial copy/move constructors.
-	     */
-	    auto data() {
-	    	using FieldType = std::variant<
-	    		thrust::device_vector<int>*,
-	    		thrust::device_vector<unsigned>*,
-	    		thrust::device_vector<uint64_t>*,
-	    		thrust::device_vector<float>*,
-	    		thrust::device_vector<double>*>;
-
-			util::array<FieldType, fieldNames.size()> data;
-
-			for (int i = 0; i < maxNumSpecies; ++i) 
-				data[i] = &Y[i];
-
-			data[maxNumSpecies]      = &node_id;
-			data[maxNumSpecies + 1]  = &particle_id;
-			data[maxNumSpecies + 2]  = &dt;
-			data[maxNumSpecies + 3]  = &c;
-			data[maxNumSpecies + 4]  = &p;
-			data[maxNumSpecies + 5]  = &cv;
-			data[maxNumSpecies + 6]  = &u;
-			data[maxNumSpecies + 7]  = &dpdT;
-			data[maxNumSpecies + 8]  = &m;
-			data[maxNumSpecies + 9]  = &temp;
-			data[maxNumSpecies + 10] = &rho;
-			data[maxNumSpecies + 11] = &rho_m1;
-
-			return data;
+private:
+	    template<size_t... Is>
+	    auto dataTuple_helper(std::index_sequence<Is...>) {
+	        return std::tie(Y[Is]...);
 	    }
 	};
 

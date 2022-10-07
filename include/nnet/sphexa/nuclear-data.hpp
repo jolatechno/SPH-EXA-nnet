@@ -76,6 +76,9 @@ namespace sphexa::sphnnet {
     	template<class... Args>
     	using DeviceNuclearData_t = DeviceNuclearDataType<Args...>;
 
+	    template<class ValueType>
+	    using FieldVector = std::vector<ValueType, std::allocator<ValueType>>;
+
 		// types
 		using RealType        = Float;
     	using KeyType         = Int;
@@ -94,28 +97,64 @@ namespace sphexa::sphnnet {
 	    //! @brief gravitational constant
 	    RealType g{0.0};
 
-		// could replace rho_m1 -> drho_dt
 		//!  @brief hydro data
-		std::vector<RealType> c, p, cv, u, dpdT, rho, temp, rho_m1;
-		//!  @brief particle mass (lower precision)
-		std::vector<Tmass> m;
-
-		//! nuclear abundances (vector of vector)
-		util::array<std::vector<RealType>, maxNumSpecies> Y;
-
-		//! timesteps
-		std::vector<RealType> dt;
-
-		//! particle ID
-		std::vector<int> node_id;
-		//! node ID
-		std::vector<KeyType> particle_id;
+		FieldVector<RealType> c;                             // speed of sound
+		FieldVector<RealType> p;                             // pressure
+		FieldVector<RealType> cv;                            // cv
+		FieldVector<RealType> u;                             // internal energy
+		FieldVector<RealType> dpdT;                          // dP/dT
+		FieldVector<RealType> rho;                           // density
+		FieldVector<RealType> temp;                          // temperature
+		FieldVector<RealType> rho_m1;                        // previous density
+		FieldVector<Tmass> m;                                // mass
+		FieldVector<RealType> dt;                            // timesteps
+		util::array<FieldVector<RealType>, maxNumSpecies> Y; // vector of nuclear abundances
+		FieldVector<int> node_id;                            // node ids
+		FieldVector<KeyType> particle_id;                    // particle id
 
 		//! mpi communicator
 #ifdef USE_MPI
     	MPI_Comm comm=MPI_COMM_WORLD;
     	sphexa::mpi::mpi_partition partition;
 #endif
+
+		//! base hydro fieldNames (every nuclear species is named "Yn")
+		inline static constexpr auto fieldNames = concat(enumerateFieldNames<"Y", maxNumSpecies>(), std::array<const char*, 12>{
+			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1",
+		});
+
+		/*! @brief return a tuple of field references
+	     *
+	     * Note: this needs to be in the same order as listed in fieldNames
+	     */
+		auto dataTuple() { 
+			return std::tuple_cat(
+				dataTuple_helper(std::make_index_sequence<maxNumSpecies>{}),
+				std::tie(node_id, particle_id, dt, c, p, cv, u, dpdT, m, temp, rho, rho_m1)
+			); 
+		}
+
+		/*! @brief return a vector of pointers to field vectors
+	     *
+	     * We implement this by returning an rvalue to prevent having to store pointers and avoid
+	     * non-trivial copy/move constructors.
+	     */
+	    auto data() {
+	        using FieldType =
+	            std::variant<FieldVector<float>*, FieldVector<double>*, FieldVector<unsigned>*, FieldVector<int>*, FieldVector<uint64_t>*>;
+
+	        return std::apply([](auto&... fields) { return std::array<FieldType, sizeof...(fields)>{&fields...}; },
+	                          dataTuple());
+	    }
+
+	    /*! @brief sets the field to be outputed
+	     * 
+	     * @param outFields  vector of the names of fields to be outputed (including abundances names "Y(i)" for the ith species)
+	     */
+	    void setOutputFields(const std::vector<std::string>& outFields) {
+	        outputFieldNames = outFields;
+	        outputFieldIndices = cstone::fieldStringsToInt(outFields, fieldNames);
+    	}
 
 		/*! @brief resize the number of particules
 		 * 
@@ -165,58 +204,14 @@ namespace sphexa::sphnnet {
 	        }
 	    }
 
-
-		//! base hydro fieldNames (every nuclear species is named "Yn")
-		inline static constexpr auto fieldNames = concat(enumerateFieldNames<"Y", maxNumSpecies>(), std::array<const char*, 12>{
-			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1",
-		});
-
-
-		/*! @brief return a vector of pointers to field vectors
-	     *
-	     * We implement this by returning an rvalue to prevent having to store pointers and avoid
-	     * non-trivial copy/move constructors.
-	     */
-	    auto data() {
-	    	using FieldType = std::variant<
-	    		std::vector<int>*,
-	    		std::vector<unsigned>*,
-	    		std::vector<uint64_t>*,
-	    		std::vector<float>*,
-	    		std::vector<double>*>;
-
-			util::array<FieldType, fieldNames.size()> data;
-
-			for (int i = 0; i < maxNumSpecies; ++i) 
-				data[i] = &Y[i];
-
-			data[maxNumSpecies]      = &node_id;
-			data[maxNumSpecies + 1]  = &particle_id;
-			data[maxNumSpecies + 2]  = &dt;
-			data[maxNumSpecies + 3]  = &c;
-			data[maxNumSpecies + 4]  = &p;
-			data[maxNumSpecies + 5]  = &cv;
-			data[maxNumSpecies + 6]  = &u;
-			data[maxNumSpecies + 7]  = &dpdT;
-			data[maxNumSpecies + 8]  = &m;
-			data[maxNumSpecies + 9]  = &temp;
-			data[maxNumSpecies + 10] = &rho;
-			data[maxNumSpecies + 11] = &rho_m1;
-
-			return data;
-	    }
-
-	    /*! @brief sets the field to be outputed
-	     * 
-	     * @param outFields  vector of the names of fields to be outputed (including abundances names "Y(i)" for the ith species)
-	     */
-	    void setOutputFields(const std::vector<std::string>& outFields) {
-	        outputFieldNames = outFields;
-	        outputFieldIndices = cstone::fieldStringsToInt(outFields, fieldNames);
-    	}
-
 		// particle fields selected for file output
 		std::vector<int>         outputFieldIndices;
 		std::vector<std::string> outputFieldNames;
+
+private:
+	    template<size_t... Is>
+	    auto dataTuple_helper(std::index_sequence<Is...>) {
+	        return std::tie(Y[Is]...);
+	    }
 	};
 }
