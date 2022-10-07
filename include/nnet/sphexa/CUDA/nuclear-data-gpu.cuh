@@ -82,8 +82,19 @@ namespace sphexa::sphnnet {
 		mutable thrust::device_vector<RealType> buffer;
 
 		//!  resize the number of particules
-		void resize(size_t size);
+		void resize(size_t size) {
+	        double growthRate = 1;
+	        auto   data_      = data();
 
+	        for (size_t i = 0; i < data_.size(); ++i) {
+	            if (this->isAllocated(i)) {
+	            	// actually resize
+	                std::visit([&](auto& arg) {
+	        			reallocate(*arg, size, growthRate);
+	                }, data_[i]);
+	            }
+	        }
+		}
 
 		//! base hydro fieldNames (every nuclear species is named "Yn")
 		inline static constexpr auto fieldNames = concat(enumerateFieldNames<"Y", maxNumSpecies>(), std::array<const char*, 12>{
@@ -123,5 +134,9 @@ namespace sphexa::sphnnet {
 
 			return data;
 	    }
-	 };
+	};
+
+	// used templates:
+    template class DeviceNuclearDataType<double, size_t>;
+    template class DeviceNuclearDataType<float, size_t>;
 }
