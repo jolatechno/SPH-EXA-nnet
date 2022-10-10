@@ -39,7 +39,8 @@
 #include <memory>
 #include <variant>
 
-#if COMPILE_DEVICE
+// can't compile CUDA GPU data for now !
+#if COMPILE_DEVICE && 0
 	#include "CUDA/nuclear-data-gpu.cuh"
 #endif
 
@@ -82,8 +83,10 @@ namespace sphexa::sphnnet {
         inline static constexpr std::array fieldNames{0};
 	};
 
+	/*! @brief Forward declaration of DeviceNuclearDataType, defined to DeviceNuclearDataFacade for now ! */
 	template<typename T, typename I>
-	class DeviceNuclearDataType;
+	class DeviceNuclearDataType : public DeviceNuclearDataFacade<T, I> {};
+	// class DeviceNuclearDataType;
 
 	/*! @brief nuclear data class for nuclear network */
 	template<typename Float, typename Int, class AccType>
