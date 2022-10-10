@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <array>
 
-#include "sph/traits.hpp"
+#include "cstone/tree/accel_switch.hpp"
 #include "cstone/util/array.hpp"
 
 #include <iostream>
@@ -79,19 +79,19 @@ namespace sphexa {
 
 
 
-    template<class Dataset, std::enable_if_t<not HaveGpu<typename Dataset::AcceleratorType>{}, int> = 0>
+    template<class Dataset, std::enable_if_t<not cstone::HaveGpu<typename Dataset::AcceleratorType>{}, int> = 0>
     void transferToDevice(Dataset&, size_t, size_t, const std::vector<std::string>&)
     {
     }
 
-    template<class Dataset, std::enable_if_t<not HaveGpu<typename Dataset::AcceleratorType>{}, int> = 0>
+    template<class Dataset, std::enable_if_t<not cstone::HaveGpu<typename Dataset::AcceleratorType>{}, int> = 0>
     void transferToHost(Dataset&, size_t, size_t, const std::vector<std::string>&)
     {
     }
 
 
 
-    template<class DataType, std::enable_if_t<HaveGpu<typename DataType::AcceleratorType>{}, int> = 0>
+    template<class DataType, std::enable_if_t<cstone::HaveGpu<typename DataType::AcceleratorType>{}, int> = 0>
     void transferToDevice(DataType& d, size_t first, size_t last, const std::vector<std::string>& fields)
     {
 #if COMPILE_DEVICE
@@ -135,7 +135,7 @@ namespace sphexa {
 #endif
     }
 
-    template<class DataType, std::enable_if_t<HaveGpu<typename DataType::AcceleratorType>{}, int> = 0>
+    template<class DataType, std::enable_if_t<cstone::HaveGpu<typename DataType::AcceleratorType>{}, int> = 0>
     void transferToHost(DataType& d, size_t first, size_t last, const std::vector<std::string>& fields)
     {
 #if COMPILE_DEVICE

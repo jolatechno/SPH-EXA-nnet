@@ -50,7 +50,7 @@
 
 #include "../nuclear-net.hpp"
 
-#include "sph/traits.hpp"
+#include "cstone/tree/accel_switch.hpp"
 
 #include "cstone/fields/field_states.hpp"
 #include "cstone/fields/data_util.hpp"
@@ -61,6 +61,27 @@
 
 
 namespace sphexa::sphnnet {
+	/*! @brief nuclear data device facade */
+	template<typename T, typename I>
+	class DeviceNuclearDataFacade {
+	public:
+		void resize(size_t) {}
+
+        template<class... Ts>
+        void setConserved(Ts...) {}
+
+        template<class... Ts>
+        void setDependent(Ts...) {}
+
+        template<class... Ts>
+        void release(Ts...) {}
+
+        template<class... Ts>
+        void acquire(Ts...) {}
+
+        inline static constexpr std::array fieldNames{0};
+	};
+
 	template<typename T, typename I>
 	class DeviceNuclearDataType;
 
@@ -85,7 +106,7 @@ namespace sphexa::sphnnet {
 	    using Tmass           = float;
 	    using XM1Type         = float;
     	using AcceleratorType = AccType;
-		using DeviceData_t    = typename sphexa::detail::AccelSwitchType<AcceleratorType, sphexa::DeviceDataFacade, DeviceNuclearData_t>::template type<Float, Int>;
+		using DeviceData_t    = typename cstone::AccelSwitchType<AcceleratorType, DeviceNuclearDataFacade, DeviceNuclearData_t>::template type<Float, Int>;
 
     	DeviceData_t devData;
 
@@ -164,7 +185,7 @@ namespace sphexa::sphnnet {
 	        double growthRate = 1;
 	        auto   data_      = data();
 
-			if constexpr (HaveGpu<AcceleratorType>{})
+			if constexpr (cstone::HaveGpu<AcceleratorType>{})
 	        	devData.resize(size);
 
 	        for (size_t i = 0; i < data_.size(); ++i) {

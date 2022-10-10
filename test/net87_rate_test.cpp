@@ -33,8 +33,6 @@
 
 #define NET86_DEBUG
 
-#include "cstone/util/array.hpp"
-
 #include "nnet/parameterization/net87/net87.hpp"
 #include "nnet/parameterization/eos/helmholtz.hpp"
 

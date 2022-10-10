@@ -32,8 +32,6 @@
 #include <iostream>
 #include <chrono>
 
-#include "cstone/util/array.hpp"
-
 #include "nnet/parameterization/net14/net14.hpp"
 #include "nnet/parameterization/eos/helmholtz.hpp"
 #include "nnet/parameterization/eos/ideal_gas.hpp"

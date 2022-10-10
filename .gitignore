@@ -35,4 +35,4 @@
 *.res#
 
 #build
-test/build
+build

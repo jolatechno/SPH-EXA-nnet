@@ -94,7 +94,7 @@ namespace nnet::parallel_nnet {
 		const size_t n_particles = n.temp.size();
 		const int dimension = n.numSpecies;
 		
-		if constexpr (sphexa::HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE) {
+		if constexpr (cstone::HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE) {
 
 			/* !!!!!!!!!!!!!
 			GPU non-batch solver
@@ -218,7 +218,7 @@ namespace nnet::parallel_nnet {
 		const int dimension = n.numSpecies;
 		using Float = typename std::remove_reference<decltype(n.cv[0])>::type;
 
-		if constexpr (sphexa::HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE) {
+		if constexpr (cstone::HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE) {
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			simple GPU application of the eos

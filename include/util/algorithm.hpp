@@ -39,8 +39,6 @@
 
 #include <omp.h>
 
-#include "cstone/util/array.hpp"
-
 #include "CUDA/cuda.inl"
 #if COMPILE_DEVICE
 	#include <cuda_runtime.h>
