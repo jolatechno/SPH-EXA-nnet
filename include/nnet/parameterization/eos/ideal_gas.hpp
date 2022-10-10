@@ -43,22 +43,9 @@ namespace nnet::eos {
 
 
 
-	/*! @brief Ideal gas EOS output struct */
-	template<typename Float>
-	struct ideal_gas_eos_output {
-		HOST_DEVICE_FUN ideal_gas_eos_output() {}
-		HOST_DEVICE_FUN ~ideal_gas_eos_output() {}
-
-		Float cv, dpdT, p;
-		Float c, u;
-
-		Float dudYe = 0;
-	};
-
-
-
 	/*! @brief Ideal gas functor class */
-	class ideal_gas_functor {
+	template<typename Float>
+	class ideal_gas_functor : public nnet::eos_functor<Float> {
 	private:
 		double mu;
 
@@ -76,9 +63,8 @@ namespace nnet::eos {
 		 *
 		 * Returns ideal gas EOS output struct.
 		 */
-		template<typename Float>
-		HOST_DEVICE_FUN ideal_gas_eos_output<Float> inline operator()(const Float *Y, const Float T, const Float rho) const {
-			ideal_gas_eos_output<Float> res;
+		HOST_DEVICE_FUN nnet::eos_struct<Float> inline operator()(const Float *Y, const Float T, const Float rho) const override {
+			nnet::eos_struct<Float> res;
 
 			const Float dmy  = ideal_gas_constants::R / mu;
 		            res.cv   = 1.5 * dmy;

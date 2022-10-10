@@ -56,7 +56,7 @@ int main() {
 
    
     std::vector<double> rate(nnet::net14::reaction_list.size()), drates(nnet::net14::reaction_list.size()), BE(14);
-	nnet::net14::compute_reaction_rates(Y.data(), 2e9, 1e9, NULL, BE.data(), rate.data(), drates.data());
+	nnet::net14::compute_reaction_rates((double*)Y.data(), 2e9, 1e9, nnet::eos_struct<double>{}, BE.data(), rate.data(), drates.data());
 
 	std::cout << "reaction_list.size=" << nnet::net14::reaction_list.size() << ", rates.size=" << rate.size() << "\n\n";
 	

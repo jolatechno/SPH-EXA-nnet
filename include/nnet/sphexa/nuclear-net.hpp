@@ -54,9 +54,9 @@ namespace sphexa::sphnnet {
      * @param use_drhodt          if true considers drho/dt in eos
      * @param jumpToNse           function to jump to nuclear statistical equilibrium
      */
-	template<class Data, class func_type, class func_eos, typename Float, class nseFunction=void*>
+	template<class Data, typename Float, class nseFunction=void*>
 	void inline computeNuclearReactions(Data &n, size_t firstIndex, size_t lastIndex, const Float hydro_dt, const Float previous_dt,
-		const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		const nnet::reaction_list &reactions, const nnet::compute_reaction_rates_functor<Float> &construct_rates_BE, const nnet::eos_functor<Float> &eos,
 		bool use_drhodt,
 		const nseFunction jumpToNse=NULL)
 	{

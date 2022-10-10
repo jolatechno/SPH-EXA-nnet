@@ -407,23 +407,6 @@ namespace nnet::eos {
 
 
 
-	/*! @brief Helmholtz EOS output struct. */
-	template<typename Float>
-	struct helm_eos_output {
-		HOST_DEVICE_FUN helm_eos_output() {}
-		HOST_DEVICE_FUN ~helm_eos_output() {}
-
-		Float cv, dpdT, p;
-		Float cp, c, u;
-
-		Float dse, dpe, dsp;
-		Float cv_gaz, cp_gaz, c_gaz; 
-
-		Float dudYe;
-	};
-
-
-
 	/*! @brief Helmholtz EOS
 	 *
 	 * @param abar_ average A (number of mass)
@@ -434,7 +417,7 @@ namespace nnet::eos {
 	 * Returns Helmholtz EOS output struct.
 	 */
 	template<typename Float>
-	HOST_DEVICE_FUN helm_eos_output<Float> inline helmholtz(double abar_, double zbar_, const Float temp, const Float rho) {
+	HOST_DEVICE_FUN nnet::eos_struct<Float> inline helmholtz(double abar_, double zbar_, const Float temp, const Float rho) {
 		// coefs
 		// Float fi[36];
 		Float *fi = new Float[36];
@@ -1086,7 +1069,7 @@ namespace nnet::eos {
 		// the specific heat at constant pressure (c&g 9.98)
 		// and relativistic formula for the sound speed (c&g 14.29)
 
-		helm_eos_output<Float> res;
+		nnet::eos_struct<Float> res;
 
 
 		Float zz        = pgas*rhoi;
@@ -1149,7 +1132,7 @@ namespace nnet::eos {
 
 	/*! @brief Helmholtz functor class */
 	template<typename Float>
-	class helmholtz_functor {
+	class helmholtz_functor : public nnet::eos_functor<Float> {
 	private:
 		const Float *Z;
 		int dimension;
@@ -1158,8 +1141,6 @@ namespace nnet::eos {
 #endif
 
 	public:
-		using eos_type = helm_eos_output<Float>;
-
 		helmholtz_functor(const Float  *Z_, int dimension_) : Z(Z_), dimension(dimension_) {
 #if COMPILE_DEVICE
 			gpuErrchk(cudaMalloc(&dev_Z,    dimension*sizeof(Float)));
@@ -1194,7 +1175,7 @@ namespace nnet::eos {
 		 *
 		 * Returns Helmholtz EOS output struct.
 		 */
-		HOST_DEVICE_FUN eos_type inline operator()(const Float *Y, const Float temp, const Float rho) const {
+		HOST_DEVICE_FUN nnet::eos_struct<Float> inline operator()(const Float *Y, const Float temp, const Float rho) const override {
 			// compute abar and zbar
 			double abar = algorithm::accumulate(Y, Y + dimension, (double)0.);
 			double zbar = eigen::dot(Y, Y + dimension, DEVICE_ACCESS(Z));

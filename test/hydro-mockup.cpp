@@ -192,11 +192,11 @@ double totalInternalEnergy(Data const &n) {
 void printHelp(char* name, int rank);
 
 // mockup of the step function 
-template<class func_type, class func_eos, class Zvector, typename Float, typename KeyType, class AccType>
+template<class Zvector, typename Float, typename KeyType, class AccType>
 void step(int rank,
 	size_t firstIndex, size_t lastIndex,
 	ParticlesDataType<Float, KeyType, AccType> &d, const double dt,
-	const nnet::reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+	const nnet::reaction_list &reactions, const nnet::compute_reaction_rates_functor<Float> &construct_rates_BE, const nnet::eos_functor<Float> &eos,
 	const Float *BE, const Zvector &Z)
 {
 	size_t n_nuclear_particles = d.nuclearData.temp.size();
@@ -350,7 +350,7 @@ int main(int argc, char* argv[]) {
 	} else {
 		helm_eos = nnet::eos::helmholtz_functor(nnet::net14::constants::Z);
 	}
-	const nnet::eos::ideal_gas_functor idea_gas_eos = nnet::eos::ideal_gas_functor(isotherm ? 1e-20 : 10.0);
+	const nnet::eos::ideal_gas_functor<double> idea_gas_eos(isotherm ? 1e-20 : 10.0);
 
 
 

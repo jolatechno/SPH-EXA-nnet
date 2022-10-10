@@ -156,7 +156,9 @@ namespace nnet::net14 {
 	});
 
 	/*! @brief net14 functor */
-	struct compute_reaction_rates_functor {
+	template<typename Float>
+	class compute_reaction_rates_functor : public nnet::compute_reaction_rates_functor<Float> {
+	public:
 		compute_reaction_rates_functor() {}
 		
 		/*! @brief compute net14 rates 
@@ -169,8 +171,7 @@ namespace nnet::net14 {
 		 * @param rates         will be populated with reaction rates
 		 * @param drates        will be populated with the temperature derivatives of reaction rates
 		 */
-		template<typename Float, class eos>
-		HOST_DEVICE_FUN void inline operator()(const Float *Y, const Float T, const Float rho, const eos &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {
+		HOST_DEVICE_FUN void inline operator()(const Float *Y, const Float T, const Float rho, const nnet::eos_struct<Float> &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const override {
 			/*********************************************/
 			/* start computing the binding energy vector */
 			/*********************************************/
@@ -803,5 +804,5 @@ namespace nnet::net14 {
 		}
 	};
 
-	extern compute_reaction_rates_functor compute_reaction_rates;
+	extern compute_reaction_rates_functor<double> compute_reaction_rates;
 }

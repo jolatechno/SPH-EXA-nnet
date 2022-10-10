@@ -127,8 +127,8 @@ int main(int argc, char* argv[]) {
 		std::cerr << ",\"Dm/m\"\n";
 	}
 
-	const nnet::eos::ideal_gas_functor idea_gas_eos(isotherm ? 1e-20 : 10.0);
-	const nnet::eos::helmholtz_functor helm_eos(nnet::net14::constants::Z);
+	const nnet::eos::ideal_gas_functor<double> idea_gas_eos(isotherm ? 1e-20 : 10.0);
+	const nnet::eos::helmholtz_functor<double> helm_eos(nnet::net14::constants::Z);
 
 	auto start = std::chrono::high_resolution_clock::now();
 

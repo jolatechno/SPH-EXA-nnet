@@ -464,6 +464,70 @@ utils functions:
 
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Interfaces definitions:
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+
+
+	//! @brief EOS output struct.
+	template<typename Float>
+	struct eos_struct {
+		HOST_DEVICE_FUN eos_struct() {}
+		HOST_DEVICE_FUN ~eos_struct() {}
+
+		Float cv, dpdT, p;
+		Float cp, c, u;
+
+		Float dse, dpe, dsp;
+		Float cv_gaz, cp_gaz, c_gaz; 
+
+		Float dudYe;
+	};
+
+
+
+	//! @brief functor interface to compute EOS
+	template<typename Float>
+	class eos_functor {
+	public:
+		/*! @brief Computes EOS.
+		 *
+		 * @param Y    molar proportions
+		 * @param T    temperature
+		 * @param rho  density
+		 *
+		 * Returns ideal gas EOS output struct.
+		 */
+		HOST_DEVICE_FUN eos_struct<Float> inline virtual operator()(const Float *Y, const Float T, const Float rho) const {
+			eos_struct<Float> res;
+			return res;
+		}
+	};
+
+
+
+	//! @brief functor interface to compute nuclear reactions rates
+	template<typename Float>
+	class compute_reaction_rates_functor {
+	public:
+		compute_reaction_rates_functor() {}
+		
+		/*! @brief computes rates.
+		 * 
+		 * @param Y              molar fractions
+		 * @param T             temperature
+		 * @param rho           density
+		 * @param eos_struct    eos struct to populate
+		 * @param corrected_BE  will be populated by binding energies, corrected by coulombien terms
+		 * @param rates         will be populated with reaction rates
+		 * @param drates        will be populated with the temperature derivatives of reaction rates
+		 */
+		HOST_DEVICE_FUN void inline virtual operator()(const Float *Y, const Float T, const Float rho, const eos_struct<Float> &eos_struct, Float *corrected_BE, Float *rates, Float *drates) const {}
+	};
+
+
+
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 First simple direct solver:
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
@@ -473,12 +537,12 @@ First simple direct solver:
 	 * 
 	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 */
-	template<class eos_type, class func_type, typename Float>
+	template<typename Float>
 	HOST_DEVICE_FUN void inline prepare_system_from_guess(const int dimension, Float *Mp, Float *RHS, Float *rates,
-		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, 
+		const ptr_reaction_list &reactions, const compute_reaction_rates_functor<Float> &construct_rates_BE, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess,
 		const Float rho, const Float drho_dt,
-		const eos_type &eos_struct, const Float dt)
+		const eos_struct<Float> &eos_struct, const Float dt)
 	{
 		/* -------------------
 		Solves d{Y, T}/dt = M'*Y using eigen:
@@ -587,13 +651,13 @@ First simple direct solver:
 	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 * solves non-iteratively and partialy implicitly the system represented by M (computed at a specific "guess")
 	 */
-	template<class func_type, class eos_type, typename Float>
+	template<typename Float>
 	void inline solve_system_from_guess(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates,
-		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, 
+		const ptr_reaction_list &reactions, const compute_reaction_rates_functor<Float> &construct_rates_BE, 
 		const Float *Y, const Float T, const Float *Y_guess, const Float T_guess, Float *next_Y, Float &next_T,
 		const Float rho, const Float drho_dt,
-		const eos_type &eos_struct, const Float dt)
+		const eos_struct<Float> &eos_struct, const Float dt)
 	{
 		if (rho < constants::min_rho || T < constants::min_temp) {
 			for (int i = 0; i < dimension; ++i)
@@ -624,10 +688,10 @@ First simple direct solver:
 	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 * solves non-iteratively and partialy implicitly the system represented by M
 	 */
-	template<class func_type, typename Float>
+	template<typename Float>
 	void inline solve_system(
 		const int dimension,
-		const ptr_reaction_list &reactions, const func_type &construct_rates_BE,
+		const ptr_reaction_list &reactions, const compute_reaction_rates_functor<Float> &construct_rates_BE,
 		const Float *Y, const Float T, Float *next_Y, Float &next_T,
 		const Float cv, const Float rho, const Float value_1, const Float dt)
 	{
@@ -657,10 +721,10 @@ Iterative solver:
 	 * 
 	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 */
-	template<class func_type, class func_eos, typename Float>
+	template<typename Float>
 	HOST_DEVICE_FUN void inline prepare_system_NR(const int dimension, 
 		Float *Mp, Float *RHS, Float *rates,
-		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		const ptr_reaction_list &reactions, const compute_reaction_rates_functor<Float> &construct_rates_BE, const eos_functor<Float> &eos,
 		const Float *Y, Float T, Float *final_Y, Float final_T, 
 		const Float rho, const Float drho_dt,
 		Float &dt,  const int i)
@@ -767,10 +831,10 @@ Iterative solver:
 	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 * iterative solver
 	 */
-	template<class func_type, class func_eos, typename Float>
+	template<typename Float>
 	Float inline solve_system_NR(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates,
-		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		const ptr_reaction_list &reactions, const compute_reaction_rates_functor<Float> &construct_rates_BE, const eos_functor<Float> &eos,
 		const Float *Y, Float T, Float *final_Y, Float &final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
@@ -813,9 +877,9 @@ Iterative solver:
 	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 * iterative solver
 	 */
-	template<class func_type, class func_eos, typename Float>
+	template<typename Float>
 	Float inline solve_system_NR(const int dimension,
-		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		const ptr_reaction_list &reactions, const compute_reaction_rates_functor<Float> &construct_rates_BE, const eos_functor<Float> &eos,
 		const Float *Y, Float T, Float *final_Y, Float &final_T, 
 		const Float rho, const Float drho_dt, Float &dt)
 	{
@@ -844,10 +908,10 @@ Substeping solver
 	 * 
 	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 */
-	template<class func_type, class func_eos, typename Float, class nseFunction=void*>
+	template<typename Float, class nseFunction=void*>
 	HOST_DEVICE_FUN void inline prepare_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *rates,
-		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		const ptr_reaction_list &reactions, const compute_reaction_rates_functor<Float> &construct_rates_BE, const eos_functor<Float> &eos,
 		const Float *final_Y, Float final_T, Float *next_Y, Float &next_T, 
 		const Float final_rho, const Float drho_dt,
 		const Float dt_tot, Float &elapsed_time, Float &dt, const int i,
@@ -939,10 +1003,10 @@ Substeping solver
 	 * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
 	 * Superstepping using solve_system_NR
 	 */
-	template<class func_type, class func_eos, typename Float, class nseFunction=void*>
+	template<typename Float, class nseFunction=void*>
 	HOST_DEVICE_FUN void inline solve_system_substep(const int dimension,
 		Float *Mp, Float *RHS, Float *DY_T, Float *rates,
-		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		const ptr_reaction_list &reactions, const compute_reaction_rates_functor<Float> &construct_rates_BE, const eos_functor<Float> &eos,
 		Float *final_Y, Float &final_T, Float *Y_buffer,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)
@@ -988,9 +1052,9 @@ Substeping solver
 	 * used in include/nnet/sphexa/nuclear-net.hpp, should not be directly accessed by user
 	 * Superstepping using solve_system_NR
 	 */
-	template<class func_type, class func_eos, typename Float, class nseFunction=void*>
+	template<typename Float, class nseFunction=void*>
 	void inline solve_system_substep(const int dimension,
-		const ptr_reaction_list &reactions, const func_type &construct_rates_BE, const func_eos &eos,
+		const ptr_reaction_list &reactions, const compute_reaction_rates_functor<Float> &construct_rates_BE, const eos_functor<Float> &eos,
 		Float *final_Y, Float &final_T,
 		const Float final_rho, const Float drho_dt, Float const dt_tot, Float &dt,
 		const nseFunction jumpToNse=NULL)

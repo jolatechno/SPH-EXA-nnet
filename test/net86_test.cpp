@@ -140,8 +140,8 @@ int main(int argc, char* argv[]) {
 	}
 
 
-	const nnet::eos::ideal_gas_functor idea_gas_eos(isotherm ? 1e-20 : 10.0);
-	const nnet::eos::helmholtz_functor helm_eos(nnet::net86::constants::Z, 86);
+	const nnet::eos::ideal_gas_functor<double> idea_gas_eos(isotherm ? 1e-20 : 10.0);
+	const nnet::eos::helmholtz_functor<double> helm_eos(nnet::net86::constants::Z, 86);
 
 
 	auto start = std::chrono::high_resolution_clock::now();

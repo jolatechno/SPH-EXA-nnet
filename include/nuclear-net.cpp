@@ -46,15 +46,15 @@ namespace nnet {
 
 			const bool table_read_success = nnet::net87::electrons::constants::read_cpu_table();
 	    }
-		compute_reaction_rates_functor compute_reaction_rates;
+		compute_reaction_rates_functor<double> compute_reaction_rates;
 	}
 	namespace net86 {
 		bool debug = false;
-		compute_reaction_rates_functor compute_reaction_rates;
+		compute_reaction_rates_functor<double> compute_reaction_rates;
 	}
 	namespace net14 {
 		bool debug = false;
-		compute_reaction_rates_functor compute_reaction_rates;
+		compute_reaction_rates_functor<double> compute_reaction_rates;
 	}
 	namespace eos {
 		namespace helmholtz_constants {
