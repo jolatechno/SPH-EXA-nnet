@@ -36,6 +36,7 @@
 #include <numeric>
 
 #include "mpi/mpi-wrapper.hpp"
+#include "nuclear-net.hpp"
 
 namespace sphexa::sphnnet {
 	/*! @brief intialize nuclear data, from a function of positions. Also initializes the partition correleating attached and detached data.
