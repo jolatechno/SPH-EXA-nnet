@@ -53,14 +53,10 @@ namespace sphexa::sphnnet {
 		using Float = typename std::remove_reference<decltype(n.Y[0][0])>::type;
 
 #ifdef USE_MPI
-		int size;
-		MPI_Comm_size(d.comm, &size);
-
-		n.comm = d.comm;
-		sphexa::sphnnet::computePartition(firstIndex, lastIndex, d, n);
-		const size_t local_nuclear_n_particles = n.partition.recv_disp[size];
+		sphexa::sphnnet::computePartition(firstIndex, lastIndex, n);
+		const size_t local_nuclear_n_particles = n.partition.recv_disp.back();
 #else
-		const size_t local_nuclear_n_particles = d.x.size();
+		const size_t local_nuclear_n_particles = local_hydro_n_particles;
 #endif
 
 		// share the initial rho
@@ -103,19 +99,12 @@ namespace sphexa::sphnnet {
 		using Float = typename std::remove_reference<decltype(n.Y[0][0])>::type;
 
 #ifdef USE_MPI
-		int size;
-		MPI_Comm_size(d.comm, &size);
-
-		n.comm = d.comm;
-		sphexa::sphnnet::computePartition(firstIndex, lastIndex, d, n);
-		const size_t local_nuclear_n_particles = n.partition.recv_disp[size];
+		sphexa::sphnnet::computePartition(firstIndex, lastIndex, n);
+		const size_t local_nuclear_n_particles = n.partition.recv_disp.back();
 #else
-		const size_t local_nuclear_n_particles = d.x.size();
+		const size_t local_nuclear_n_particles = local_hydro_n_particles;
 #endif
-		const size_t local_n_particles = d.x.size();
-
-		// share the initial rho
-		n.resize(local_nuclear_n_particles);
+		const size_t local_n_particles         = d.x.size();
 
 		// receiv position for initializer
 #ifdef USE_MPI
@@ -156,14 +145,10 @@ namespace sphexa::sphnnet {
 		using Float = typename std::remove_reference<decltype(n.Y[0][0])>::type;
 
 #ifdef USE_MPI
-		int size;
-		MPI_Comm_size(d.comm, &size);
-
-		n.comm = d.comm;
-		sphexa::sphnnet::computePartition(firstIndex, lastIndex, d, n);
-		const size_t local_nuclear_n_particles = n.partition.recv_disp[size];
+		sphexa::sphnnet::computePartition(firstIndex, lastIndex, n);
+		const size_t local_nuclear_n_particles = n.partition.recv_disp.back();
 #else
-		const size_t local_nuclear_n_particles = d.x.size();
+		const size_t local_nuclear_n_particles = local_hydro_n_particles;
 #endif
 
 		// share the initial rho
@@ -199,14 +184,10 @@ namespace sphexa::sphnnet {
 		const int dimension = n.numSpecies;
 
 #ifdef USE_MPI
-		int size;
-		MPI_Comm_size(d.comm, &size);
-
-		n.comm = d.comm;
-		sphexa::sphnnet::computePartition(firstIndex, lastIndex, d, n);
-		const size_t local_nuclear_n_particles = n.partition.recv_disp[size];
+		sphexa::sphnnet::computePartition(firstIndex, lastIndex, n);
+		const size_t local_nuclear_n_particles = n.partition.recv_disp.back();
 #else
-		const size_t local_nuclear_n_particles = d.x.size();
+		const size_t local_nuclear_n_particles = local_hydro_n_particles;
 #endif
 
 		// share the initial rho
@@ -229,7 +210,7 @@ namespace sphexa::sphnnet {
 	 */
 	template<class initFunc, class ParticlesDataType>
 	void inline initNuclearDataFromPos(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
-		initNuclearDataFromPos(firstIndex, lastIndex, d, d.nuclearData, initializer);
+		initNuclearDataFromPos(firstIndex, lastIndex, d.hydro, d.nuclearData, initializer);
 	}
 
 	/*! @brief intialize nuclear data, from a function of radius. Also initializes the partition correleating attached and detached data.
@@ -241,7 +222,7 @@ namespace sphexa::sphnnet {
 	 */
 	template<class initFunc, class ParticlesDataType>
 	void inline initNuclearDataFromRadius(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
-		initNuclearDataFromRadius(firstIndex, lastIndex, d, d.nuclearData, initializer);
+		initNuclearDataFromRadius(firstIndex, lastIndex, d.hydro, d.nuclearData, initializer);
 	}
 
 	/*! @brief intialize nuclear data, from a function of density. Also initializes the partition correleating attached and detached data.
@@ -253,7 +234,7 @@ namespace sphexa::sphnnet {
 	 */
 	template<class initFunc, class ParticlesDataType>
 	void inline initNuclearDataFromRho(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const initFunc initializer) {
-		initNuclearDataFromRadius(firstIndex, lastIndex, d, d.nuclearData, initializer);
+		initNuclearDataFromRadius(firstIndex, lastIndex, d.hydro, d.nuclearData, initializer);
 	}
 
 	/*! @brief intialize nuclear data, from a function of density. Also initializes the partition correleating attached and detached data.
@@ -265,6 +246,6 @@ namespace sphexa::sphnnet {
 	 */
 	template<class Vector, class ParticlesDataType>
 	void inline initNuclearDataFromConst(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, const Vector &Y0) {
-		initNuclearDataFromConst(firstIndex, lastIndex, d, d.nuclearData, Y0);
+		initNuclearDataFromConst(firstIndex, lastIndex, d.hydro, d.nuclearData, Y0);
 	}
 }

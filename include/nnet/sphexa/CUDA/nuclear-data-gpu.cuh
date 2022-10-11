@@ -29,7 +29,6 @@
  * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
-
 #pragma once
 
 #include "../../../util/CUDA/cuda.inl"
@@ -49,92 +48,104 @@
 
 #include <thrust/device_vector.h>
 
-namespace sphexa::sphnnet {
-	/*! @brief device nuclear data class for nuclear network */
-	template<typename Float, typename Int>
-	class DeviceNuclearDataType : public cstone::FieldStates<DeviceNuclearDataType<Float, Int>> {
-	public:
-		//! maximum number of nuclear species
-		static const int maxNumSpecies = 100;
-		//! actual number of nuclear species
-		int numSpecies = 0;
+namespace sphexa::sphnnet
+{
+/*! @brief device nuclear data class for nuclear network */
+template<typename Float, typename Int>
+class DeviceNuclearDataType : public cstone::FieldStates<DeviceNuclearDataType<Float, Int>>
+{
+public:
+    //! maximum number of nuclear species
+    static const int maxNumSpecies = 100;
+    //! actual number of nuclear species
+    int numSpecies = 0;
 
-	    template<class FType>
-	    using DevVector = thrust::device_vector<FType>;
+    template<class FType>
+    using DevVector = thrust::device_vector<FType>;
 
-		// types
-		using RealType = Float;
-    	using KeyType  = Int;
-	    using Tmass    = float;
-	    using XM1Type  = float;
+    // types
+    using RealType = Float;
+    using KeyType  = Int;
+    using Tmass    = float;
+    using XM1Type  = float;
 
-		DevVector<RealType> c;                             // speed of sound
-		DevVector<RealType> p;                             // pressure
-		DevVector<RealType> cv;                            // cv
-		DevVector<RealType> u;                             // internal energy
-		DevVector<RealType> dpdT;                          // dP/dT
-		DevVector<RealType> rho;                           // density
-		DevVector<RealType> temp;                          // temperature
-		DevVector<RealType> rho_m1;                        // previous density
-		DevVector<Tmass> m;                                // mass
-		DevVector<RealType> dt;                            // timesteps
-		util::array<DevVector<RealType>, maxNumSpecies> Y; // vector of nuclear abundances
-		DevVector<int> node_id;                            // node ids
-		DevVector<KeyType> particle_id;                    // particle id
-		mutable thrust::device_vector<RealType> buffer;    // solver buffer
+    DevVector<RealType>                             c;      // speed of sound
+    DevVector<RealType>                             p;      // pressure
+    DevVector<RealType>                             cv;     // cv
+    DevVector<RealType>                             u;      // internal energy
+    DevVector<RealType>                             dpdT;   // dP/dT
+    DevVector<RealType>                             rho;    // density
+    DevVector<RealType>                             temp;   // temperature
+    DevVector<RealType>                             rho_m1; // previous density
+    DevVector<Tmass>                                m;      // mass
+    DevVector<RealType>                             dt;     // timesteps
+    util::array<DevVector<RealType>, maxNumSpecies> Y;      // vector of nuclear abundances
+    mutable thrust::device_vector<RealType>         buffer; // solver buffer
 
-		//! base hydro fieldNames (every nuclear species is named "Yn")
-		inline static constexpr auto fieldNames = concat(enumerateFieldNames<"Y", maxNumSpecies>(), std::array<const char*, 12>{
-			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1",
-		});
+    //! base hydro fieldNames (every nuclear species is named "Yn")
+    inline static constexpr auto fieldNames =
+        concat(enumerateFieldNames<"Y", maxNumSpecies>(), std::array<const char*, 10>{
+                                                              "dt",
+                                                              "c",
+                                                              "p",
+                                                              "cv",
+                                                              "u",
+                                                              "dpdT",
+                                                              "m",
+                                                              "temp",
+                                                              "rho",
+                                                              "rho_m1",
+                                                          });
 
-		/*! @brief return a tuple of field references
-	     *
-	     * Note: this needs to be in the same order as listed in fieldNames
-	     */
-		auto dataTuple() { 
-			return std::tuple_cat(
-				dataTuple_helper(std::make_index_sequence<maxNumSpecies>{}),
-				std::tie(node_id, particle_id, dt, c, p, cv, u, dpdT, m, temp, rho, rho_m1)
-			); 
-		}
+    /*! @brief return a tuple of field references
+     *
+     * Note: this needs to be in the same order as listed in fieldNames
+     */
+    auto dataTuple()
+    {
+        return std::tuple_cat(dataTuple_helper(std::make_index_sequence<maxNumSpecies>{}),
+                              std::tie(dt, c, p, cv, u, dpdT, m, temp, rho, rho_m1));
+    }
 
-		/*! @brief return a vector of pointers to field vectors
-	     *
-	     * We implement this by returning an rvalue to prevent having to store pointers and avoid
-	     * non-trivial copy/move constructors.
-	     */
-	    auto data() {
-	        using FieldType =
-	            std::variant<FieldVector<float>*, FieldVector<double>*, FieldVector<unsigned>*, FieldVector<int>*, FieldVector<uint64_t>*>;
+    /*! @brief return a vector of pointers to field vectors
+     *
+     * We implement this by returning an rvalue to prevent having to store pointers and avoid
+     * non-trivial copy/move constructors.
+     */
+    auto data()
+    {
+        using FieldType = std::variant<FieldVector<float>*, FieldVector<double>*, FieldVector<unsigned>*,
+                                       FieldVector<int>*, FieldVector<uint64_t>*>;
 
-	        return std::apply([](auto&... fields) { return std::array<FieldType, sizeof...(fields)>{&fields...}; },
-	                          dataTuple());
-	    }
+        return std::apply([](auto&... fields) { return std::array<FieldType, sizeof...(fields)>{&fields...}; },
+                          dataTuple());
+    }
 
-		//!  resize the number of particules
-		void resize(size_t size) {
-	        double growthRate = 1;
-	        auto   data_      = data();
+    //!  resize the number of particules
+    void resize(size_t size)
+    {
+        double growthRate = 1;
+        auto   data_      = data();
 
-	        for (size_t i = 0; i < data_.size(); ++i) {
-	            if (this->isAllocated(i)) {
-	            	// actually resize
-	                std::visit([&](auto& arg) {
-	        			reallocate(*arg, size, growthRate);
-	                }, data_[i]);
-	            }
-	        }
-		}
+        for (size_t i = 0; i < data_.size(); ++i)
+        {
+            if (this->isAllocated(i))
+            {
+                // actually resize
+                std::visit([&](auto& arg) { reallocate(*arg, size, growthRate); }, data_[i]);
+            }
+        }
+    }
 
 private:
-	    template<size_t... Is>
-	    auto dataTuple_helper(std::index_sequence<Is...>) {
-	        return std::tie(Y[Is]...);
-	    }
-	};
+    template<size_t... Is>
+    auto dataTuple_helper(std::index_sequence<Is...>)
+    {
+        return std::tie(Y[Is]...);
+    }
+};
 
-	// used templates:
-    template class DeviceNuclearDataType<double, size_t>;
-    template class DeviceNuclearDataType<float, size_t>;
-}
+// used templates:
+template class DeviceNuclearDataType<double, size_t>;
+template class DeviceNuclearDataType<float, size_t>;
+} // namespace sphexa::sphnnet

@@ -84,26 +84,13 @@ namespace sphexa::sphnnet {
 	 * 
 	 * @param firstIndex  first (included) particle considered in d
 	 * @param lastIndex   last (excluded) particle considered in d
-	 * @param d           ParticlesDataType (contains node_id and particle_id to be populated)
 	 * @param n           nuclearDataType (contains mpi_partition to be populated)
 	 */
-	template<class ParticlesDataType,class nuclearDataType>
-	void inline computePartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d, nuclearDataType &n) {
+	template<class Data>
+	void inline computePartition(size_t firstIndex, size_t lastIndex, Data &n) {
 #ifdef USE_MPI
-		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
+		n.partition = sphexa::mpi::partitionFromPointers(firstIndex, lastIndex, n.node_id, n.particle_id, n.comm);
 #endif
-	}
-
-
-	/*! @brief function that updates the nuclear partition
-	 * 
-	 * @param firstIndex  first (included) particle considered in d
-	 * @param lastIndex   last (excluded) particle considered in d
-	 * @param d           ParticlesDataType, where d.nuclearData is the nuclear data container
-	 */
-	template<class ParticlesDataType>
-	void inline computeNuclearPartition(size_t firstIndex, size_t lastIndex, ParticlesDataType &d) {
-		computePartition(firstIndex, lastIndex, d, d.nuclearData);
 	}
 
 
@@ -111,12 +98,13 @@ namespace sphexa::sphnnet {
 	 * 
 	 * @param firstIndex  index of the first particle to be considered (included) when populating the node_id and particle_id vectors
 	 * @param lastIndex   index of the last particle to be considered (excluded)  when populating the node_id and particle_id vectors
-	 * @param d           ParticlesDataType (contains node_id and particle_id to be populated)
+	 * @param d           nuclearDataType (contains node_id and particle_id to be populated)
 	 */
-	template<class ParticlesDataType>
-	void inline initializeNuclearPointers(size_t firstIndex, size_t lastIndex, ParticlesDataType &d) {
+	template<class Data>
+	void inline initializePointers(size_t firstIndex, size_t lastIndex, Data &n) {
 #ifdef USE_MPI
-		sphexa::mpi::initializePointers(firstIndex, lastIndex, d.node_id, d.particle_id, d.comm);
+		n.resize_hydro(lastIndex);
+		sphexa::mpi::initializePointers(firstIndex, lastIndex, n.node_id, n.particle_id, n.comm);
 #endif
 	}
 
@@ -161,7 +149,7 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType>
 	void inline syncHydroToNuclear(ParticlesDataType &d, const std::vector<std::string> &sync_fields) {
-		syncDataToStaticPartition(d, d.nuclearData, sync_fields);
+		syncDataToStaticPartition(d.hydro, d.nuclearData, sync_fields);
 	}
 
 
@@ -203,6 +191,6 @@ namespace sphexa::sphnnet {
 	 */
 	template<class ParticlesDataType>
 	void inline syncNuclearToHydro(ParticlesDataType &d, const std::vector<std::string> &sync_fields) {
-		syncDataFromStaticPartition(d, d.nuclearData, sync_fields);
+		syncDataFromStaticPartition(d.hydro, d.nuclearData, sync_fields);
 	}
 }

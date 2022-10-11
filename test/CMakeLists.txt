@@ -80,12 +80,12 @@ if (COMPILE_HYDRO_MOCKUP)
 
 
 	if(CMAKE_HIP_COMPILER)
-		set_source_properties(hydro-mockup.cu PROPERTY LANGUAGE HIP)
-		set_source_properties(util/domain/include/cstone/util/reallocate.cu PROPERTY LANGUAGE HIP)
+		set_source_properties(hydro-mockup.cpp PROPERTY LANGUAGE HIP)
+		set_source_properties(util/domain/include/cstone/util/reallocate.cpp PROPERTY LANGUAGE HIP)
 	endif()
 
 	if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
-		add_library(reallocate_cu STATIC util/domain/include/cstone/util/reallocate.cu)
+		add_library(reallocate_cu STATIC util/domain/include/cstone/util/reallocate.cpp)
 
 	    set_target_properties(reallocate_cu PROPERTIES
 	    	CUDA_SEPARABLE_COMPILATION ON
@@ -99,7 +99,7 @@ if (COMPILE_HYDRO_MOCKUP)
 
 
 
-	    add_executable(${nnet}-cuda hydro-mockup.cu)
+	    add_executable(${nnet}-cuda hydro-mockup.cpp)
 	  # add_executable(${nnet}-cuda hydro-mockup.cpp)
 
 	   	set_target_properties(${nnet}-cuda PROPERTIES
@@ -123,8 +123,8 @@ if (COMPILE_HYDRO_MOCKUP)
 
 
 
-	    add_executable(${nnet}-cpu hydro-mockup.cu)
-	  # add_executable(${nnet}-cpu hydro-mockup.cu)
+	    add_executable(${nnet}-cpu hydro-mockup.cpp)
+	  # add_executable(${nnet}-cpu hydro-mockup.cpp)
 
 	   	set_target_properties(${nnet}-cpu PROPERTIES
 	   		CUDA_SEPARABLE_COMPILATION ON

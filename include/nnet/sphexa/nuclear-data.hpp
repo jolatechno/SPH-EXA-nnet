@@ -29,7 +29,6 @@
  * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
-
 #pragma once
 
 #include "../../util/CUDA/cuda.inl"
@@ -41,11 +40,11 @@
 
 // can't compile CUDA GPU data for now !
 #if COMPILE_DEVICE && 0
-	#include "CUDA/nuclear-data-gpu.cuh"
+#include "CUDA/nuclear-data-gpu.cuh"
 #endif
 
 #ifdef USE_MPI
-	#include <mpi.h>
+#include <mpi.h>
 #endif
 #include "mpi/mpi-wrapper.hpp"
 
@@ -60,182 +59,252 @@
 
 #include "cstone/util/reallocate.hpp"
 
+namespace sphexa::sphnnet
+{
+/*! @brief nuclear data device facade */
+template<typename T, typename I>
+class DeviceNuclearDataFacade
+{
+public:
+    void resize(size_t) {}
 
-namespace sphexa::sphnnet {
-	/*! @brief nuclear data device facade */
-	template<typename T, typename I>
-	class DeviceNuclearDataFacade {
-	public:
-		void resize(size_t) {}
+    template<class... Ts>
+    void setConserved(Ts...)
+    {
+    }
 
-        template<class... Ts>
-        void setConserved(Ts...) {}
+    template<class... Ts>
+    void setDependent(Ts...)
+    {
+    }
 
-        template<class... Ts>
-        void setDependent(Ts...) {}
+    template<class... Ts>
+    void release(Ts...)
+    {
+    }
 
-        template<class... Ts>
-        void release(Ts...) {}
+    template<class... Ts>
+    void acquire(Ts...)
+    {
+    }
 
-        template<class... Ts>
-        void acquire(Ts...) {}
+    inline static constexpr std::array fieldNames{0};
+};
 
-        inline static constexpr std::array fieldNames{0};
-	};
+/*! @brief Forward declaration of DeviceNuclearDataType, defined to DeviceNuclearDataFacade for now ! */
+template<typename T, typename I>
+class DeviceNuclearDataType : public DeviceNuclearDataFacade<T, I>
+{
+};
+// class DeviceNuclearDataType;
 
-	/*! @brief Forward declaration of DeviceNuclearDataType, defined to DeviceNuclearDataFacade for now ! */
-	template<typename T, typename I>
-	class DeviceNuclearDataType : public DeviceNuclearDataFacade<T, I> {};
-	// class DeviceNuclearDataType;
+/*! @brief nuclear data class for nuclear network */
+template<typename Float, typename Int, class AccType>
+struct NuclearDataType : public cstone::FieldStates<NuclearDataType<Float, Int, AccType>>
+{
+public:
+    //! maximum number of nuclear species
+    static const int maxNumSpecies = 100;
+    //! actual number of nuclear species
+    int numSpecies = 0;
 
-	/*! @brief nuclear data class for nuclear network */
-	template<typename Float, typename Int, class AccType>
-	struct NuclearDataType : public cstone::FieldStates<NuclearDataType<Float, Int, AccType>> {
-	public:
-		//! maximum number of nuclear species
-		static const int maxNumSpecies = 100;
-		//! actual number of nuclear species
-		int numSpecies = 0;
+    template<class... Args>
+    using DeviceNuclearData_t = DeviceNuclearDataType<Args...>;
 
-    	template<class... Args>
-    	using DeviceNuclearData_t = DeviceNuclearDataType<Args...>;
+    template<class ValueType>
+    using FieldVector = std::vector<ValueType, std::allocator<ValueType>>;
 
-	    template<class ValueType>
-	    using FieldVector = std::vector<ValueType, std::allocator<ValueType>>;
+    // types
+    using RealType        = Float;
+    using KeyType         = Int;
+    using Tmass           = float;
+    using XM1Type         = float;
+    using AcceleratorType = AccType;
+    using DeviceData_t    = typename cstone::AccelSwitchType<AcceleratorType, DeviceNuclearDataFacade,
+                                                          DeviceNuclearData_t>::template type<Float, Int>;
 
-		// types
-		using RealType        = Float;
-    	using KeyType         = Int;
-	    using Tmass           = float;
-	    using XM1Type         = float;
-    	using AcceleratorType = AccType;
-		using DeviceData_t    = typename cstone::AccelSwitchType<AcceleratorType, DeviceNuclearDataFacade, DeviceNuclearData_t>::template type<Float, Int>;
+    //! @brief number of fields that have hydro size
+    const int numHydroFields = 2;
 
-    	DeviceData_t devData;
+    DeviceData_t devData;
 
-    	size_t iteration{0};
-	    size_t numParticlesGlobal;
-	    RealType ttot{0.0};
-	    //! current and previous (global) time-steps
-	    RealType minDt, minDt_m1;
-	    //! @brief gravitational constant
-	    RealType g{0.0};
+    size_t   iteration{0};
+    size_t   numParticlesGlobal;
+    RealType ttot{0.0};
+    //! current and previous (global) time-steps
+    RealType minDt, minDt_m1;
+    //! @brief gravitational constant
+    RealType g{0.0};
 
-		//!  @brief hydro data
-		FieldVector<RealType> c;                             // speed of sound
-		FieldVector<RealType> p;                             // pressure
-		FieldVector<RealType> cv;                            // cv
-		FieldVector<RealType> u;                             // internal energy
-		FieldVector<RealType> dpdT;                          // dP/dT
-		FieldVector<RealType> rho;                           // density
-		FieldVector<RealType> temp;                          // temperature
-		FieldVector<RealType> rho_m1;                        // previous density
-		FieldVector<Tmass> m;                                // mass
-		FieldVector<RealType> dt;                            // timesteps
-		util::array<FieldVector<RealType>, maxNumSpecies> Y; // vector of nuclear abundances
-		FieldVector<int> node_id;                            // node ids
-		FieldVector<KeyType> particle_id;                    // particle id
+    //! @brief hydro data
+    FieldVector<RealType>                             c;                   // speed of sound
+    FieldVector<RealType>                             p;                   // pressure
+    FieldVector<RealType>                             cv;                  // cv
+    FieldVector<RealType>                             u;                   // internal energy
+    FieldVector<RealType>                             dpdT;                // dP/dT
+    FieldVector<RealType>                             rho;                 // density
+    FieldVector<RealType>                             temp;                // temperature
+    FieldVector<RealType>                             rho_m1;              // previous density
+    FieldVector<Tmass>                                m;                   // mass
+    FieldVector<RealType>                             dt;                  // timesteps
+    util::array<FieldVector<RealType>, maxNumSpecies> Y;                   // vector of nuclear abundances
+    FieldVector<int>                                  nuclear_node_id;     // node ids (for nuclear data)
+    FieldVector<KeyType>                              nuclear_particle_id; // particle id (for nuclear data)
+    //! @brief data
+    FieldVector<int>     node_id;     // node ids (for hydro data)
+    FieldVector<KeyType> particle_id; // particle id (for hydro data)
 
-		//! mpi communicator
+    //! mpi communicator
 #ifdef USE_MPI
-    	MPI_Comm comm=MPI_COMM_WORLD;
-    	sphexa::mpi::mpi_partition partition;
+    MPI_Comm                   comm = MPI_COMM_WORLD;
+    sphexa::mpi::mpi_partition partition;
 #endif
 
-		//! base hydro fieldNames (every nuclear species is named "Yn")
-		inline static constexpr auto fieldNames = concat(enumerateFieldNames<"Y", maxNumSpecies>(), std::array<const char*, 12>{
-			"nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1",
-		});
+    //! base hydro fieldNames (every nuclear species is named "Yn")
+    inline static constexpr auto fieldNames =
+        concat(enumerateFieldNames<"Y", maxNumSpecies>(), std::array<const char*, 14>{
+                                                              "dt",
+                                                              "c",
+                                                              "p",
+                                                              "cv",
+                                                              "u",
+                                                              "dpdT",
+                                                              "m",
+                                                              "temp",
+                                                              "rho",
+                                                              "rho_m1",
+                                                              "nuclear_node_id",
+                                                              "nuclear_particle_id",
+                                                              "node_id",
+                                                              "particle_id",
+                                                          });
 
-		/*! @brief return a tuple of field references
+    /*! @brief return a tuple of field references
+     *
+     * Note: this needs to be in the same order as listed in fieldNames
+     */
+    auto dataTuple()
+    {
+        return std::tuple_cat(dataTuple_helper(std::make_index_sequence<maxNumSpecies>{}),
+                              std::tie(dt, c, p, cv, u, dpdT, m, temp, rho, rho_m1, nuclear_node_id,
+                                       nuclear_particle_id, node_id, particle_id));
+    }
+
+    /*! @brief return a vector of pointers to field vectors
+     *
+     * We implement this by returning an rvalue to prevent having to store pointers and avoid
+     * non-trivial copy/move constructors.
+     */
+    auto data()
+    {
+        using FieldType = std::variant<FieldVector<float>*, FieldVector<double>*, FieldVector<unsigned>*,
+                                       FieldVector<int>*, FieldVector<uint64_t>*>;
+
+        return std::apply([](auto&... fields) { return std::array<FieldType, sizeof...(fields)>{&fields...}; },
+                          dataTuple());
+    }
+
+    /*! @brief sets the field to be outputed
+     *
+     * @param outFields  vector of the names of fields to be outputed (including abundances names "Y(i)" for the ith
+     * species)
+     */
+    void setOutputFields(const std::vector<std::string>& outFields)
+    {
+        outputFieldNames   = outFields;
+        outputFieldIndices = cstone::fieldStringsToInt(outFields, fieldNames);
+    }
+
+    /*! @brief resize the number of particules (nuclear)
+     *
+     * @param size  number of particle to be hold by the class
+     */
+    void resize(size_t size)
+    {
+        double growthRate = 1;
+        auto   data_      = data();
+
+        if constexpr (cstone::HaveGpu<AcceleratorType>{}) devData.resize(size);
+
+        for (size_t i = 0; i < data_.size() - numHydroFields; ++i)
+        {
+            if (this->isAllocated(i))
+            {
+                // actually resize
+                std::visit(
+                    [&](auto& arg)
+                    {
+                        size_t previous_size = arg->size();
+
+                        // reallocate
+                        reallocate(*arg, size, growthRate);
+
+                        // fill node_id
+                        if ((void*)arg == (void*)(&nuclear_node_id))
+                        {
+                            int rank = 0;
+#ifdef USE_MPI
+                            MPI_Comm_rank(comm, &rank);
+#endif
+                            std::fill(nuclear_node_id.begin() + previous_size, nuclear_node_id.end(), rank);
+                        }
+
+                        // fill particle ID
+                        else if ((void*)arg == (void*)(&nuclear_particle_id))
+                        {
+                            std::iota(nuclear_particle_id.begin() + previous_size, nuclear_particle_id.end(), previous_size);
+                        }
+
+                        // fill rho or rho_m1
+                        else if ((void*)arg == (void*)(&rho) || (void*)arg == (void*)(&rho_m1))
+                        {
+                            std::fill(arg->begin() + previous_size, arg->end(), 0.);
+                        }
+
+                        // fill dt
+                        else if ((void*)arg == (void*)(&dt))
+                        {
+                            std::fill(dt.begin() + previous_size, dt.end(), nnet::constants::initial_dt);
+                        }
+                    },
+                    data_[i]);
+               	}
+            }
+        }
+
+        /*! @brief resize the number of particules (hydro)
 	     *
-	     * Note: this needs to be in the same order as listed in fieldNames
+	     * @param size  number of particle to be hold by the class
 	     */
-		auto dataTuple() { 
-			return std::tuple_cat(
-				dataTuple_helper(std::make_index_sequence<maxNumSpecies>{}),
-				std::tie(node_id, particle_id, dt, c, p, cv, u, dpdT, m, temp, rho, rho_m1)
-			); 
-		}
-
-		/*! @brief return a vector of pointers to field vectors
-	     *
-	     * We implement this by returning an rvalue to prevent having to store pointers and avoid
-	     * non-trivial copy/move constructors.
-	     */
-	    auto data() {
-	        using FieldType =
-	            std::variant<FieldVector<float>*, FieldVector<double>*, FieldVector<unsigned>*, FieldVector<int>*, FieldVector<uint64_t>*>;
-
-	        return std::apply([](auto&... fields) { return std::array<FieldType, sizeof...(fields)>{&fields...}; },
-	                          dataTuple());
-	    }
-
-	    /*! @brief sets the field to be outputed
-	     * 
-	     * @param outFields  vector of the names of fields to be outputed (including abundances names "Y(i)" for the ith species)
-	     */
-	    void setOutputFields(const std::vector<std::string>& outFields) {
-	        outputFieldNames = outFields;
-	        outputFieldIndices = cstone::fieldStringsToInt(outFields, fieldNames);
-    	}
-
-		/*! @brief resize the number of particules
-		 * 
-		 * @param size  number of particle to be hold by the class
-		 */
-		void resize(size_t size) {
+        void resize_hydro(size_t size) {
 	        double growthRate = 1;
 	        auto   data_      = data();
 
-			if constexpr (cstone::HaveGpu<AcceleratorType>{})
-	        	devData.resize(size);
-
-	        for (size_t i = 0; i < data_.size(); ++i) {
-	            if (this->isAllocated(i)) {
-	            	// actually resize
-	                std::visit([&](auto& arg) { 
-	                	size_t previous_size = arg->size();
-
-                		// reallocate
-                		reallocate(*arg, size, growthRate);
-
-                		// fill node_id
-		                if ((void*)arg == (void*)(&node_id)) {
-	        				int rank = 0;
-#ifdef USE_MPI
-							MPI_Comm_rank(comm, &rank);
-#endif
-							std::fill(node_id.begin() + previous_size, node_id.end(), rank);
-		                }
-
-		                // fill particle ID
-		                else if ((void*)arg == (void*)(&particle_id)) {
-		                	std::iota(particle_id.begin() + previous_size, particle_id.end(), previous_size);
-		                }
-
-		                // fill rho or rho_m1
-		                else if ((void*)arg == (void*)(&rho) || (void*)arg == (void*)(&rho_m1)) {
-		                	std::fill(arg->begin() + previous_size, arg->end(), 0.);
-		                }
-
-		    			// fill dt
-		                else if ((void*)arg == (void*)(&dt)) {
-		                	std::fill(dt.begin() + previous_size, dt.end(), nnet::constants::initial_dt);
-		                }
-	                }, data_[i]);
+        	for (size_t i = data_.size() - numHydroFields; i < data_.size(); ++i)
+	        {
+	            if (this->isAllocated(i))
+	            {
+	                // actually resize
+	                std::visit(
+	                    [&](auto& arg)
+	                    {
+	                        // reallocate
+	                        reallocate(*arg, size, growthRate);
+	                    },
+	                    data_[i]);
 	            }
 	        }
-	    }
+        }
 
-		// particle fields selected for file output
-		std::vector<int>         outputFieldIndices;
-		std::vector<std::string> outputFieldNames;
+        // particle fields selected for file output
+        std::vector<int>         outputFieldIndices;
+        std::vector<std::string> outputFieldNames;
 
-private:
-	    template<size_t... Is>
-	    auto dataTuple_helper(std::index_sequence<Is...>) {
-	        return std::tie(Y[Is]...);
-	    }
-	};
-}
+    private:
+        template<size_t... Is>
+        auto dataTuple_helper(std::index_sequence<Is...>)
+        {
+            return std::tie(Y[Is]...);
+        }
+    };
+} // namespace sphexa::sphnnet

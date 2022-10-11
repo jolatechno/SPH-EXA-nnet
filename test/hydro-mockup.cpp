@@ -109,28 +109,21 @@ void dump(Dataset& d, size_t firstIndex, size_t lastIndex, /*const cstone::Box<t
 
 
 // mockup of the ParticlesDataType
-	template<typename Float, typename Int, class AccType>
+template<typename Float, typename Int, class AccType>
 class ParticlesDataType {
 public:
-	sphexa::sphnnet::NuclearDataType<Float, Int, AccType> nuclearData;
-
 #ifdef USE_MPI
 	// communicator
 	MPI_Comm comm=MPI_COMM_WORLD;
 #endif
 
 	// pointers
-	std::vector<int> node_id;
-	std::vector<std::size_t> particle_id;
 	std::vector<double> x, y, z;
 
 	// hydro data
 	std::vector<double> rho, temp, cv; //...
 
 	void resize(const size_t N) {
-		node_id.resize(N);
-		particle_id.resize(N);
-
 		x.resize(N);
 		y.resize(N);
 		z.resize(N);
@@ -140,7 +133,7 @@ public:
 	}
 
 	const std::vector<std::string> fieldNames = {
-		"nid", "pid", "rho", "temp", "x", "y", "z", "cv"
+		"rho", "temp", "x", "y", "z", "cv"
 	};
 
 	auto data() {
@@ -149,8 +142,8 @@ public:
 	    	std::vector<int>*,
 	    	std::vector<double>*>;
 
-	    std::array<FieldType, 8> ret = {
-	    	&node_id, &particle_id, &rho, &temp, &x, &y, &z, &cv};
+	    std::array<FieldType, 6> ret = {
+	    	&rho, &temp, &x, &y, &z, &cv};
 
 	    return ret;
 	}
@@ -168,6 +161,26 @@ public:
     	return true;
     }
 };
+
+
+
+// mockup of the SimData
+template<typename Float, typename Int, class AccType>
+class SimData {
+public:
+	ParticlesDataType<Float, Int, AccType> hydro;
+	sphexa::sphnnet::NuclearDataType<Float, Int, AccType> nuclearData;
+
+
+#ifdef USE_MPI
+	// communicator
+	MPI_Comm comm=MPI_COMM_WORLD;
+#endif
+};
+
+
+
+
 
 template<class Data>
 double totalInternalEnergy(Data const &n) {
@@ -195,7 +208,7 @@ void printHelp(char* name, int rank);
 template<class Zvector, typename Float, typename KeyType, class AccType>
 void step(int rank,
 	size_t firstIndex, size_t lastIndex,
-	ParticlesDataType<Float, KeyType, AccType> &d, const double dt,
+	SimData<Float, KeyType, AccType> &d, const double dt,
 	const nnet::reaction_list &reactions, const nnet::compute_reaction_rates_functor<Float> &construct_rates_BE, const nnet::eos_functor<Float> &eos,
 	const Float *BE, const Zvector &Z)
 {
@@ -203,7 +216,7 @@ void step(int rank,
 
 	// domain redecomposition
 
-	sphexa::sphnnet::computeNuclearPartition(firstIndex, lastIndex, d);
+	sphexa::sphnnet::computePartition(firstIndex, lastIndex, d.nuclearData);
 
 	// do hydro stuff
 
@@ -326,17 +339,17 @@ int main(int argc, char* argv[]) {
 	/* !!!!!!!!!!!!
 	initialize the hydro state
 	!!!!!!!!!!!! */
-	ParticlesDataType<double, size_t, AccType> particle_data;
+	SimData<double, size_t, AccType> particle_data;
 	particle_data.nuclearData.numSpecies = 14;
 	
 	const size_t n_particles = total_n_particles*(rank + 1)/size - total_n_particles*rank/size;
 	const size_t offset = 10*rank;
 	const size_t first = offset, last = n_particles + offset;
 
-	particle_data.resize(last);
+	particle_data.hydro.resize(last);
 	for (size_t i = first; i < last; ++i) {
-		particle_data.temp[i] = T_left   + (T_right   - T_left  )*((float)(total_n_particles*rank/size + i-first))/((float)(total_n_particles - 1));
-		particle_data.rho[i]  = rho_left + (rho_right - rho_left)*((float)(total_n_particles*rank/size + i-first))/((float)(total_n_particles - 1));
+		particle_data.hydro.temp[i] = T_left   + (T_right   - T_left  )*((float)(total_n_particles*rank/size + i-first))/((float)(total_n_particles - 1));
+		particle_data.hydro.rho[i]  = rho_left + (rho_right - rho_left)*((float)(total_n_particles*rank/size + i-first))/((float)(total_n_particles - 1));
 	}
 
 
@@ -358,10 +371,13 @@ int main(int argc, char* argv[]) {
 	/* !!!!!!!!!!!!
 	initialize nuclear data
 	!!!!!!!!!!!! */
-	sphexa::sphnnet::initializeNuclearPointers(first, last, particle_data);
 
-	particle_data.nuclearData.setDependent("nid", "pid", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1", "dt");
+
+
+	particle_data.nuclearData.setDependent("nuclear_node_id", "nuclear_particle_id", "node_id", "particle_id", "dt", "c", "p", "cv", "u", "dpdT", "m", "temp", "rho", "rho_m1", "dt");
 	particle_data.nuclearData.devData.setDependent("temp", "rho", "rho_m1", "dt", "c", "p", "cv", "u", "dpdT");
+
+	sphexa::sphnnet::initializePointers(first, last, particle_data.nuclearData);
 
 	if (use_net87) {
 		particle_data.nuclearData.numSpecies = 87;
@@ -402,14 +418,14 @@ int main(int argc, char* argv[]) {
 
 
 
-	std::vector<std::string> nuclearOutFields, hydroOutFields   = {"nid", "pid", "temp", "rho"};
-	particle_data.setOutputFields(hydroOutFields);
+	std::vector<std::string> nuclearOutFields, hydroOutFields   = {"temp", "rho"};
+	particle_data.hydro.setOutputFields(hydroOutFields);
 	if (use_net87 || use_net86) {
-		nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y2", "Y4", "Y3"};
+		nuclearOutFields = {"nuclear_particle_id", "nuclear_node_id", "temp", "rho", "cv", "u", "dpdT", "Y2", "Y4", "Y3"};
 
 		particle_data.nuclearData.setOutputFields(nuclearOutFields);
 	} else {
-		nuclearOutFields = {"nid", "pid", "temp", "rho", "cv", "u", "dpdT", "Y0", "Y2", "Y1"};
+		nuclearOutFields = {"nuclear_particle_id", "nuclear_node_id", "temp", "rho", "cv", "u", "dpdT", "Y0", "Y2", "Y1"};
 
 		particle_data.nuclearData.setOutputFields(nuclearOutFields);
 	}
@@ -508,8 +524,8 @@ int main(int argc, char* argv[]) {
 #ifdef USE_MPI
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
-	dump(particle_data, first, first + n_print, "/dev/stdout");
-	dump(particle_data, last - n_print,   last, "/dev/stdout");
+	dump(particle_data.hydro, first, first + n_print, "/dev/stdout");
+	dump(particle_data.hydro, last - n_print,   last, "/dev/stdout");
 
 
 #ifdef USE_MPI
