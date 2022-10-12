@@ -133,7 +133,7 @@ namespace sphexa::sphnnet {
 			std::visit(
 				[&d, &n](auto&& send, auto &&recv){
 #ifdef USE_MPI
-					sphexa::mpi::syncDataToStaticPartition(n.partition, send->data(), recv->data(), d.comm);
+					sphexa::mpi::syncDataToStaticPartition(n.partition, send->data(), recv->data(), n.comm);
 #else
 					if constexpr (std::is_same<decltype(send), decltype(recv)>::value)
 						*recv = *send;
@@ -175,7 +175,7 @@ namespace sphexa::sphnnet {
 			std::visit(
 				[&d, &n](auto&& send, auto &&recv){
 #ifdef USE_MPI
-					sphexa::mpi::syncDataFromStaticPartition(n.partition, send->data(), recv->data(), d.comm);
+					sphexa::mpi::syncDataFromStaticPartition(n.partition, send->data(), recv->data(), n.comm);
 #else
 					if constexpr (std::is_same<decltype(send), decltype(recv)>::value)
 						*recv = *send;
