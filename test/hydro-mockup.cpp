@@ -366,18 +366,6 @@ int main(int argc, char* argv[]) {
     //!@brief Z
     std::vector<double> Z;
 
-
-    if (idealGas) 
-    {
-    	eos = new nnet::eos::ideal_gas_functor<double>(isotherm ? 1e-20 : 10.0);
-    }
-    else
-    {
-    	if (use_net87) { eos = new nnet::eos::helmholtz_functor<double>(nnet::net87::constants::Z, 87); }
-    	else if (use_net86) { eos = new nnet::eos::helmholtz_functor<double>(nnet::net86::constants::Z, 86); } 
-		else { eos = new nnet::eos::helmholtz_functor<double>(nnet::net14::constants::Z); }
-    }
-
 	
 	if (use_net87)
     {
@@ -406,6 +394,10 @@ int main(int argc, char* argv[]) {
         Z.resize(14);
         std::copy(nnet::net14::constants::Z.begin(), nnet::net14::constants::Z.begin() + 14, Z.begin());
     }
+
+
+    if (idealGas) { eos = new nnet::eos::ideal_gas_functor<double>(isotherm ? 1e-20 : 10.0); }
+    else { eos = new nnet::eos::helmholtz_functor<double>(Z); }
 
 
 

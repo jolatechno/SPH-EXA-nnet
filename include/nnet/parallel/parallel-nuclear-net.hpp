@@ -35,16 +35,17 @@
 #pragma once
 
 #include "../../util/CUDA/cuda.inl"
-#if COMPILE_DEVICE
-	#include <device_launch_parameters.h>
-	#include <cuda.h>
-	#include <cuda_runtime_api.h>
-	#include <cuda_runtime.h>
+//#if COMPILE_DEVICE
+#if defined(USE_CUDA)
+#include <device_launch_parameters.h>
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include <cuda_runtime.h>
 
-	#include <thrust/device_vector.h>
+#include <thrust/device_vector.h>
 
-	#include "../CUDA/nuclear-net.cuh"
-	#include "CUDA/parallel-nuclear-net.cuh"
+#include "../CUDA/nuclear-net.cuh"
+#include "CUDA/parallel-nuclear-net.cuh"
 #endif
 
 #include <numeric>

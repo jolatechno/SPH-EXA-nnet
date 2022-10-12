@@ -40,6 +40,8 @@ template<typename T, typename I>
 class DeviceNuclearDataFacade
 {
 public:
+    void resize_hydro(size_t) {}
+    
     void resize(size_t) {}
 
     template<class... Ts>

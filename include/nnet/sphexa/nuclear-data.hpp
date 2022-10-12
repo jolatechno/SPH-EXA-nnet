@@ -40,7 +40,6 @@
 
 #include "CUDA/nuclear-data-stubs.hpp"
 
-// can't compile CUDA GPU data for now !
 // #if COMPILE_DEVICE
 #if defined(USE_CUDA)
 #include "CUDA/nuclear-data-gpu.cuh"
@@ -75,6 +74,9 @@ public:
     //! actual number of nuclear species
     int numSpecies = 0;
 
+    //! @brief number of fields that have hydro size
+    const int numHydroFields = 2;
+
     template<class ValueType>
     using FieldVector = std::vector<ValueType, std::allocator<ValueType>>;
 
@@ -84,9 +86,6 @@ public:
     using Tmass           = float;
     using XM1Type         = float;
     using AcceleratorType = AccType;
-
-    //! @brief number of fields that have hydro size
-    const int numHydroFields = 2;
 
     DeviceNuclearData_t<AccType, Float, Int> devData;
 
@@ -186,7 +185,7 @@ public:
         double growthRate = 1;
         auto   data_      = data();
 
-        if constexpr (cstone::HaveGpu<AcceleratorType>{}) devData.resize(size);
+        if constexpr (cstone::HaveGpu<AcceleratorType>{}) { devData.resize(size); }
 
         for (size_t i = 0; i < data_.size() - numHydroFields; ++i)
         {
@@ -230,43 +229,45 @@ public:
                         }
                     },
                     data_[i]);
-               	}
+           	}
+        }
+    }
+
+
+    /*! @brief resize the number of particules (hydro)
+     *
+     * @param size  number of particle to be hold by the class
+     */
+    void resize_hydro(size_t size) {
+        double growthRate = 1;
+        auto   data_      = data();
+
+    	for (size_t i = data_.size() - numHydroFields; i < data_.size(); ++i)
+        {
+            if (this->isAllocated(i))
+            {
+                // actually resize
+                std::visit(
+                    [&](auto& arg)
+                    {
+                        // reallocate
+                        reallocate(*arg, size, growthRate);
+                    },
+                    data_[i]);
             }
         }
+    }
 
-        /*! @brief resize the number of particules (hydro)
-	     *
-	     * @param size  number of particle to be hold by the class
-	     */
-        void resize_hydro(size_t size) {
-	        double growthRate = 1;
-	        auto   data_      = data();
+    // particle fields selected for file output
+    std::vector<int>         outputFieldIndices;
+    std::vector<std::string> outputFieldNames;
 
-        	for (size_t i = data_.size() - numHydroFields; i < data_.size(); ++i)
-	        {
-	            if (this->isAllocated(i))
-	            {
-	                // actually resize
-	                std::visit(
-	                    [&](auto& arg)
-	                    {
-	                        // reallocate
-	                        reallocate(*arg, size, growthRate);
-	                    },
-	                    data_[i]);
-	            }
-	        }
-        }
+private:
+    template<size_t... Is>
+    auto dataTuple_helper(std::index_sequence<Is...>)
+    {
+        return std::tie(Y[Is]...);
+    }
+};
 
-        // particle fields selected for file output
-        std::vector<int>         outputFieldIndices;
-        std::vector<std::string> outputFieldNames;
-
-    private:
-        template<size_t... Is>
-        auto dataTuple_helper(std::index_sequence<Is...>)
-        {
-            return std::tie(Y[Is]...);
-        }
-    };
 } // namespace sphexa::sphnnet

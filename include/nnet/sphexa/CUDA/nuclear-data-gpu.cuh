@@ -58,6 +58,9 @@ public:
     //! actual number of nuclear species
     int numSpecies = 0;
 
+    //! @brief number of fields that have hydro size
+    const int numHydroFields = 2;
+
     template<class FType>
     using DevVector = thrust::device_vector<FType>;
 
@@ -78,11 +81,17 @@ public:
     DevVector<Tmass>                                m;      // mass
     DevVector<RealType>                             dt;     // timesteps
     util::array<DevVector<RealType>, maxNumSpecies> Y;      // vector of nuclear abundances
+    DevVector<int>                                  nuclear_node_id;     // node ids (for nuclear data)
+    DevVector<KeyType>                              nuclear_particle_id; // particle id (for nuclear data)
+    //! @brief data
+    DevVector<int>     node_id;     // node ids (for hydro data)
+    DevVector<KeyType> particle_id; // particle id (for hydro data)
+
     mutable thrust::device_vector<RealType>         buffer; // solver buffer
 
     //! base hydro fieldNames (every nuclear species is named "Yn")
     inline static constexpr auto fieldNames =
-        concat(enumerateFieldNames<"Y", maxNumSpecies>(), std::array<const char*, 10>{
+        concat(enumerateFieldNames<"Y", maxNumSpecies>(), std::array<const char*, 14>{
                                                               "dt",
                                                               "c",
                                                               "p",
@@ -93,6 +102,10 @@ public:
                                                               "temp",
                                                               "rho",
                                                               "rho_m1",
+                                                              "nuclear_node_id",
+                                                              "nuclear_particle_id",
+                                                              "node_id",
+                                                              "particle_id",
                                                           });
 
     /*! @brief return a tuple of field references
@@ -102,7 +115,8 @@ public:
     auto dataTuple()
     {
         return std::tuple_cat(dataTuple_helper(std::make_index_sequence<maxNumSpecies>{}),
-                              std::tie(dt, c, p, cv, u, dpdT, m, temp, rho, rho_m1));
+                              std::tie(dt, c, p, cv, u, dpdT, m, temp, rho, rho_m1, nuclear_node_id,
+                                       nuclear_particle_id, node_id, particle_id));
     }
 
     /*! @brief return a vector of pointers to field vectors
@@ -125,12 +139,36 @@ public:
         double growthRate = 1;
         auto   data_      = data();
 
-        for (size_t i = 0; i < data_.size(); ++i)
+        for (size_t i = 0; i < data_.size() - numHydroFields; ++i)
         {
             if (this->isAllocated(i))
             {
                 // actually resize
                 std::visit([&](auto& arg) { reallocate(*arg, size, growthRate); }, data_[i]);
+            }
+        }
+    }
+
+    /*! @brief resize the number of particules (hydro)
+     *
+     * @param size  number of particle to be hold by the class
+     */
+    void resize_hydro(size_t size) {
+        double growthRate = 1;
+        auto   data_      = data();
+
+    	for (size_t i = data_.size() - numHydroFields; i < data_.size(); ++i)
+        {
+            if (this->isAllocated(i))
+            {
+                // actually resize
+                std::visit(
+                    [&](auto& arg)
+                    {
+                        // reallocate
+                        reallocate(*arg, size, growthRate);
+                    },
+                    data_[i]);
             }
         }
     }
