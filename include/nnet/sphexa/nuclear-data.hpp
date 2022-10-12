@@ -87,7 +87,7 @@ public:
     using XM1Type         = float;
     using AcceleratorType = AccType;
 
-    DeviceNuclearData_t<AccType, Float, Int> devData;
+    DeviceNuclearData_t<AcceleratorType, RealType, KeyType> devData;
 
     size_t   iteration{0};
     size_t   numParticlesGlobal;
@@ -118,7 +118,7 @@ public:
     //! mpi communicator
 #ifdef USE_MPI
     MPI_Comm                   comm = MPI_COMM_WORLD;
-    sphexa::mpi::mpi_partition partition;
+    sphexa::mpi::mpi_partition<KeyType> partition;
 #endif
 
     //! base hydro fieldNames (every nuclear species is named "Yn")
@@ -185,7 +185,7 @@ public:
         double growthRate = 1;
         auto   data_      = data();
 
-        if constexpr (cstone::HaveGpu<AcceleratorType>{}) { devData.resize(size); }
+        devData.resize(size);
 
         for (size_t i = 0; i < data_.size() - numHydroFields; ++i)
         {
@@ -200,30 +200,14 @@ public:
                         // reallocate
                         reallocate(*arg, size, growthRate);
 
-                        // fill node_id
-                        if ((void*)arg == (void*)(&nuclear_node_id))
-                        {
-                            int rank = 0;
-#ifdef USE_MPI
-                            MPI_Comm_rank(comm, &rank);
-#endif
-                            std::fill(nuclear_node_id.begin() + previous_size, nuclear_node_id.end(), rank);
-                        }
-
-                        // fill particle ID
-                        else if ((void*)arg == (void*)(&nuclear_particle_id))
-                        {
-                            std::iota(nuclear_particle_id.begin() + previous_size, nuclear_particle_id.end(), previous_size);
-                        }
-
                         // fill rho or rho_m1
-                        else if ((void*)arg == (void*)(&rho) || (void*)arg == (void*)(&rho_m1))
+                        if ((void*)arg == (void*)(&rho) || (void*)arg == (void*)(&rho_m1))
                         {
                             std::fill(arg->begin() + previous_size, arg->end(), 0.);
                         }
 
                         // fill dt
-                        else if ((void*)arg == (void*)(&dt))
+                        if ((void*)arg == (void*)(&dt))
                         {
                             std::fill(dt.begin() + previous_size, dt.end(), nnet::constants::initial_dt);
                         }
@@ -239,8 +223,10 @@ public:
      * @param size  number of particle to be hold by the class
      */
     void resize_hydro(size_t size) {
-        double growthRate = 1;
+        double growthRate = 1.05;
         auto   data_      = data();
+
+        devData.resize_hydro(size);
 
     	for (size_t i = data_.size() - numHydroFields; i < data_.size(); ++i)
         {

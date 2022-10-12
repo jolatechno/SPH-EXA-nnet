@@ -81,7 +81,7 @@ namespace nnet::parallel_nnet {
 	 * 
 	 * For the GPU version, Data should contain a GPU class n.devData with the exact same requierments.
      */
-	template<class Data, typename Float, class nseFunction=void*>
+	template<bool use_gpu, class Data, typename Float, class nseFunction=void*>
 	void computeNuclearReactions(Data &n, size_t firstIndex, size_t lastIndex, const Float hydro_dt, const Float previous_dt,
 		const nnet::reaction_list &reactions, const nnet::compute_reaction_rates_functor<Float> &construct_rates_BE, const nnet::eos_functor<Float> &eos,
 		bool use_drhodt,
@@ -95,7 +95,7 @@ namespace nnet::parallel_nnet {
 		const size_t n_particles = n.temp.size();
 		const int dimension = n.numSpecies;
 		
-		if constexpr (cstone::HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE) {
+		if constexpr (use_gpu && COMPILE_DEVICE) {
 
 			/* !!!!!!!!!!!!!
 			GPU non-batch solver
@@ -214,12 +214,12 @@ namespace nnet::parallel_nnet {
 	 * 
 	 * For the GPU version, Data should contain a GPU class n.devData with the exact same requierments.
 	 */
-	template<class Data, class Vector>
+	template<bool use_gpu, class Data, class Vector>
 	void computeHelmEOS(Data &n, size_t firstIndex, size_t lastIndex, const Vector &Z) {
 		const int dimension = n.numSpecies;
 		using Float = typename std::remove_reference<decltype(n.cv[0])>::type;
 
-		if constexpr (cstone::HaveGpu<typename Data::AcceleratorType>{} && COMPILE_DEVICE) {
+		if constexpr (use_gpu && COMPILE_DEVICE) {
 
 			/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			simple GPU application of the eos

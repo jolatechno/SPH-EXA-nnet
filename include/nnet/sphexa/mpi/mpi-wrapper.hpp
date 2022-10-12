@@ -47,27 +47,29 @@
 
 namespace sphexa::mpi {
 	/*! @brief class correlating particles to detached data */
-	struct mpi_partition {
+	template<typename Int>
+	class mpi_partition {
+	public:
 		// references to pointers
-		const std::vector<int>             *node_id;
-		const std::vector<std::size_t>     *particle_id;
+		std::vector<int> const* node_id;
+		std::vector<Int> const* particle_id;
 
 		// send partition limits
 		std::vector<int> send_disp;
 		std::vector<int> send_count;
 
 		// send partition
-		std::vector<std::size_t> send_partition;
+		std::vector<Int> send_partition;
 
 		// send partition limits
 		std::vector<int> recv_disp;
 		std::vector<int> recv_count;
 
 		// send partition
-		std::vector<std::size_t> recv_partition;
+		std::vector<Int> recv_partition;
 
 		mpi_partition() {}
-		mpi_partition(const std::vector<int> &node_id_, const std::vector<std::size_t> &particle_id_) : node_id(&node_id_), particle_id(&particle_id_) {}
+		mpi_partition(const std::vector<int> &node_id_, const std::vector<Int> &particle_id_) : node_id(&node_id_), particle_id(&particle_id_) {}
 
 		void resize_comm_size(const int size) {
 			send_disp .resize(size + 1, 0);
@@ -94,9 +96,10 @@ namespace sphexa::mpi {
 	 * 
 	 * Returns mpi_partition correlating the detached data and attached data
 	 */
-	mpi_partition partitionFromPointers(size_t firstIndex, size_t lastIndex, const std::vector<int> &node_id, const std::vector<std::size_t> &particle_id, MPI_Comm comm)
+	template<typename Int>
+	mpi_partition<Int> partitionFromPointers(size_t firstIndex, size_t lastIndex, const std::vector<int> &node_id, const std::vector<Int> &particle_id, MPI_Comm comm)
 	{
-		mpi_partition partition(node_id, particle_id);
+		mpi_partition<Int> partition(node_id, particle_id);
 
 #ifdef USE_MPI
 		int rank, size;
@@ -152,7 +155,8 @@ namespace sphexa::mpi {
 	 * @param particle_id  particle id vector to be populated
 	 * @param comm         MPI communicator
 	 */
-	void initializePointers(size_t firstIndex, size_t lastIndex, std::vector<int> &node_id, std::vector<std::size_t> &particle_id, MPI_Comm comm) {
+	template<typename Int>
+	void initializePointers(size_t firstIndex, size_t lastIndex, std::vector<int> &node_id, std::vector<Int> &particle_id, MPI_Comm comm) {
 		int rank, size;
 		MPI_Comm_size(comm, &size);
 		MPI_Comm_rank(comm, &rank);
@@ -185,8 +189,8 @@ namespace sphexa::mpi {
 	 * @param datatype     MPI datatype of data to be sent/received
 	 * @param comm         MPI communicator
 	 */
-	template<typename T>
-	void syncDataToStaticPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
+	template<typename T, typename Int>
+	void syncDataToStaticPartition(const mpi_partition<Int> &partition, const T *send_vector, T *recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
 		int size;
 		MPI_Comm_size(comm, &size);
 
@@ -209,27 +213,32 @@ namespace sphexa::mpi {
 		for (size_t i = 0; i < n_particles_recv; ++i)
 			recv_vector[partition.recv_partition[i]] = recv_buffer[i];
 	}
-	void syncDataToStaticPartition(const mpi_partition &partition, const double *send_vector, double *recv_vector, MPI_Comm comm) {
+	template<typename Int>
+	void syncDataToStaticPartition(const mpi_partition<Int> &partition, const double *send_vector, double *recv_vector, MPI_Comm comm) {
 		syncDataToStaticPartition(partition, send_vector, recv_vector, MPI_DOUBLE, comm);
 	}
-	void syncDataToStaticPartition(const mpi_partition &partition, const float *send_vector, float *recv_vector, MPI_Comm comm) {
+	template<typename Int>
+	void syncDataToStaticPartition(const mpi_partition<Int> &partition, const float *send_vector, float *recv_vector, MPI_Comm comm) {
 		syncDataToStaticPartition(partition, send_vector, recv_vector, MPI_FLOAT, comm);
 	}
-	void syncDataToStaticPartition(const mpi_partition &partition, const int *send_vector, int *recv_vector, MPI_Comm comm) {
+	template<typename Int>
+	void syncDataToStaticPartition(const mpi_partition<Int> &partition, const int *send_vector, int *recv_vector, MPI_Comm comm) {
 		syncDataToStaticPartition(partition, send_vector, recv_vector, MPI_INT, comm);
 	}
-	void syncDataToStaticPartition(const mpi_partition &partition, const uint *send_vector, uint *recv_vector, MPI_Comm comm) {
+	template<typename Int>
+	void syncDataToStaticPartition(const mpi_partition<Int> &partition, const uint *send_vector, uint *recv_vector, MPI_Comm comm) {
 		syncDataToStaticPartition(partition, send_vector, recv_vector, MPI_UNSIGNED, comm);
 	}
-	void syncDataToStaticPartition(const mpi_partition &partition, const size_t *send_vector, size_t *recv_vector, MPI_Comm comm) {
+	template<typename Int>
+	void syncDataToStaticPartition(const mpi_partition<Int> &partition, const size_t *send_vector, size_t *recv_vector, MPI_Comm comm) {
 		syncDataToStaticPartition(partition, send_vector, recv_vector, MPI_UNSIGNED_LONG_LONG, comm);
 	}
-	template<typename T>
-	void syncDataToStaticPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, MPI_Comm comm) {
+	template<typename T, typename Int>
+	void syncDataToStaticPartition(const mpi_partition<Int> &partition, const T *send_vector, T *recv_vector, MPI_Comm comm) {
 		throw std::runtime_error("Type not implictly supported by syncDataToStaticPartition\n");
 	}
-	template<typename T1, typename T2>
-	void syncDataToStaticPartition(const mpi_partition &partition, const T1 *send_vector, T2 *recv_vector, MPI_Comm comm) {
+	template<typename T1, typename T2, typename Int>
+	void syncDataToStaticPartition(const mpi_partition<Int> &partition, const T1 *send_vector, T2 *recv_vector, MPI_Comm comm) {
 		throw std::runtime_error("Type mismatch in syncDataToStaticPartition\n");
 	}
 
@@ -241,8 +250,8 @@ namespace sphexa::mpi {
 	 * @param datatype     MPI datatype of data to be sent/received
 	 * @param comm         MPI communicator
 	 */
-	template<typename T>
-	void syncDataFromStaticPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
+	template<typename T, typename Int>
+	void syncDataFromStaticPartition(const mpi_partition<Int> &partition, const T *send_vector, T *recv_vector, const MPI_Datatype datatype, MPI_Comm comm) {
 		// exact same thing as "direct_sync_data_from_partition" but with "send_ <-> recv_"
 
 		int size;
@@ -267,27 +276,32 @@ namespace sphexa::mpi {
 		for (size_t i = 0; i < n_particles_send; ++i)
 			recv_vector[partition.send_partition[i]] = recv_buffer[i];
 	}
-	void syncDataFromStaticPartition(const mpi_partition &partition, const double *send_vector, double *recv_vector, MPI_Comm comm)  {
+	template<typename Int>
+	void syncDataFromStaticPartition(const mpi_partition<Int> &partition, const double *send_vector, double *recv_vector, MPI_Comm comm)  {
 		syncDataFromStaticPartition(partition, send_vector, recv_vector, MPI_DOUBLE, comm);
 	}
-	void syncDataFromStaticPartition(const mpi_partition &partition, const float *send_vector, float *recv_vector, MPI_Comm comm)  {
+	template<typename Int>
+	void syncDataFromStaticPartition(const mpi_partition<Int> &partition, const float *send_vector, float *recv_vector, MPI_Comm comm)  {
 		syncDataFromStaticPartition(partition, send_vector, recv_vector, MPI_FLOAT, comm);
 	}
-	void syncDataFromStaticPartition(const mpi_partition &partition, const int *send_vector, int *recv_vector, MPI_Comm comm)  {
+	template<typename Int>
+	void syncDataFromStaticPartition(const mpi_partition<Int> &partition, const int *send_vector, int *recv_vector, MPI_Comm comm)  {
 		syncDataFromStaticPartition(partition, send_vector, recv_vector, MPI_INT, comm);
 	}
-	void syncDataFromStaticPartition(const mpi_partition &partition, const uint *send_vector, uint *recv_vector, MPI_Comm comm)  {
+	template<typename Int>
+	void syncDataFromStaticPartition(const mpi_partition<Int> &partition, const uint *send_vector, uint *recv_vector, MPI_Comm comm)  {
 		syncDataFromStaticPartition(partition, send_vector, recv_vector, MPI_UNSIGNED, comm);
 	}
-	void syncDataFromStaticPartition(const mpi_partition &partition, const size_t *send_vector, size_t *recv_vector, MPI_Comm comm)  {
+	template<typename Int>
+	void syncDataFromStaticPartition(const mpi_partition<Int> &partition, const size_t *send_vector, size_t *recv_vector, MPI_Comm comm)  {
 		syncDataFromStaticPartition(partition, send_vector, recv_vector, MPI_UNSIGNED_LONG_LONG, comm);
 	}
-	template<typename T>
-	void syncDataFromStaticPartition(const mpi_partition &partition, const T *send_vector, T *recv_vector, MPI_Comm comm) {
+	template<typename T, typename Int>
+	void syncDataFromStaticPartition(const mpi_partition<Int> &partition, const T *send_vector, T *recv_vector, MPI_Comm comm) {
 		throw std::runtime_error("Type not implictly supported by syncDataFromStaticPartition\n");
 	}
-	template<typename T1, typename T2>
-	void syncDataFromStaticPartition(const mpi_partition &partition, const T1 *send_vector, T2 *recv_vector, MPI_Comm comm) {
+	template<typename T1, typename T2, typename Int>
+	void syncDataFromStaticPartition(const mpi_partition<Int> &partition, const T1 *send_vector, T2 *recv_vector, MPI_Comm comm) {
 		throw std::runtime_error("Type mismatch in syncDataFromStaticPartition\n");
 	}
 #endif

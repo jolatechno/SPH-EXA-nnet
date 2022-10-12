@@ -154,7 +154,7 @@ public:
      * @param size  number of particle to be hold by the class
      */
     void resize_hydro(size_t size) {
-        double growthRate = 1;
+        double growthRate = 1.01;
         auto   data_      = data();
 
     	for (size_t i = data_.size() - numHydroFields; i < data_.size(); ++i)

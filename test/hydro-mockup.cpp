@@ -543,6 +543,9 @@ int main(int argc, char* argv[]) {
 
 	sphexa::transferToHost(particle_data.nuclearData, 0, n_nuclear_particles, {"cv"});
 
+	std::fill(particle_data.nuclearData.nuclear_node_id.begin(), particle_data.nuclearData.nuclear_node_id.end(), rank);
+	std::iota(particle_data.nuclearData.nuclear_particle_id.begin(), particle_data.nuclearData.nuclear_particle_id.end(), 0);
+
 	dump(particle_data.nuclearData, 0,                             n_print,             "/dev/stdout");
 	dump(particle_data.nuclearData, n_nuclear_particles - n_print, n_nuclear_particles, "/dev/stdout");
 

@@ -60,7 +60,7 @@ namespace sphexa::sphnnet {
 		bool use_drhodt,
 		const nseFunction jumpToNse=NULL)
 	{
-		nnet::parallel_nnet::computeNuclearReactions(n, firstIndex, lastIndex, hydro_dt, previous_dt,
+		nnet::parallel_nnet::computeNuclearReactions<cstone::HaveGpu<typename Data::AcceleratorType>{}>(n, firstIndex, lastIndex, hydro_dt, previous_dt,
 			reactions, construct_rates_BE, eos,
 			use_drhodt,
 			jumpToNse);
@@ -76,7 +76,7 @@ namespace sphexa::sphnnet {
 	 */
 	template<class Data, class Vector>
 	void inline computeHelmEOS(Data &n, size_t firstIndex, size_t lastIndex, const Vector &Z) {
-		nnet::parallel_nnet::computeHelmEOS(n, firstIndex, lastIndex, Z);
+		nnet::parallel_nnet::computeHelmEOS<cstone::HaveGpu<typename Data::AcceleratorType>{}>(n, firstIndex, lastIndex, Z);
 	}
 
 
