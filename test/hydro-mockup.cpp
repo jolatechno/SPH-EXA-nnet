@@ -355,16 +355,57 @@ int main(int argc, char* argv[]) {
 
 
 
-	nnet::eos::helmholtz_functor<double> helm_eos;
-	if (use_net87) {
-		helm_eos = nnet::eos::helmholtz_functor(nnet::net87::constants::Z, 87);
-	} else if (use_net86) {
-		helm_eos = nnet::eos::helmholtz_functor(nnet::net87::constants::Z, 86);
-	} else {
-		helm_eos = nnet::eos::helmholtz_functor(nnet::net14::constants::Z);
-	}
-	const nnet::eos::ideal_gas_functor<double> idea_gas_eos(isotherm ? 1e-20 : 10.0);
+	//! @brief nuclear network reaction list
+    nnet::reaction_list const* reactions;
+    //! @brief nuclear network parameterization
+    nnet::compute_reaction_rates_functor<double> const* construct_rates_BE;
+    //! @brief eos
+    nnet::eos_functor<double> *eos;
+    //! @brief BE
+    double const* BE;
+    //!@brief Z
+    std::vector<double> Z;
 
+
+    if (idealGas) 
+    {
+    	eos = new nnet::eos::ideal_gas_functor<double>(isotherm ? 1e-20 : 10.0);
+    }
+    else
+    {
+    	if (use_net87) { eos = new nnet::eos::helmholtz_functor<double>(nnet::net87::constants::Z, 87); }
+    	else if (use_net86) { eos = new nnet::eos::helmholtz_functor<double>(nnet::net86::constants::Z, 86); } 
+		else { eos = new nnet::eos::helmholtz_functor<double>(nnet::net14::constants::Z); }
+    }
+
+	
+	if (use_net87)
+    {
+        reactions          = &nnet::net87::reaction_list;
+        construct_rates_BE = &nnet::net87::compute_reaction_rates;
+        BE                 =  nnet::net87::BE.data();
+
+        Z.resize(87);
+        std::copy(nnet::net87::constants::Z.begin(), nnet::net87::constants::Z.begin() + 87, Z.begin());
+    }    
+    else if (use_net86)
+    {
+        reactions          = &nnet::net86::reaction_list;
+        construct_rates_BE = &nnet::net86::compute_reaction_rates;
+        BE                 =  nnet::net86::BE.data();
+
+        Z.resize(86);
+        std::copy(nnet::net86::constants::Z.begin(), nnet::net86::constants::Z.begin() + 86, Z.begin());
+    }
+    else
+    {
+        reactions          = &nnet::net14::reaction_list;
+        construct_rates_BE = &nnet::net14::compute_reaction_rates;
+        BE                 =  nnet::net14::BE.data();
+
+        Z.resize(14);
+        std::copy(nnet::net14::constants::Z.begin(), nnet::net14::constants::Z.begin() + 14, Z.begin());
+    }
 
 
 
@@ -452,45 +493,12 @@ int main(int argc, char* argv[]) {
 #endif
 		auto start_it = std::chrono::high_resolution_clock::now();
 
-		if (use_net87) {
-			if (idealGas) {
-				step(rank,
-					first, last,
-					particle_data, hydro_dt,
-					nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, idea_gas_eos,
-					nnet::net87::BE.data(), nnet::net87::constants::Z);
-			} else
-				step(rank,
-					first, last,
-					particle_data, hydro_dt,
-					nnet::net87::reaction_list, nnet::net87::compute_reaction_rates, helm_eos,
-					nnet::net87::BE.data(), nnet::net87::constants::Z);
-		} else if (use_net86) {
-			if (idealGas) {
-				step(rank,
-					first, last,
-					particle_data, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, idea_gas_eos,
-					nnet::net86::BE.data(), nnet::net86::constants::Z);
-			} else
-				step(rank,
-					first, last,
-					particle_data, hydro_dt,
-					nnet::net86::reaction_list, nnet::net86::compute_reaction_rates, helm_eos,
-					nnet::net86::BE.data(), nnet::net86::constants::Z);
-		} else
-			if (idealGas) {
-				step(rank,
-					first, last,
-					particle_data, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, idea_gas_eos,
-					nnet::net14::BE.data(), nnet::net14::constants::Z);
-			} else
-				step(rank,
-					first, last,
-					particle_data, hydro_dt,
-					nnet::net14::reaction_list, nnet::net14::compute_reaction_rates, helm_eos,
-					nnet::net14::BE.data(), nnet::net14::constants::Z);
+		step(rank,
+			first, last,
+			particle_data, hydro_dt,
+			*reactions, *construct_rates_BE,
+			*eos,
+			BE, Z);
 
 		t += hydro_dt;
 
