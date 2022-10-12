@@ -38,8 +38,11 @@
 #include <memory>
 #include <variant>
 
+#include "CUDA/nuclear-data-stubs.hpp"
+
 // can't compile CUDA GPU data for now !
-#if COMPILE_DEVICE && 0
+// #if COMPILE_DEVICE
+#if defined(USE_CUDA)
 #include "CUDA/nuclear-data-gpu.cuh"
 #endif
 
@@ -61,42 +64,6 @@
 
 namespace sphexa::sphnnet
 {
-/*! @brief nuclear data device facade */
-template<typename T, typename I>
-class DeviceNuclearDataFacade
-{
-public:
-    void resize(size_t) {}
-
-    template<class... Ts>
-    void setConserved(Ts...)
-    {
-    }
-
-    template<class... Ts>
-    void setDependent(Ts...)
-    {
-    }
-
-    template<class... Ts>
-    void release(Ts...)
-    {
-    }
-
-    template<class... Ts>
-    void acquire(Ts...)
-    {
-    }
-
-    inline static constexpr std::array fieldNames{0};
-};
-
-/*! @brief Forward declaration of DeviceNuclearDataType, defined to DeviceNuclearDataFacade for now ! */
-template<typename T, typename I>
-class DeviceNuclearDataType : public DeviceNuclearDataFacade<T, I>
-{
-};
-// class DeviceNuclearDataType;
 
 /*! @brief nuclear data class for nuclear network */
 template<typename Float, typename Int, class AccType>
@@ -108,9 +75,6 @@ public:
     //! actual number of nuclear species
     int numSpecies = 0;
 
-    template<class... Args>
-    using DeviceNuclearData_t = DeviceNuclearDataType<Args...>;
-
     template<class ValueType>
     using FieldVector = std::vector<ValueType, std::allocator<ValueType>>;
 
@@ -120,13 +84,11 @@ public:
     using Tmass           = float;
     using XM1Type         = float;
     using AcceleratorType = AccType;
-    using DeviceData_t    = typename cstone::AccelSwitchType<AcceleratorType, DeviceNuclearDataFacade,
-                                                          DeviceNuclearData_t>::template type<Float, Int>;
 
     //! @brief number of fields that have hydro size
     const int numHydroFields = 2;
 
-    DeviceData_t devData;
+    DeviceNuclearData_t<AccType, Float, Int> devData;
 
     size_t   iteration{0};
     size_t   numParticlesGlobal;

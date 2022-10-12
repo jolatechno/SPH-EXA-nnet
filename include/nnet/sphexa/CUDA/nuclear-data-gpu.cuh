@@ -37,8 +37,6 @@
 #include <array>
 #include <memory>
 
-#include "sph/traits.hpp"
-
 #include "cstone/fields/field_states.hpp"
 #include "cstone/fields/enumerate.hpp"
 #include "cstone/fields/concatenate.hpp"
@@ -114,8 +112,8 @@ public:
      */
     auto data()
     {
-        using FieldType = std::variant<FieldVector<float>*, FieldVector<double>*, FieldVector<unsigned>*,
-                                       FieldVector<int>*, FieldVector<uint64_t>*>;
+        using FieldType = std::variant<DevVector<float>*, DevVector<double>*, DevVector<unsigned>*,
+                                       DevVector<int>*, DevVector<uint64_t>*>;
 
         return std::apply([](auto&... fields) { return std::array<FieldType, sizeof...(fields)>{&fields...}; },
                           dataTuple());
