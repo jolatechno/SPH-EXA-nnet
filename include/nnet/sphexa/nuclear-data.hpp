@@ -89,13 +89,13 @@ public:
 
     DeviceNuclearData_t<AcceleratorType, RealType, KeyType> devData;
 
+    //! nuclear energy
+    RealType enuclear{0.0};
     size_t   iteration{0};
     size_t   numParticlesGlobal;
     RealType ttot{0.0};
     //! current and previous (global) time-steps
     RealType minDt, minDt_m1;
-    //! @brief gravitational constant
-    RealType g{0.0};
 
     //! @brief hydro data
     FieldVector<RealType>                             c;                   // speed of sound

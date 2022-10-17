@@ -75,8 +75,9 @@ namespace nnet::parallel_nnet {
 
 			// compute drho/dt
 			Float drho_dt = 0;
-			if (use_drhodt && rho_m1_[thread] != 0)
-				drho_dt = (rho_[thread] - rho_m1_[thread])/previous_dt;
+			if (use_drhodt)
+				if (rho_m1_[thread] != 0)
+					drho_dt = (rho_[thread] - rho_m1_[thread])/previous_dt;
 
 			// initial condition
 			Float elapsed = 0.0;

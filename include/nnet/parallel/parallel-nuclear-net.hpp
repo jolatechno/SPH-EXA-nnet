@@ -170,7 +170,7 @@ namespace nnet::parallel_nnet {
 			num_threads = omp_get_num_threads();
 			int omp_batch_size = ::util::dynamic_batch_size(n_particles, num_threads);
 
-			#pragma omp parallel for firstprivate(Y, Mp, RHS, DY_T, rates, Y_buffer, reactions/*, construct_rates_BE, eos*/) schedule(dynamic, omp_batch_size)
+			#pragma omp parallel for firstprivate(Y, Mp, RHS, DY_T, rates, Y_buffer) schedule(dynamic, omp_batch_size)
 			for (size_t i = firstIndex; i < lastIndex; ++i)
 				if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp) {
 					// copy to local vector
@@ -179,8 +179,9 @@ namespace nnet::parallel_nnet {
 
 					// compute drho/dt
 					Float drho_dt = 0;
-					if (use_drhodt && n.rho_m1[i] != 0)
-						n.rho_m1[i] = (n.rho[i] - n.rho_m1[i])/previous_dt;
+					if (use_drhodt)
+						if (n.rho_m1[i] != 0)
+							n.rho_m1[i] = (n.rho[i] - n.rho_m1[i])/previous_dt;
 
 					// solve
 					nnet::solve_system_substep(dimension,

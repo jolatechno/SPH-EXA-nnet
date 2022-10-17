@@ -64,7 +64,7 @@ namespace sphexa::sphnnet {
 	 */
 	template<class Data, typename Float>
 	Float totalNuclearEnergy(Data const &n, const Float *BE) {
-		const size_t n_particles = n.temp.size();
+		const size_t n_particles = n.Y[0].size();
 		const int dimension = n.numSpecies;
 
 #if COMPILE_DEVICE
