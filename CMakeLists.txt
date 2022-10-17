@@ -51,20 +51,6 @@ else()
     message(STATUS "No CUDA support")
 endif()
 
-
-option(COMPILE_HYDRO_MOCKUP "Enable nuclear networks" ON)
-if (COMPILE_HYDRO_MOCKUP)
-    if (DEFINED CSTONE_DIR AND DEFINED SPH_DIR)
-        if(NOT EXISTS ${CSTONE_DIR} OR NOT EXISTS ${SPH_DIR})
-            set(COMPILE_HYDRO_MOCKUP OFF)
-            message(STATUS "SPH-EXA not found !")
-        endif()
-    else()
-        set(COMPILE_HYDRO_MOCKUP OFF)
-        message(STATUS "SPH-EXA not path not given !")
-    endif()
-endif()
-
 set(NNET_DIR ${PROJECT_SOURCE_DIR}/include)
 
 add_subdirectory(include)
