@@ -38,17 +38,17 @@
 #include <cuda_runtime.h>
 #include <thrust/device_vector.h>
 
-#include "../../nuclear-net.hpp"
-#include "../../CUDA/nuclear-net.cuh"
+#include "nnet/nuclear-net.hpp"
+#include "nnet/CUDA/nuclear-net.cuh"
 
-#include "../../parameterization/eos/helmholtz.hpp"
-#include "../../parameterization/eos/ideal_gas.hpp"
+#include "nnet/parameterization/eos/helmholtz.hpp"
+#include "nnet/parameterization/eos/ideal_gas.hpp"
 
-#include "../../parameterization/net14/net14.hpp"
-#include "../../parameterization/net86/net86.hpp"
-#include "../../parameterization/net87/net87.hpp"
+#include "nnet/parameterization/net14/net14.hpp"
+#include "nnet/parameterization/net86/net86.hpp"
+#include "nnet/parameterization/net87/net87.hpp"
 
-#include "../../../util/algorithm.hpp"
+#include "nnet-util/algorithm.hpp"
 
 #ifndef CUDA_NUM_THREAD_PER_BLOCK
 	#define CUDA_NUM_THREAD_PER_BLOCK 32

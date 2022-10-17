@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "../../util/CUDA/cuda.inl"
+#include "CUDA/cuda.inl"
 #if COMPILE_DEVICE
 	#include <device_launch_parameters.h>
 	#include <cuda.h>
@@ -41,14 +41,14 @@
 
 	#include <thrust/device_vector.h>
 
-	#include "../CUDA/nuclear-net.cuh"
+	#include "nnet/CUDA/nuclear-net.cuh"
 #endif
 
 #include <numeric>
 #include <omp.h>
 
-#include "../../util/eigen.hpp"
-#include "../../util/algorithm.hpp"
+#include "nnet-util/eigen.hpp"
+#include "nnet-util/algorithm.hpp"
 
 #include "mpi/mpi-wrapper.hpp"
 

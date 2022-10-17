@@ -32,16 +32,16 @@
 
 #pragma once
 
-#include "../../../util/CUDA/cuda.inl"
+#include "nnet-util/CUDA/cuda.inl"
 #if COMPILE_DEVICE
-	#include "../../../util/CUDA/cuda-util.hpp"
+	#include "nnet-util/CUDA/cuda-util.hpp"
 #endif
 
 #include <vector>
 
 #include "net14-constants.hpp"
 
-#include "../../nuclear-net.hpp"
+#include "nnet/nuclear-net.hpp"
 
 #define BE_NET14 \
 	28.2970*constants::Mev_to_erg COMMA \

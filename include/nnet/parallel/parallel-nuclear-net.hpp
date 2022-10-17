@@ -34,7 +34,7 @@
 
 #pragma once
 
-#include "../../util/CUDA/cuda.inl"
+#include "nnet-util/CUDA/cuda.inl"
 //#if COMPILE_DEVICE
 #if defined(USE_CUDA)
 #include <device_launch_parameters.h>
@@ -44,19 +44,19 @@
 
 #include <thrust/device_vector.h>
 
-#include "../CUDA/nuclear-net.cuh"
+#include "nnet/CUDA/nuclear-net.cuh"
 #include "CUDA/parallel-nuclear-net.cuh"
 #endif
 
 #include <numeric>
 #include <omp.h>
 
-#include "../nuclear-net.hpp"
+#include "nnet/nuclear-net.hpp"
 
-#include "../../util/eigen.hpp"
-#include "../../util/algorithm.hpp"
+#include "nnet-util/eigen.hpp"
+#include "nnet-util/algorithm.hpp"
 
-#include "../parameterization/eos/helmholtz.hpp"
+#include "nnet/parameterization/eos/helmholtz.hpp"
 
 namespace nnet::parallel_nnet {
 	/*! @brief function to compute nuclear reaction, either from NuclearData or ParticuleData if it includes Y

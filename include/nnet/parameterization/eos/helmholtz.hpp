@@ -32,17 +32,17 @@
 
 #pragma once
 
-#include "../../../util/CUDA/cuda.inl"
+#include "nnet-util/CUDA/cuda.inl"
 #if COMPILE_DEVICE
-	#include "../../../util/CUDA/cuda-util.hpp"
+	#include "nnet-util/CUDA/cuda-util.hpp"
 #endif
 
 #define STRINGIFY(...) #__VA_ARGS__
 #define STR(...) STRINGIFY(__VA_ARGS__)
 
-#include "../../../util/eigen.hpp"
+#include "nnet-util/eigen.hpp"
 
-#include "../../../util/algorithm.hpp"
+#include "nnet-util/algorithm.hpp"
 
 #ifndef IMAX
 	#define IMAX 541

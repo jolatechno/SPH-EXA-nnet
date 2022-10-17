@@ -32,13 +32,13 @@
 
 #pragma once
 
-#include "../parallel/parallel-nuclear-net.hpp"
+#include "nnet/parallel/parallel-nuclear-net.hpp"
 
 #include "mpi/mpi-wrapper.hpp"
 
 #include "cstone/fields/data_util.hpp"
 
-#include "../../util/algorithm.hpp"
+#include "nnet-util/algorithm.hpp"
 
 namespace sphexa::sphnnet {
 	/*! @brief function to compute nuclear reaction, either from NuclearData or ParticuleData if it includes Y

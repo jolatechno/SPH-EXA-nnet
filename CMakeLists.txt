@@ -51,7 +51,7 @@ else()
     message(STATUS "No CUDA support")
 endif()
 
-set(NNET_DIR ${PROJECT_SOURCE_DIR}/include)
+set(NNET_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_subdirectory(include)
 add_subdirectory(test)

@@ -32,9 +32,9 @@
 
 #pragma once
 
-#include "../util/CUDA/cuda.inl"
+#include "nnet-util/CUDA/cuda.inl"
 
-#include "../util/eigen.hpp"
+#include "nnet-util/eigen.hpp"
 
 #include <iostream>
 

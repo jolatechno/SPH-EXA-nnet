@@ -32,9 +32,9 @@
 
 #pragma once
 
-#include "../../../util/CUDA/cuda.inl"
+#include "nnet-util/CUDA/cuda.inl"
 #if COMPILE_DEVICE
-	#include "../../../util/CUDA/cuda-util.hpp"
+	#include "nnet-util/CUDA/cuda-util.hpp"
 #endif
 
 #include <vector>
@@ -42,8 +42,8 @@
 
 #include "net86-constants.hpp"
 
-#include "../../nuclear-net.hpp"
-#include "../../../util/algorithm.hpp"
+#include "nnet/nuclear-net.hpp"
+#include "nnet-util/algorithm.hpp"
 
 #define BE_NET86 \
 	0 COMMA 0 COMMA \

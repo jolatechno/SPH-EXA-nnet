@@ -31,7 +31,7 @@
 
 #pragma once
 
-#include "../../util/CUDA/cuda.inl"
+#include "CUDA/cuda.inl"
 
 #include <vector>
 #include <array>
@@ -49,8 +49,6 @@
 #include <mpi.h>
 #endif
 #include "mpi/mpi-wrapper.hpp"
-
-#include "../nuclear-net.hpp"
 
 #include "cstone/tree/accel_switch.hpp"
 

@@ -31,7 +31,7 @@
 
 #pragma once
 
-#include "../../../util/CUDA/cuda.inl"
+#include "cuda.inl"
 
 #include <vector>
 #include <array>
