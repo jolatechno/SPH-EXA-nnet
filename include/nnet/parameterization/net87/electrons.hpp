@@ -65,6 +65,9 @@
 
 namespace nnet::net87::electrons {
 	namespace constants {
+		/*! @brief table initialize sucess */
+		extern bool table_read_success;
+
 		/*! @brief table sizes */
 		static const int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
 

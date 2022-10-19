@@ -68,8 +68,10 @@ namespace nnet::eos {
 	/*! @brief if true print debuging prints */
 	extern bool debug;
 	
-
 	namespace helmholtz_constants {
+		/*! @brief table initialize sucess */
+		extern bool table_read_success;
+		
 		// table size
 		const int imax = IMAX, jmax = JMAX;
 
