@@ -34,7 +34,7 @@
 
 #pragma once
 
-#include "nnet-util/CUDA/cuda.inl"
+#include "nnet_util/CUDA/cuda.inl"
 //#if COMPILE_DEVICE
 #if defined(USE_CUDA)
 #include <device_launch_parameters.h>
@@ -44,17 +44,17 @@
 
 #include <thrust/device_vector.h>
 
-#include "nnet/CUDA/nuclear-net.cuh"
-#include "CUDA/parallel-nuclear-net.cuh"
+#include "nnet/CUDA/nuclear_net.cuh"
+#include "CUDA/parallel_nuclear_net.cuh"
 #endif
 
 #include <numeric>
 #include <omp.h>
 
-#include "nnet/nuclear-net.hpp"
+#include "nnet/nuclear_net.hpp"
 
-#include "nnet-util/eigen.hpp"
-#include "nnet-util/algorithm.hpp"
+#include "nnet_util/eigen.hpp"
+#include "nnet_util/algorithm.hpp"
 
 #include "nnet/parameterization/eos/helmholtz.hpp"
 

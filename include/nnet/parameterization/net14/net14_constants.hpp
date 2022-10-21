@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "nnet-util/CUDA/cuda.inl"
+#include "nnet_util/CUDA/cuda.inl"
 
 #include <array>
 #include <vector>

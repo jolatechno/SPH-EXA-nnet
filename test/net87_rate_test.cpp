@@ -36,7 +36,7 @@
 #include "nnet/parameterization/net87/net87.hpp"
 #include "nnet/parameterization/eos/helmholtz.hpp"
 
-#include "nnet/nuclear-net.hpp"
+#include "nnet/nuclear_net.hpp"
 
 int main() {
 	std::cout << "A.size = " << nnet::net87::constants::A.size() << "\n";

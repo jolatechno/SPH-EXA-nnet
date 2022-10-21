@@ -36,7 +36,7 @@
 #include "nnet/parameterization/eos/helmholtz.hpp"
 #include "nnet/parameterization/eos/ideal_gas.hpp"
 
-#include "nnet/nuclear-net.hpp"
+#include "nnet/nuclear_net.hpp"
 
 #include "util/arg_parser.hpp"
 

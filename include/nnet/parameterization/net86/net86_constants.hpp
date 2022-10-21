@@ -32,13 +32,13 @@
 
 #pragma once
 
-#include "nnet-util/CUDA/cuda.inl"
+#include "nnet_util/CUDA/cuda.inl"
 
 #include <vector>
 #include <algorithm>
 #include <numeric>
 
-#include "../net14/net14-constants.hpp"
+#include "../net14/net14_constants.hpp"
 
 namespace nnet::net86::constants {
 	static const int proton = 0;

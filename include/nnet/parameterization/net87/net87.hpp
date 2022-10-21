@@ -32,9 +32,9 @@
 
 #pragma once
 
-#include "nnet-util/CUDA/cuda.inl"
+#include "nnet_util/CUDA/cuda.inl"
 #if COMPILE_DEVICE
-	#include "nnet-util/CUDA/cuda-util.hpp"
+	#include "nnet_util/CUDA/cuda-util.hpp"
 #endif
 
 #include <vector>
@@ -44,7 +44,7 @@
 
 #include "../net86/net86.hpp"
 
-#include "nnet/nuclear-net.hpp"
+#include "nnet/nuclear_net.hpp"
 
 namespace nnet::net87 {
 	namespace constants = nnet::net86::constants;

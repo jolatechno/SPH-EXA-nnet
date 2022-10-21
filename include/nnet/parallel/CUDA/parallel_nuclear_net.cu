@@ -30,7 +30,7 @@
  */
 
 
-#include "parallel-nuclear-net.cuh"
+#include "parallel_nuclear_net.cuh"
 
 namespace nnet::parallel_nnet {
 	/***********************************************/
