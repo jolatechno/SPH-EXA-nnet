@@ -87,11 +87,6 @@ namespace nnet::parallel_nnet {
 		bool use_drhodt,
 		const nseFunction jumpToNse=NULL)
 	{
-		n.minDt_m1 = n.minDt;
-		n.minDt    = hydro_dt;
-		n.ttot    += n.minDt;
-		++n.iteration;
-
 		const size_t n_particles = n.temp.size();
 		const int dimension = n.numSpecies;
 		
