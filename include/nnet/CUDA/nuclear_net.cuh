@@ -61,12 +61,12 @@ public:
 GPUReactionList inline moveToGpu(const PtrReactionList& reactions)
 {
     GPUReactionList dev_reactions;
-    dev_reactions.num_reactions = reactions.num_reactions;
+    dev_reactions.numReactions = reactions.numReactions;
 
-    dev_reactions.ReactantProduct = cuda_util::moveToGpu<reaction::ReactantProduct>(
-        reactions.ReactantProduct, reactions.reactant_begin[reactions.num_reactions]);
-    dev_reactions.reactant_begin = cuda_util::moveToGpu<int>(reactions.reactant_begin, reactions.num_reactions + 1);
-    dev_reactions.product_begin  = cuda_util::moveToGpu<int>(reactions.product_begin, reactions.num_reactions);
+    dev_reactions.reactantProduct = cuda_util::moveToGpu<Reaction::ReactantProduct>(
+        reactions.reactantProduct, reactions.reactantBegin[reactions.numReactions]);
+    dev_reactions.reactantBegin = cuda_util::moveToGpu<int>(reactions.reactantBegin, reactions.numReactions + 1);
+    dev_reactions.productBegin  = cuda_util::moveToGpu<int>(reactions.productBegin, reactions.numReactions);
 
     return dev_reactions;
 }
@@ -77,8 +77,8 @@ GPUReactionList inline moveToGpu(const PtrReactionList& reactions)
  */
 void inline free(GPUReactionList& reactions)
 {
-    gpuErrchk(cudaFree((void*)reactions.ReactantProduct));
-    gpuErrchk(cudaFree((void*)reactions.reactant_begin));
-    gpuErrchk(cudaFree((void*)reactions.product_begin));
+    gpuErrchk(cudaFree((void*)reactions.reactantProduct));
+    gpuErrchk(cudaFree((void*)reactions.reactantBegin));
+    gpuErrchk(cudaFree((void*)reactions.productBegin));
 }
 } // namespace nnet

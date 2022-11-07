@@ -173,7 +173,7 @@ private:
     std::vector<int> productBegin  = {};
 
     // actual vectors
-    std::vector<Reaction::ReactantProduct> ReactantProduct = {};
+    std::vector<Reaction::ReactantProduct> reactantProduct = {};
 
     friend class PtrReactionList;
 
@@ -188,8 +188,8 @@ public:
     /*! @brief push back reaction to list */
     void inline pushBack(Reaction const& Reaction)
     {
-        ReactantProduct.insert(ReactantProduct.end(), Reaction.reactants.begin(), Reaction.reactants.end());
-        ReactantProduct.insert(ReactantProduct.end(), Reaction.products.begin(), Reaction.products.end());
+        reactantProduct.insert(reactantProduct.end(), Reaction.reactants.begin(), Reaction.reactants.end());
+        reactantProduct.insert(reactantProduct.end(), Reaction.products.begin(), Reaction.products.end());
 
         productBegin.push_back(reactantBegin.back() + Reaction.reactants.size());
         reactantBegin.push_back(productBegin.back() + Reaction.products.size());
@@ -200,9 +200,9 @@ public:
     {
         ReactionReference Reaction;
 
-        Reaction.reactants = ReactionReference::VectorReference(ReactantProduct.data() + reactantBegin[i],
+        Reaction.reactants = ReactionReference::VectorReference(reactantProduct.data() + reactantBegin[i],
                                                                 productBegin[i] - reactantBegin[i]);
-        Reaction.products  = ReactionReference::VectorReference(ReactantProduct.data() + productBegin[i],
+        Reaction.products  = ReactionReference::VectorReference(reactantProduct.data() + productBegin[i],
                                                                 reactantBegin[i + 1] - productBegin[i]);
 
         return Reaction;
@@ -225,7 +225,7 @@ class PtrReactionList
 protected:
     // pointer to each reaction
     const int *                      reactantBegin, *productBegin;
-    const Reaction::ReactantProduct* ReactantProduct;
+    const Reaction::ReactantProduct* reactantProduct;
     int                              numReactions;
 
     // forward declaration
@@ -241,7 +241,7 @@ public:
 
         reactantBegin   = other.reactantBegin.data();
         productBegin    = other.productBegin.data();
-        ReactantProduct = other.ReactantProduct.data();
+        reactantProduct = other.reactantProduct.data();
     }
 
     /*! @brief access reaction from reacton list */
@@ -250,8 +250,8 @@ public:
         ReactionReference Reaction;
 
         Reaction.reactants =
-            ReactionReference::VectorReference(ReactantProduct + reactantBegin[i], productBegin[i] - reactantBegin[i]);
-        Reaction.products = ReactionReference::VectorReference(ReactantProduct + productBegin[i],
+            ReactionReference::VectorReference(reactantProduct + reactantBegin[i], productBegin[i] - reactantBegin[i]);
+        Reaction.products = ReactionReference::VectorReference(reactantProduct + productBegin[i],
                                                                reactantBegin[i + 1] - productBegin[i]);
 
         return Reaction;
