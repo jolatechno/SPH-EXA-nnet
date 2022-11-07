@@ -32,17 +32,25 @@
 
 #pragma once
 
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <array>
+#include <vector>
+#include <tuple>
+#include <math.h>
+
 #include "nnet_util/CUDA/cuda.inl"
 #if COMPILE_DEVICE
 	#include "nnet_util/CUDA/cuda-util.hpp"
 #endif
 
-#define STRINGIFY(...) #__VA_ARGS__
-#define STR(...) STRINGIFY(__VA_ARGS__)
-
 #include "nnet_util/eigen.hpp"
 
 #include "nnet_util/algorithm.hpp"
+
+#define STRINGIFY(...) #__VA_ARGS__
+#define STR(...) STRINGIFY(__VA_ARGS__)
 
 #ifndef IMAX
 	#define IMAX 541
@@ -53,16 +61,6 @@
 #ifndef HELM_TABLE_PATH
 	#define HELM_TABLE_PATH "./helm_table.dat"
 #endif
-
-#include <iostream>
-
-#include <sstream>
-#include <string>
-#include <array>
-
-#include <vector>
-#include <tuple>
-#include <math.h>
 
 namespace nnet::eos {
 	/*! @brief if true print debuging prints */

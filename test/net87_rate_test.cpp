@@ -31,12 +31,11 @@
 
 #include <iostream>
 
-#define NET86_DEBUG
-
 #include "nnet/parameterization/net87/net87.hpp"
 #include "nnet/parameterization/eos/helmholtz.hpp"
-
 #include "nnet/nuclear_net.hpp"
+
+#define NET86_DEBUG
 
 int main() {
 	std::cout << "A.size = " << nnet::net87::constants::A.size() << "\n";

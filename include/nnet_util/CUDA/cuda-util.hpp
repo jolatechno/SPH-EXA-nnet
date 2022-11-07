@@ -32,12 +32,12 @@
 
 #pragma once
 
-#include <cuda_runtime.h>
-#include <iostream>
-
 #ifdef USE_MPI
 	#include <mpi.h>
 #endif
+
+#include <cuda_runtime.h>
+#include <iostream>
 
 /*! @brief manage CUDA error.
  *

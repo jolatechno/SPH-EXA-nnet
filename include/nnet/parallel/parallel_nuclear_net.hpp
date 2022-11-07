@@ -34,6 +34,9 @@
 
 #pragma once
 
+#include <numeric>
+#include <omp.h>
+
 #include "nnet_util/CUDA/cuda.inl"
 //#if COMPILE_DEVICE
 #if defined(USE_CUDA)
@@ -41,15 +44,11 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <cuda_runtime.h>
-
 #include <thrust/device_vector.h>
 
 #include "nnet/CUDA/nuclear_net.cuh"
 #include "CUDA/parallel_nuclear_net.cuh"
 #endif
-
-#include <numeric>
-#include <omp.h>
 
 #include "nnet/nuclear_net.hpp"
 

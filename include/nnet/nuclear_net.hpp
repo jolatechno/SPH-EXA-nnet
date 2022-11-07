@@ -32,17 +32,14 @@
 
 #pragma once
 
-#include "nnet_util/CUDA/cuda.inl"
-
-#include "nnet_util/eigen.hpp"
-
 #include <iostream>
-
-#include <cmath> // factorial
-
 #include <vector>
 #include <tuple>
 #include <memory>
+#include <cmath> // factorial
+
+#include "nnet_util/CUDA/cuda.inl"
+#include "nnet_util/eigen.hpp"
 
 namespace nnet {
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

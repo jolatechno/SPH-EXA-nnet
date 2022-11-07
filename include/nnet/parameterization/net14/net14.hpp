@@ -32,12 +32,12 @@
 
 #pragma once
 
+#include <vector>
+
 #include "nnet_util/CUDA/cuda.inl"
 #if COMPILE_DEVICE
 	#include "nnet_util/CUDA/cuda-util.hpp"
 #endif
-
-#include <vector>
 
 #include "net14_constants.hpp"
 

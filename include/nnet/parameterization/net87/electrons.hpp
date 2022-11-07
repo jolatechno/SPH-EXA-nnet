@@ -32,15 +32,21 @@
 
 #pragma once
 
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <array>
+#include <cmath>
+
 #include "nnet_util/CUDA/cuda.inl"
 #if COMPILE_DEVICE
 	#include "nnet_util/CUDA/cuda-util.hpp"
 #endif
 
+#include "nnet_util/eigen.hpp"
+
 #define STRINGIFY(...) #__VA_ARGS__
 #define STR(...) STRINGIFY(__VA_ARGS__)
-
-#include "nnet_util/eigen.hpp"
 
 #ifndef N_TEMP
 	#define N_TEMP 41
@@ -54,14 +60,6 @@
 #ifndef ELECTRON_TABLE_PATH
 	#define ELECTRON_TABLE_PATH "./electron_rate.dat"
 #endif
-
-#include <iostream>
-
-#include <sstream>
-#include <string>
-#include <array>
-
-#include <cmath>
 
 namespace nnet::net87::electrons {
 	namespace constants {

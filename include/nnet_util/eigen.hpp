@@ -32,15 +32,14 @@
 
 #pragma once
 
-#include "CUDA/cuda.inl"
-#if COMPILE_DEVICE
-	#include "CUDA/cuda-util.hpp"
-#endif
-
 #include <vector>
 #include <cmath>
 #include <tuple>
 
+#include "CUDA/cuda.inl"
+#if COMPILE_DEVICE
+	#include "CUDA/cuda-util.hpp"
+#endif
 
 namespace eigen {
 #if COMPILE_DEVICE

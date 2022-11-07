@@ -32,11 +32,11 @@
 
 #pragma once
 
-#include "nnet_util/CUDA/cuda.inl"
-
 #include <vector>
 #include <algorithm>
 #include <numeric>
+
+#include "nnet_util/CUDA/cuda.inl"
 
 #include "../net14/net14_constants.hpp"
 
