@@ -29,51 +29,56 @@
  * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
-
 #pragma once
 
 #include "nnet_util/CUDA/cuda.inl"
 
-namespace nnet::eos {
-	namespace ideal_gas_constants {
-		const static double Kb = 1.380658e-16;
-		const static double Na = 6.022137e23;
-		const static double R  = 8.317e7;
-	}
+namespace nnet::eos
+{
+namespace ideal_gas_constants
+{
+const static double Kb = 1.380658e-16;
+const static double Na = 6.022137e23;
+const static double R  = 8.317e7;
+} // namespace ideal_gas_constants
 
+/*! @brief Ideal gas functor class */
+template<typename Float>
+class ideal_gas_functor : public nnet::eos_functor<Float>
+{
+private:
+    double mu;
 
+public:
+    ideal_gas_functor(double mu_)
+        : mu(mu_)
+    {
+    }
 
-	/*! @brief Ideal gas functor class */
-	template<typename Float>
-	class ideal_gas_functor : public nnet::eos_functor<Float> {
-	private:
-		double mu;
+    HOST_DEVICE_FUN ideal_gas_functor() {}
+    HOST_DEVICE_FUN ~ideal_gas_functor() {}
 
-	public:
-		ideal_gas_functor(double mu_) : mu(mu_) {}
-		
-		HOST_DEVICE_FUN  ideal_gas_functor() {}
-		HOST_DEVICE_FUN ~ideal_gas_functor() {}
+    /*! @brief Ideal gas EOS for nuclear networks.
+     *
+     * @param Y    molar proportions
+     * @param T    temperature
+     * @param rho  density
+     *
+     * Returns ideal gas EOS output struct.
+     */
+    HOST_DEVICE_FUN nnet::eos_struct<Float> inline operator()(const Float* Y, const Float T,
+                                                              const Float rho) const override
+    {
+        nnet::eos_struct<Float> res;
 
-		/*! @brief Ideal gas EOS for nuclear networks.
-		 *
-		 * @param Y    molar proportions
-		 * @param T    temperature
-		 * @param rho  density
-		 *
-		 * Returns ideal gas EOS output struct.
-		 */
-		HOST_DEVICE_FUN nnet::eos_struct<Float> inline operator()(const Float *Y, const Float T, const Float rho) const override {
-			nnet::eos_struct<Float> res;
+        const Float dmy = ideal_gas_constants::R / mu;
+        res.cv          = 1.5 * dmy;
+        res.u           = T * res.cv;
+        res.p           = rho * T * dmy;
+        res.c           = std::sqrt(res.p / rho);
+        res.dpdT        = rho * dmy;
 
-			const Float dmy  = ideal_gas_constants::R / mu;
-		            res.cv   = 1.5 * dmy;
-		    		res.u    = T * res.cv;
-		    		res.p    = rho * T * dmy;
-		    		res.c    = std::sqrt(res.p / rho);
-		    		res.dpdT = rho * dmy;
-
-			return res;
-		}
-	};
-}
+        return res;
+    }
+};
+} // namespace nnet::eos

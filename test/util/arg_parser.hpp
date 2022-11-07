@@ -7,7 +7,7 @@
 #include <cmath>
 #include <cassert>
 
-//namespace sphexa
+// namespace sphexa
 //{
 
 //! @brief returns true if all characters of @p str together represent a valid integral number

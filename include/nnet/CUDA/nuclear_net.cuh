@@ -29,7 +29,6 @@
  * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
-
 #pragma once
 
 #include <cuda_runtime.h>
@@ -39,44 +38,47 @@
 
 #include "nnet_util/CUDA/cuda-util.hpp"
 
-namespace nnet {
-	/*! @brief Class for reaction list on GPU. */
-	class gpu_reaction_list : public ptr_reaction_list {
-	private:
-		friend gpu_reaction_list move_to_gpu(const ptr_reaction_list &reactions);
-		friend void inline free(gpu_reaction_list &reactions);
+namespace nnet
+{
+/*! @brief Class for reaction list on GPU. */
+class gpu_reaction_list : public ptr_reaction_list
+{
+private:
+    friend gpu_reaction_list move_to_gpu(const ptr_reaction_list& reactions);
+    friend void inline free(gpu_reaction_list& reactions);
 
-	public:
-		gpu_reaction_list() {}
-		~gpu_reaction_list() {};
-	};
+public:
+    gpu_reaction_list() {}
+    ~gpu_reaction_list(){};
+};
 
+/*! @brief copy CPU reaction list to GPU.
+ *
+ * @param reactions CPU reaction list to copy to GPU.
+ *
+ * Returns a GPU reaction list copied from CPU.
+ */
+gpu_reaction_list inline move_to_gpu(const ptr_reaction_list& reactions)
+{
+    gpu_reaction_list dev_reactions;
+    dev_reactions.num_reactions = reactions.num_reactions;
 
-	/*! @brief copy CPU reaction list to GPU.
-	 *
-	 * @param reactions CPU reaction list to copy to GPU.
-	 * 
-	 * Returns a GPU reaction list copied from CPU.
-	 */
-	gpu_reaction_list inline move_to_gpu(const ptr_reaction_list &reactions) {
-		gpu_reaction_list dev_reactions;
-		dev_reactions.num_reactions = reactions.num_reactions;
+    dev_reactions.reactant_product = cuda_util::move_to_gpu<reaction::reactant_product>(
+        reactions.reactant_product, reactions.reactant_begin[reactions.num_reactions]);
+    dev_reactions.reactant_begin = cuda_util::move_to_gpu<int>(reactions.reactant_begin, reactions.num_reactions + 1);
+    dev_reactions.product_begin  = cuda_util::move_to_gpu<int>(reactions.product_begin, reactions.num_reactions);
 
-		dev_reactions.reactant_product = cuda_util::move_to_gpu<reaction::reactant_product>(reactions.reactant_product, reactions.reactant_begin[reactions.num_reactions]);
-		dev_reactions.reactant_begin   = cuda_util::move_to_gpu<int>(reactions.reactant_begin, reactions.num_reactions + 1);
-		dev_reactions.product_begin    = cuda_util::move_to_gpu<int>(reactions.product_begin,  reactions.num_reactions);
-
-		return dev_reactions;
-	} 
-
-
-	/*! @brief free GPU reaction list from GPU memory.
-	 *
-	 * @param reactions GPU reaction lists
-	 */
-	void inline free(gpu_reaction_list &reactions) {
-		gpuErrchk(cudaFree((void*)reactions.reactant_product));
-		gpuErrchk(cudaFree((void*)reactions.reactant_begin));
-		gpuErrchk(cudaFree((void*)reactions.product_begin));
-	}
+    return dev_reactions;
 }
+
+/*! @brief free GPU reaction list from GPU memory.
+ *
+ * @param reactions GPU reaction lists
+ */
+void inline free(gpu_reaction_list& reactions)
+{
+    gpuErrchk(cudaFree((void*)reactions.reactant_product));
+    gpuErrchk(cudaFree((void*)reactions.reactant_begin));
+    gpuErrchk(cudaFree((void*)reactions.product_begin));
+}
+} // namespace nnet

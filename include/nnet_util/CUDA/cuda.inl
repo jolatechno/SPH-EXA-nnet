@@ -29,59 +29,54 @@
  * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
-
 #define COMMA ,
 
 #if defined(__CUDACC__) || defined(__HIPCC__)
-    /*! @brief True if compiled with CUDA/HIP compiler */
-	#define COMPILE_DEVICE true
+/*! @brief True if compiled with CUDA/HIP compiler */
+#define COMPILE_DEVICE true
 
-    /*! @brief Host/device function decorator */
-	#define HOST_DEVICE_FUN __host__ __device__
+/*! @brief Host/device function decorator */
+#define HOST_DEVICE_FUN __host__ __device__
 
-    /*! @brief Define variable on CPU and GPU
-     * 
-     * @param type        variable type
-     * @param symbol      variable name
-     * @param definition  variable assignment (must support device assignment)
-     */
-	#define DEVICE_DEFINE(type, symbol, definition) \
-		           type       symbol definition     \
-		__device__ type dev_##symbol definition
+/*! @brief Define variable on CPU and GPU
+ *
+ * @param type        variable type
+ * @param symbol      variable name
+ * @param definition  variable assignment (must support device assignment)
+ */
+#define DEVICE_DEFINE(type, symbol, definition) type symbol definition __device__ type dev_##symbol definition
 #else
-    /*! @brief True if compiled with CUDA/HIP compiler */
-	#define COMPILE_DEVICE false
+/*! @brief True if compiled with CUDA/HIP compiler */
+#define COMPILE_DEVICE false
 
-    /*! @brief Host/device function decorator */
-	#define HOST_DEVICE_FUN
+/*! @brief Host/device function decorator */
+#define HOST_DEVICE_FUN
 
-	/*! @brief Define variable on CPU and GPU 
-     * 
-     * @param type        variable type
-     * @param symbol      variable name
-     * @param definition  variable assignment (must support device assignment)
-     */
-	#define DEVICE_DEFINE(type, symbol, definition) \
-		type symbol definition
+/*! @brief Define variable on CPU and GPU
+ *
+ * @param type        variable type
+ * @param symbol      variable name
+ * @param definition  variable assignment (must support device assignment)
+ */
+#define DEVICE_DEFINE(type, symbol, definition) type symbol definition
 #endif
 
-
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-    /*! @brief True if compiling device code */
-	#define DEVICE_CODE true
+/*! @brief True if compiling device code */
+#define DEVICE_CODE true
 
-	/*! @brief Access device-defined variable
-     * 
-     * @param symbol   variable name to access
-     */
-	#define DEVICE_ACCESS(symbol) dev_##symbol
+/*! @brief Access device-defined variable
+ *
+ * @param symbol   variable name to access
+ */
+#define DEVICE_ACCESS(symbol) dev_##symbol
 #else
-    /*! @brief True if compiling device code */
-	#define DEVICE_CODE false
-	
-	/*! @brief Access device-defined variable 
-     * 
-     * @param symbol   variable name to access
-     */
-	#define DEVICE_ACCESS(symbol) symbol
+/*! @brief True if compiling device code */
+#define DEVICE_CODE false
+
+/*! @brief Access device-defined variable
+ *
+ * @param symbol   variable name to access
+ */
+#define DEVICE_ACCESS(symbol) symbol
 #endif
