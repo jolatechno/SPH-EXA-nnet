@@ -66,7 +66,7 @@ namespace cuda_util
  * @param dimension  buffer size to copy
  */
 template<class T>
-T inline* move_to_gpu(const T* const ptr, int dimension)
+T inline* moveToGpu(const T* const ptr, int dimension)
 {
     T* dev_ptr;
 
@@ -81,7 +81,7 @@ T inline* move_to_gpu(const T* const ptr, int dimension)
  * @param dev_ptr  device buffer to free
  */
 template<class T>
-void inline free_from_gpu(const T* dev_ptr)
+void inline freeFromGPU(const T* dev_ptr)
 {
     gpuErrchk(cudaFree((void*)const_cast<T*>(dev_ptr)));
 }

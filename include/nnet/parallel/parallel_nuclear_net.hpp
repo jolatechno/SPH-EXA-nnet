@@ -115,7 +115,7 @@ void computeNuclearReactions(Data& n, size_t firstIndex, size_t lastIndex, const
         if (use_drhodt) rho_m1_ptr = (Float*)thrust::raw_pointer_cast(n.devData.rho_m1.data() + firstIndex);
 
         // reactions to GPU
-        nnet::gpu_reaction_list dev_reactions = nnet::move_to_gpu(reactions);
+        nnet::gpu_reaction_list dev_reactions = nnet::moveToGpu(reactions);
 
         // copy pointers to GPU
         std::vector<Float*> Y_raw_ptr(dimension);
@@ -166,7 +166,7 @@ void computeNuclearReactions(Data& n, size_t firstIndex, size_t lastIndex, const
 #pragma omp parallel
 #pragma omp master
         num_threads        = omp_get_num_threads();
-        int omp_batch_size = ::util::dynamic_batch_size(n_particles, num_threads);
+        int omp_batch_size = ::util::dynamicBatchSize(n_particles, num_threads);
 
 #pragma omp parallel for firstprivate(Y, Mp, RHS, DY_T, rates, Y_buffer) schedule(dynamic, omp_batch_size)
         for (size_t i = firstIndex; i < lastIndex; ++i)
@@ -182,9 +182,9 @@ void computeNuclearReactions(Data& n, size_t firstIndex, size_t lastIndex, const
                     if (n.rho_m1[i] != 0) n.rho_m1[i] = (n.rho[i] - n.rho_m1[i]) / previous_dt;
 
                 // solve
-                nnet::solve_system_substep(dimension, Mp.data(), RHS.data(), DY_T.data(), rates.data(), reactions,
-                                           construct_rates_BE, eos, Y.data(), n.temp[i], Y_buffer.data(), n.rho[i],
-                                           drho_dt, hydro_dt, n.dt[i], jumpToNse);
+                nnet::solveSystemSubstep(dimension, Mp.data(), RHS.data(), DY_T.data(), rates.data(), reactions,
+                                         construct_rates_BE, eos, Y.data(), n.temp[i], Y_buffer.data(), n.rho[i],
+                                         drho_dt, hydro_dt, n.dt[i], jumpToNse);
 
                 // copy from local vector
                 for (int j = 0; j < dimension; ++j)

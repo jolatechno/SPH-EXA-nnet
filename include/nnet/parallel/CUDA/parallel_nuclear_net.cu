@@ -85,16 +85,16 @@ __global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, cons
         for (int iter = 1;; ++iter)
         {
             // generate system
-            nnet::prepare_system_substep(dimension, Mp, RHS, rates, *reactions, *construct_rates_BE, *eos, Y,
-                                         temp_[thread], Y_buffer, T_buffer, rho_[thread], drho_dt, hydro_dt, elapsed,
-                                         dt_[thread], iter);
+            nnet::prepareSystemSubstep(dimension, Mp, RHS, rates, *reactions, *construct_rates_BE, *eos, Y,
+                                       temp_[thread], Y_buffer, T_buffer, rho_[thread], drho_dt, hydro_dt, elapsed,
+                                       dt_[thread], iter);
 
             // solve M*D{T, Y} = RHS
             eigen::solve(Mp, RHS, DY_T, dimension + 1, (Float)nnet::constants::epsilon_system);
 
             // finalize
-            if (nnet::finalize_system_substep(dimension, Y, temp_[thread], Y_buffer, T_buffer, DY_T, hydro_dt, elapsed,
-                                              dt_[thread], iter))
+            if (nnet::finalizeSystemSubstep(dimension, Y, temp_[thread], Y_buffer, T_buffer, DY_T, hydro_dt, elapsed,
+                                            dt_[thread], iter))
             {
                 // copy Y "buffer" back to actual storage
                 for (int j = 0; j < dimension; ++j)

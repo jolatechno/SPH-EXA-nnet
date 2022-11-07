@@ -151,12 +151,12 @@ int main(int argc, char* argv[])
 
         // solve the system
         double current_dt = idealGas
-                                ? nnet::solve_system_NR(86, Mp.data(), RHS.data(), DY_T.data(), rates.data(),
-                                                        nnet::net86::reaction_list, nnet::net86::compute_reaction_rates,
-                                                        idea_gas_eos, last_Y.data(), last_T, Y.data(), T, rho, 0., dt)
-                                : nnet::solve_system_NR(86, Mp.data(), RHS.data(), DY_T.data(), rates.data(),
-                                                        nnet::net86::reaction_list, nnet::net86::compute_reaction_rates,
-                                                        helm_eos, last_Y.data(), last_T, Y.data(), T, rho, 0., dt);
+                                ? nnet::solveSystemNR(86, Mp.data(), RHS.data(), DY_T.data(), rates.data(),
+                                                      nnet::net86::reaction_list, nnet::net86::compute_reaction_rates,
+                                                      idea_gas_eos, last_Y.data(), last_T, Y.data(), T, rho, 0., dt)
+                                : nnet::solveSystemNR(86, Mp.data(), RHS.data(), DY_T.data(), rates.data(),
+                                                      nnet::net86::reaction_list, nnet::net86::compute_reaction_rates,
+                                                      helm_eos, last_Y.data(), last_T, Y.data(), T, rho, 0., dt);
         t += current_dt;
 
         nnet::net86::debug = false;

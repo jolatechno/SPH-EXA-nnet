@@ -182,11 +182,11 @@ public:
     reaction_list(std::vector<reaction> const& reactions)
     {
         for (auto& Reaction : reactions)
-            push_back(Reaction);
+            pushBack(Reaction);
     }
 
     /*! @brief push back reaction to list */
-    void inline push_back(reaction const& Reaction)
+    void inline pushBack(reaction const& Reaction)
     {
         reactant_product.insert(reactant_product.end(), Reaction.reactants.begin(), Reaction.reactants.end());
         reactant_product.insert(reactant_product.end(), Reaction.products.begin(), Reaction.products.end());
@@ -230,7 +230,7 @@ protected:
 
     // forward declaration
     friend gpu_reaction_list;
-    friend gpu_reaction_list move_to_gpu(const ptr_reaction_list& reactions);
+    friend gpu_reaction_list moveToGpu(const ptr_reaction_list& reactions);
     friend void inline free(gpu_reaction_list& reactions);
 
 public:
@@ -322,7 +322,7 @@ HOST_DEVICE_FUN void inline clip(Float* X, const int dimension, const Float epsi
  * @param dimension  size of buffer to be checked for nan
  */
 template<typename Float>
-HOST_DEVICE_FUN bool inline contain_nan(const Float T, const Float* Y, const int dimension)
+HOST_DEVICE_FUN bool inline containsNan(const Float T, const Float* Y, const int dimension)
 {
     if (std::isnan(T)) return true;
 
@@ -344,8 +344,8 @@ HOST_DEVICE_FUN bool inline contain_nan(const Float T, const Float* Y, const int
  * @param dimension  number of nuclear species
  */
 template<typename Float>
-HOST_DEVICE_FUN void inline derivatives_from_reactions(const ptr_reaction_list& reactions, const Float* rates,
-                                                       const Float rho, const Float* Y, Float* dY, const int dimension)
+HOST_DEVICE_FUN void inline derivativesFromReactions(const ptr_reaction_list& reactions, const Float* rates,
+                                                     const Float rho, const Float* Y, Float* dY, const int dimension)
 {
     // fill with zero
     for (int i = 0; i < dimension; ++i)
@@ -392,7 +392,7 @@ HOST_DEVICE_FUN void inline derivatives_from_reactions(const ptr_reaction_list& 
  * @param dimension  number of nuclear species
  */
 template<typename Float>
-HOST_DEVICE_FUN void inline order_1_dY_from_reactions(const ptr_reaction_list& reactions, const Float* rates,
+HOST_DEVICE_FUN void inline firstOrderDYFromReactions(const ptr_reaction_list& reactions, const Float* rates,
                                                       const Float rho, Float const* Y, Float* M, const int dimension)
 {
     // fill matrix with zero
@@ -511,12 +511,12 @@ First simple direct solver:
  * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
  */
 template<typename Float>
-HOST_DEVICE_FUN void inline prepare_system_from_guess(const int dimension, Float* Mp, Float* RHS, Float* rates,
-                                                      const ptr_reaction_list&                     reactions,
-                                                      const compute_reaction_rates_functor<Float>& construct_rates_BE,
-                                                      const Float* Y, const Float T, const Float* Y_guess,
-                                                      const Float T_guess, const Float rho, const Float drho_dt,
-                                                      const eos_struct<Float>& eos_struct, const Float dt)
+HOST_DEVICE_FUN void inline prepareSystemFromGuess(const int dimension, Float* Mp, Float* RHS, Float* rates,
+                                                   const ptr_reaction_list&                     reactions,
+                                                   const compute_reaction_rates_functor<Float>& construct_rates_BE,
+                                                   const Float* Y, const Float T, const Float* Y_guess,
+                                                   const Float T_guess, const Float rho, const Float drho_dt,
+                                                   const eos_struct<Float>& eos_struct, const Float dt)
 {
     /* -------------------
     Solves d{Y, T}/dt = M'*Y using eigen:
@@ -554,13 +554,13 @@ HOST_DEVICE_FUN void inline prepare_system_from_guess(const int dimension, Float
     // construct BE and rates in plance
     construct_rates_BE(Y_guess, T_guess, rho, eos_struct, BE, rates, drates_dT);
     // include rate derivative
-    util::derivatives_from_reactions(reactions, drates_dT, rho, Y_guess, &Mp[1], dimension);
+    util::derivativesFromReactions(reactions, drates_dT, rho, Y_guess, &Mp[1], dimension);
     // swap
     for (int i = 0; i < dimension; ++i)
         Mp[0 + (dimension + 1) * (i + 1)] = -BE[i] / eos_struct.cv;
 
     // compute RHS
-    util::derivatives_from_reactions(reactions, rates, rho, Y_guess, &RHS[1], dimension);
+    util::derivativesFromReactions(reactions, rates, rho, Y_guess, &RHS[1], dimension);
     for (int i = 0; i < dimension; ++i)
         RHS[i + 1] *= dt;
     // correct RHS based on the derivative of rates
@@ -576,7 +576,7 @@ HOST_DEVICE_FUN void inline prepare_system_from_guess(const int dimension, Float
     }
 
     // main matrix part
-    util::order_1_dY_from_reactions(reactions, rates, rho, Y_guess, Mp, dimension);
+    util::firstOrderDYFromReactions(reactions, rates, rho, Y_guess, Mp, dimension);
     for (int i = 0; i < dimension; ++i)
     {
         //     dY = ... + theta*dt*Mp*(next_Y - Y_guess) = ... + theta*dt*Mp*(next_Y - Y + Y - Y_guess) = ... +
@@ -608,13 +608,13 @@ HOST_DEVICE_FUN void inline prepare_system_from_guess(const int dimension, Float
     Mp[0]  = 1 - constants::theta * value_1 / eos_struct.cv;
 }
 
-/*! @brief second part after solving the system (generated in "prepare_system_from_guess")
+/*! @brief second part after solving the system (generated in "prepareSystemFromGuess")
  *
  * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
  */
 template<typename Float>
-HOST_DEVICE_FUN void inline finalize_system(const int dimension, const Float* Y, const Float T, Float* next_Y,
-                                            Float& next_T, const Float* DY_T)
+HOST_DEVICE_FUN void inline finalizeSystem(const int dimension, const Float* Y, const Float T, Float* next_Y,
+                                           Float& next_T, const Float* DY_T)
 {
     // increment values
     for (int i = 0; i < dimension; ++i)
@@ -631,12 +631,12 @@ HOST_DEVICE_FUN void inline finalize_system(const int dimension, const Float* Y,
  * solves non-iteratively and partialy implicitly the system represented by M (computed at a specific "guess")
  */
 template<typename Float>
-void inline solve_system_from_guess(const int dimension, Float* Mp, Float* RHS, Float* DY_T, Float* rates,
-                                    const ptr_reaction_list&                     reactions,
-                                    const compute_reaction_rates_functor<Float>& construct_rates_BE, const Float* Y,
-                                    const Float T, const Float* Y_guess, const Float T_guess, Float* next_Y,
-                                    Float& next_T, const Float rho, const Float drho_dt,
-                                    const eos_struct<Float>& eos_struct, const Float dt)
+void inline solveSystemFromGuess(const int dimension, Float* Mp, Float* RHS, Float* DY_T, Float* rates,
+                                 const ptr_reaction_list&                     reactions,
+                                 const compute_reaction_rates_functor<Float>& construct_rates_BE, const Float* Y,
+                                 const Float T, const Float* Y_guess, const Float T_guess, Float* next_Y, Float& next_T,
+                                 const Float rho, const Float drho_dt, const eos_struct<Float>& eos_struct,
+                                 const Float dt)
 {
     if (rho < constants::min_rho || T < constants::min_temp)
     {
@@ -647,14 +647,14 @@ void inline solve_system_from_guess(const int dimension, Float* Mp, Float* RHS, 
     else
     {
         // generate system
-        prepare_system_from_guess(dimension, Mp, RHS, DY_T, rates, reactions, construct_rates_BE, Y, T, Y_guess,
-                                  T_guess, rho, drho_dt, eos_struct, dt);
+        prepareSystemFromGuess(dimension, Mp, RHS, DY_T, rates, reactions, construct_rates_BE, Y, T, Y_guess, T_guess,
+                               rho, drho_dt, eos_struct, dt);
 
         // solve M*D{T, Y} = RHS
         eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilon_system);
 
         // finalize
-        return finalize_system(dimension, Y, T, next_Y, next_T, DY_T);
+        return finalizeSystem(dimension, Y, T, next_Y, next_T, DY_T);
     }
 }
 
@@ -665,10 +665,10 @@ void inline solve_system_from_guess(const int dimension, Float* Mp, Float* RHS, 
  * solves non-iteratively and partialy implicitly the system represented by M
  */
 template<typename Float>
-void inline solve_system(const int dimension, const ptr_reaction_list& reactions,
-                         const compute_reaction_rates_functor<Float>& construct_rates_BE, const Float* Y, const Float T,
-                         Float* next_Y, Float& next_T, const Float cv, const Float rho, const Float value_1,
-                         const Float dt)
+void inline solveSystem(const int dimension, const ptr_reaction_list& reactions,
+                        const compute_reaction_rates_functor<Float>& construct_rates_BE, const Float* Y, const Float T,
+                        Float* next_Y, Float& next_T, const Float cv, const Float rho, const Float value_1,
+                        const Float dt)
 {
 
     eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
@@ -676,8 +676,8 @@ void inline solve_system(const int dimension, const ptr_reaction_list& reactions
     eigen::Vector<Float> DY_T(dimension + 1);
     std::vector<Float>   rates(dimension * dimension);
 
-    solve_system_from_guess(dimension, Mp.data(), RHS.data(), DY_T.data(), rates.data(), reactions, construct_rates_BE,
-                            Y, T, Y, T, next_Y, next_T, cv, rho, value_1, dt);
+    solveSystemFromGuess(dimension, Mp.data(), RHS.data(), DY_T.data(), rates.data(), reactions, construct_rates_BE, Y,
+                         T, Y, T, next_Y, next_T, cv, rho, value_1, dt);
 }
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -689,12 +689,11 @@ Iterative solver:
  * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
  */
 template<typename Float>
-HOST_DEVICE_FUN void inline prepare_system_NR(const int dimension, Float* Mp, Float* RHS, Float* rates,
-                                              const ptr_reaction_list&                     reactions,
-                                              const compute_reaction_rates_functor<Float>& construct_rates_BE,
-                                              const eos_functor<Float>& eos, const Float* Y, Float T, Float* final_Y,
-                                              Float final_T, const Float rho, const Float drho_dt, Float& dt,
-                                              const int i)
+HOST_DEVICE_FUN void inline prepareSystemNR(const int dimension, Float* Mp, Float* RHS, Float* rates,
+                                            const ptr_reaction_list&                     reactions,
+                                            const compute_reaction_rates_functor<Float>& construct_rates_BE,
+                                            const eos_functor<Float>& eos, const Float* Y, Float T, Float* final_Y,
+                                            Float final_T, const Float rho, const Float drho_dt, Float& dt, const int i)
 {
     // copy if first iteration
     if (i <= 1)
@@ -713,24 +712,24 @@ HOST_DEVICE_FUN void inline prepare_system_NR(const int dimension, Float* Mp, Fl
     auto eos_struct = eos(final_Y, T_theta, rho);
 
     // generate system
-    prepare_system_from_guess(dimension, Mp, RHS, rates, reactions, construct_rates_BE, Y, T, final_Y, T_theta, rho,
-                              drho_dt, eos_struct, dt);
+    prepareSystemFromGuess(dimension, Mp, RHS, rates, reactions, construct_rates_BE, Y, T, final_Y, T_theta, rho,
+                           drho_dt, eos_struct, dt);
 }
 
-/*! @brief second part after solving the system (generated in "prepare_system_NR")
+/*! @brief second part after solving the system (generated in "prepareSystemNR")
  *
  * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
  */
 template<typename Float>
-HOST_DEVICE_FUN bool inline finalize_system_NR(const int dimension, const Float* Y, const Float T, Float* final_Y,
-                                               Float& final_T, const Float* DY_T, Float& dt, Float& used_dt, int& i)
+HOST_DEVICE_FUN bool inline finalizeSystemNR(const int dimension, const Float* Y, const Float T, Float* final_Y,
+                                             Float& final_T, const Float* DY_T, Float& dt, Float& used_dt, int& i)
 {
 
     Float last_T = final_T;
-    finalize_system(dimension, Y, T, final_Y, final_T, DY_T);
+    finalizeSystem(dimension, Y, T, final_Y, final_T, DY_T);
 
     // check for garbage
-    if (util::contain_nan(final_T, final_Y, dimension) || final_T < 0)
+    if (util::containsNan(final_T, final_Y, dimension) || final_T < 0)
     {
         // set timestep
         dt *= constants::nan_dt_step;
@@ -789,11 +788,11 @@ HOST_DEVICE_FUN bool inline finalize_system_NR(const int dimension, const Float*
  * iterative solver
  */
 template<typename Float>
-Float inline solve_system_NR(const int dimension, Float* Mp, Float* RHS, Float* DY_T, Float* rates,
-                             const ptr_reaction_list&                     reactions,
-                             const compute_reaction_rates_functor<Float>& construct_rates_BE,
-                             const eos_functor<Float>& eos, const Float* Y, Float T, Float* final_Y, Float& final_T,
-                             const Float rho, const Float drho_dt, Float& dt)
+Float inline solveSystemNR(const int dimension, Float* Mp, Float* RHS, Float* DY_T, Float* rates,
+                           const ptr_reaction_list&                     reactions,
+                           const compute_reaction_rates_functor<Float>& construct_rates_BE,
+                           const eos_functor<Float>& eos, const Float* Y, Float T, Float* final_Y, Float& final_T,
+                           const Float rho, const Float drho_dt, Float& dt)
 {
     // check for non-burning particles
     if (rho < constants::min_rho || T < constants::min_temp)
@@ -807,14 +806,14 @@ Float inline solve_system_NR(const int dimension, Float* Mp, Float* RHS, Float* 
     for (int i = 1;; ++i)
     {
         // generate system
-        prepare_system_NR(dimension, Mp, RHS, rates, reactions, construct_rates_BE, eos, Y, T, final_Y, final_T, rho,
-                          drho_dt, dt, i);
+        prepareSystemNR(dimension, Mp, RHS, rates, reactions, construct_rates_BE, eos, Y, T, final_Y, final_T, rho,
+                        drho_dt, dt, i);
 
         // solve M*D{T, Y} = RHS
         eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilon_system);
 
         // finalize
-        if (finalize_system_NR(dimension, Y, T, final_Y, final_T, DY_T, dt, timestep, i)) { return timestep; }
+        if (finalizeSystemNR(dimension, Y, T, final_Y, final_T, DY_T, dt, timestep, i)) { return timestep; }
     }
 }
 
@@ -825,18 +824,18 @@ Float inline solve_system_NR(const int dimension, Float* Mp, Float* RHS, Float* 
  * iterative solver
  */
 template<typename Float>
-Float inline solve_system_NR(const int dimension, const ptr_reaction_list& reactions,
-                             const compute_reaction_rates_functor<Float>& construct_rates_BE,
-                             const eos_functor<Float>& eos, const Float* Y, Float T, Float* final_Y, Float& final_T,
-                             const Float rho, const Float drho_dt, Float& dt)
+Float inline solveSystemNR(const int dimension, const ptr_reaction_list& reactions,
+                           const compute_reaction_rates_functor<Float>& construct_rates_BE,
+                           const eos_functor<Float>& eos, const Float* Y, Float T, Float* final_Y, Float& final_T,
+                           const Float rho, const Float drho_dt, Float& dt)
 {
     std::vector<Float>   rates(reactions.size());
     eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
     eigen::Vector<Float> RHS(dimension + 1);
     eigen::Vector<Float> DY_T(dimension + 1);
 
-    return solve_system_NR(dimension, Mp.data(), RHS.data(), DY_T.data(), rates.data(), reactions, construct_rates_BE,
-                           eos, Y, T, final_Y, final_T, rho, drho_dt, dt);
+    return solveSystemNR(dimension, Mp.data(), RHS.data(), DY_T.data(), rates.data(), reactions, construct_rates_BE,
+                         eos, Y, T, final_Y, final_T, rho, drho_dt, dt);
 }
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -848,13 +847,13 @@ Substeping solver
  * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
  */
 template<typename Float, class nseFunction = void*>
-HOST_DEVICE_FUN void inline prepare_system_substep(const int dimension, Float* Mp, Float* RHS, Float* rates,
-                                                   const ptr_reaction_list&                     reactions,
-                                                   const compute_reaction_rates_functor<Float>& construct_rates_BE,
-                                                   const eos_functor<Float>& eos, const Float* final_Y, Float final_T,
-                                                   Float* next_Y, Float& next_T, const Float final_rho,
-                                                   const Float drho_dt, const Float dt_tot, Float& elapsed_time,
-                                                   Float& dt, const int i, const nseFunction jumpToNse = NULL)
+HOST_DEVICE_FUN void inline prepareSystemSubstep(const int dimension, Float* Mp, Float* RHS, Float* rates,
+                                                 const ptr_reaction_list&                     reactions,
+                                                 const compute_reaction_rates_functor<Float>& construct_rates_BE,
+                                                 const eos_functor<Float>& eos, const Float* final_Y, Float final_T,
+                                                 Float* next_Y, Float& next_T, const Float final_rho,
+                                                 const Float drho_dt, const Float dt_tot, Float& elapsed_time,
+                                                 Float& dt, const int i, const nseFunction jumpToNse = NULL)
 {
     // compute rho
     Float rho = final_rho - drho_dt * (dt_tot - elapsed_time);
@@ -876,25 +875,25 @@ HOST_DEVICE_FUN void inline prepare_system_substep(const int dimension, Float* M
     if (dt_tot - elapsed_time < dt) used_dt = dt_tot - elapsed_time;
 
     // prepare system
-    prepare_system_NR(dimension, Mp, RHS, rates, reactions, construct_rates_BE, eos, final_Y, final_T, next_Y, next_T,
-                      rho, drho_dt, used_dt, i);
+    prepareSystemNR(dimension, Mp, RHS, rates, reactions, construct_rates_BE, eos, final_Y, final_T, next_Y, next_T,
+                    rho, drho_dt, used_dt, i);
 }
 
-/*! @brief second part after solving the system (generated in "prepare_system_from_guess")
+/*! @brief second part after solving the system (generated in "prepareSystemFromGuess")
  *
  * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
  */
 template<typename Float>
-HOST_DEVICE_FUN bool inline finalize_system_substep(const int dimension, Float* final_Y, Float& final_T, Float* next_Y,
-                                                    Float& next_T, const Float* DY_T, const Float dt_tot,
-                                                    Float& elapsed_time, Float& dt, int& i)
+HOST_DEVICE_FUN bool inline finalizeSystemSubstep(const int dimension, Float* final_Y, Float& final_T, Float* next_Y,
+                                                  Float& next_T, const Float* DY_T, const Float dt_tot,
+                                                  Float& elapsed_time, Float& dt, int& i)
 {
     // insure convergence to the right time
     Float timestep, used_dt = dt;
     if (dt_tot - elapsed_time < dt) used_dt = dt_tot - elapsed_time;
 
     // finalize system
-    bool converged = finalize_system_NR(dimension, final_Y, final_T, next_Y, next_T, DY_T, used_dt, timestep, i);
+    bool converged = finalizeSystemNR(dimension, final_Y, final_T, next_Y, next_T, DY_T, used_dt, timestep, i);
 
     // update timestep
     if (dt_tot - elapsed_time < dt)
@@ -926,15 +925,15 @@ HOST_DEVICE_FUN bool inline finalize_system_substep(const int dimension, Float* 
 /*! @brief function to supperstep (can include jumping to NSE)
  *
  * used in include/nnet/sphexa/nuclear-net.hpp and/or in later function, should not be directly accessed by user
- * Superstepping using solve_system_NR
+ * Superstepping using solveSystemNR
  */
 template<typename Float, class nseFunction = void*>
-HOST_DEVICE_FUN void inline solve_system_substep(const int dimension, Float* Mp, Float* RHS, Float* DY_T, Float* rates,
-                                                 const ptr_reaction_list&                     reactions,
-                                                 const compute_reaction_rates_functor<Float>& construct_rates_BE,
-                                                 const eos_functor<Float>& eos, Float* final_Y, Float& final_T,
-                                                 Float* Y_buffer, const Float final_rho, const Float drho_dt,
-                                                 Float const dt_tot, Float& dt, const nseFunction jumpToNse = NULL)
+HOST_DEVICE_FUN void inline solveSystemSubstep(const int dimension, Float* Mp, Float* RHS, Float* DY_T, Float* rates,
+                                               const ptr_reaction_list&                     reactions,
+                                               const compute_reaction_rates_functor<Float>& construct_rates_BE,
+                                               const eos_functor<Float>& eos, Float* final_Y, Float& final_T,
+                                               Float* Y_buffer, const Float final_rho, const Float drho_dt,
+                                               Float const dt_tot, Float& dt, const nseFunction jumpToNse = NULL)
 {
     // check for non-burning particles
     if (final_rho < constants::min_rho || final_T < constants::min_temp) return;
@@ -945,14 +944,14 @@ HOST_DEVICE_FUN void inline solve_system_substep(const int dimension, Float* Mp,
     for (int i = 1;; ++i)
     {
         // generate system
-        prepare_system_substep(dimension, Mp, RHS, rates, reactions, construct_rates_BE, eos, final_Y, final_T,
-                               Y_buffer, T_buffer, final_rho, drho_dt, dt_tot, elapsed_time, dt, i, jumpToNse);
+        prepareSystemSubstep(dimension, Mp, RHS, rates, reactions, construct_rates_BE, eos, final_Y, final_T, Y_buffer,
+                             T_buffer, final_rho, drho_dt, dt_tot, elapsed_time, dt, i, jumpToNse);
 
         // solve M*D{T, Y} = RHS
         eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilon_system);
 
         // finalize
-        if (finalize_system_substep(dimension, final_Y, final_T, Y_buffer, T_buffer, DY_T, dt_tot, elapsed_time, dt, i))
+        if (finalizeSystemSubstep(dimension, final_Y, final_T, Y_buffer, T_buffer, DY_T, dt_tot, elapsed_time, dt, i))
         {
             break;
         }
@@ -963,19 +962,19 @@ HOST_DEVICE_FUN void inline solve_system_substep(const int dimension, Float* Mp,
 /*! @brief function to supperstep (can include jumping to NSE)
  *
  * used in include/nnet/sphexa/nuclear-net.hpp, should not be directly accessed by user
- * Superstepping using solve_system_NR
+ * Superstepping using solveSystemNR
  */
 template<typename Float, class nseFunction = void*>
-void inline solve_system_substep(const int dimension, const ptr_reaction_list& reactions,
-                                 const compute_reaction_rates_functor<Float>& construct_rates_BE,
-                                 const eos_functor<Float>& eos, Float* final_Y, Float& final_T, const Float final_rho,
-                                 const Float drho_dt, Float const dt_tot, Float& dt, const nseFunction jumpToNse = NULL)
+void inline solveSystemSubstep(const int dimension, const ptr_reaction_list& reactions,
+                               const compute_reaction_rates_functor<Float>& construct_rates_BE,
+                               const eos_functor<Float>& eos, Float* final_Y, Float& final_T, const Float final_rho,
+                               const Float drho_dt, Float const dt_tot, Float& dt, const nseFunction jumpToNse = NULL)
 {
     std::vector<Float>   rates(reactions.size());
     eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
     eigen::Vector<Float> RHS(dimension + 1), DY_T(dimension + 1), Y_buffer(dimension);
 
-    solve_system_substep(dimension, Mp.data(), RHS.data(), DY_T.data(), rates.data(), reactions, construct_rates_BE,
-                         eos, final_Y, final_T, Y_buffer.data(), final_rho, drho_dt, dt_tot, dt, jumpToNse);
+    solveSystemSubstep(dimension, Mp.data(), RHS.data(), DY_T.data(), rates.data(), reactions, construct_rates_BE, eos,
+                       final_Y, final_T, Y_buffer.data(), final_rho, drho_dt, dt_tot, dt, jumpToNse);
 }
 } // namespace nnet

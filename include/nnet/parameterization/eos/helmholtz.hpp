@@ -162,7 +162,7 @@ DEVICE_DEFINE(extern double, xft[IMAX][JMAX], ;)
 DEVICE_DEFINE(extern double, xfdt[IMAX][JMAX], ;)
 
 /*! @brief Read helmholtz constant table. */
-bool inline read_cpu_table()
+bool inline readCPUTable()
 {
     // read table
     const std::string helmolt_table = {
@@ -247,7 +247,7 @@ bool inline read_cpu_table()
     return true;
 }
 
-bool inline copy_table_to_gpu()
+bool inline copyTableToGPU()
 {
 #if COMPILE_DEVICE
     // copy to device
@@ -399,8 +399,8 @@ HOST_DEVICE_FUN Float inline h3(const Float* fi, const Float w0t, const Float w1
 
 // get correspong table indices
 template<typename Float>
-HOST_DEVICE_FUN void inline get_table_indices(int& iat, int& jat, const Float temp, const Float rho, const Float abar,
-                                              const Float zbar)
+HOST_DEVICE_FUN void inline getTableIndices(int& iat, int& jat, const Float temp, const Float rho, const Float abar,
+                                            const Float zbar)
 {
     const Float ye  = std::max((Float)1e-16, zbar / abar);
     const Float din = ye * rho;
@@ -439,7 +439,7 @@ HOST_DEVICE_FUN nnet::eos_struct<Float> inline helmholtz(double abar_, double zb
 
     // compute polynoms rates
     int iat, jat;
-    helmholtz_constants::get_table_indices(iat, jat, temp, rho, abar, zbar);
+    helmholtz_constants::getTableIndices(iat, jat, temp, rho, abar, zbar);
 
     Float ytot1 = 1 / abar;
     Float ye    = std::max<Float>((Float)1e-16, zbar / abar);

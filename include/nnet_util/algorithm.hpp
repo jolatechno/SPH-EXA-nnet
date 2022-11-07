@@ -76,7 +76,7 @@ HOST_DEVICE_FUN void inline fill(it begin, it end, Float x)
 namespace util
 {
 /*! @brief scheduling batch size according to an empirical rule */
-int inline dynamic_batch_size(size_t N, int P)
+int inline dynamicBatchSize(size_t N, int P)
 {
     static const float phi = 1.61803398875; // golden ratio
 

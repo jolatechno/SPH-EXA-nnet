@@ -46,7 +46,7 @@ DEVICE_DEFINE(double, log_temp_ref[N_TEMP], ;)
 DEVICE_DEFINE(double, log_rho_ref[N_RHO], ;)
 DEVICE_DEFINE(double, electron_rate[N_TEMP][N_RHO][N_C], ;)
 
-bool table_read_success = nnet::net87::electrons::constants::read_cpu_table();
+bool table_read_success = nnet::net87::electrons::constants::readCPUTable();
 } // namespace electrons::constants
 compute_reaction_rates_functor<double> compute_reaction_rates;
 } // namespace net87
@@ -103,7 +103,7 @@ DEVICE_DEFINE(double, xfd[IMAX][JMAX], ;)
 DEVICE_DEFINE(double, xft[IMAX][JMAX], ;)
 DEVICE_DEFINE(double, xfdt[IMAX][JMAX], ;)
 
-bool table_read_success = nnet::eos::helmholtz_constants::read_cpu_table();
+bool table_read_success = nnet::eos::helmholtz_constants::readCPUTable();
 } // namespace helmholtz_constants
 bool debug = false;
 } // namespace eos

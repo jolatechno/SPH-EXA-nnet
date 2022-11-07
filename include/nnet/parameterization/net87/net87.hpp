@@ -58,9 +58,9 @@ inline static const nnet::reaction_list reaction_list = []()
     nnet::reaction_list reactions = nnet::net86::reaction_list;
 
     // electron captures
-    reactions.push_back(nnet::reaction{{{constants::proton}, {constants::electron}}, {{constants::neutron}}});
-    reactions.push_back(nnet::reaction{{{constants::neutron}, {constants::electron}},
-                                       {{constants::proton}}}); // assume position = electron
+    reactions.pushBack(nnet::reaction{{{constants::proton}, {constants::electron}}, {{constants::neutron}}});
+    reactions.pushBack(nnet::reaction{{{constants::neutron}, {constants::electron}},
+                                      {{constants::proton}}}); // assume position = electron
 
     return reactions;
 }();

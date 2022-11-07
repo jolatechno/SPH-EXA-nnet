@@ -114,17 +114,17 @@ inline static const nnet::reaction_list reaction_list = []()
     C + O fusion,
     2O fusion
     !!!!!!!!!!!!!!!!!!!!!!!! */
-    reactions.push_back(
+    reactions.pushBack(
         nnet::reaction{{{constants::main_reactant[0], 2}}, {{constants::main_product[0]}, {constants::alpha}}});
-    reactions.push_back(nnet::reaction{{{constants::main_reactant[1]}, {constants::secondary_reactant[1]}},
-                                       {{constants::main_product[1]}, {constants::alpha}}});
-    reactions.push_back(
+    reactions.pushBack(nnet::reaction{{{constants::main_reactant[1]}, {constants::secondary_reactant[1]}},
+                                      {{constants::main_product[1]}, {constants::alpha}}});
+    reactions.pushBack(
         nnet::reaction{{{constants::main_reactant[2], 2}}, {{constants::main_product[2]}, {constants::alpha}}});
 
     /* !!!!!!!!!!!!!!!!!!!!!!!!
     3He -> C fusion
     !!!!!!!!!!!!!!!!!!!!!!!! */
-    reactions.push_back(nnet::reaction{{{constants::main_reactant[4], 3}}, {{constants::main_product[4]}}});
+    reactions.pushBack(nnet::reaction{{{constants::main_reactant[4], 3}}, {{constants::main_product[4]}}});
 
     /* !!!!!!!!!!!!!!!!!!!!!!!!
     direct reaction
@@ -139,23 +139,23 @@ inline static const nnet::reaction_list reaction_list = []()
 
         if (delta_Z == 0 && delta_A == 0)
         {
-            reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
-                                               {{constants::main_product[i]}}});
+            reactions.pushBack(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
+                                              {{constants::main_product[i]}}});
         }
         else if (delta_A == 1 && delta_Z == 0)
         {
-            reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
-                                               {{constants::main_product[i]}, {constants::neutron}}});
+            reactions.pushBack(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
+                                              {{constants::main_product[i]}, {constants::neutron}}});
         }
         else if (delta_A == 1 && delta_Z == 1)
         {
-            reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
-                                               {{constants::main_product[i]}, {constants::proton}}});
+            reactions.pushBack(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
+                                              {{constants::main_product[i]}, {constants::proton}}});
         }
         else if (delta_A == 4 && delta_Z == 2)
         {
-            reactions.push_back(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
-                                               {{constants::main_product[i]}, {constants::alpha}}});
+            reactions.pushBack(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
+                                              {{constants::main_product[i]}, {constants::alpha}}});
         }
         else
             throw std::runtime_error("Mass conservation not possible when adding reaction to net86\n");
@@ -164,7 +164,7 @@ inline static const nnet::reaction_list reaction_list = []()
     /* !!!!!!!!!!!!!!!!!!!!!!!!
     C -> 3He fission
     !!!!!!!!!!!!!!!!!!!!!!!! */
-    reactions.push_back(nnet::reaction{{{constants::main_product[4]}}, {{constants::main_reactant[4], 3}}});
+    reactions.pushBack(nnet::reaction{{{constants::main_product[4]}}, {{constants::main_reactant[4], 3}}});
 
     /* !!!!!!!!!!!!!!!!!!!!!!!!
     inverse reaction
@@ -179,23 +179,23 @@ inline static const nnet::reaction_list reaction_list = []()
 
         if (delta_Z == 0 && delta_A == 0)
         {
-            reactions.push_back(nnet::reaction{{{constants::main_product[i]}},
-                                               {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
+            reactions.pushBack(nnet::reaction{{{constants::main_product[i]}},
+                                              {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
         }
         else if (delta_A == -1 && delta_Z == 0)
         {
-            reactions.push_back(nnet::reaction{{{constants::main_product[i]}, {constants::neutron}},
-                                               {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
+            reactions.pushBack(nnet::reaction{{{constants::main_product[i]}, {constants::neutron}},
+                                              {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
         }
         else if (delta_A == -1 && delta_Z == -1)
         {
-            reactions.push_back(nnet::reaction{{{constants::main_product[i]}, {constants::proton}},
-                                               {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
+            reactions.pushBack(nnet::reaction{{{constants::main_product[i]}, {constants::proton}},
+                                              {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
         }
         else if (delta_A == -4 && delta_Z == -2)
         {
-            reactions.push_back(nnet::reaction{{{constants::main_product[i]}, {constants::alpha}},
-                                               {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
+            reactions.pushBack(nnet::reaction{{{constants::main_product[i]}, {constants::alpha}},
+                                              {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
         }
         else
             throw std::runtime_error("Mass conservation not possible when adding reaction to net86\n");

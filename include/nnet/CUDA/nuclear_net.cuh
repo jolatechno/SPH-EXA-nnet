@@ -44,7 +44,7 @@ namespace nnet
 class gpu_reaction_list : public ptr_reaction_list
 {
 private:
-    friend gpu_reaction_list move_to_gpu(const ptr_reaction_list& reactions);
+    friend gpu_reaction_list moveToGpu(const ptr_reaction_list& reactions);
     friend void inline free(gpu_reaction_list& reactions);
 
 public:
@@ -58,15 +58,15 @@ public:
  *
  * Returns a GPU reaction list copied from CPU.
  */
-gpu_reaction_list inline move_to_gpu(const ptr_reaction_list& reactions)
+gpu_reaction_list inline moveToGpu(const ptr_reaction_list& reactions)
 {
     gpu_reaction_list dev_reactions;
     dev_reactions.num_reactions = reactions.num_reactions;
 
-    dev_reactions.reactant_product = cuda_util::move_to_gpu<reaction::reactant_product>(
+    dev_reactions.reactant_product = cuda_util::moveToGpu<reaction::reactant_product>(
         reactions.reactant_product, reactions.reactant_begin[reactions.num_reactions]);
-    dev_reactions.reactant_begin = cuda_util::move_to_gpu<int>(reactions.reactant_begin, reactions.num_reactions + 1);
-    dev_reactions.product_begin  = cuda_util::move_to_gpu<int>(reactions.product_begin, reactions.num_reactions);
+    dev_reactions.reactant_begin = cuda_util::moveToGpu<int>(reactions.reactant_begin, reactions.num_reactions + 1);
+    dev_reactions.product_begin  = cuda_util::moveToGpu<int>(reactions.product_begin, reactions.num_reactions);
 
     return dev_reactions;
 }

@@ -75,7 +75,7 @@ DEVICE_DEFINE(extern double, log_rho_ref[N_RHO], ;)
 DEVICE_DEFINE(extern double, electron_rate[N_TEMP][N_RHO][N_C], ;)
 
 /*! @brief read electron rate constants table for net87 */
-bool inline read_cpu_table()
+bool inline readCPUTable()
 {
     // read table
     const std::string electron_rate_table = {
@@ -99,7 +99,7 @@ bool inline read_cpu_table()
     return true;
 }
 
-bool inline copy_table_to_gpu()
+bool inline copyTableToGPU()
 {
 #if COMPILE_DEVICE
     // copy to device
