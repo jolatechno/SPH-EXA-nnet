@@ -41,15 +41,15 @@
 namespace nnet
 {
 /*! @brief Class for reaction list on GPU. */
-class gpu_reaction_list : public ptr_reaction_list
+class GPUReactionList : public PtrReactionList
 {
 private:
-    friend gpu_reaction_list moveToGpu(const ptr_reaction_list& reactions);
-    friend void inline free(gpu_reaction_list& reactions);
+    friend GPUReactionList moveToGpu(const PtrReactionList& reactions);
+    friend void inline free(GPUReactionList& reactions);
 
 public:
-    gpu_reaction_list() {}
-    ~gpu_reaction_list(){};
+    GPUReactionList() {}
+    ~GPUReactionList(){};
 };
 
 /*! @brief copy CPU reaction list to GPU.
@@ -58,13 +58,13 @@ public:
  *
  * Returns a GPU reaction list copied from CPU.
  */
-gpu_reaction_list inline moveToGpu(const ptr_reaction_list& reactions)
+GPUReactionList inline moveToGpu(const PtrReactionList& reactions)
 {
-    gpu_reaction_list dev_reactions;
+    GPUReactionList dev_reactions;
     dev_reactions.num_reactions = reactions.num_reactions;
 
-    dev_reactions.reactant_product = cuda_util::moveToGpu<reaction::reactant_product>(
-        reactions.reactant_product, reactions.reactant_begin[reactions.num_reactions]);
+    dev_reactions.ReactantProduct = cuda_util::moveToGpu<reaction::ReactantProduct>(
+        reactions.ReactantProduct, reactions.reactant_begin[reactions.num_reactions]);
     dev_reactions.reactant_begin = cuda_util::moveToGpu<int>(reactions.reactant_begin, reactions.num_reactions + 1);
     dev_reactions.product_begin  = cuda_util::moveToGpu<int>(reactions.product_begin, reactions.num_reactions);
 
@@ -75,9 +75,9 @@ gpu_reaction_list inline moveToGpu(const ptr_reaction_list& reactions)
  *
  * @param reactions GPU reaction lists
  */
-void inline free(gpu_reaction_list& reactions)
+void inline free(GPUReactionList& reactions)
 {
-    gpuErrchk(cudaFree((void*)reactions.reactant_product));
+    gpuErrchk(cudaFree((void*)reactions.ReactantProduct));
     gpuErrchk(cudaFree((void*)reactions.reactant_begin));
     gpuErrchk(cudaFree((void*)reactions.product_begin));
 }

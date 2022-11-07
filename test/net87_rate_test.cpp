@@ -47,7 +47,7 @@ int main()
     nnet::net86::debug = nnet::eos::debug = true;
 #endif
 
-    nnet::eos::helmholtz_functor helm(nnet::net87::constants::Z);
+    nnet::eos::HelmholtzFunctor helm(nnet::net87::constants::Z);
 
     std::array<double, 87> Y, X;
     for (int i = 0; i < 87; ++i)
@@ -58,9 +58,9 @@ int main()
         Y[i] = X[i] / nnet::net87::constants::A[i];
     Y[86] = 1;
 
-    std::vector<double> rate(nnet::net87::reaction_list.size()), drates(nnet::net87::reaction_list.size()), BE(87);
+    std::vector<double> rate(nnet::net87::reactionList.size()), drates(nnet::net87::reactionList.size()), BE(87);
     auto                eos_struct = helm(Y.data(), 3e9, 1e9);
-    nnet::net87::compute_reaction_rates(Y.data(), 3e9, 1e9, eos_struct, BE.data(), rate.data(), drates.data());
+    nnet::net87::computeReactionRates(Y.data(), 3e9, 1e9, eos_struct, BE.data(), rate.data(), drates.data());
 
     std::cout << "net14 <-> net87:\n";
     for (int i = 0; i < 14; ++i)
@@ -72,17 +72,17 @@ int main()
     // print reactions
     std::cout << "\ndirect rates:\n";
     for (int i = 0; i < 157 - 1; ++i)
-        std::cout << "(" << i + 1 << ")\t" << nnet::net87::reaction_list[i] << "\t\tR=" << rate[i]
+        std::cout << "(" << i + 1 << ")\t" << nnet::net87::reactionList[i] << "\t\tR=" << rate[i]
                   << ",\tdR/dT=" << drates[i] << "\n";
 
     std::cout << "\nreverse rates:\n";
     for (int i = 157 - 1; i < 157 - 1 + 157 - 4; ++i)
-        std::cout << "(" << i - (157 - 5) + 1 << ")\t" << nnet::net87::reaction_list[i] << "\t\tR=" << rate[i]
+        std::cout << "(" << i - (157 - 5) + 1 << ")\t" << nnet::net87::reactionList[i] << "\t\tR=" << rate[i]
                   << ",\tdR/dT=" << drates[i] << "\n";
 
     std::cout << "\nelectron capture rates:\n";
-    for (size_t i = 157 - 1 + 157 - 4; i < nnet::net87::reaction_list.size(); ++i)
-        std::cout << "(" << i - (157 - 5) + 1 << ")\t" << nnet::net87::reaction_list[i] << "\t\tR=" << rate[i]
+    for (size_t i = 157 - 1 + 157 - 4; i < nnet::net87::reactionList.size(); ++i)
+        std::cout << "(" << i - (157 - 5) + 1 << ")\t" << nnet::net87::reactionList[i] << "\t\tR=" << rate[i]
                   << ",\tdR/dT=" << drates[i] << "\n";
 
     std::cout << "\nBE: ";

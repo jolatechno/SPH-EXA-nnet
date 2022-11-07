@@ -44,19 +44,19 @@ const static double R  = 8.317e7;
 
 /*! @brief Ideal gas functor class */
 template<typename Float>
-class ideal_gas_functor : public nnet::eos_functor<Float>
+class IdealGasFunctor : public nnet::eos_functor<Float>
 {
 private:
     double mu;
 
 public:
-    ideal_gas_functor(double mu_)
+    IdealGasFunctor(double mu_)
         : mu(mu_)
     {
     }
 
-    HOST_DEVICE_FUN ideal_gas_functor() {}
-    HOST_DEVICE_FUN ~ideal_gas_functor() {}
+    HOST_DEVICE_FUN IdealGasFunctor() {}
+    HOST_DEVICE_FUN ~IdealGasFunctor() {}
 
     /*! @brief Ideal gas EOS for nuclear networks.
      *

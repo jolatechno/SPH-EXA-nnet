@@ -105,9 +105,9 @@ const bool skip_coulombian_correction = false;
 DEVICE_DEFINE(inline static const std::array<double COMMA 86>, BE, = {BE_NET86};)
 
 /*! @brief constant list of ordered reaction */
-inline static const nnet::reaction_list reaction_list = []()
+inline static const nnet::ReactionList reactionList = []()
 {
-    nnet::reaction_list reactions;
+    nnet::ReactionList reactions;
 
     /* !!!!!!!!!!!!!!!!!!!!!!!!
     2C fusion,
@@ -115,16 +115,16 @@ inline static const nnet::reaction_list reaction_list = []()
     2O fusion
     !!!!!!!!!!!!!!!!!!!!!!!! */
     reactions.pushBack(
-        nnet::reaction{{{constants::main_reactant[0], 2}}, {{constants::main_product[0]}, {constants::alpha}}});
-    reactions.pushBack(nnet::reaction{{{constants::main_reactant[1]}, {constants::secondary_reactant[1]}},
+        nnet::Reaction{{{constants::main_reactant[0], 2}}, {{constants::main_product[0]}, {constants::alpha}}});
+    reactions.pushBack(nnet::Reaction{{{constants::main_reactant[1]}, {constants::secondary_reactant[1]}},
                                       {{constants::main_product[1]}, {constants::alpha}}});
     reactions.pushBack(
-        nnet::reaction{{{constants::main_reactant[2], 2}}, {{constants::main_product[2]}, {constants::alpha}}});
+        nnet::Reaction{{{constants::main_reactant[2], 2}}, {{constants::main_product[2]}, {constants::alpha}}});
 
     /* !!!!!!!!!!!!!!!!!!!!!!!!
     3He -> C fusion
     !!!!!!!!!!!!!!!!!!!!!!!! */
-    reactions.pushBack(nnet::reaction{{{constants::main_reactant[4], 3}}, {{constants::main_product[4]}}});
+    reactions.pushBack(nnet::Reaction{{{constants::main_reactant[4], 3}}, {{constants::main_product[4]}}});
 
     /* !!!!!!!!!!!!!!!!!!!!!!!!
     direct reaction
@@ -139,22 +139,22 @@ inline static const nnet::reaction_list reaction_list = []()
 
         if (delta_Z == 0 && delta_A == 0)
         {
-            reactions.pushBack(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
+            reactions.pushBack(nnet::Reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
                                               {{constants::main_product[i]}}});
         }
         else if (delta_A == 1 && delta_Z == 0)
         {
-            reactions.pushBack(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
+            reactions.pushBack(nnet::Reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
                                               {{constants::main_product[i]}, {constants::neutron}}});
         }
         else if (delta_A == 1 && delta_Z == 1)
         {
-            reactions.pushBack(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
+            reactions.pushBack(nnet::Reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
                                               {{constants::main_product[i]}, {constants::proton}}});
         }
         else if (delta_A == 4 && delta_Z == 2)
         {
-            reactions.pushBack(nnet::reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
+            reactions.pushBack(nnet::Reaction{{{constants::main_reactant[i]}, {constants::secondary_reactant[i]}},
                                               {{constants::main_product[i]}, {constants::alpha}}});
         }
         else
@@ -164,7 +164,7 @@ inline static const nnet::reaction_list reaction_list = []()
     /* !!!!!!!!!!!!!!!!!!!!!!!!
     C -> 3He fission
     !!!!!!!!!!!!!!!!!!!!!!!! */
-    reactions.pushBack(nnet::reaction{{{constants::main_product[4]}}, {{constants::main_reactant[4], 3}}});
+    reactions.pushBack(nnet::Reaction{{{constants::main_product[4]}}, {{constants::main_reactant[4], 3}}});
 
     /* !!!!!!!!!!!!!!!!!!!!!!!!
     inverse reaction
@@ -179,22 +179,22 @@ inline static const nnet::reaction_list reaction_list = []()
 
         if (delta_Z == 0 && delta_A == 0)
         {
-            reactions.pushBack(nnet::reaction{{{constants::main_product[i]}},
+            reactions.pushBack(nnet::Reaction{{{constants::main_product[i]}},
                                               {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
         }
         else if (delta_A == -1 && delta_Z == 0)
         {
-            reactions.pushBack(nnet::reaction{{{constants::main_product[i]}, {constants::neutron}},
+            reactions.pushBack(nnet::Reaction{{{constants::main_product[i]}, {constants::neutron}},
                                               {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
         }
         else if (delta_A == -1 && delta_Z == -1)
         {
-            reactions.pushBack(nnet::reaction{{{constants::main_product[i]}, {constants::proton}},
+            reactions.pushBack(nnet::Reaction{{{constants::main_product[i]}, {constants::proton}},
                                               {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
         }
         else if (delta_A == -4 && delta_Z == -2)
         {
-            reactions.pushBack(nnet::reaction{{{constants::main_product[i]}, {constants::alpha}},
+            reactions.pushBack(nnet::Reaction{{{constants::main_product[i]}, {constants::alpha}},
                                               {{constants::main_reactant[i]}, {constants::secondary_reactant[i]}}});
         }
         else
@@ -206,10 +206,10 @@ inline static const nnet::reaction_list reaction_list = []()
 
 /*! @brief net86 functor */
 template<typename Float>
-class compute_reaction_rates_functor : public nnet::compute_reaction_rates_functor<Float>
+class ComputeReactionRatesFunctor : public nnet::ComputeReactionRatesFunctor<Float>
 {
 public:
-    compute_reaction_rates_functor() {}
+    ComputeReactionRatesFunctor() {}
 
     /*! @brief compute net86 rates
      *
@@ -712,7 +712,7 @@ public:
             const Float val3 = val1 * t9i * 1e-9;
             const Float val4 = 1.5e-9 * t9i;
 
-            const int k = constants::fits::get_temperature_range(T);
+            const int k = constants::fits::getTemperatureRange(T);
 
             for (int i = 7; i < 137; ++i)
             {
@@ -796,7 +796,7 @@ public:
 
                 // compute deltamukbt
                 /*for (int i = 0; i < 157; ++i) {
-                    const auto &Reaction = reaction_list[i];
+                    const auto &Reaction = ReactionList[i];
 
                     Float deltamukbt_ = 0;
                     for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants)
@@ -868,5 +868,5 @@ public:
     }
 };
 
-extern compute_reaction_rates_functor<double> compute_reaction_rates;
+extern ComputeReactionRatesFunctor<double> computeReactionRates;
 } // namespace nnet::net86

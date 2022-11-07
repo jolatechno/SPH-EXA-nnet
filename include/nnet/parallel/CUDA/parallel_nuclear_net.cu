@@ -45,8 +45,8 @@ template<typename Float>
 __global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, const int dimension, Float* global_buffer,
                                                   Float* rho_, Float* rho_m1_, Float** Y_, Float* temp_, Float* dt_,
                                                   const Float hydro_dt, const Float previous_dt,
-                                                  const nnet::gpu_reaction_list*                     reactions,
-                                                  const nnet::compute_reaction_rates_functor<Float>& construct_rates_BE,
+                                                  const nnet::GPUReactionList*                    reactions,
+                                                  const nnet::ComputeReactionRatesFunctor<Float>& construct_rates_BE,
                                                   const nnet::eos_functor<Float>& eos, bool use_drhodt)
 {
     size_t thread = blockIdx.x * blockDim.x + threadIdx.x;
@@ -114,21 +114,20 @@ __global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, cons
 template<typename Float>
 void cudaComputeNuclearReactions(const size_t n_particles, const int dimension, thrust::device_vector<Float>& buffer,
                                  Float* rho_, Float* rho_m1_, Float** Y_, Float* temp_, Float* dt_,
-                                 const Float hydro_dt, const Float previous_dt,
-                                 const nnet::gpu_reaction_list&                     reactions,
-                                 const nnet::compute_reaction_rates_functor<Float>& construct_rates_BE,
+                                 const Float hydro_dt, const Float previous_dt, const nnet::GPUReactionList& reactions,
+                                 const nnet::ComputeReactionRatesFunctor<Float>& construct_rates_BE,
                                  const nnet::eos_functor<Float>& eos, bool use_drhodt)
 {
     // copy classes to gpu
-    nnet::gpu_reaction_list* dev_reactions;
-    func_type*               dev_construct_rates_BE;
-    func_eos*                dev_eos;
+    nnet::GPUReactionList* dev_reactions;
+    func_type*             dev_construct_rates_BE;
+    func_eos*              dev_eos;
     // allocate
-    gpuErrchk(cudaMalloc((void**)&dev_reactions, sizeof(nnet::gpu_reaction_list)));
+    gpuErrchk(cudaMalloc((void**)&dev_reactions, sizeof(nnet::GPUReactionList)));
     gpuErrchk(cudaMalloc((void**)&dev_construct_rates_BE, sizeof(func_type)));
     gpuErrchk(cudaMalloc((void**)&dev_eos, sizeof(func_eos)));
     // actually copy
-    gpuErrchk(cudaMemcpy(dev_reactions, &reactions, sizeof(nnet::gpu_reaction_list), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_reactions, &reactions, sizeof(nnet::GPUReactionList), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(dev_construct_rates_BE, &construct_rates_BE, sizeof(func_type), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(dev_eos, &eos, sizeof(func_eos), cudaMemcpyHostToDevice));
 
@@ -165,13 +164,12 @@ void cudaComputeNuclearReactions(const size_t n_particles, const int dimension, 
 // used templates:
 template void cudaComputeNuclearReactions(const unsigned long, const int, thrust::device_vector<double>&, double*,
                                           double*, double**, double*, double*, const double, const double,
-                                          nnet::gpu_reaction_list const&,
-                                          nnet::compute_reaction_rates_functor<double> const&,
+                                          nnet::GPUReactionList const&,
+                                          nnet::ComputeReactionRatesFunctor<double> const&,
                                           nnet::eos_functor<double> const&, bool);
 template void cudaComputeNuclearReactions(const unsigned long, const int, thrust::device_vector<float>&, float*, float*,
                                           float**, float*, float*, const float, const float,
-                                          nnet::gpu_reaction_list const&,
-                                          nnet::compute_reaction_rates_functor<float> const&,
+                                          nnet::GPUReactionList const&, nnet::ComputeReactionRatesFunctor<float> const&,
                                           nnet::eos_functor<float> const&, bool);
 
 /************************************************************/

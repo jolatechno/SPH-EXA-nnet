@@ -70,8 +70,8 @@ template<typename Float>
 extern void cudaComputeNuclearReactions(const size_t n_particles, const int dimension,
                                         thrust::device_vector<Float>& buffer, Float* rho_, Float* rho_m1_, Float** Y_,
                                         Float* temp_, Float* dt_, const Float hydro_dt, const Float previous_dt,
-                                        const nnet::gpu_reaction_list&                     reactions,
-                                        const nnet::compute_reaction_rates_functor<Float>& construct_rates_BE,
+                                        const nnet::GPUReactionList&                    reactions,
+                                        const nnet::ComputeReactionRatesFunctor<Float>& construct_rates_BE,
                                         const nnet::eos_functor<Float>& eos, bool use_drhodt);
 
 template<typename Float>

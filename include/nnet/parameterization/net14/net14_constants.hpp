@@ -104,7 +104,7 @@ HOST_DEVICE_FUN Float inline glt1(const Float x)
 
 namespace fits
 {
-HOST_DEVICE_FUN int inline get_temperature_range(double T)
+HOST_DEVICE_FUN int inline getTemperatureRange(double T)
 {
     if (T < 1.5e8) return 0;
 

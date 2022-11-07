@@ -1062,7 +1062,7 @@ HOST_DEVICE_FUN nnet::eos_struct<Float> inline helmholtz(double abar_, double zb
 
 /*! @brief Helmholtz functor class */
 template<typename Float>
-class helmholtz_functor : public nnet::eos_functor<Float>
+class HelmholtzFunctor : public nnet::eos_functor<Float>
 {
 private:
     const Float* Z;
@@ -1072,7 +1072,7 @@ private:
 #endif
 
 public:
-    helmholtz_functor(const Float* Z_, int dimension_)
+    HelmholtzFunctor(const Float* Z_, int dimension_)
         : Z(Z_)
         , dimension(dimension_)
     {
@@ -1082,38 +1082,38 @@ public:
 #endif
     }
     template<class Vector>
-    helmholtz_functor(const Vector& Z_, int dimension_)
-        : helmholtz_functor(Z_.data(), dimension_)
+    HelmholtzFunctor(const Vector& Z_, int dimension_)
+        : HelmholtzFunctor(Z_.data(), dimension_)
     {
     }
     template<class Vector>
-    helmholtz_functor(const Vector& Z_)
-        : helmholtz_functor(Z_.data(), Z_.size())
+    HelmholtzFunctor(const Vector& Z_)
+        : HelmholtzFunctor(Z_.data(), Z_.size())
     {
     }
 
-    helmholtz_functor(const std::vector<Float>& Z_, int dimension_)
-        : helmholtz_functor(Z_.data(), dimension_)
+    HelmholtzFunctor(const std::vector<Float>& Z_, int dimension_)
+        : HelmholtzFunctor(Z_.data(), dimension_)
     {
     }
-    helmholtz_functor(const std::vector<Float>& Z_)
-        : helmholtz_functor(Z_.data(), Z_.size())
+    HelmholtzFunctor(const std::vector<Float>& Z_)
+        : HelmholtzFunctor(Z_.data(), Z_.size())
     {
     }
 
     template<size_t n>
-    helmholtz_functor(const std::array<Float, n>& Z_, int dimension_)
-        : helmholtz_functor(Z_.data(), dimension_)
+    HelmholtzFunctor(const std::array<Float, n>& Z_, int dimension_)
+        : HelmholtzFunctor(Z_.data(), dimension_)
     {
     }
     template<size_t n>
-    helmholtz_functor(const std::array<Float, n>& Z_)
-        : helmholtz_functor(Z_.data(), Z_.size())
+    HelmholtzFunctor(const std::array<Float, n>& Z_)
+        : HelmholtzFunctor(Z_.data(), Z_.size())
     {
     }
 
-    HOST_DEVICE_FUN helmholtz_functor() {}
-    HOST_DEVICE_FUN ~helmholtz_functor()
+    HOST_DEVICE_FUN HelmholtzFunctor() {}
+    HOST_DEVICE_FUN ~HelmholtzFunctor()
     {
 #if COMPILE_DEVICE && !DEVICE_CODE
         cudaFree(dev_Z);

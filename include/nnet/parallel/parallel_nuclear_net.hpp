@@ -84,8 +84,8 @@ namespace nnet::parallel_nnet
  */
 template<bool use_gpu, class Data, typename Float, class nseFunction = void*>
 void computeNuclearReactions(Data& n, size_t firstIndex, size_t lastIndex, const Float hydro_dt,
-                             const Float previous_dt, const nnet::reaction_list& reactions,
-                             const nnet::compute_reaction_rates_functor<Float>& construct_rates_BE,
+                             const Float previous_dt, const nnet::ReactionList& reactions,
+                             const nnet::ComputeReactionRatesFunctor<Float>& construct_rates_BE,
                              const nnet::eos_functor<Float>& eos, bool use_drhodt, const nseFunction jumpToNse = NULL)
 {
     const size_t n_particles = n.temp.size();
@@ -115,7 +115,7 @@ void computeNuclearReactions(Data& n, size_t firstIndex, size_t lastIndex, const
         if (use_drhodt) rho_m1_ptr = (Float*)thrust::raw_pointer_cast(n.devData.rho_m1.data() + firstIndex);
 
         // reactions to GPU
-        nnet::gpu_reaction_list dev_reactions = nnet::moveToGpu(reactions);
+        nnet::GPUReactionList dev_reactions = nnet::moveToGpu(reactions);
 
         // copy pointers to GPU
         std::vector<Float*> Y_raw_ptr(dimension);

@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
         last_Y[i] = X[i] / nnet::net86::constants::A[i];
 
     // buffers
-    std::vector<double>   rates(nnet::net86::reaction_list.size());
+    std::vector<double>   rates(nnet::net86::reactionList.size());
     eigen::Matrix<double> Mp(86 + 1, 86 + 1);
     eigen::Vector<double> RHS(86 + 1);
     eigen::Vector<double> DY_T(86 + 1);
@@ -139,8 +139,8 @@ int main(int argc, char* argv[])
         std::cerr << ",,\"Dm/m\"\n";
     }
 
-    const nnet::eos::ideal_gas_functor<double> idea_gas_eos(isotherm ? 1e-20 : 10.0);
-    const nnet::eos::helmholtz_functor<double> helm_eos(nnet::net86::constants::Z, 86);
+    const nnet::eos::IdealGasFunctor<double>  idea_gas_eos(isotherm ? 1e-20 : 10.0);
+    const nnet::eos::HelmholtzFunctor<double> helm_eos(nnet::net86::constants::Z, 86);
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -152,10 +152,10 @@ int main(int argc, char* argv[])
         // solve the system
         double current_dt = idealGas
                                 ? nnet::solveSystemNR(86, Mp.data(), RHS.data(), DY_T.data(), rates.data(),
-                                                      nnet::net86::reaction_list, nnet::net86::compute_reaction_rates,
+                                                      nnet::net86::reactionList, nnet::net86::computeReactionRates,
                                                       idea_gas_eos, last_Y.data(), last_T, Y.data(), T, rho, 0., dt)
                                 : nnet::solveSystemNR(86, Mp.data(), RHS.data(), DY_T.data(), rates.data(),
-                                                      nnet::net86::reaction_list, nnet::net86::compute_reaction_rates,
+                                                      nnet::net86::reactionList, nnet::net86::computeReactionRates,
                                                       helm_eos, last_Y.data(), last_T, Y.data(), T, rho, 0., dt);
         t += current_dt;
 

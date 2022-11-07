@@ -55,22 +55,22 @@ int main()
     for (int i = 0; i < 14; ++i)
         Y[i] = X[i] / nnet::net14::constants::A[i];
 
-    std::vector<double> rate(nnet::net14::reaction_list.size()), drates(nnet::net14::reaction_list.size()), BE(14);
-    nnet::net14::compute_reaction_rates((double*)Y.data(), 2e9, 1e9, nnet::eos_struct<double>{}, BE.data(), rate.data(),
-                                        drates.data());
+    std::vector<double> rate(nnet::net14::reactionList.size()), drates(nnet::net14::reactionList.size()), BE(14);
+    nnet::net14::computeReactionRates((double*)Y.data(), 2e9, 1e9, nnet::eos_struct<double>{}, BE.data(), rate.data(),
+                                      drates.data());
 
-    std::cout << "reaction_list.size=" << nnet::net14::reaction_list.size() << ", rates.size=" << rate.size() << "\n\n";
+    std::cout << "ReactionList.size=" << nnet::net14::reactionList.size() << ", rates.size=" << rate.size() << "\n\n";
 
     int num_special_reactions = 5, num_reactions = 157 - 5, num_reverse = 157 - 5;
 
     std::cout << "\ndirect rates:\n";
     for (int i = 0; i < 16; ++i)
-        std::cout << "(" << i + 1 << ")\t" << nnet::net14::reaction_list[i] << "\t\tR=" << rate[i]
+        std::cout << "(" << i + 1 << ")\t" << nnet::net14::reactionList[i] << "\t\tR=" << rate[i]
                   << ",\tdR/dT=" << drates[i] << "\n";
 
     std::cout << "\ninverse rates:\n";
     for (int i = 16; i < 16 + 13; ++i)
-        std::cout << "(" << i - 15 << ")\t" << nnet::net14::reaction_list[i] << "\t\tR=" << rate[i]
+        std::cout << "(" << i - 15 << ")\t" << nnet::net14::reactionList[i] << "\t\tR=" << rate[i]
                   << ",\tdR/dT=" << drates[i] << "\n";
 
     std::cout << "\nBE: ";

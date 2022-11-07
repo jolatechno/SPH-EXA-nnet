@@ -68,7 +68,7 @@ const bool skip_coulombian_correction = false;
 DEVICE_DEFINE(inline static const std::array<double COMMA 14>, BE, = {BE_NET14};)
 
 /*! @brief constant list of ordered reaction */
-inline static const nnet::reaction_list reaction_list(std::vector<nnet::reaction>{
+inline static const nnet::ReactionList reactionList(std::vector<nnet::Reaction>{
     /* !!!!!!!!!!!!!!!!!!!!!!!!
        3He -> C fusion */
     {{{0, 3}}, {{1}}},
@@ -137,10 +137,10 @@ inline static const nnet::reaction_list reaction_list(std::vector<nnet::reaction
 
 /*! @brief net14 functor */
 template<typename Float>
-class compute_reaction_rates_functor : public nnet::compute_reaction_rates_functor<Float>
+class ComputeReactionRatesFunctor : public nnet::ComputeReactionRatesFunctor<Float>
 {
 public:
-    compute_reaction_rates_functor() {}
+    ComputeReactionRatesFunctor() {}
 
     /*! @brief compute net14 rates
      *
@@ -283,7 +283,7 @@ public:
                 - Cr + He <- Fe
                 - Fe + He <- Ni
                 - Ni + He <- Zn */
-            const int k = constants::fits::get_temperature_range(T);
+            const int k = constants::fits::getTemperatureRange(T);
             for (int i = 4; i < 14; ++i)
             {
                 l[i - 1] = constants::fits::DEVICE_ACCESS(choose)[i - 4][k] /
@@ -727,7 +727,7 @@ public:
                 deltamukbt[15] = 2. * mukbt[2] - mukbt[5];
 
                 /*for (int i = 0; i < 16; ++i) {
-                    const auto &Reaction = reaction_list[i];
+                    const auto &Reaction = ReactionList[i];
 
                     Float deltamukbt_ = 0;
                     for (const auto [reactant_id, n_reactant_consumed] : Reaction.reactants)
@@ -775,5 +775,5 @@ public:
     }
 };
 
-extern compute_reaction_rates_functor<double> compute_reaction_rates;
+extern ComputeReactionRatesFunctor<double> computeReactionRates;
 } // namespace nnet::net14

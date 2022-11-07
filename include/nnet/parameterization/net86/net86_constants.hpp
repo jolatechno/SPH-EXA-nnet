@@ -210,7 +210,7 @@ DEVICE_DEFINE(static const inline int, main_product[157], =
 
 namespace fits
 {
-HOST_DEVICE_FUN int inline get_temperature_range(double T)
+HOST_DEVICE_FUN int inline getTemperatureRange(double T)
 {
     if (T < 1.5e8) return 0;
 

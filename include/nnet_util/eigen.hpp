@@ -47,29 +47,29 @@ namespace eigen
 namespace cuda
 {
 template<typename Type, int n, int m>
-class fixed_size_matrix;
+class FixedSizeMatrix;
 template<typename Type, int n>
-class fixed_size_array;
+class FixedSizeArray;
 } // namespace cuda
 #endif
 
 /*! @brief Custom fixed-size matrix type */
 template<typename Type, int n, int m>
-class fixed_size_matrix
+class FixedSizeMatrix
 {
 private:
     std::vector<Type> weights;
 
 public:
-    fixed_size_matrix() { weights.resize(n * m); }
+    FixedSizeMatrix() { weights.resize(n * m); }
     template<class Other>
-    fixed_size_matrix(Other const& other)
-        : fixed_size_matrix()
+    FixedSizeMatrix(Other const& other)
+        : FixedSizeMatrix()
     {
         *this = other;
     }
     template<class Other>
-    fixed_size_matrix& operator=(Other const& other)
+    FixedSizeMatrix& operator=(Other const& other)
     {
         for (int i = 0; i < n; ++i)
             for (int j = 0; j < m; ++j)
@@ -88,21 +88,21 @@ public:
 
 /*! @brief Custom fixed-size matrix type */
 template<typename Type, int n>
-class fixed_size_array
+class FixedSizeArray
 {
 private:
     std::vector<Type> weights;
 
 public:
-    fixed_size_array() { weights.resize(n); }
+    FixedSizeArray() { weights.resize(n); }
     template<class Other>
-    fixed_size_array(Other const& other)
-        : fixed_size_array()
+    FixedSizeArray(Other const& other)
+        : FixedSizeArray()
     {
         *this = other;
     }
     template<class Other>
-    fixed_size_array& operator=(Other const& other)
+    FixedSizeArray& operator=(Other const& other)
     {
         for (int i = 0; i < n; ++i)
             operator[](i) = other[i];

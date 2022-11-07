@@ -53,13 +53,13 @@ namespace constants = nnet::net86::constants;
 DEVICE_DEFINE(inline static const std::array<double COMMA 87>, BE, = {BE_NET86 COMMA 0.782 * constants::Mev_to_erg};)
 
 /*! @brief constant list of ordered reaction */
-inline static const nnet::reaction_list reaction_list = []()
+inline static const nnet::ReactionList reactionList = []()
 {
-    nnet::reaction_list reactions = nnet::net86::reaction_list;
+    nnet::ReactionList reactions = nnet::net86::reactionList;
 
     // electron captures
-    reactions.pushBack(nnet::reaction{{{constants::proton}, {constants::electron}}, {{constants::neutron}}});
-    reactions.pushBack(nnet::reaction{{{constants::neutron}, {constants::electron}},
+    reactions.pushBack(nnet::Reaction{{{constants::proton}, {constants::electron}}, {{constants::neutron}}});
+    reactions.pushBack(nnet::Reaction{{{constants::neutron}, {constants::electron}},
                                       {{constants::proton}}}); // assume position = electron
 
     return reactions;
@@ -67,13 +67,13 @@ inline static const nnet::reaction_list reaction_list = []()
 
 /*! @brief net87 functor */
 template<typename Float>
-class compute_reaction_rates_functor : public nnet::compute_reaction_rates_functor<Float>
+class ComputeReactionRatesFunctor : public nnet::ComputeReactionRatesFunctor<Float>
 {
 private:
-    nnet::net86::compute_reaction_rates_functor<Float> net86_compute_reaction_rates;
+    nnet::net86::ComputeReactionRatesFunctor<Float> net86_computeReactionRates;
 
 public:
-    compute_reaction_rates_functor() {}
+    ComputeReactionRatesFunctor() {}
 
     /*! @brief compute net87 rates
      *
@@ -114,7 +114,7 @@ public:
 
         Float dUedYe = eos_struct.dudYe;
 
-        net86_compute_reaction_rates(Y, T, rho, eos_struct, corrected_BE, rates, drates);
+        net86_computeReactionRates(Y, T, rho, eos_struct, corrected_BE, rates, drates);
 
         /*********************************************/
         /* start computing the binding energy vector */
@@ -146,5 +146,5 @@ public:
     }
 };
 
-extern compute_reaction_rates_functor<double> compute_reaction_rates;
+extern ComputeReactionRatesFunctor<double> computeReactionRates;
 } // namespace nnet::net87

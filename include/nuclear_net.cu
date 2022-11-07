@@ -48,17 +48,17 @@ DEVICE_DEFINE(double, electron_rate[N_TEMP][N_RHO][N_C], ;)
 
 bool table_read_success = nnet::net87::electrons::constants::readCPUTable();
 } // namespace electrons::constants
-compute_reaction_rates_functor<double> compute_reaction_rates;
+ComputeReactionRatesFunctor<double> computeReactionRates;
 } // namespace net87
 namespace net86
 {
-bool                                   debug = false;
-compute_reaction_rates_functor<double> compute_reaction_rates;
+bool                                debug = false;
+ComputeReactionRatesFunctor<double> computeReactionRates;
 } // namespace net86
 namespace net14
 {
-bool                                   debug = false;
-compute_reaction_rates_functor<double> compute_reaction_rates;
+bool                                debug = false;
+ComputeReactionRatesFunctor<double> computeReactionRates;
 } // namespace net14
 namespace eos
 {

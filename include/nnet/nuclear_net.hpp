@@ -110,18 +110,18 @@ const double dt_nse_tol = 0; // 1e-8; // !!!! useless for now
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 /*! @brief reaction class */
-struct reaction
+struct Reaction
 {
     /*! @brief class representing a product or reactant */
-    struct reactant_product
+    struct ReactantProduct
     {
         int species_id, n_consumed = 1;
     };
 
-    std::vector<reactant_product> reactants, products;
+    std::vector<ReactantProduct> reactants, products;
 
     // reaction class print operator
-    friend std::ostream& operator<<(std::ostream& os, const reaction& r);
+    friend std::ostream& operator<<(std::ostream& os, const Reaction& r);
 };
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -129,21 +129,21 @@ struct reaction
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 /*! @brief class referencing a reaction */
-struct reaction_reference
+struct ReactionReference
 {
-    HOST_DEVICE_FUN reaction_reference() {}
+    HOST_DEVICE_FUN ReactionReference() {}
 
     /*! @brief class simulating a vector from a pointer */
     template<class T>
-    class vector_reference
+    class VectorReference
     {
     private:
         const T* ptr   = nullptr;
         size_t   size_ = 0;
 
     public:
-        HOST_DEVICE_FUN vector_reference() {}
-        HOST_DEVICE_FUN vector_reference(const T* ptr_, size_t size)
+        HOST_DEVICE_FUN VectorReference() {}
+        HOST_DEVICE_FUN VectorReference(const T* ptr_, size_t size)
             : ptr(ptr_)
             , size_(size)
         {
@@ -154,10 +154,10 @@ struct reaction_reference
         HOST_DEVICE_FUN const T& operator[](int i) { return ptr[i]; }
     };
 
-    vector_reference<reaction::reactant_product> reactants, products;
+    VectorReference<Reaction::ReactantProduct> reactants, products;
 
     // reaction class print operator
-    friend std::ostream& operator<<(std::ostream& os, const reaction_reference& r);
+    friend std::ostream& operator<<(std::ostream& os, const ReactionReference& r);
 };
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -165,7 +165,7 @@ struct reaction_reference
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 /*! @brief reaction pointer class (pointer to contigous buffers rather then a vector of reaction) */
-class reaction_list
+class ReactionList
 {
 private:
     // pointer to each reaction
@@ -173,37 +173,37 @@ private:
     std::vector<int> product_begin  = {};
 
     // actual vectors
-    std::vector<reaction::reactant_product> reactant_product = {};
+    std::vector<Reaction::ReactantProduct> ReactantProduct = {};
 
-    friend class ptr_reaction_list;
+    friend class PtrReactionList;
 
 public:
-    reaction_list() {}
-    reaction_list(std::vector<reaction> const& reactions)
+    ReactionList() {}
+    ReactionList(std::vector<Reaction> const& reactions)
     {
         for (auto& Reaction : reactions)
             pushBack(Reaction);
     }
 
     /*! @brief push back reaction to list */
-    void inline pushBack(reaction const& Reaction)
+    void inline pushBack(Reaction const& Reaction)
     {
-        reactant_product.insert(reactant_product.end(), Reaction.reactants.begin(), Reaction.reactants.end());
-        reactant_product.insert(reactant_product.end(), Reaction.products.begin(), Reaction.products.end());
+        ReactantProduct.insert(ReactantProduct.end(), Reaction.reactants.begin(), Reaction.reactants.end());
+        ReactantProduct.insert(ReactantProduct.end(), Reaction.products.begin(), Reaction.products.end());
 
         product_begin.push_back(reactant_begin.back() + Reaction.reactants.size());
         reactant_begin.push_back(product_begin.back() + Reaction.products.size());
     }
 
     /*! @brief access reaction from reacton list */
-    reaction_reference inline operator[](int i) const
+    ReactionReference inline operator[](int i) const
     {
-        reaction_reference Reaction;
+        ReactionReference Reaction;
 
-        Reaction.reactants = reaction_reference::vector_reference(reactant_product.data() + reactant_begin[i],
-                                                                  product_begin[i] - reactant_begin[i]);
-        Reaction.products  = reaction_reference::vector_reference(reactant_product.data() + product_begin[i],
-                                                                  reactant_begin[i + 1] - product_begin[i]);
+        Reaction.reactants = ReactionReference::VectorReference(ReactantProduct.data() + reactant_begin[i],
+                                                                product_begin[i] - reactant_begin[i]);
+        Reaction.products  = ReactionReference::VectorReference(ReactantProduct.data() + product_begin[i],
+                                                                reactant_begin[i + 1] - product_begin[i]);
 
         return Reaction;
     }
@@ -217,42 +217,42 @@ public:
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 // forward declaration
-class gpu_reaction_list;
+class GPUReactionList;
 
 /*! @brief reaction pointer class (pointer to contigous buffers rather then a vector of reaction) */
-class ptr_reaction_list
+class PtrReactionList
 {
 protected:
     // pointer to each reaction
-    const int *                       reactant_begin, *product_begin;
-    const reaction::reactant_product* reactant_product;
-    int                               num_reactions;
+    const int *                      reactant_begin, *product_begin;
+    const Reaction::ReactantProduct* ReactantProduct;
+    int                              num_reactions;
 
     // forward declaration
-    friend gpu_reaction_list;
-    friend gpu_reaction_list moveToGpu(const ptr_reaction_list& reactions);
-    friend void inline free(gpu_reaction_list& reactions);
+    friend GPUReactionList;
+    friend GPUReactionList moveToGpu(const PtrReactionList& reactions);
+    friend void inline free(GPUReactionList& reactions);
 
 public:
-    ptr_reaction_list() {}
-    ptr_reaction_list(reaction_list const& other)
+    PtrReactionList() {}
+    PtrReactionList(ReactionList const& other)
     {
         num_reactions = other.size();
 
-        reactant_begin   = other.reactant_begin.data();
-        product_begin    = other.product_begin.data();
-        reactant_product = other.reactant_product.data();
+        reactant_begin  = other.reactant_begin.data();
+        product_begin   = other.product_begin.data();
+        ReactantProduct = other.ReactantProduct.data();
     }
 
     /*! @brief access reaction from reacton list */
-    HOST_DEVICE_FUN reaction_reference inline operator[](int i) const
+    HOST_DEVICE_FUN ReactionReference inline operator[](int i) const
     {
-        reaction_reference Reaction;
+        ReactionReference Reaction;
 
-        Reaction.reactants = reaction_reference::vector_reference(reactant_product + reactant_begin[i],
-                                                                  product_begin[i] - reactant_begin[i]);
-        Reaction.products  = reaction_reference::vector_reference(reactant_product + product_begin[i],
-                                                                  reactant_begin[i + 1] - product_begin[i]);
+        Reaction.reactants = ReactionReference::VectorReference(ReactantProduct + reactant_begin[i],
+                                                                product_begin[i] - reactant_begin[i]);
+        Reaction.products  = ReactionReference::VectorReference(ReactantProduct + product_begin[i],
+                                                                reactant_begin[i + 1] - product_begin[i]);
 
         return Reaction;
     }
@@ -266,7 +266,7 @@ print functions:
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 // print reaction reference
-std::ostream inline& operator<<(std::ostream& os, const reaction_reference& r)
+std::ostream inline& operator<<(std::ostream& os, const ReactionReference& r)
 {
     // print reactant
     for (auto [reactant_id, n_reactant_consumed] : r.reactants)
@@ -281,7 +281,7 @@ std::ostream inline& operator<<(std::ostream& os, const reaction_reference& r)
 }
 
 // print reaction
-std::ostream inline& operator<<(std::ostream& os, const reaction& r)
+std::ostream inline& operator<<(std::ostream& os, const Reaction& r)
 {
     // print reactant
     for (auto [reactant_id, n_reactant_consumed] : r.reactants)
@@ -344,7 +344,7 @@ HOST_DEVICE_FUN bool inline containsNan(const Float T, const Float* Y, const int
  * @param dimension  number of nuclear species
  */
 template<typename Float>
-HOST_DEVICE_FUN void inline derivativesFromReactions(const ptr_reaction_list& reactions, const Float* rates,
+HOST_DEVICE_FUN void inline derivativesFromReactions(const PtrReactionList& reactions, const Float* rates,
                                                      const Float rho, const Float* Y, Float* dY, const int dimension)
 {
     // fill with zero
@@ -392,7 +392,7 @@ HOST_DEVICE_FUN void inline derivativesFromReactions(const ptr_reaction_list& re
  * @param dimension  number of nuclear species
  */
 template<typename Float>
-HOST_DEVICE_FUN void inline firstOrderDYFromReactions(const ptr_reaction_list& reactions, const Float* rates,
+HOST_DEVICE_FUN void inline firstOrderDYFromReactions(const PtrReactionList& reactions, const Float* rates,
                                                       const Float rho, Float const* Y, Float* M, const int dimension)
 {
     // fill matrix with zero
@@ -480,10 +480,10 @@ public:
 
 //! @brief functor interface to compute nuclear reactions rates
 template<typename Float>
-class compute_reaction_rates_functor
+class ComputeReactionRatesFunctor
 {
 public:
-    compute_reaction_rates_functor() {}
+    ComputeReactionRatesFunctor() {}
 
     /*! @brief computes rates.
      *
@@ -512,8 +512,8 @@ First simple direct solver:
  */
 template<typename Float>
 HOST_DEVICE_FUN void inline prepareSystemFromGuess(const int dimension, Float* Mp, Float* RHS, Float* rates,
-                                                   const ptr_reaction_list&                     reactions,
-                                                   const compute_reaction_rates_functor<Float>& construct_rates_BE,
+                                                   const PtrReactionList&                    reactions,
+                                                   const ComputeReactionRatesFunctor<Float>& construct_rates_BE,
                                                    const Float* Y, const Float T, const Float* Y_guess,
                                                    const Float T_guess, const Float rho, const Float drho_dt,
                                                    const eos_struct<Float>& eos_struct, const Float dt)
@@ -632,8 +632,8 @@ HOST_DEVICE_FUN void inline finalizeSystem(const int dimension, const Float* Y, 
  */
 template<typename Float>
 void inline solveSystemFromGuess(const int dimension, Float* Mp, Float* RHS, Float* DY_T, Float* rates,
-                                 const ptr_reaction_list&                     reactions,
-                                 const compute_reaction_rates_functor<Float>& construct_rates_BE, const Float* Y,
+                                 const PtrReactionList&                    reactions,
+                                 const ComputeReactionRatesFunctor<Float>& construct_rates_BE, const Float* Y,
                                  const Float T, const Float* Y_guess, const Float T_guess, Float* next_Y, Float& next_T,
                                  const Float rho, const Float drho_dt, const eos_struct<Float>& eos_struct,
                                  const Float dt)
@@ -665,8 +665,8 @@ void inline solveSystemFromGuess(const int dimension, Float* Mp, Float* RHS, Flo
  * solves non-iteratively and partialy implicitly the system represented by M
  */
 template<typename Float>
-void inline solveSystem(const int dimension, const ptr_reaction_list& reactions,
-                        const compute_reaction_rates_functor<Float>& construct_rates_BE, const Float* Y, const Float T,
+void inline solveSystem(const int dimension, const PtrReactionList& reactions,
+                        const ComputeReactionRatesFunctor<Float>& construct_rates_BE, const Float* Y, const Float T,
                         Float* next_Y, Float& next_T, const Float cv, const Float rho, const Float value_1,
                         const Float dt)
 {
@@ -690,8 +690,8 @@ Iterative solver:
  */
 template<typename Float>
 HOST_DEVICE_FUN void inline prepareSystemNR(const int dimension, Float* Mp, Float* RHS, Float* rates,
-                                            const ptr_reaction_list&                     reactions,
-                                            const compute_reaction_rates_functor<Float>& construct_rates_BE,
+                                            const PtrReactionList&                    reactions,
+                                            const ComputeReactionRatesFunctor<Float>& construct_rates_BE,
                                             const eos_functor<Float>& eos, const Float* Y, Float T, Float* final_Y,
                                             Float final_T, const Float rho, const Float drho_dt, Float& dt, const int i)
 {
@@ -789,10 +789,10 @@ HOST_DEVICE_FUN bool inline finalizeSystemNR(const int dimension, const Float* Y
  */
 template<typename Float>
 Float inline solveSystemNR(const int dimension, Float* Mp, Float* RHS, Float* DY_T, Float* rates,
-                           const ptr_reaction_list&                     reactions,
-                           const compute_reaction_rates_functor<Float>& construct_rates_BE,
-                           const eos_functor<Float>& eos, const Float* Y, Float T, Float* final_Y, Float& final_T,
-                           const Float rho, const Float drho_dt, Float& dt)
+                           const PtrReactionList&                    reactions,
+                           const ComputeReactionRatesFunctor<Float>& construct_rates_BE, const eos_functor<Float>& eos,
+                           const Float* Y, Float T, Float* final_Y, Float& final_T, const Float rho,
+                           const Float drho_dt, Float& dt)
 {
     // check for non-burning particles
     if (rho < constants::min_rho || T < constants::min_temp)
@@ -824,10 +824,10 @@ Float inline solveSystemNR(const int dimension, Float* Mp, Float* RHS, Float* DY
  * iterative solver
  */
 template<typename Float>
-Float inline solveSystemNR(const int dimension, const ptr_reaction_list& reactions,
-                           const compute_reaction_rates_functor<Float>& construct_rates_BE,
-                           const eos_functor<Float>& eos, const Float* Y, Float T, Float* final_Y, Float& final_T,
-                           const Float rho, const Float drho_dt, Float& dt)
+Float inline solveSystemNR(const int dimension, const PtrReactionList& reactions,
+                           const ComputeReactionRatesFunctor<Float>& construct_rates_BE, const eos_functor<Float>& eos,
+                           const Float* Y, Float T, Float* final_Y, Float& final_T, const Float rho,
+                           const Float drho_dt, Float& dt)
 {
     std::vector<Float>   rates(reactions.size());
     eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
@@ -848,8 +848,8 @@ Substeping solver
  */
 template<typename Float, class nseFunction = void*>
 HOST_DEVICE_FUN void inline prepareSystemSubstep(const int dimension, Float* Mp, Float* RHS, Float* rates,
-                                                 const ptr_reaction_list&                     reactions,
-                                                 const compute_reaction_rates_functor<Float>& construct_rates_BE,
+                                                 const PtrReactionList&                    reactions,
+                                                 const ComputeReactionRatesFunctor<Float>& construct_rates_BE,
                                                  const eos_functor<Float>& eos, const Float* final_Y, Float final_T,
                                                  Float* next_Y, Float& next_T, const Float final_rho,
                                                  const Float drho_dt, const Float dt_tot, Float& elapsed_time,
@@ -929,8 +929,8 @@ HOST_DEVICE_FUN bool inline finalizeSystemSubstep(const int dimension, Float* fi
  */
 template<typename Float, class nseFunction = void*>
 HOST_DEVICE_FUN void inline solveSystemSubstep(const int dimension, Float* Mp, Float* RHS, Float* DY_T, Float* rates,
-                                               const ptr_reaction_list&                     reactions,
-                                               const compute_reaction_rates_functor<Float>& construct_rates_BE,
+                                               const PtrReactionList&                    reactions,
+                                               const ComputeReactionRatesFunctor<Float>& construct_rates_BE,
                                                const eos_functor<Float>& eos, Float* final_Y, Float& final_T,
                                                Float* Y_buffer, const Float final_rho, const Float drho_dt,
                                                Float const dt_tot, Float& dt, const nseFunction jumpToNse = NULL)
@@ -965,8 +965,8 @@ HOST_DEVICE_FUN void inline solveSystemSubstep(const int dimension, Float* Mp, F
  * Superstepping using solveSystemNR
  */
 template<typename Float, class nseFunction = void*>
-void inline solveSystemSubstep(const int dimension, const ptr_reaction_list& reactions,
-                               const compute_reaction_rates_functor<Float>& construct_rates_BE,
+void inline solveSystemSubstep(const int dimension, const PtrReactionList& reactions,
+                               const ComputeReactionRatesFunctor<Float>& construct_rates_BE,
                                const eos_functor<Float>& eos, Float* final_Y, Float& final_T, const Float final_rho,
                                const Float drho_dt, Float const dt_tot, Float& dt, const nseFunction jumpToNse = NULL)
 {
