@@ -115,7 +115,7 @@ struct Reaction
     /*! @brief class representing a product or reactant */
     struct ReactantProduct
     {
-        int species_id, n_consumed = 1;
+        int speciesId, numConsumed = 1;
     };
 
     std::vector<ReactantProduct> reactants, products;
@@ -169,8 +169,8 @@ class ReactionList
 {
 private:
     // pointer to each reaction
-    std::vector<int> reactant_begin = {0};
-    std::vector<int> product_begin  = {};
+    std::vector<int> reactantBegin = {0};
+    std::vector<int> productBegin  = {};
 
     // actual vectors
     std::vector<Reaction::ReactantProduct> ReactantProduct = {};
@@ -191,8 +191,8 @@ public:
         ReactantProduct.insert(ReactantProduct.end(), Reaction.reactants.begin(), Reaction.reactants.end());
         ReactantProduct.insert(ReactantProduct.end(), Reaction.products.begin(), Reaction.products.end());
 
-        product_begin.push_back(reactant_begin.back() + Reaction.reactants.size());
-        reactant_begin.push_back(product_begin.back() + Reaction.products.size());
+        productBegin.push_back(reactantBegin.back() + Reaction.reactants.size());
+        reactantBegin.push_back(productBegin.back() + Reaction.products.size());
     }
 
     /*! @brief access reaction from reacton list */
@@ -200,16 +200,16 @@ public:
     {
         ReactionReference Reaction;
 
-        Reaction.reactants = ReactionReference::VectorReference(ReactantProduct.data() + reactant_begin[i],
-                                                                product_begin[i] - reactant_begin[i]);
-        Reaction.products  = ReactionReference::VectorReference(ReactantProduct.data() + product_begin[i],
-                                                                reactant_begin[i + 1] - product_begin[i]);
+        Reaction.reactants = ReactionReference::VectorReference(ReactantProduct.data() + reactantBegin[i],
+                                                                productBegin[i] - reactantBegin[i]);
+        Reaction.products  = ReactionReference::VectorReference(ReactantProduct.data() + productBegin[i],
+                                                                reactantBegin[i + 1] - productBegin[i]);
 
         return Reaction;
     }
 
     /*! @brief access reaction list size */
-    size_t inline size() const { return product_begin.size(); }
+    size_t inline size() const { return productBegin.size(); }
 };
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -224,9 +224,9 @@ class PtrReactionList
 {
 protected:
     // pointer to each reaction
-    const int *                      reactant_begin, *product_begin;
+    const int *                      reactantBegin, *productBegin;
     const Reaction::ReactantProduct* ReactantProduct;
-    int                              num_reactions;
+    int                              numReactions;
 
     // forward declaration
     friend GPUReactionList;
@@ -237,10 +237,10 @@ public:
     PtrReactionList() {}
     PtrReactionList(ReactionList const& other)
     {
-        num_reactions = other.size();
+        numReactions = other.size();
 
-        reactant_begin  = other.reactant_begin.data();
-        product_begin   = other.product_begin.data();
+        reactantBegin   = other.reactantBegin.data();
+        productBegin    = other.productBegin.data();
         ReactantProduct = other.ReactantProduct.data();
     }
 
@@ -249,16 +249,16 @@ public:
     {
         ReactionReference Reaction;
 
-        Reaction.reactants = ReactionReference::VectorReference(ReactantProduct + reactant_begin[i],
-                                                                product_begin[i] - reactant_begin[i]);
-        Reaction.products  = ReactionReference::VectorReference(ReactantProduct + product_begin[i],
-                                                                reactant_begin[i + 1] - product_begin[i]);
+        Reaction.reactants =
+            ReactionReference::VectorReference(ReactantProduct + reactantBegin[i], productBegin[i] - reactantBegin[i]);
+        Reaction.products = ReactionReference::VectorReference(ReactantProduct + productBegin[i],
+                                                               reactantBegin[i + 1] - productBegin[i]);
 
         return Reaction;
     }
 
     /*! @brief access reaction list size */
-    HOST_DEVICE_FUN size_t inline size() const { return num_reactions; }
+    HOST_DEVICE_FUN size_t inline size() const { return numReactions; }
 };
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -351,8 +351,8 @@ HOST_DEVICE_FUN void inline derivativesFromReactions(const PtrReactionList& reac
     for (int i = 0; i < dimension; ++i)
         dY[i] = 0.;
 
-    const int num_reactions = reactions.size();
-    for (int i = 0; i < num_reactions; ++i)
+    const int numReactions = reactions.size();
+    for (int i = 0; i < numReactions; ++i)
     {
         const auto& Reaction = reactions[i];
         Float       rate     = rates[i];
@@ -400,8 +400,8 @@ HOST_DEVICE_FUN void inline firstOrderDYFromReactions(const PtrReactionList& rea
         for (int j = 0; j < dimension; ++j)
             M[(i + 1) + (dimension + 1) * (j + 1)] = 0.;
 
-    const int num_reactions = reactions.size();
-    for (int i = 0; i < num_reactions; ++i)
+    const int numReactions = reactions.size();
+    for (int i = 0; i < numReactions; ++i)
     {
         const auto& Reaction = reactions[i];
         Float       rate     = rates[i];

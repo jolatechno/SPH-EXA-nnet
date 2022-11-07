@@ -165,13 +165,13 @@ DEVICE_DEFINE(extern double, xfdt[IMAX][JMAX], ;)
 bool inline readCPUTable()
 {
     // read table
-    const std::string helmolt_table = {
+    const std::string helmoltz_table = {
 #include HELM_TABLE_PATH
     };
 
     // read file
     std::stringstream helm_table;
-    helm_table << helmolt_table;
+    helm_table << helmoltz_table;
 
     // read the helmholtz free energy and its derivatives
     for (int i = 0; i < imax; ++i)
@@ -1068,7 +1068,7 @@ private:
     const Float* Z;
     int          dimension;
 #if COMPILE_DEVICE
-    Float* dev_Z;
+    Float* devZ;
 #endif
 
 public:
@@ -1077,8 +1077,8 @@ public:
         , dimension(dimension_)
     {
 #if COMPILE_DEVICE
-        gpuErrchk(cudaMalloc(&dev_Z, dimension * sizeof(Float)));
-        gpuErrchk(cudaMemcpy(dev_Z, Z, dimension * sizeof(Float), cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMalloc(&devZ, dimension * sizeof(Float)));
+        gpuErrchk(cudaMemcpy(devZ, Z, dimension * sizeof(Float), cudaMemcpyHostToDevice));
 #endif
     }
     template<class Vector>
@@ -1116,7 +1116,7 @@ public:
     HOST_DEVICE_FUN ~HelmholtzFunctor()
     {
 #if COMPILE_DEVICE && !DEVICE_CODE
-        cudaFree(dev_Z);
+        cudaFree(devZ);
 #endif
     }
 

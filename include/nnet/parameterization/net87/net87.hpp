@@ -70,7 +70,7 @@ template<typename Float>
 class ComputeReactionRatesFunctor : public nnet::ComputeReactionRatesFunctor<Float>
 {
 private:
-    nnet::net86::ComputeReactionRatesFunctor<Float> net86_computeReactionRates;
+    nnet::net86::ComputeReactionRatesFunctor<Float> net86ComputeReactionRates;
 
 public:
     ComputeReactionRatesFunctor() {}
@@ -114,7 +114,7 @@ public:
 
         Float dUedYe = eos_struct.dudYe;
 
-        net86_computeReactionRates(Y, T, rho, eos_struct, corrected_BE, rates, drates);
+        net86ComputeReactionRates(Y, T, rho, eos_struct, corrected_BE, rates, drates);
 
         /*********************************************/
         /* start computing the binding energy vector */
