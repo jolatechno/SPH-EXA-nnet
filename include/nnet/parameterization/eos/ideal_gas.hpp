@@ -35,16 +35,16 @@
 
 namespace nnet::eos
 {
-namespace ideal_gas_constants
+namespace idealGas::constants
 {
 const static double Kb = 1.380658e-16;
 const static double Na = 6.022137e23;
 const static double R  = 8.317e7;
-} // namespace ideal_gas_constants
+} // namespace idealGas::constants
 
 /*! @brief Ideal gas functor class */
 template<typename Float>
-class IdealGasFunctor : public nnet::eos_functor<Float>
+class IdealGasFunctor : public nnet::EosFunctor<Float>
 {
 private:
     double mu;
@@ -71,7 +71,7 @@ public:
     {
         nnet::eos_struct<Float> res;
 
-        const Float dmy = ideal_gas_constants::R / mu;
+        const Float dmy = idealGas::constants::R / mu;
         res.cv          = 1.5 * dmy;
         res.u           = T * res.cv;
         res.p           = rho * T * dmy;

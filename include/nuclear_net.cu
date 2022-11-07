@@ -24,7 +24,7 @@
  */
 
 /*! @file
- * @brief Initialization of variables, and main nuclear-net cuda library file.
+ * @brief Initialization of variables, and main nuclear-net library file.
  *
  * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
@@ -46,23 +46,26 @@ DEVICE_DEFINE(double, log_temp_ref[N_TEMP], ;)
 DEVICE_DEFINE(double, log_rho_ref[N_RHO], ;)
 DEVICE_DEFINE(double, electron_rate[N_TEMP][N_RHO][N_C], ;)
 
-bool table_read_success = nnet::net87::electrons::constants::readCPUTable();
+bool table_read_success = readCPUTable();
 } // namespace electrons::constants
 ComputeReactionRatesFunctor<double> computeReactionRates;
 } // namespace net87
+
 namespace net86
 {
 bool                                debug = false;
 ComputeReactionRatesFunctor<double> computeReactionRates;
 } // namespace net86
+
 namespace net14
 {
 bool                                debug = false;
 ComputeReactionRatesFunctor<double> computeReactionRates;
 } // namespace net14
-namespace eos
+
+namespace eos::helmholtz
 {
-namespace helmholtz_constants
+namespace constants
 {
 DEVICE_DEFINE(double, d[IMAX], ;)
 DEVICE_DEFINE(double, dd_sav[IMAX - 1], ;)
@@ -103,8 +106,8 @@ DEVICE_DEFINE(double, xfd[IMAX][JMAX], ;)
 DEVICE_DEFINE(double, xft[IMAX][JMAX], ;)
 DEVICE_DEFINE(double, xfdt[IMAX][JMAX], ;)
 
-bool table_read_success = nnet::eos::helmholtz_constants::readCPUTable();
-} // namespace helmholtz_constants
+bool table_read_success = readCPUTable();
+} // namespace constants
 bool debug = false;
-} // namespace eos
+} // namespace eos::helmholtz
 } // namespace nnet

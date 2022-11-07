@@ -56,7 +56,7 @@
 #define CUDA_NUM_THREAD_PER_BLOCK_NNET CUDA_NUM_THREAD_PER_BLOCK
 #endif
 
-namespace nnet::parallel_nnet
+namespace nnet::parallel
 {
 namespace constants
 {
@@ -72,10 +72,10 @@ extern void cudaComputeNuclearReactions(const size_t n_particles, const int dime
                                         Float* temp_, Float* dt_, const Float hydro_dt, const Float previous_dt,
                                         const nnet::GPUReactionList&                    reactions,
                                         const nnet::ComputeReactionRatesFunctor<Float>& construct_rates_BE,
-                                        const nnet::eos_functor<Float>& eos, bool use_drhodt);
+                                        const nnet::EosFunctor<Float>& eos, bool use_drhodt);
 
 template<typename Float>
 extern void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const Float* Z, const Float* temp_,
                                  const Float* rho_, Float* const* Y_, Float* u, Float* cv, Float* p, Float* c,
                                  Float* dpdT);
-} // namespace nnet::parallel_nnet
+} // namespace nnet::parallel

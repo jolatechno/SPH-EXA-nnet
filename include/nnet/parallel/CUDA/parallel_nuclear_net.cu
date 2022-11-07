@@ -31,7 +31,7 @@
 
 #include "parallel_nuclear_net.cuh"
 
-namespace nnet::parallel_nnet
+namespace nnet::parallel
 {
 /***********************************************/
 /* code to compute nuclear reaction on the GPU */
@@ -47,7 +47,7 @@ __global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, cons
                                                   const Float hydro_dt, const Float previous_dt,
                                                   const nnet::GPUReactionList*                    reactions,
                                                   const nnet::ComputeReactionRatesFunctor<Float>& construct_rates_BE,
-                                                  const nnet::eos_functor<Float>& eos, bool use_drhodt)
+                                                  const nnet::EosFunctor<Float>& eos, bool use_drhodt)
 {
     size_t thread = blockIdx.x * blockDim.x + threadIdx.x;
     if (thread < n_particles)
@@ -116,7 +116,7 @@ void cudaComputeNuclearReactions(const size_t n_particles, const int dimension, 
                                  Float* rho_, Float* rho_m1_, Float** Y_, Float* temp_, Float* dt_,
                                  const Float hydro_dt, const Float previous_dt, const nnet::GPUReactionList& reactions,
                                  const nnet::ComputeReactionRatesFunctor<Float>& construct_rates_BE,
-                                 const nnet::eos_functor<Float>& eos, bool use_drhodt)
+                                 const nnet::EosFunctor<Float>& eos, bool use_drhodt)
 {
     // copy classes to gpu
     nnet::GPUReactionList* dev_reactions;
@@ -166,11 +166,11 @@ template void cudaComputeNuclearReactions(const unsigned long, const int, thrust
                                           double*, double**, double*, double*, const double, const double,
                                           nnet::GPUReactionList const&,
                                           nnet::ComputeReactionRatesFunctor<double> const&,
-                                          nnet::eos_functor<double> const&, bool);
+                                          nnet::EosFunctor<double> const&, bool);
 template void cudaComputeNuclearReactions(const unsigned long, const int, thrust::device_vector<float>&, float*, float*,
                                           float**, float*, float*, const float, const float,
                                           nnet::GPUReactionList const&, nnet::ComputeReactionRatesFunctor<float> const&,
-                                          nnet::eos_functor<float> const&, bool);
+                                          nnet::EosFunctor<float> const&, bool);
 
 /************************************************************/
 /* code to compute helmholtz equation of a state on the GPU */
@@ -197,7 +197,7 @@ __global__ void cudaKernelComputeHelmholtz(const size_t n_particles, const int d
         }
 
         // actually compute helmholtz eos
-        auto eos_struct = nnet::eos::helmholtz(abar, zbar, temp_[thread], rho_[thread]);
+        auto eos_struct = nnet::eos::helmholtz::helmholtzEos(abar, zbar, temp_[thread], rho_[thread]);
 
         // copy results to buffers
         u[thread]    = eos_struct.u;
@@ -232,4 +232,4 @@ template void cudaComputeHelmholtz(const size_t n_particles, const int dimension
 template void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const float* Z, const float* temp_,
                                    const float* rho_, float* const* Y_, float* u, float* cv, float* p, float* c,
                                    float* dpdT);
-} // namespace nnet::parallel_nnet
+} // namespace nnet::parallel

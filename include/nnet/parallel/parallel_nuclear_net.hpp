@@ -57,7 +57,7 @@
 
 #include "nnet/parameterization/eos/helmholtz.hpp"
 
-namespace nnet::parallel_nnet
+namespace nnet::parallel
 {
 /*! @brief function to compute nuclear reaction, either from NuclearData or ParticuleData if it includes Y
  *
@@ -86,7 +86,7 @@ template<bool use_gpu, class Data, typename Float, class nseFunction = void*>
 void computeNuclearReactions(Data& n, size_t firstIndex, size_t lastIndex, const Float hydro_dt,
                              const Float previous_dt, const nnet::ReactionList& reactions,
                              const nnet::ComputeReactionRatesFunctor<Float>& construct_rates_BE,
-                             const nnet::eos_functor<Float>& eos, bool use_drhodt, const nseFunction jumpToNse = NULL)
+                             const nnet::EosFunctor<Float>& eos, bool use_drhodt, const nseFunction jumpToNse = NULL)
 {
     const size_t n_particles = n.temp.size();
     const int    dimension   = n.numSpecies;
@@ -279,7 +279,7 @@ void computeHelmEOS(Data& n, size_t firstIndex, size_t lastIndex, const Vector& 
             double abar = std::accumulate(Y.data(), Y.data() + dimension, (double)0.);
             double zbar = eigen::dot(Y.data(), Y.data() + dimension, Z);
 
-            auto eos_struct = nnet::eos::helmholtz(abar, zbar, n.temp[i], n.rho[i]);
+            auto eos_struct = nnet::eos::helmholtz::helmholtzEos(abar, zbar, n.temp[i], n.rho[i]);
 
             n.u[i]    = eos_struct.u;
             n.cv[i]   = eos_struct.cv;
@@ -289,4 +289,4 @@ void computeHelmEOS(Data& n, size_t firstIndex, size_t lastIndex, const Vector& 
         }
     }
 }
-} // namespace nnet::parallel_nnet
+} // namespace nnet::parallel

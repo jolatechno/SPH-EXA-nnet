@@ -460,7 +460,7 @@ struct eos_struct
 
 //! @brief functor interface to compute EOS
 template<typename Float>
-class eos_functor
+class EosFunctor
 {
 public:
     /*! @brief Computes EOS.
@@ -692,7 +692,7 @@ template<typename Float>
 HOST_DEVICE_FUN void inline prepareSystemNR(const int dimension, Float* Mp, Float* RHS, Float* rates,
                                             const PtrReactionList&                    reactions,
                                             const ComputeReactionRatesFunctor<Float>& construct_rates_BE,
-                                            const eos_functor<Float>& eos, const Float* Y, Float T, Float* final_Y,
+                                            const EosFunctor<Float>& eos, const Float* Y, Float T, Float* final_Y,
                                             Float final_T, const Float rho, const Float drho_dt, Float& dt, const int i)
 {
     // copy if first iteration
@@ -790,7 +790,7 @@ HOST_DEVICE_FUN bool inline finalizeSystemNR(const int dimension, const Float* Y
 template<typename Float>
 Float inline solveSystemNR(const int dimension, Float* Mp, Float* RHS, Float* DY_T, Float* rates,
                            const PtrReactionList&                    reactions,
-                           const ComputeReactionRatesFunctor<Float>& construct_rates_BE, const eos_functor<Float>& eos,
+                           const ComputeReactionRatesFunctor<Float>& construct_rates_BE, const EosFunctor<Float>& eos,
                            const Float* Y, Float T, Float* final_Y, Float& final_T, const Float rho,
                            const Float drho_dt, Float& dt)
 {
@@ -825,7 +825,7 @@ Float inline solveSystemNR(const int dimension, Float* Mp, Float* RHS, Float* DY
  */
 template<typename Float>
 Float inline solveSystemNR(const int dimension, const PtrReactionList& reactions,
-                           const ComputeReactionRatesFunctor<Float>& construct_rates_BE, const eos_functor<Float>& eos,
+                           const ComputeReactionRatesFunctor<Float>& construct_rates_BE, const EosFunctor<Float>& eos,
                            const Float* Y, Float T, Float* final_Y, Float& final_T, const Float rho,
                            const Float drho_dt, Float& dt)
 {
@@ -850,7 +850,7 @@ template<typename Float, class nseFunction = void*>
 HOST_DEVICE_FUN void inline prepareSystemSubstep(const int dimension, Float* Mp, Float* RHS, Float* rates,
                                                  const PtrReactionList&                    reactions,
                                                  const ComputeReactionRatesFunctor<Float>& construct_rates_BE,
-                                                 const eos_functor<Float>& eos, const Float* final_Y, Float final_T,
+                                                 const EosFunctor<Float>& eos, const Float* final_Y, Float final_T,
                                                  Float* next_Y, Float& next_T, const Float final_rho,
                                                  const Float drho_dt, const Float dt_tot, Float& elapsed_time,
                                                  Float& dt, const int i, const nseFunction jumpToNse = NULL)
@@ -931,7 +931,7 @@ template<typename Float, class nseFunction = void*>
 HOST_DEVICE_FUN void inline solveSystemSubstep(const int dimension, Float* Mp, Float* RHS, Float* DY_T, Float* rates,
                                                const PtrReactionList&                    reactions,
                                                const ComputeReactionRatesFunctor<Float>& construct_rates_BE,
-                                               const eos_functor<Float>& eos, Float* final_Y, Float& final_T,
+                                               const EosFunctor<Float>& eos, Float* final_Y, Float& final_T,
                                                Float* Y_buffer, const Float final_rho, const Float drho_dt,
                                                Float const dt_tot, Float& dt, const nseFunction jumpToNse = NULL)
 {
@@ -967,7 +967,7 @@ HOST_DEVICE_FUN void inline solveSystemSubstep(const int dimension, Float* Mp, F
 template<typename Float, class nseFunction = void*>
 void inline solveSystemSubstep(const int dimension, const PtrReactionList& reactions,
                                const ComputeReactionRatesFunctor<Float>& construct_rates_BE,
-                               const eos_functor<Float>& eos, Float* final_Y, Float& final_T, const Float final_rho,
+                               const EosFunctor<Float>& eos, Float* final_Y, Float& final_T, const Float final_rho,
                                const Float drho_dt, Float const dt_tot, Float& dt, const nseFunction jumpToNse = NULL)
 {
     std::vector<Float>   rates(reactions.size());
