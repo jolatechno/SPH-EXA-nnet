@@ -101,11 +101,11 @@ int main(int argc, char* argv[])
         X[i] = 0;
     if (test_case == "C-O-burning")
     {
-        X[nnet::net86::constants::net14_species_order[1]] = 0.5;
-        X[nnet::net86::constants::net14_species_order[2]] = 0.5;
+        X[nnet::net86::constants::net14SpeciesOrder[1]] = 0.5;
+        X[nnet::net86::constants::net14SpeciesOrder[2]] = 0.5;
     }
-    else if (test_case == "He-burning") { X[nnet::net86::constants::net14_species_order[0]] = 1; }
-    else if (test_case == "Si-burning") { X[nnet::net86::constants::net14_species_order[5]] = 1; }
+    else if (test_case == "He-burning") { X[nnet::net86::constants::net14SpeciesOrder[0]] = 1; }
+    else if (test_case == "Si-burning") { X[nnet::net86::constants::net14SpeciesOrder[5]] = 1; }
     else
     {
         printHelp(argv[0]);
@@ -128,12 +128,12 @@ int main(int argc, char* argv[])
         std::cerr << "\"t\",\"dt\",,\"T\",";
         if (save_res_net14)
         {
-            for (auto name : nnet::net14::constants::species_names)
+            for (auto name : nnet::net14::constants::speciesNames)
                 std::cerr << ",\"x(" << name << ")\"";
         }
         else
         {
-            for (auto name : nnet::net86::constants::species_names)
+            for (auto name : nnet::net86::constants::speciesNames)
                 std::cerr << ",\"x(" << name << ")\"";
         }
         std::cerr << ",,\"Dm/m\"\n";
@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    double t = 0, dt = nnet::constants::initial_dt;
+    double t = 0, dt = nnet::constants::initialDt;
     for (int i = 1; i <= n_max; ++i)
     {
         if (t >= t_max) break;
@@ -178,12 +178,12 @@ int main(int argc, char* argv[])
                 std::cerr << t << "," << dt << ",," << T << ",,";
                 if (save_res_net14)
                 {
-                    for (auto idx : nnet::net86::constants::net14_species_order)
+                    for (auto idx : nnet::net86::constants::net14SpeciesOrder)
                         std::cerr << X[idx] << ", ";
                 }
                 else
                     for (int i = 0; i < 86; ++i)
-                        std::cerr << X[nnet::net86::constants::species_order[i]] << ", ";
+                        std::cerr << X[nnet::net86::constants::speciesOrder[i]] << ", ";
                 std::cerr << "," << dm_m << "\n";
             }
 
@@ -199,17 +199,17 @@ int main(int argc, char* argv[])
                 if (debug_net86)
                 {
                     for (int i = 0; i < 86; ++i)
-                        std::cout << X[nnet::net86::constants::species_order[i]] << ", ";
+                        std::cout << X[nnet::net86::constants::speciesOrder[i]] << ", ";
                 }
                 else
                 {
-                    /*for (auto idx : nnet::net86::constants::net14_species_order)
+                    /*for (auto idx : nnet::net86::constants::net14SpeciesOrder)
                         std::cout << X[idx] << ", ";*/
 
                     for (int i = 0; i < 14; ++i)
                     {
                         double x = 0;
-                        for (auto idx : nnet::net86::constants::net14_accumulated_species_order[i])
+                        for (auto idx : nnet::net86::constants::net14AccumulatedSpeciesOrder[i])
                             x += X[idx];
                         std::cout << x << ", ";
                     }

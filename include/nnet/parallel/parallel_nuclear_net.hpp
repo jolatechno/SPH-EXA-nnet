@@ -170,7 +170,7 @@ void computeNuclearReactions(Data& n, size_t firstIndex, size_t lastIndex, const
 
 #pragma omp parallel for firstprivate(Y, Mp, RHS, DY_T, rates, Y_buffer) schedule(dynamic, omp_batch_size)
         for (size_t i = firstIndex; i < lastIndex; ++i)
-            if (n.rho[i] > nnet::constants::min_rho && n.temp[i] > nnet::constants::min_temp)
+            if (n.rho[i] > nnet::constants::minRho && n.temp[i] > nnet::constants::minTemp)
             {
                 // copy to local vector
                 for (int j = 0; j < dimension; ++j)

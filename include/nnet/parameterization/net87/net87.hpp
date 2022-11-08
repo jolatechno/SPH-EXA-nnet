@@ -50,7 +50,7 @@ namespace nnet::net87
 namespace constants = nnet::net86::constants;
 
 /*! @brief constant mass-excendent values */
-DEVICE_DEFINE(inline static const std::array<double COMMA 87>, BE, = {BE_NET86 COMMA 0.782 * constants::Mev_to_erg};)
+DEVICE_DEFINE(inline static const std::array<double COMMA 87>, BE, = {BE_NET86 COMMA 0.782 * constants::MevToErg};)
 
 /*! @brief constant list of ordered reaction */
 inline static const nnet::ReactionList reactionList = []()

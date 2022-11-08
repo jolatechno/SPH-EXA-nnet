@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
     if (n_save > 0)
     {
         std::cerr << "\"t\",\"dt\",,\"T\",,";
-        for (auto name : nnet::net14::constants::species_names)
+        for (auto name : nnet::net14::constants::speciesNames)
             std::cerr << "\"x(" << name << ")\",";
         std::cerr << ",\"Dm/m\"\n";
     }
@@ -130,7 +130,7 @@ int main(int argc, char* argv[])
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    double t = 0, dt = nnet::constants::initial_dt;
+    double t = 0, dt = nnet::constants::initialDt;
     for (int i = 1; i <= n_max; ++i)
     {
         if (t >= t_max) break;

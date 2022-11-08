@@ -52,8 +52,8 @@ int main()
     std::array<double, 87> Y, X;
     for (int i = 0; i < 87; ++i)
         X[i] = 0;
-    X[nnet::net87::constants::net14_species_order[1]] = 0.5;
-    X[nnet::net87::constants::net14_species_order[2]] = 0.5;
+    X[nnet::net87::constants::net14SpeciesOrder[1]] = 0.5;
+    X[nnet::net87::constants::net14SpeciesOrder[2]] = 0.5;
     for (int i = 0; i < 86; ++i)
         Y[i] = X[i] / nnet::net87::constants::A[i];
     Y[86] = 1;
@@ -64,7 +64,7 @@ int main()
 
     std::cout << "net14 <-> net87:\n";
     for (int i = 0; i < 14; ++i)
-        std::cout << i << " <-> " << nnet::net87::constants::net14_species_order[i] << ", ";
+        std::cout << i << " <-> " << nnet::net87::constants::net14SpeciesOrder[i] << ", ";
     std::cout << "\n\n";
 
     int num_special_reactions = 5, num_reactions = 157 - 5, num_reverse = 157 - 5;

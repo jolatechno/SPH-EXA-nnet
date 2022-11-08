@@ -45,48 +45,35 @@
 #include "net86_constants.hpp"
 
 #define BE_NET86                                                                                                       \
-    0 COMMA 0 COMMA 28.2970 * constants::Mev_to_erg COMMA 92.1631 * constants::Mev_to_erg COMMA 127.621 *              \
-        constants::Mev_to_erg COMMA 160.651 * constants::Mev_to_erg COMMA 163.082 *                                    \
-        constants::Mev_to_erg COMMA 198.263 * constants::Mev_to_erg COMMA 181.731 *                                    \
-        constants::Mev_to_erg COMMA 167.412 * constants::Mev_to_erg COMMA 186.570 *                                    \
-        constants::Mev_to_erg COMMA 168.584 * constants::Mev_to_erg COMMA 174.152 *                                    \
-        constants::Mev_to_erg COMMA 177.776 * constants::Mev_to_erg COMMA 200.534 *                                    \
-        constants::Mev_to_erg COMMA 236.543 * constants::Mev_to_erg COMMA 219.364 *                                    \
-        constants::Mev_to_erg COMMA 205.594 * constants::Mev_to_erg COMMA 224.958 *                                    \
-        constants::Mev_to_erg COMMA 206.052 * constants::Mev_to_erg COMMA 211.901 *                                    \
-        constants::Mev_to_erg COMMA 216.687 * constants::Mev_to_erg COMMA 239.291 *                                    \
-        constants::Mev_to_erg COMMA 271.786 * constants::Mev_to_erg COMMA 256.744 *                                    \
-        constants::Mev_to_erg COMMA 245.017 * constants::Mev_to_erg COMMA 262.924 *                                    \
-        constants::Mev_to_erg COMMA 243.691 * constants::Mev_to_erg COMMA 250.612 *                                    \
-        constants::Mev_to_erg COMMA 255.626 * constants::Mev_to_erg COMMA 274.063 *                                    \
-        constants::Mev_to_erg COMMA 306.722 * constants::Mev_to_erg COMMA 291.468 *                                    \
-        constants::Mev_to_erg COMMA 280.428 * constants::Mev_to_erg COMMA 298.215 *                                    \
-        constants::Mev_to_erg COMMA 278.727 * constants::Mev_to_erg COMMA 285.570 *                                    \
-        constants::Mev_to_erg COMMA 291.845 * constants::Mev_to_erg COMMA 308.580 *                                    \
-        constants::Mev_to_erg COMMA 342.059 * constants::Mev_to_erg COMMA 326.418 *                                    \
-        constants::Mev_to_erg COMMA 315.511 * constants::Mev_to_erg COMMA 333.730 *                                    \
-        constants::Mev_to_erg COMMA 313.129 * constants::Mev_to_erg COMMA 320.654 *                                    \
-        constants::Mev_to_erg COMMA 327.349 * constants::Mev_to_erg COMMA 343.144 *                                    \
-        constants::Mev_to_erg COMMA 375.482 * constants::Mev_to_erg COMMA 359.183 *                                    \
-        constants::Mev_to_erg COMMA 350.422 * constants::Mev_to_erg COMMA 366.832 *                                    \
-        constants::Mev_to_erg COMMA 346.912 * constants::Mev_to_erg COMMA 354.694 *                                    \
-        constants::Mev_to_erg COMMA 361.903 * constants::Mev_to_erg COMMA 377.096 *                                    \
-        constants::Mev_to_erg COMMA 411.469 * constants::Mev_to_erg COMMA 395.135 *                                    \
-        constants::Mev_to_erg COMMA 385.012 * constants::Mev_to_erg COMMA 403.369 *                                    \
-        constants::Mev_to_erg COMMA 381.982 * constants::Mev_to_erg COMMA 390.368 *                                    \
-        constants::Mev_to_erg COMMA 398.202 * constants::Mev_to_erg COMMA 413.553 *                                    \
-        constants::Mev_to_erg COMMA 447.703 * constants::Mev_to_erg COMMA 431.520 *                                    \
-        constants::Mev_to_erg COMMA 422.051 * constants::Mev_to_erg COMMA 440.323 *                                    \
-        constants::Mev_to_erg COMMA 417.703 * constants::Mev_to_erg COMMA 426.636 *                                    \
-        constants::Mev_to_erg COMMA 435.051 * constants::Mev_to_erg COMMA 449.302 *                                    \
-        constants::Mev_to_erg COMMA 483.994 * constants::Mev_to_erg COMMA 467.353 *                                    \
-        constants::Mev_to_erg COMMA 458.387 * constants::Mev_to_erg COMMA 476.830 *                                    \
-        constants::Mev_to_erg COMMA 453.158 * constants::Mev_to_erg COMMA 462.740 *                                    \
-        constants::Mev_to_erg COMMA 471.765 * constants::Mev_to_erg COMMA 484.689 *                                    \
-        constants::Mev_to_erg COMMA 514.999 * constants::Mev_to_erg COMMA 500.002 *                                    \
-        constants::Mev_to_erg COMMA 494.241 * constants::Mev_to_erg COMMA 509.878 *                                    \
-        constants::Mev_to_erg COMMA 486.966 * constants::Mev_to_erg COMMA 497.115 *                                    \
-        constants::Mev_to_erg                                       COMMA 506.460 * constants::Mev_to_erg
+    0 COMMA 0 COMMA 28.2970 * constants::MevToErg COMMA 92.1631 * constants::MevToErg COMMA 127.621 *                  \
+        constants::MevToErg COMMA 160.651 * constants::MevToErg COMMA 163.082 * constants::MevToErg COMMA 198.263 *    \
+        constants::MevToErg COMMA 181.731 * constants::MevToErg COMMA 167.412 * constants::MevToErg COMMA 186.570 *    \
+        constants::MevToErg COMMA 168.584 * constants::MevToErg COMMA 174.152 * constants::MevToErg COMMA 177.776 *    \
+        constants::MevToErg COMMA 200.534 * constants::MevToErg COMMA 236.543 * constants::MevToErg COMMA 219.364 *    \
+        constants::MevToErg COMMA 205.594 * constants::MevToErg COMMA 224.958 * constants::MevToErg COMMA 206.052 *    \
+        constants::MevToErg COMMA 211.901 * constants::MevToErg COMMA 216.687 * constants::MevToErg COMMA 239.291 *    \
+        constants::MevToErg COMMA 271.786 * constants::MevToErg COMMA 256.744 * constants::MevToErg COMMA 245.017 *    \
+        constants::MevToErg COMMA 262.924 * constants::MevToErg COMMA 243.691 * constants::MevToErg COMMA 250.612 *    \
+        constants::MevToErg COMMA 255.626 * constants::MevToErg COMMA 274.063 * constants::MevToErg COMMA 306.722 *    \
+        constants::MevToErg COMMA 291.468 * constants::MevToErg COMMA 280.428 * constants::MevToErg COMMA 298.215 *    \
+        constants::MevToErg COMMA 278.727 * constants::MevToErg COMMA 285.570 * constants::MevToErg COMMA 291.845 *    \
+        constants::MevToErg COMMA 308.580 * constants::MevToErg COMMA 342.059 * constants::MevToErg COMMA 326.418 *    \
+        constants::MevToErg COMMA 315.511 * constants::MevToErg COMMA 333.730 * constants::MevToErg COMMA 313.129 *    \
+        constants::MevToErg COMMA 320.654 * constants::MevToErg COMMA 327.349 * constants::MevToErg COMMA 343.144 *    \
+        constants::MevToErg COMMA 375.482 * constants::MevToErg COMMA 359.183 * constants::MevToErg COMMA 350.422 *    \
+        constants::MevToErg COMMA 366.832 * constants::MevToErg COMMA 346.912 * constants::MevToErg COMMA 354.694 *    \
+        constants::MevToErg COMMA 361.903 * constants::MevToErg COMMA 377.096 * constants::MevToErg COMMA 411.469 *    \
+        constants::MevToErg COMMA 395.135 * constants::MevToErg COMMA 385.012 * constants::MevToErg COMMA 403.369 *    \
+        constants::MevToErg COMMA 381.982 * constants::MevToErg COMMA 390.368 * constants::MevToErg COMMA 398.202 *    \
+        constants::MevToErg COMMA 413.553 * constants::MevToErg COMMA 447.703 * constants::MevToErg COMMA 431.520 *    \
+        constants::MevToErg COMMA 422.051 * constants::MevToErg COMMA 440.323 * constants::MevToErg COMMA 417.703 *    \
+        constants::MevToErg COMMA 426.636 * constants::MevToErg COMMA 435.051 * constants::MevToErg COMMA 449.302 *    \
+        constants::MevToErg COMMA 483.994 * constants::MevToErg COMMA 467.353 * constants::MevToErg COMMA 458.387 *    \
+        constants::MevToErg COMMA 476.830 * constants::MevToErg COMMA 453.158 * constants::MevToErg COMMA 462.740 *    \
+        constants::MevToErg COMMA 471.765 * constants::MevToErg COMMA 484.689 * constants::MevToErg COMMA 514.999 *    \
+        constants::MevToErg COMMA 500.002 * constants::MevToErg COMMA 494.241 * constants::MevToErg COMMA 509.878 *    \
+        constants::MevToErg COMMA 486.966 * constants::MevToErg COMMA 497.115 * constants::MevToErg COMMA 506.460 *    \
+        constants::MevToErg
 
 namespace nnet::net86
 {

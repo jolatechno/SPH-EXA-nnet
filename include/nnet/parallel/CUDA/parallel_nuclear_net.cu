@@ -132,8 +132,7 @@ void cudaComputeNuclearReactions(const size_t n_particles, const int dimension, 
     gpuErrchk(cudaMemcpy(dev_eos, &eos, sizeof(func_eos), cudaMemcpyHostToDevice));
 
     // compute chunk sizes
-    int cuda_num_blocks =
-        (n_particles + constants::cuda_num_thread_per_block_nnet - 1) / constants::cuda_num_thread_per_block_nnet;
+    int cudaNumBlocks = (n_particles + constants::cudaNumThreadPerBlockNnet - 1) / constants::cudaNumThreadPerBlockNnet;
 
     // buffer sizes
     const size_t Y_size        = dimension;
@@ -147,7 +146,7 @@ void cudaComputeNuclearReactions(const size_t n_particles, const int dimension, 
     if (buffer.size() < buffer_size) buffer.resize(buffer_size);
 
     // launch kernel
-    cudaKernelComputeNuclearReactions<<<cuda_num_blocks, constants::cuda_num_thread_per_block_nnet>>>(
+    cudaKernelComputeNuclearReactions<<<cudaNumBlocks, constants::cudaNumThreadPerBlockNnet>>>(
         n_particles, dimension, (Float*)thrust::raw_pointer_cast(buffer.data()), rho_, rho_m1_, Y_, temp_, dt_,
         hydro_dt, previous_dt, dev_reactions, dev_construct_rates_BE, dev_eos, use_drhodt);
 
@@ -217,12 +216,11 @@ void cudaComputeHelmholtz(const size_t n_particles, const int dimension, const F
                           const Float* rho_, Float* const* Y_, Float* u, Float* cv, Float* p, Float* c, Float* dpdT)
 {
     // compute chunk sizes
-    int cuda_num_blocks =
-        (n_particles + constants::cuda_num_thread_per_block - 1) / constants::cuda_num_thread_per_block;
+    int cudaNumBlocks = (n_particles + constants::cudaNumThreadPerBlock - 1) / constants::cudaNumThreadPerBlock;
 
     // launch kernel
-    cudaKernelComputeHelmholtz<<<cuda_num_blocks, constants::cuda_num_thread_per_block>>>(
-        n_particles, dimension, Z, temp_, rho_, Y_, u, cv, p, c, dpdT);
+    cudaKernelComputeHelmholtz<<<cudaNumBlocks, constants::cudaNumThreadPerBlock>>>(n_particles, dimension, Z, temp_,
+                                                                                    rho_, Y_, u, cv, p, c, dpdT);
 }
 
 // used templates:

@@ -61,9 +61,9 @@ namespace nnet::parallel
 namespace constants
 {
 //! number of thread per cuda thread block for nuclear network
-const int cuda_num_thread_per_block_nnet = CUDA_NUM_THREAD_PER_BLOCK_NNET;
+const int cudaNumThreadPerBlockNnet = CUDA_NUM_THREAD_PER_BLOCK_NNET;
 //! number of thread per cuda thread block
-const int cuda_num_thread_per_block = CUDA_NUM_THREAD_PER_BLOCK;
+const int cudaNumThreadPerBlock = CUDA_NUM_THREAD_PER_BLOCK;
 } // namespace constants
 
 template<typename Float>

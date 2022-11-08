@@ -43,13 +43,11 @@
 #include "nnet/nuclear_net.hpp"
 
 #define BE_NET14                                                                                                       \
-    28.2970 * constants::Mev_to_erg COMMA 92.1631 * constants::Mev_to_erg COMMA 127.621 *                              \
-        constants::Mev_to_erg COMMA 160.652 * constants::Mev_to_erg COMMA 198.259 *                                    \
-        constants::Mev_to_erg COMMA 236.539 * constants::Mev_to_erg COMMA 271.784 *                                    \
-        constants::Mev_to_erg COMMA 306.719 * constants::Mev_to_erg COMMA 342.056 *                                    \
-        constants::Mev_to_erg COMMA 375.479 * constants::Mev_to_erg COMMA 411.470 *                                    \
-        constants::Mev_to_erg COMMA 447.704 * constants::Mev_to_erg COMMA 483.995 *                                    \
-        constants::Mev_to_erg                                       COMMA 526.850 * constants::Mev_to_erg
+    28.2970 * constants::MevToErg COMMA 92.1631 * constants::MevToErg COMMA 127.621 *                                  \
+        constants::MevToErg COMMA 160.652 * constants::MevToErg COMMA 198.259 * constants::MevToErg COMMA 236.539 *    \
+        constants::MevToErg COMMA 271.784 * constants::MevToErg COMMA 306.719 * constants::MevToErg COMMA 342.056 *    \
+        constants::MevToErg COMMA 375.479 * constants::MevToErg COMMA 411.470 * constants::MevToErg COMMA 447.704 *    \
+        constants::MevToErg COMMA 483.995 * constants::MevToErg COMMA 526.850 * constants::MevToErg
 
 namespace nnet::net14
 {

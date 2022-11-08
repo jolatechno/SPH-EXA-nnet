@@ -48,60 +48,60 @@ constants :
 namespace constants
 {
 //! initial nuclear timestep
-const double initial_dt = 1e-5;
+const double initialDt = 1e-5;
 
 //! theta for the implicit method
 const double theta = 0.8;
 
 //! minimum temperature at which we compute the nuclear network
-const double min_temp = 1e8;
+const double minTemp = 1e8;
 //! minimum density at which we compute the nuclear network
-const double min_rho = 1e5;
+const double minRho = 1e5;
 
 //! maximum timestep
-const double max_dt = 1e-2;
+const double maxDt = 1e-2;
 //! maximum timestep evolution
-const double max_dt_step = 2;
+const double maxDtStep = 2;
 //! maximum negative timestep evolution
-const double min_dt_step = 1e-2;
+const double minDtStep = 1e-2;
 //! timestep jump when a nan is in the solution
-const double nan_dt_step = 2e-1;
+const double nanDtStep = 2e-1;
 
 //! relative temperature variation target of the implicit solver
-const double dT_T_target = 4e-3;
+const double dTOverTempTarget = 4e-3;
 //! relative temperature variation tolerance of the implicit solver
-const double dT_T_tol = 4;
+const double dToverTempTol = 4;
 
 //! the value that is considered null inside a system
-const double epsilon_system = 1e-40;
+const double epsilonSystem = 1e-40;
 //! the value that is considered null inside a state
-const double epsilon_vector = 1e-16;
+const double epsilonVector = 1e-16;
 
 namespace NR
 {
 //! maximum timestep
-const double max_dt = 1e-2;
+const double maxDt = 1e-2;
 
 //! relative temperature variation target of the implicit solver
-const double dT_T_target = 1e-2;
+const double dTOverTempTarget = 1e-2;
 //! relative temperature variation tolerance of the implicit solver
-const double dT_T_tol = 4;
+const double dTOverTempTol = 4;
 
 //! minimum number of newton raphson iterations
-const int min_it = 1;
+const int minIt = 1;
 //! maximum number of newton raphson iterations
-const int max_it = 11;
+const int maxIt = 11;
 //! tolerance for the correction to break out of the newton raphson loop
-const double it_tol = 1e-7;
+const double itTol = 1e-7;
 } // namespace NR
 
 namespace substep
 {
 //! timestep tolerance for substepping
-const double dt_tol = 1e-6;
+const double dtTol = 1e-6;
 
 //! ratio of the nuclear timestep and "super timestep" to jump to NSE
-const double dt_nse_tol = 0; // 1e-8; // !!!! useless for now
+const double dtNseTol = 0; // 1e-8; // !!!! useless for now
 } // namespace substep
 } // namespace constants
 
@@ -416,7 +416,7 @@ HOST_DEVICE_FUN void inline firstOrderDYFromReactions(const PtrReactionList& rea
             rate *= std::pow(Y[reactant_id] * rho, n_reactant_consumed - 1);
         }
 
-        if (rate > constants::epsilon_system)
+        if (rate > constants::epsilonSystem)
             for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants)
             {
                 // compute rate
@@ -638,7 +638,7 @@ void inline solveSystemFromGuess(const int dimension, Float* Mp, Float* RHS, Flo
                                  const Float rho, const Float drho_dt, const eos_struct<Float>& eos_struct,
                                  const Float dt)
 {
-    if (rho < constants::min_rho || T < constants::min_temp)
+    if (rho < constants::minRho || T < constants::minTemp)
     {
         for (int i = 0; i < dimension; ++i)
             next_Y[i] = Y[i];
@@ -651,7 +651,7 @@ void inline solveSystemFromGuess(const int dimension, Float* Mp, Float* RHS, Flo
                                rho, drho_dt, eos_struct, dt);
 
         // solve M*D{T, Y} = RHS
-        eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilon_system);
+        eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilonSystem);
 
         // finalize
         return finalizeSystem(dimension, Y, T, next_Y, next_T, DY_T);
@@ -732,7 +732,7 @@ HOST_DEVICE_FUN bool inline finalizeSystemNR(const int dimension, const Float* Y
     if (util::containsNan(final_T, final_Y, dimension) || final_T < 0)
     {
         // set timestep
-        dt *= constants::nan_dt_step;
+        dt *= constants::nanDtStep;
 
         // jump back
         i       = 0;
@@ -742,10 +742,10 @@ HOST_DEVICE_FUN bool inline finalizeSystemNR(const int dimension, const Float* Y
 
     // break condition
     Float dT_T = std::abs((final_T - T) / final_T);
-    if (i >= constants::NR::min_it && dT_T > constants::NR::dT_T_target * constants::NR::dT_T_tol)
+    if (i >= constants::NR::minIt && dT_T > constants::NR::dTOverTempTarget * constants::NR::dTOverTempTol)
     {
         // set timestep
-        dt *= constants::NR::dT_T_target / dT_T;
+        dt *= constants::NR::dTOverTempTol / dT_T;
 
         // jump back
         i       = 0;
@@ -757,21 +757,21 @@ HOST_DEVICE_FUN bool inline finalizeSystemNR(const int dimension, const Float* Y
     }
 
     // cleanup Vector
-    util::clip(final_Y, dimension, (Float)nnet::constants::epsilon_vector);
+    util::clip(final_Y, dimension, (Float)nnet::constants::epsilonVector);
 
     // return condition
     Float correction = std::abs((final_T - last_T) / final_T);
-    if ((i >= constants::NR::min_it && correction < constants::NR::it_tol) || i >= constants::NR::max_it)
+    if ((i >= constants::NR::minIt && correction < constants::NR::itTol) || i >= constants::NR::maxIt)
     {
         // mass and temperature variation
         Float dT_T = std::abs((final_T - T) / final_T);
 
         // timestep tweeking
         used_dt = dt;
-        dt      = (dT_T == 0 ? constants::max_dt_step : constants::NR::dT_T_target / dT_T) * used_dt;
-        dt      = std::min(dt, used_dt * (Float)constants::max_dt_step);
-        dt      = std::max(dt, used_dt * (Float)constants::min_dt_step);
-        dt      = std::min(dt, (Float)constants::NR::max_dt);
+        dt      = (dT_T == 0 ? constants::maxDtStep : constants::NR::dTOverTempTarget / dT_T) * used_dt;
+        dt      = std::min(dt, used_dt * (Float)constants::maxDtStep);
+        dt      = std::max(dt, used_dt * (Float)constants::minDtStep);
+        dt      = std::min(dt, (Float)constants::NR::maxDt);
 
         return true;
     }
@@ -795,9 +795,9 @@ Float inline solveSystemNR(const int dimension, Float* Mp, Float* RHS, Float* DY
                            const Float drho_dt, Float& dt)
 {
     // check for non-burning particles
-    if (rho < constants::min_rho || T < constants::min_temp)
+    if (rho < constants::minRho || T < constants::minTemp)
     {
-        dt = constants::max_dt;
+        dt = constants::maxDt;
         return dt;
     }
 
@@ -810,7 +810,7 @@ Float inline solveSystemNR(const int dimension, Float* Mp, Float* RHS, Float* DY
                         drho_dt, dt, i);
 
         // solve M*D{T, Y} = RHS
-        eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilon_system);
+        eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilonSystem);
 
         // finalize
         if (finalizeSystemNR(dimension, Y, T, final_Y, final_T, DY_T, dt, timestep, i)) { return timestep; }
@@ -861,9 +861,9 @@ HOST_DEVICE_FUN void inline prepareSystemSubstep(const int dimension, Float* Mp,
 #ifndef COMPILE_DEVICE
     // timejump if needed
     if constexpr (std::is_invocable<std::remove_pointer<nseFunction>>())
-        if (dt < dt_tot * constants::substep::dt_nse_tol)
+        if (dt < dt_tot * constants::substep::dtNseTol)
         {
-            dt           = constants::max_dt;
+            dt           = constants::maxDt;
             elapsed_time = dt_tot;
 
             (*jumpToNse)(reactions, construct_rates_BE, eos, final_Y, final_T, rho, drho_dt);
@@ -915,7 +915,7 @@ HOST_DEVICE_FUN bool inline finalizeSystemSubstep(const int dimension, Float* fi
         elapsed_time += timestep;
 
         // check exit condition
-        if ((dt_tot - elapsed_time) / dt_tot < constants::substep::dt_tol) return true;
+        if ((dt_tot - elapsed_time) / dt_tot < constants::substep::dtTol) return true;
     }
 
     return false;
@@ -936,7 +936,7 @@ HOST_DEVICE_FUN void inline solveSystemSubstep(const int dimension, Float* Mp, F
                                                Float const dt_tot, Float& dt, const nseFunction jumpToNse = NULL)
 {
     // check for non-burning particles
-    if (final_rho < constants::min_rho || final_T < constants::min_temp) return;
+    if (final_rho < constants::minRho || final_T < constants::minTemp) return;
 
     // actual solving
     Float elapsed_time = 0;
@@ -948,7 +948,7 @@ HOST_DEVICE_FUN void inline solveSystemSubstep(const int dimension, Float* Mp, F
                              T_buffer, final_rho, drho_dt, dt_tot, elapsed_time, dt, i, jumpToNse);
 
         // solve M*D{T, Y} = RHS
-        eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilon_system);
+        eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilonSystem);
 
         // finalize
         if (finalizeSystemSubstep(dimension, final_Y, final_T, Y_buffer, T_buffer, DY_T, dt_tot, elapsed_time, dt, i))
