@@ -58,7 +58,7 @@ void inline gpuErrchk(cudaError_t code)
     }
 }
 
-namespace cuda_util
+namespace util::cuda
 {
 /*! @brief Function to move buffer to device
  *
@@ -104,4 +104,4 @@ void inline initCudaMpi(MPI_Comm comm)
     gpuErrchk(cudaSetDevice(local_rank));
 }
 #endif
-} // namespace cuda_util
+} // namespace util::cuda

@@ -63,10 +63,10 @@ GPUReactionList inline moveToGpu(const PtrReactionList& reactions)
     GPUReactionList dev_reactions;
     dev_reactions.numReactions = reactions.numReactions;
 
-    dev_reactions.reactantProduct = cuda_util::moveToGpu<Reaction::ReactantProduct>(
+    dev_reactions.reactantProduct = ::util::cuda::moveToGpu<Reaction::ReactantProduct>(
         reactions.reactantProduct, reactions.reactantBegin[reactions.numReactions]);
-    dev_reactions.reactantBegin = cuda_util::moveToGpu<int>(reactions.reactantBegin, reactions.numReactions + 1);
-    dev_reactions.productBegin  = cuda_util::moveToGpu<int>(reactions.productBegin, reactions.numReactions);
+    dev_reactions.reactantBegin = ::util::cuda::moveToGpu<int>(reactions.reactantBegin, reactions.numReactions + 1);
+    dev_reactions.productBegin  = ::util::cuda::moveToGpu<int>(reactions.productBegin, reactions.numReactions);
 
     return dev_reactions;
 }
