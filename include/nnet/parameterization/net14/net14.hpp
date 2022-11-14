@@ -133,6 +133,16 @@ inline static const nnet::ReactionList reactionList(std::vector<nnet::Reaction>{
     {{{13}}, {{0}, {12}}}  // Ni + He <- Zn
 });
 
+/*! @brief compute net14 rates
+ *
+ * @param Y              molar fractions
+ * @param T             temperature
+ * @param rho           density
+ * @param eos_struct    eos struct to populate
+ * @param corrected_BE  will be populated by binding energies, corrected by coulombien terms
+ * @param rates         will be populated with reaction rates
+ * @param drates        will be populated with the temperature derivatives of reaction rates
+ */
 template<typename Float>
 extern HOST_DEVICE_FUN void computeNet14ReactionRates(const Float* Y, const Float T, const Float rho,
                                                       const nnet::eos_struct<Float>& eos_struct, Float* corrected_BE,

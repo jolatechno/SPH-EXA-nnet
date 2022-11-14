@@ -47,10 +47,4 @@ bool table_read_success = readCPUTable();
 ComputeReactionRatesFunctor<double> computeReactionRates;
 } // namespace net87
 
-namespace net86
-{
-bool                                debug = false;
-ComputeReactionRatesFunctor<double> computeReactionRates;
-} // namespace net86
-
 } // namespace nnet
