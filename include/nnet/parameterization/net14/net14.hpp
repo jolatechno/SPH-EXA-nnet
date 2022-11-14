@@ -133,6 +133,11 @@ inline static const nnet::ReactionList reactionList(std::vector<nnet::Reaction>{
     {{{13}}, {{0}, {12}}}  // Ni + He <- Zn
 });
 
+template<typename Float>
+extern HOST_DEVICE_FUN void computeNet14ReactionRates(const Float* Y, const Float T, const Float rho,
+                                                      const nnet::eos_struct<Float>& eos_struct, Float* corrected_BE,
+                                                      Float* rates, Float* drates);
+
 /*! @brief net14 functor */
 template<typename Float>
 class ComputeReactionRatesFunctor : public nnet::ComputeReactionRatesFunctor<Float>
@@ -152,7 +157,10 @@ public:
      */
     HOST_DEVICE_FUN void inline operator()(const Float* Y, const Float T, const Float rho,
                                            const nnet::eos_struct<Float>& eos_struct, Float* corrected_BE, Float* rates,
-                                           Float* drates) const override;
+                                           Float* drates) const override
+    {
+        computeNet14ReactionRates(Y, T, rho, eos_struct, corrected_BE, rates, drates);
+    }
 };
 
 extern ComputeReactionRatesFunctor<double> computeReactionRates;

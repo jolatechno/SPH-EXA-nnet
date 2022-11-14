@@ -30,6 +30,7 @@
  */
 
 #include "net14.hpp"
+#include "net14_tables.hpp"
 
 namespace nnet::net14
 {
@@ -37,10 +38,9 @@ namespace nnet::net14
 bool debug = false;
 
 template<typename Float>
-HOST_DEVICE_FUN void ComputeReactionRatesFunctor<Float>::operator()(const Float* Y, const Float T, const Float rho,
-                                                                    const nnet::eos_struct<Float>& eos_struct,
-                                                                    Float* corrected_BE, Float* rates,
-                                                                    Float* drates) const
+HOST_DEVICE_FUN void computeNet14ReactionRates(const Float* Y, const Float T, const Float rho,
+                                               const nnet::eos_struct<Float>& eos_struct, Float* corrected_BE,
+                                               Float* rates, Float* drates)
 {
     /*********************************************/
     /* start computing the binding energy vector */
@@ -659,8 +659,12 @@ HOST_DEVICE_FUN void ComputeReactionRatesFunctor<Float>::operator()(const Float*
     }
 }
 
-template class ComputeReactionRatesFunctor<float>;
-template class ComputeReactionRatesFunctor<double>;
+template void computeNet14ReactionRates(const float* Y, const float T, const float rho,
+                                        const nnet::eos_struct<float>& eos_struct, float* corrected_BE, float* rates,
+                                        float* drates);
+template void computeNet14ReactionRates(const double* Y, const double T, const double rho,
+                                        const nnet::eos_struct<double>& eos_struct, double* corrected_BE, double* rates,
+                                        double* drates);
 
 ComputeReactionRatesFunctor<double> computeReactionRates;
 

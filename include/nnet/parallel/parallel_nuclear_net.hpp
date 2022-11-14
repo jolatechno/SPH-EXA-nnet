@@ -53,7 +53,6 @@
 #include "nnet/nuclear_net.hpp"
 
 #include "nnet_util/eigen.hpp"
-#include "nnet_util/algorithm.hpp"
 
 #include "nnet/parameterization/eos/helmholtz.hpp"
 
