@@ -31,10 +31,6 @@
 
 #include "nnet/parameterization/net87/net87.hpp"
 #include "nnet/parameterization/net86/net86.hpp"
-#include "nnet/parameterization/net14/net14.hpp"
-
-#include "nnet/parameterization/eos/helmholtz.hpp"
-#include "nnet/parameterization/eos/ideal_gas.hpp"
 
 namespace nnet
 {
@@ -57,9 +53,4 @@ bool                                debug = false;
 ComputeReactionRatesFunctor<double> computeReactionRates;
 } // namespace net86
 
-namespace net14
-{
-bool                                debug = false;
-ComputeReactionRatesFunctor<double> computeReactionRates;
-} // namespace net14
 } // namespace nnet

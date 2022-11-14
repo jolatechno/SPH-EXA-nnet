@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <numeric>
 #include <cmath>
+#include <string>
 
 #include "nnet_util/CUDA/cuda.inl"
 
