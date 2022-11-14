@@ -1,6 +1,6 @@
 set(NNET_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(nuclear SHARED nuclear_net.cpp)
+add_library(nuclear SHARED nuclear_net.cpp nnet/parameterization/eos/helmholtz.cpp)
 target_include_directories(nuclear PRIVATE ${NNET_DIR})
 
 if(CMAKE_HIP_COMPILER)
@@ -8,7 +8,7 @@ if(CMAKE_HIP_COMPILER)
 endif()
 
 if(CMAKE_CUDA_COMPILER OR CMAKE_HIP_COMPILER)
-	add_library(nuclear_gpu STATIC nuclear_net.cu)
+	add_library(nuclear_gpu STATIC nuclear_net.cu nnet/parameterization/eos/helmholtz.cpp)
 
     set_target_properties(nuclear_gpu PROPERTIES
     	CUDA_SEPARABLE_COMPILATION ON
