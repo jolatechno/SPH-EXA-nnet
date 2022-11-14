@@ -43,11 +43,43 @@
 
 #include "../net86/net86.hpp"
 
-#include "electrons.hpp"
+#ifndef N_TEMP
+#define N_TEMP 41
+#endif
+#ifndef N_RHO
+#define N_RHO 51
+#endif
+#ifndef N_C
+#define N_C 12
+#endif
+#ifndef ELECTRON_TABLE_PATH
+#define ELECTRON_TABLE_PATH "./electron_rate.dat"
+#endif
 
 namespace nnet::net87
 {
 namespace constants = nnet::net86::constants;
+
+namespace electrons
+{
+namespace constants
+{
+/*! @brief table sizes */
+static const int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
+
+extern bool readCPUTable();
+extern bool copyTableToGPU();
+} // namespace constants
+
+/*! @brief interpolate electronic parameters
+ *
+ * @param temp     temperature
+ * @param rhoElec  electron density
+ * @param rate     electronic parameters to be populated
+ */
+template<typename Float>
+extern HOST_DEVICE_FUN void interpolate(Float temp, Float rhoElec, std::array<Float, constants::nC>& rate);
+} // namespace electrons
 
 /*! @brief constant mass-excendent values */
 DEVICE_DEFINE(inline static const std::array<double COMMA 87>, BE, = {BE_NET86 COMMA 0.782 * constants::MevToErg};)
@@ -69,9 +101,6 @@ inline static const nnet::ReactionList reactionList = []()
 template<typename Float>
 class ComputeReactionRatesFunctor : public nnet::ComputeReactionRatesFunctor<Float>
 {
-private:
-    nnet::net86::ComputeReactionRatesFunctor<Float> net86ComputeReactionRates;
-
 public:
     ComputeReactionRatesFunctor() {}
 
@@ -114,7 +143,7 @@ public:
 
         Float dUedYe = eos_struct.dudYe;
 
-        net86ComputeReactionRates(Y, T, rho, eos_struct, corrected_BE, rates, drates);
+        net86::computeNet86ReactionRates(Y, T, rho, eos_struct, corrected_BE, rates, drates);
 
         /*********************************************/
         /* start computing the binding energy vector */
@@ -147,4 +176,5 @@ public:
 };
 
 extern ComputeReactionRatesFunctor<double> computeReactionRates;
+
 } // namespace nnet::net87

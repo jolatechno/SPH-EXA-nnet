@@ -86,7 +86,7 @@ DEVICE_DEFINE(double, xfd[IMAX][JMAX], ;)
 DEVICE_DEFINE(double, xft[IMAX][JMAX], ;)
 DEVICE_DEFINE(double, xfdt[IMAX][JMAX], ;)
 
-bool inline readCPUTable()
+bool readCPUTable()
 {
     // read table
     const std::string helmoltz_table = {
@@ -171,7 +171,7 @@ bool inline readCPUTable()
     return true;
 }
 
-bool inline copyTableToGPU()
+bool copyTableToGPU()
 {
 #if COMPILE_DEVICE
     // copy to device

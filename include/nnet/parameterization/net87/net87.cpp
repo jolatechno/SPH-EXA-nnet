@@ -29,8 +29,6 @@
  * @author Joseph Touzet <joseph.touzet@ens-paris-saclay.fr>
  */
 
-#pragma once
-
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -44,38 +42,27 @@
 
 #include "nnet_util/eigen.hpp"
 
+#include "net87.hpp"
+
 #define STRINGIFY(...) #__VA_ARGS__
 #define STR(...) STRINGIFY(__VA_ARGS__)
 
-#ifndef N_TEMP
-#define N_TEMP 41
-#endif
-#ifndef N_RHO
-#define N_RHO 51
-#endif
-#ifndef N_C
-#define N_C 12
-#endif
-#ifndef ELECTRON_TABLE_PATH
-#define ELECTRON_TABLE_PATH "./electron_rate.dat"
-#endif
-
-namespace nnet::net87::electrons
+namespace nnet::net87
 {
+
+namespace electrons
+{
+
 namespace constants
 {
-/*! @brief table initialize sucess */
-extern bool table_read_success;
+bool table_read_success = readCPUTable();
 
-/*! @brief table sizes */
-static const int nTemp = N_TEMP, nRho = N_RHO, nC = N_C;
-
-DEVICE_DEFINE(extern double, log_temp_ref[N_TEMP], ;)
-DEVICE_DEFINE(extern double, log_rho_ref[N_RHO], ;)
-DEVICE_DEFINE(extern double, electron_rate[N_TEMP][N_RHO][N_C], ;)
+DEVICE_DEFINE(double, log_temp_ref[N_TEMP], ;)
+DEVICE_DEFINE(double, log_rho_ref[N_RHO], ;)
+DEVICE_DEFINE(double, electron_rate[N_TEMP][N_RHO][N_C], ;)
 
 /*! @brief read electron rate constants table for net87 */
-bool inline readCPUTable()
+bool readCPUTable()
 {
     // read table
     const std::string electron_rate_table = {
@@ -99,7 +86,7 @@ bool inline readCPUTable()
     return true;
 }
 
-bool inline copyTableToGPU()
+bool copyTableToGPU()
 {
 #if COMPILE_DEVICE
     // copy to device
@@ -112,14 +99,8 @@ bool inline copyTableToGPU()
 }
 } // namespace constants
 
-/*! @brief interpolate electronic parameters
- *
- * @param temp     temperature
- * @param rhoElec  electron density
- * @param rate     electronic parameters to be populated
- */
 template<typename Float>
-HOST_DEVICE_FUN void inline interpolate(Float temp, Float rhoElec, std::array<Float, constants::nC>& rate)
+HOST_DEVICE_FUN void interpolate(Float temp, Float rhoElec, std::array<Float, constants::nC>& rate)
 {
     // find temperature index
     int   i_temp_sup = 0;
@@ -158,4 +139,12 @@ HOST_DEVICE_FUN void inline interpolate(Float temp, Float rhoElec, std::array<Fl
                    constants::DEVICE_ACCESS(electron_rate)[i_temp_sup][i_rho_sup][i] * xx1 * yy1) /
                   (x2x1 * y2y1);
 }
-} // namespace nnet::net87::electrons
+
+template void interpolate(float temp, float rhoElec, std::array<float, constants::nC>& rate);
+template void interpolate(double temp, double rhoElec, std::array<double, constants::nC>& rate);
+
+} // namespace electrons
+
+ComputeReactionRatesFunctor<double> computeReactionRates;
+
+} // namespace nnet::net87
