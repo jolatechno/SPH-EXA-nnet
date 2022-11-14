@@ -126,8 +126,8 @@ const double c2   = 0.288675;
 const double esqu = qe * qe;
 
 /*! @brief Read helmholtz constant table. */
-extern bool inline readCPUTable();
-extern bool inline copyTableToGPU();
+extern bool readCPUTable();
+extern bool copyTableToGPU();
 
 } // namespace constants
 

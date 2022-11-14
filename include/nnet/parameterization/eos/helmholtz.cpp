@@ -338,8 +338,7 @@ HOST_DEVICE_FUN void inline getTableIndices(int& iat, int& jat, const Float temp
 } // namespace constants
 
 template<typename Float>
-HOST_DEVICE_FUN nnet::eos_struct<Float> inline helmholtzEos(double abar_, double zbar_, const Float temp,
-                                                            const Float rho)
+HOST_DEVICE_FUN nnet::eos_struct<Float> helmholtzEos(double abar_, double zbar_, const Float temp, const Float rho)
 {
     // coefs
     // Float fi[36];
