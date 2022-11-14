@@ -416,7 +416,7 @@ HOST_DEVICE_FUN void inline firstOrderDYFromReactions(const PtrReactionList& rea
             rate *= std::pow(Y[reactant_id] * rho, n_reactant_consumed - 1);
         }
 
-        if (rate > constants::epsilonSystem)
+        if (rate > (Float)constants::epsilonSystem)
             for (auto const [reactant_id, n_reactant_consumed] : Reaction.reactants)
             {
                 // compute rate
@@ -651,7 +651,7 @@ void inline solveSystemFromGuess(const int dimension, Float* Mp, Float* RHS, Flo
                                rho, drho_dt, eos_struct, dt);
 
         // solve M*D{T, Y} = RHS
-        eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilonSystem);
+        eigen::solve(Mp, RHS, DY_T, dimension + 1, (Float)constants::epsilonSystem);
 
         // finalize
         return finalizeSystem(dimension, Y, T, next_Y, next_T, DY_T);
@@ -810,7 +810,7 @@ Float inline solveSystemNR(const int dimension, Float* Mp, Float* RHS, Float* DY
                         drho_dt, dt, i);
 
         // solve M*D{T, Y} = RHS
-        eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilonSystem);
+        eigen::solve(Mp, RHS, DY_T, dimension + 1, (Float)constants::epsilonSystem);
 
         // finalize
         if (finalizeSystemNR(dimension, Y, T, final_Y, final_T, DY_T, dt, timestep, i)) { return timestep; }
@@ -948,7 +948,7 @@ HOST_DEVICE_FUN void inline solveSystemSubstep(const int dimension, Float* Mp, F
                              T_buffer, final_rho, drho_dt, dt_tot, elapsed_time, dt, i, jumpToNse);
 
         // solve M*D{T, Y} = RHS
-        eigen::solve(Mp, RHS, DY_T, dimension + 1, constants::epsilonSystem);
+        eigen::solve(Mp, RHS, DY_T, dimension + 1, (Float)constants::epsilonSystem);
 
         // finalize
         if (finalizeSystemSubstep(dimension, final_Y, final_T, Y_buffer, T_buffer, DY_T, dt_tot, elapsed_time, dt, i))

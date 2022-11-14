@@ -57,6 +57,8 @@
 
 #include "nnet/parameterization/eos/helmholtz.hpp"
 
+#include "implementation/parallel_nuclear_net_impl.hpp"
+
 namespace nnet::parallel
 {
 /*! @brief function to compute nuclear reaction, either from NuclearData or ParticuleData if it includes Y
@@ -157,39 +159,16 @@ void computeNuclearReactions(Data& n, size_t firstIndex, size_t lastIndex, const
             }
         }
 
-        // buffers
-        std::vector<Float>   rates(reactions.size());
-        eigen::Vector<Float> RHS(dimension + 1), DY_T(dimension + 1), Y_buffer(dimension), Y(dimension);
-        eigen::Matrix<Float> Mp(dimension + 1, dimension + 1);
+        // copy pointers to array
+        std::vector<Float*> Y_raw_ptr(dimension);
+        for (int i = 0; i < dimension; ++i)
+            Y_raw_ptr[i] = n.Y[i].data() + firstIndex;
 
-        int num_threads;
-#pragma omp parallel
-#pragma omp master
-        num_threads        = omp_get_num_threads();
-        int omp_batch_size = ::util::dynamicBatchSize(n_particles, num_threads);
-
-#pragma omp parallel for firstprivate(Y, Mp, RHS, DY_T, rates, Y_buffer) schedule(dynamic, omp_batch_size)
-        for (size_t i = firstIndex; i < lastIndex; ++i)
-            if (n.rho[i] > nnet::constants::minRho && n.temp[i] > nnet::constants::minTemp)
-            {
-                // copy to local vector
-                for (int j = 0; j < dimension; ++j)
-                    Y[j] = n.Y[j][i];
-
-                // compute drho/dt
-                Float drho_dt = 0;
-                if (use_drhodt)
-                    if (n.rho_m1[i] != 0) n.rho_m1[i] = (n.rho[i] - n.rho_m1[i]) / previous_dt;
-
-                // solve
-                nnet::solveSystemSubstep(dimension, Mp.data(), RHS.data(), DY_T.data(), rates.data(), reactions,
-                                         construct_rates_BE, eos, Y.data(), n.temp[i], Y_buffer.data(), n.rho[i],
-                                         drho_dt, hydro_dt, n.dt[i], jumpToNse);
-
-                // copy from local vector
-                for (int j = 0; j < dimension; ++j)
-                    n.Y[j][i] = Y[j];
-            }
+        // call the cuda kernel wrapper
+        computeNuclearReactionsImpl(lastIndex - firstIndex, dimension, n.rho.data() + firstIndex,
+                                    n.rho_m1.data() + firstIndex, Y_raw_ptr.data(), n.temp.data() + firstIndex,
+                                    n.dt.data() + firstIndex, hydro_dt, previous_dt, reactions, construct_rates_BE, eos,
+                                    use_drhodt, jumpToNse);
     }
 }
 
@@ -266,27 +245,19 @@ void computeHelmEOS(Data& n, size_t firstIndex, size_t lastIndex, const Vector& 
         /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         simple CPU parallel application of the eos
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-        std::vector<Float> Y(dimension);
 
-#pragma omp parallel for firstprivate(Y) schedule(static)
-        for (size_t i = firstIndex; i < lastIndex; ++i)
-        {
-            // copy to local vector
-            for (int j = 0; j < dimension; ++j)
-                Y[j] = n.Y[j][i];
+        // copy pointers to array
+        std::vector<Float*> Y_raw_ptr(dimension);
+        for (int i = 0; i < dimension; ++i)
+            Y_raw_ptr[i] = n.Y[i].data() + firstIndex;
 
-            // compute abar and zbar
-            double abar = std::accumulate(Y.data(), Y.data() + dimension, (double)0.);
-            double zbar = eigen::dot(Y.data(), Y.data() + dimension, Z);
-
-            auto eos_struct = nnet::eos::helmholtz::helmholtzEos(abar, zbar, n.temp[i], n.rho[i]);
-
-            n.u[i]    = eos_struct.u;
-            n.cv[i]   = eos_struct.cv;
-            n.p[i]    = eos_struct.p;
-            n.c[i]    = eos_struct.c;
-            n.dpdT[i] = eos_struct.dpdT;
-        }
+        // call the cpu impl
+        computeHelmholtzImpl(lastIndex - firstIndex, dimension, Z.data(),
+                             // read buffers:
+                             n.temp.data() + firstIndex, n.rho.data() + firstIndex, Y_raw_ptr.data(),
+                             // write buffers:
+                             n.u.data() + firstIndex, n.cv.data() + firstIndex, n.p.data() + firstIndex,
+                             n.c.data() + firstIndex, n.dpdT.data() + firstIndex);
     }
 }
 } // namespace nnet::parallel
