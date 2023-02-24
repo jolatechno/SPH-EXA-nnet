@@ -33,6 +33,7 @@
 
 namespace nnet::parallel
 {
+
 /***********************************************/
 /* code to compute nuclear reaction on the GPU */
 /***********************************************/
@@ -46,8 +47,8 @@ __global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, cons
                                                   Float* rho_, Float* rho_m1_, Float** Y_, Float* temp_, Float* dt_,
                                                   const Float hydro_dt, const Float previous_dt,
                                                   const nnet::GPUReactionList*                    reactions,
-                                                  const nnet::ComputeReactionRatesFunctor<Float>& construct_rates_BE,
-                                                  const nnet::EosFunctor<Float>& eos, bool use_drhodt)
+                                                  const nnet::ComputeReactionRatesFunctor<Float>* construct_rates_BE,
+                                                  const nnet::EosFunctor<Float>* eos, bool use_drhodt)
 {
     size_t thread = blockIdx.x * blockDim.x + threadIdx.x;
     if (thread < n_particles)
@@ -90,7 +91,7 @@ __global__ void cudaKernelComputeNuclearReactions(const size_t n_particles, cons
                                        dt_[thread], iter);
 
             // solve M*D{T, Y} = RHS
-            eigen::solve(Mp, RHS, DY_T, dimension + 1, (Float)nnet::constants::epsilon_system);
+            eigen::solve(Mp, RHS, DY_T, dimension + 1, (Float)nnet::constants::epsilonSystem);
 
             // finalize
             if (nnet::finalizeSystemSubstep(dimension, Y, temp_[thread], Y_buffer, T_buffer, DY_T, hydro_dt, elapsed,
@@ -119,17 +120,18 @@ void cudaComputeNuclearReactions(const size_t n_particles, const int dimension, 
                                  const nnet::EosFunctor<Float>& eos, bool use_drhodt)
 {
     // copy classes to gpu
-    nnet::GPUReactionList* dev_reactions;
-    func_type*             dev_construct_rates_BE;
-    func_eos*              dev_eos;
+    nnet::GPUReactionList*                    dev_reactions;
+    nnet::ComputeReactionRatesFunctor<Float>* dev_construct_rates_BE;
+    nnet::EosFunctor<Float>*                  dev_eos;
     // allocate
     gpuErrchk(cudaMalloc((void**)&dev_reactions, sizeof(nnet::GPUReactionList)));
-    gpuErrchk(cudaMalloc((void**)&dev_construct_rates_BE, sizeof(func_type)));
-    gpuErrchk(cudaMalloc((void**)&dev_eos, sizeof(func_eos)));
+    gpuErrchk(cudaMalloc((void**)&dev_construct_rates_BE, sizeof(nnet::ComputeReactionRatesFunctor<Float>)));
+    gpuErrchk(cudaMalloc((void**)&dev_eos, sizeof(nnet::EosFunctor<Float>)));
     // actually copy
     gpuErrchk(cudaMemcpy(dev_reactions, &reactions, sizeof(nnet::GPUReactionList), cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(dev_construct_rates_BE, &construct_rates_BE, sizeof(func_type), cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(dev_eos, &eos, sizeof(func_eos), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_construct_rates_BE, &construct_rates_BE, sizeof(nnet::ComputeReactionRatesFunctor<Float>),
+                         cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_eos, &eos, sizeof(nnet::EosFunctor<Float>), cudaMemcpyHostToDevice));
 
     // compute chunk sizes
     int cudaNumBlocks = (n_particles + constants::cudaNumThreadPerBlockNnet - 1) / constants::cudaNumThreadPerBlockNnet;
